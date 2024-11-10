@@ -10,13 +10,11 @@ function Datas() {
         // convert file to base64 encoded
         const file = event.files[0];
         const reader = new FileReader();
-        // const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
         reader.onload = function (e: ProgressEvent<FileReader>) {
             const fileDatas = e.target?.result
             if (fileDatas) {
                 const parsed = ParseBanquePostale(fileDatas.toString())
-                console.log("parsed", parsed);
             }
         };
         reader.readAsText(file);
