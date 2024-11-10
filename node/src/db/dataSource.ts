@@ -4,6 +4,7 @@ import { DataSource } from "typeorm";
 
 const port = process.env.DB_PORT as number | undefined;
 
+console.log(`${__dirname}/**/db/migrations/*.{ts,js}`)
 export const AppDataSource = new DataSource({
    type: 'postgres',
    host: process.env.DB_HOST,
@@ -11,7 +12,8 @@ export const AppDataSource = new DataSource({
    username: process.env.DB_USER,
    password: process.env.DB_PASS,
    database: process.env.DB_NAME,
+   schema: process.env.DB_SCHEMA,
 
-   entities: [`${__dirname}/**/entities/*.{ts,js}`],
+   entities: [`${__dirname}/../entities/*.{ts,js}`],
    migrations: [`${__dirname}/**/migrations/*.{ts,js}`]
 })
