@@ -1,0 +1,22 @@
+{
+    "clg": {
+        "prefix": "clg",
+        "body": "console.log(\"$1\", $1);"
+    },
+    "react": {
+        "prefix": "react",
+        "body": "import React from 'react';",
+    },
+    "useEffect": {
+        "prefix": "useEffect",
+        "body": [
+            "useEffect(()=> {",
+            "$1",
+            "},[$2]);"
+        ]
+    },
+    "useState": {
+        "prefix": "useState",
+        "body": "const [$1, set$1] = useState($2);"
+    }
+}

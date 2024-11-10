@@ -1,4 +1,4 @@
-import { parse } from "date-fns"
+import { parseDDMMYYYYToDate } from "./DatesUtils"
 
 interface BanquePostaleImport {
     accountNumber: string,
@@ -20,10 +20,6 @@ function csvAmountToJsAmount(str: string): number {
     } else {
         return -Infinity
     }
-}
-
-function parseDDMMYYYYToDate(stringifiedDate: string): Date {
-    return parse(stringifiedDate, 'dd/MM/yyyy', new Date())
 }
 
 function ParseBanquePostale(csvDatas: string): object {

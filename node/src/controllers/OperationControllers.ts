@@ -1,9 +1,14 @@
 import { Router, Request, Response } from "express";
+import { AccountingLine } from "../entities/AccountingLine";
+import { AppDataSource } from "../db/dataSource";
 
 const OperationRoutes = Router();
 
 OperationRoutes.get('/', (req: Request, res: Response) => {
-    return res.json('Established connection!');
+    const accountingLineRepo = AppDataSource.getRepository(AccountingLine)
+    accountingLineRepo.find().then(accountingLines => {
+        return res.json(accountingLines);
+    })
 })
 
 export default OperationRoutes

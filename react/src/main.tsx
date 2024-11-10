@@ -9,7 +9,7 @@ import router from './routes/Router';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PrimeReactProvider>
-    <RouterProvider router={router} />
+      <RouterProvider router={router} />
     </PrimeReactProvider>
   </StrictMode>,
 )
