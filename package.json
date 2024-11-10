@@ -1,0 +1,17 @@
+{
+  "name": "comptes-chateau",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev-front": "cd react && npm start",
+    "dev-back": "cd node && npm run dev",
+    "start": "concurrently \"npm run dev-front\" \"npm run dev-back\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
