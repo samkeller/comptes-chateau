@@ -8,7 +8,6 @@ class AccountingService extends BaseService {
 
     getAllAccountingLines(): Promise<AccountLine[]> {
         return axios.get(this.apiUrl + "operation/").then(response => {
-            console.log("response", response);
             return response.data.map((v: Partial<AccountLine>) => new AccountLine(v))
         })
     }

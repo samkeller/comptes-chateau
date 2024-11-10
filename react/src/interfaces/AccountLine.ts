@@ -1,4 +1,5 @@
-import { parseDateToDDMMYYYY } from "../Utils/DatesUtils"
+import { isValid } from "date-fns"
+import { parseDateToDDMMYYYY, parseDateToDisplay, parseDDMMYYYYToDate, parsePostgresToDate } from "../Utils/DatesUtils"
 import AccountLineNature from "./enums/AccountLineNature"
 import AccountLinePoste from "./enums/AccountLinePoste"
 
@@ -15,6 +16,19 @@ class AccountLine {
     constructor(accountLine: Partial<AccountLine>) {
         Object.assign(this, accountLine)
     }
+
+    public getDisplayDateValeur(): string {
+        if (this.dateValeur === null || !this.dateValeur) {
+            return ""
+        } else {
+            return parseDateToDisplay(parsePostgresToDate(this.dateValeur))
+        }
+    }
+
+    public getDisplayDateOperation(): string {
+        return parseDateToDisplay(parsePostgresToDate(this.dateOperation))
+    }
 }
+
 
 export default AccountLine
