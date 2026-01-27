@@ -11,4 +11,14 @@ OperationRoutes.get('/', (req: Request, res: Response) => {
     })
 })
 
+OperationRoutes.post('/', (req: Request, res: Response) => {
+    const accountingLineRepo = AppDataSource.getRepository(AccountingLine)
+
+    // TODO add validation (https://github.com/typestack/class-validator)
+
+    accountingLineRepo.insert(req.body).then(accountingLines => {
+        return res.json(accountingLines);
+    })
+})
+
 export default OperationRoutes

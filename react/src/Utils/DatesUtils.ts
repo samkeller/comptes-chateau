@@ -1,4 +1,4 @@
-import { format, parse } from "date-fns"
+import { format, parse, parseISO } from "date-fns"
 
 /**
  * Transforme une string en date
@@ -10,7 +10,7 @@ function parseDDMMYYYYToDate(stringifiedDate: string): Date {
 }
 
 function parsePostgresToDate(stringifiedDate: string): Date {
-    return parse(stringifiedDate, 'yyyy-MM-dd', new Date())
+    return parseISO(stringifiedDate)
 }
 
 function parseDateToDDMMYYYY(date: Date): string {

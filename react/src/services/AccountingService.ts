@@ -11,6 +11,12 @@ class AccountingService extends BaseService {
             return response.data.map((v: Partial<AccountLine>) => new AccountLine(v))
         })
     }
+
+    createAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
+        return axios.post(this.apiUrl + "operation/", accountLine).then(response => {
+            return new AccountLine(response.data)
+        })
+    }
 }
 
 export default AccountingService
