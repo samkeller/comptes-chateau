@@ -1,5 +1,6 @@
 import axios from "axios"
 import AccountLine from "../interfaces/AccountLine"
+import { toLocaleIsoString } from "../Utils/DatesUtils"
 
 class BaseService {
     protected apiUrl = import.meta.env.VITE_API_URL
@@ -13,7 +14,13 @@ class AccountingService extends BaseService {
     }
 
     createAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
-        return axios.post(this.apiUrl + "operation/", accountLine).then(response => {
+        const dataToSend = {
+            ...accountLine,
+            dateOperation: accountLine.dateOperation ? toLocaleIsoString(accountLine.dateOperation) : null,
+            ...(accountLine.dateValeur && { dateValeur: toLocaleIsoString(accountLine.dateValeur) })
+        }
+
+        return axios.post(this.apiUrl + "operation/", dataToSend).then(response => {
             return new AccountLine(response.data)
         })
     }

@@ -9,6 +9,8 @@ import AddAccountLineDialog from "./AddAccountLineDialog"
 
 function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
+
+    const [editingLine, setEditingLine] = useState<AccountLine | null>(null)
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
 
     const refreshLines = () => {
@@ -26,11 +28,29 @@ function AccountBook() {
             <i className="pi pi-check text-green-500"></i> :
             <i className="pi pi-times text-red-500"></i>
     }
-    
+    const actionsBody = (data: AccountLine) => {
+        return (
+            <Button
+                rounded text icon="pi pi-pencil" className="mr-2"
+                onClick={() => {
+                    setEditingLine(data)
+                    setShowAddDialog(true)
+                }}
+            ></Button>
+        )
+    }
+
     return (
         <div className="p-5">
             {
-                showAddDialog && <AddAccountLineDialog hideDialog={() => setShowAddDialog(false)} refresh={refreshLines} />
+                showAddDialog && <AddAccountLineDialog 
+                editingLine={editingLine}
+                hideDialog={() => {
+                    setEditingLine(null)
+                    setShowAddDialog(false)
+                }} 
+                refresh={refreshLines} 
+                />
             }
             <div className="flex justify-content-end">
                 <Button label="Ajouter une dépense" icon="pi pi-plus" className="mb-3" onClick={() => setShowAddDialog(true)} />
@@ -41,13 +61,14 @@ function AccountBook() {
                     size="small"
                     paginator rows={20} rowsPerPageOptions={[5, 10, 25, 50]}
                 >
-                    <Column field="dateOperation" header="Date opération" body={(v: AccountLine) => v.getDisplayDateOperation()}></Column>
-                    <Column field="dateValeur" header="Date valeur" body={(v: AccountLine) => v.getDisplayDateValeur()}></Column>
+                    <Column field="dateOperation" header="Date opération" body={(v: AccountLine) => v.displayDateOperation}></Column>
+                    <Column field="dateValeur" header="Date valeur" body={(v: AccountLine) => v.displayDateValeur}></Column>
                     <Column field="operation" header="Opération"></Column>
                     <Column field="nature" header="Nature"></Column>
                     <Column field="poste" header="Poste"></Column>
                     <Column field="solde" header="Solde"></Column>
                     <Column field="isHorsCb" header="Est hors CB" body={isHorsCbBody}></Column>
+                    <Column header="Actions" body={actionsBody} />
                 </DataTable>
             </Card>
         </div>

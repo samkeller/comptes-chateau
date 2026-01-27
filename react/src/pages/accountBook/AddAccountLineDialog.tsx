@@ -14,18 +14,19 @@ import { FloatLabel } from 'primereact/floatlabel';
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../Utils/DatesUtils';
 
 interface AddAcountLineDialogProps {
+    editingLine: AccountLine | null;
     hideDialog: () => void;
     refresh: () => void;
 }
 
-export default function AddAccountLineDialog({ hideDialog, refresh: onAdd }: AddAcountLineDialogProps) {
-    const [dateOperation, setDateOperation] = useState<string>("");
-    const [dateValeur, setDateValeur] = useState<string>("");
-    const [operation, setOperation] = useState<string>('');
-    const [nature, setNature] = useState<AccountLineNature>(AccountLineNature.UNKNOWN);
-    const [poste, setPoste] = useState<AccountLinePoste>(AccountLinePoste.UNKNOWN);
-    const [solde, setSolde] = useState<number>(0);
-    const [isHorsCB, setIsHorsCB] = useState<boolean>(false);
+export default function AddAccountLineDialog({ editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
+    const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : "");
+    const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
+    const [operation, setOperation] = useState<string>(editingLine?.operation || '');
+    const [nature, setNature] = useState<AccountLineNature>(editingLine?.nature || AccountLineNature.UNKNOWN);
+    const [poste, setPoste] = useState<AccountLinePoste>(editingLine?.poste || AccountLinePoste.UNKNOWN);
+    const [solde, setSolde] = useState<number>(editingLine?.solde || 0);
+    const [isHorsCB, setIsHorsCB] = useState<boolean>(editingLine?.isHorsCB || false);
 
     const natureOptions = Object.values(AccountLineNature).filter(v => v !== '').map(v => ({ label: v, value: v }));
     const posteOptions = Object.values(AccountLinePoste).filter(v => v !== '').map(v => ({ label: v, value: v }));
@@ -33,8 +34,9 @@ export default function AddAccountLineDialog({ hideDialog, refresh: onAdd }: Add
     const handleSubmit = async () => {
         if (!dateOperation) return;
         const accountLine: Partial<AccountLine> = {
-            dateOperation,
-            dateValeur,
+            id: editingLine ? editingLine.id : 0,
+            dateOperation: parseDDMMYYYYToDate(dateOperation),
+            dateValeur: dateValeur ? parseDDMMYYYYToDate(dateValeur) : null,
             operation,
             nature,
             poste,
@@ -43,7 +45,7 @@ export default function AddAccountLineDialog({ hideDialog, refresh: onAdd }: Add
         };
         try {
             await new AccountingService().createAccountingLine(accountLine);
-            onAdd();
+            refresh();
             hideDialog();
         } catch (error) {
             console.error('Error creating account line', error);
@@ -58,7 +60,7 @@ export default function AddAccountLineDialog({ hideDialog, refresh: onAdd }: Add
     return (
         <Dialog
             visible
-            header="Ajouter une ligne comptable"
+            header={editingLine?.id ? "Modifier une dépense" :"Ajouter une dépense" }
             footer={footer}
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}

@@ -1,11 +1,11 @@
-import { parseDateToDDMMYYYY, parseDateToDisplay,  parsePostgresToDate } from "../Utils/DatesUtils"
+import { parseDateToDisplay } from "../Utils/DatesUtils"
 import AccountLineNature from "./enums/AccountLineNature"
 import AccountLinePoste from "./enums/AccountLinePoste"
 
 class AccountLine {
     id: number = 0
-    dateOperation: string = parseDateToDDMMYYYY(new Date())
-    dateValeur: string | null = null
+    dateOperation: Date = new Date()
+    dateValeur: Date | null = null
     operation: string | null = ""
     nature: AccountLineNature = AccountLineNature.UNKNOWN
     poste: AccountLinePoste = AccountLinePoste.UNKNOWN
@@ -14,18 +14,24 @@ class AccountLine {
 
     constructor(accountLine: Partial<AccountLine>) {
         Object.assign(this, accountLine)
-    }
-
-    public getDisplayDateValeur(): string {
-        if (this.dateValeur === null || !this.dateValeur) {
-            return ""
-        } else {
-            return parseDateToDisplay(parsePostgresToDate(this.dateValeur))
+        // Convertir les dates ISO en objets Date
+        if (accountLine.dateOperation) {
+            this.dateOperation = new Date(accountLine.dateOperation)
+        }
+        if (accountLine.dateValeur) {
+            this.dateValeur = new Date(accountLine.dateValeur)
         }
     }
 
-    public getDisplayDateOperation(): string {
-        return parseDateToDisplay(parsePostgresToDate(this.dateOperation))
+    public get displayDateValeur(): string {
+        if (this.dateValeur === null) {
+            return ""
+        }
+        return parseDateToDisplay(this.dateValeur)
+    }
+
+    public get displayDateOperation(): string {
+        return parseDateToDisplay(this.dateOperation)
     }
 }
 

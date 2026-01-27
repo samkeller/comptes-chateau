@@ -16,7 +16,7 @@ OperationRoutes.post('/', (req: Request, res: Response) => {
 
     // TODO add validation (https://github.com/typestack/class-validator)
 
-    accountingLineRepo.insert(req.body).then(accountingLines => {
+    accountingLineRepo.save(req.body).then(accountingLines => {
         return res.json(accountingLines);
     })
 })
