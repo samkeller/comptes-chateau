@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Toast } from 'primereact/toast';
 import { FileUpload, FileUploadHandlerEvent } from 'primereact/fileupload';
 import { ParseBanquePostale } from '../../Utils/ParseBanquePostalUtils';
+import { PageTemplate } from '../PageTemplate';
 
 function Datas() {
     const toast = useRef<Toast>(null);
@@ -22,14 +23,16 @@ function Datas() {
 
 
     return (
-        <div className="card flex justify-content-center">
-            <Toast ref={toast}></Toast>
-            <FileUpload
-                mode="basic" accept="csv"
-                maxFileSize={1000000}
-                customUpload uploadHandler={customBase64Uploader}
-            />
-        </div>
+        <PageTemplate>
+            <div className="card flex justify-content-center">
+                <Toast ref={toast}></Toast>
+                <FileUpload
+                    mode="basic" accept="csv"
+                    maxFileSize={1000000}
+                    customUpload uploadHandler={customBase64Uploader}
+                />
+            </div>
+        </PageTemplate>
     )
 }
 

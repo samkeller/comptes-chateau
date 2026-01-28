@@ -6,6 +6,7 @@ import { Column } from "primereact/column"
 import { Card } from "primereact/card"
 import { Button } from "primereact/button"
 import AddAccountLineDialog from "./AddAccountLineDialog"
+import { PageTemplate } from "../PageTemplate"
 
 function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
@@ -41,15 +42,15 @@ function AccountBook() {
     }
 
     return (
-        <div className="p-5">
+        <PageTemplate>
             {
-                showAddDialog && <AddAccountLineDialog 
-                editingLine={editingLine}
-                hideDialog={() => {
-                    setEditingLine(null)
-                    setShowAddDialog(false)
-                }} 
-                refresh={refreshLines} 
+                showAddDialog && <AddAccountLineDialog
+                    editingLine={editingLine}
+                    hideDialog={() => {
+                        setEditingLine(null)
+                        setShowAddDialog(false)
+                    }}
+                    refresh={refreshLines}
                 />
             }
             <div className="flex justify-content-end">
@@ -71,7 +72,7 @@ function AccountBook() {
                     <Column header="Actions" body={actionsBody} />
                 </DataTable>
             </Card>
-        </div>
+        </PageTemplate>
     )
 }
 
