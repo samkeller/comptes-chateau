@@ -39,7 +39,10 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             service.getAllPostes()
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
+            setNature(naturesData[0] || null);
+
             setPostes(postesData);
+            setPoste(postesData[0] || null);
             setLoading(false);
         });
     }, []);
