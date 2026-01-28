@@ -7,6 +7,7 @@ import { Card } from "primereact/card"
 import { Button } from "primereact/button"
 import AddAccountLineDialog from "./AddAccountLineDialog"
 import { PageTemplate } from "../PageTemplate"
+import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel"
 
 function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
@@ -65,8 +66,8 @@ function AccountBook() {
                     <Column field="dateOperation" header="Date opération" body={(v: AccountLine) => v.displayDateOperation}></Column>
                     <Column field="dateValeur" header="Date valeur" body={(v: AccountLine) => v.displayDateValeur}></Column>
                     <Column field="operation" header="Opération"></Column>
-                    <Column field="nature.label" header="Nature"></Column>
-                    <Column field="poste.label" header="Poste"></Column>
+                    <Column field="nature.label" header="Nature" body={(data: AccountLine) => data.nature && <ColoredLabel data={data.nature} />}></Column>
+                    <Column field="poste.label" header="Poste" body={(data: AccountLine) => data.poste && <ColoredLabel data={data.poste} />}></Column>
                     <Column field="solde" header="Solde"></Column>
                     <Column field="isHorsCb" header="Est hors CB" body={isHorsCbBody}></Column>
                     <Column header="Actions" body={actionsBody} />

@@ -12,6 +12,7 @@ import { AccountLinePoste } from '../../interfaces/AccountLinePoste';
 import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../Utils/DatesUtils';
+import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
 
 interface AddAcountLineDialogProps {
     editingLine: AccountLine | null;
@@ -85,7 +86,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
     return (
         <Dialog
             visible
-            header={editingLine?.id ? "Modifier une dépense" :"Ajouter une dépense" }
+            header={editingLine?.id ? "Modifier une dépense" : "Ajouter une dépense"}
             footer={footer}
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}
@@ -124,11 +125,28 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                 </FloatLabel>
                 <div className='flex gap-1'>
                     <FloatLabel className='flex-1'>
-                        <Dropdown id="nature" value={nature} options={natureOptions} onChange={(e) => setNature(e.value)} placeholder="Sélectionner une nature" className='w-full' />
+                        <Dropdown id="nature"
+                            value={nature}
+                            options={natureOptions}
+                            onChange={(e) => setNature(e.value)}
+                            placeholder="Sélectionner une nature"
+                            className='w-full'
+                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
+                            valueTemplate={(option) => <ColoredLabel data={option.value} />}
+                        />
                         <label htmlFor="nature">Nature</label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
-                        <Dropdown id="poste" value={poste} options={posteOptions} onChange={(e) => setPoste(e.value)} placeholder="Sélectionner un poste" className='w-full' />
+                        <Dropdown
+                            id="poste"
+                            value={poste}
+                            options={posteOptions}
+                            onChange={(e) => setPoste(e.value)}
+                            placeholder="Sélectionner un poste"
+                            className='w-full'
+                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
+                            valueTemplate={(option) => <ColoredLabel data={option.value} />}
+                        />
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>
                 </div>
