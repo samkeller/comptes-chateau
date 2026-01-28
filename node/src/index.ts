@@ -1,6 +1,8 @@
 import express, { Router } from 'express';
 import { AppDataSource } from './db/dataSource';
 import OperationRoutes from './controllers/OperationControllers';
+import NatureRoutes from './controllers/NatureController'
+import PosteRoutes from './controllers/PosteController'
 import morgan from 'morgan';
 import cors from 'cors';
 
@@ -14,7 +16,8 @@ AppDataSource.initialize().then(() => {
     const routes = Router()
 
     routes.use("/operation", OperationRoutes)
-
+    routes.use('/nature', NatureRoutes)
+    routes.use('/poste', PosteRoutes)
     app.use("/api", routes)
 
     return app.listen(process.env.PORT);

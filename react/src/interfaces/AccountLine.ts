@@ -1,14 +1,14 @@
 import { parseDateToDisplay } from "../Utils/DatesUtils"
-import AccountLineNature from "./enums/AccountLineNature"
-import AccountLinePoste from "./enums/AccountLinePoste"
+import { AccountLineNature } from "./AccountLineNature"
+import { AccountLinePoste } from "./AccountLinePoste"
 
 class AccountLine {
     id: number = 0
     dateOperation: Date = new Date()
     dateValeur: Date | null = null
     operation: string | null = ""
-    nature: AccountLineNature = AccountLineNature.UNKNOWN
-    poste: AccountLinePoste = AccountLinePoste.UNKNOWN
+    nature: AccountLineNature | null = null
+    poste: AccountLinePoste | null = null
     solde: number = 0
     isHorsCB: boolean = false
 

@@ -1,10 +1,13 @@
 import axios from "axios"
 import AccountLine from "../interfaces/AccountLine"
+import { AccountLineNature } from "../interfaces/AccountLineNature"
+import { AccountLinePoste } from "../interfaces/AccountLinePoste"
 import { toLocaleIsoString } from "../Utils/DatesUtils"
 
 class BaseService {
     protected apiUrl = import.meta.env.VITE_API_URL
 }
+
 class AccountingService extends BaseService {
 
     getAllAccountingLines(): Promise<AccountLine[]> {
@@ -22,6 +25,18 @@ class AccountingService extends BaseService {
 
         return axios.post(this.apiUrl + "operation/", dataToSend).then(response => {
             return new AccountLine(response.data)
+        })
+    }
+
+    getAllNatures(): Promise<AccountLineNature[]> {
+        return axios.get(this.apiUrl + "nature/").then(response => {
+            return response.data
+        })
+    }
+
+    getAllPostes(): Promise<AccountLinePoste[]> {
+        return axios.get(this.apiUrl + "poste/").then(response => {
+            return response.data
         })
     }
 }

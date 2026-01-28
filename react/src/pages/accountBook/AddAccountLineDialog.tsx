@@ -1,5 +1,5 @@
 import { Dialog } from 'primereact/dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
@@ -7,8 +7,8 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { Checkbox } from 'primereact/checkbox';
 import AccountLine from '../../interfaces/AccountLine';
-import AccountLineNature from '../../interfaces/enums/AccountLineNature';
-import AccountLinePoste from '../../interfaces/enums/AccountLinePoste';
+import { AccountLineNature } from '../../interfaces/AccountLineNature';
+import { AccountLinePoste } from '../../interfaces/AccountLinePoste';
 import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../Utils/DatesUtils';
@@ -23,13 +23,29 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
     const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : "");
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
     const [operation, setOperation] = useState<string>(editingLine?.operation || '');
-    const [nature, setNature] = useState<AccountLineNature>(editingLine?.nature || AccountLineNature.UNKNOWN);
-    const [poste, setPoste] = useState<AccountLinePoste>(editingLine?.poste || AccountLinePoste.UNKNOWN);
+    const [nature, setNature] = useState<AccountLineNature | null>(editingLine?.nature || null);
+    const [poste, setPoste] = useState<AccountLinePoste | null>(editingLine?.poste || null);
     const [solde, setSolde] = useState<number>(editingLine?.solde || 0);
     const [isHorsCB, setIsHorsCB] = useState<boolean>(editingLine?.isHorsCB || false);
 
-    const natureOptions = Object.values(AccountLineNature).filter(v => v !== '').map(v => ({ label: v, value: v }));
-    const posteOptions = Object.values(AccountLinePoste).filter(v => v !== '').map(v => ({ label: v, value: v }));
+    const [natures, setNatures] = useState<AccountLineNature[]>([]);
+    const [postes, setPostes] = useState<AccountLinePoste[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const service = new AccountingService();
+        Promise.all([
+            service.getAllNatures(),
+            service.getAllPostes()
+        ]).then(([naturesData, postesData]) => {
+            setNatures(naturesData);
+            setPostes(postesData);
+            setLoading(false);
+        });
+    }, []);
+
+    const natureOptions = natures.map(v => ({ label: v.label, value: v }));
+    const posteOptions = postes.map(v => ({ label: v.label, value: v }));
 
     const handleSubmit = async () => {
         if (!dateOperation) return;
@@ -56,6 +72,12 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
         <Button label="Ajouter" icon="pi pi-check" onClick={handleSubmit} />
     </div>
+
+    if (loading) {
+        return <Dialog visible header="Chargement..." style={{ width: '60vw' }} onHide={hideDialog}>
+            <div>Chargement des options...</div>
+        </Dialog>
+    }
 
     return (
         <Dialog

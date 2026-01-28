@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
+import { AccountLineNature } from "./AccountLineNature";
+import { AccountLinePoste } from "./AccountLinePoste";
 
 @Entity('accounting-line')
 export class AccountingLine {
@@ -14,11 +16,13 @@ export class AccountingLine {
     @Column({ type: 'text' })
     operation: string;
 
-    @Column({ type: 'text', nullable: true })
-    nature: string;
+    @ManyToOne(() => AccountLineNature)
+    @JoinColumn({ name: 'nature_id' })
+    nature: AccountLineNature;
 
-    @Column({ type: 'text', nullable: true })
-    poste: string
+    @ManyToOne(() => AccountLinePoste)
+    @JoinColumn({ name: 'poste_id' })
+    poste: AccountLinePoste;
 
     @Column({ type: "int" })
     solde: number

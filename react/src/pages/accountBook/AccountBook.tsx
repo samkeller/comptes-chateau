@@ -64,8 +64,8 @@ function AccountBook() {
                     <Column field="dateOperation" header="Date opération" body={(v: AccountLine) => v.displayDateOperation}></Column>
                     <Column field="dateValeur" header="Date valeur" body={(v: AccountLine) => v.displayDateValeur}></Column>
                     <Column field="operation" header="Opération"></Column>
-                    <Column field="nature" header="Nature"></Column>
-                    <Column field="poste" header="Poste"></Column>
+                    <Column field="nature.label" header="Nature"></Column>
+                    <Column field="poste.label" header="Poste"></Column>
                     <Column field="solde" header="Solde"></Column>
                     <Column field="isHorsCb" header="Est hors CB" body={isHorsCbBody}></Column>
                     <Column header="Actions" body={actionsBody} />
