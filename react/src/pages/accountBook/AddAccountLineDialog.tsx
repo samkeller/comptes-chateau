@@ -40,13 +40,16 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             service.getAllPostes()
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
-            setNature(naturesData[0] || null);
-
             setPostes(postesData);
-            setPoste(postesData[0] || null);
+
+            if (!editingLine) {
+                // Théoriquement, ces deux valeurs ne devraient pas être nulles.
+                setNature(naturesData[0] || null);
+                setPoste(postesData[0] || null);
+            }
             setLoading(false);
         });
-    }, []);
+    }, [editingLine]);
 
     const natureOptions = natures.map(v => ({ label: v.label, value: v }));
     const posteOptions = postes.map(v => ({ label: v.label, value: v }));
