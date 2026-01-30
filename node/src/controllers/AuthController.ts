@@ -3,11 +3,14 @@ import { Router } from "express";
 import { COOKIE_NAME } from "..";
 import rateLimit from "express-rate-limit";
 
-const masterHash = process.env.MASTER_PASSWORD_HASH;
+const masterPassword = process.env.MASTER_PASSWORD;
 
-if (!masterHash) {
-  throw new Error("MASTER_PASSWORD_HASH environment variable is not set");
+if (!masterPassword) {
+  throw new Error("MASTER_PASSWORD environment variable is not set");
 }
+
+// Hash au démarrage pour comparaison sécurisée
+const masterHash = bcrypt.hashSync(masterPassword, 10);
 
 const AuthRoutes = Router();
 
