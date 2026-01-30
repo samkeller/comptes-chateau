@@ -4,10 +4,7 @@ import { AccountLineNature } from "../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../interfaces/AccountLinePoste"
 import { toLocaleIsoString } from "../Utils/DatesUtils"
 import { LazyTableState } from "../pages/accountBook/AccountBook"
-
-class BaseService {
-    protected apiUrl = import.meta.env.VITE_API_URL
-}
+import BaseService from "./BaseService"
 
 export interface LazyLoadResponse {
     data: AccountLine[];
@@ -79,7 +76,7 @@ class AccountingService extends BaseService {
 
         const requestParams = params.toString();
 
-        return axios.get(`${this.apiUrl}operation/lazy?${requestParams}`).then(response => {
+        return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
             return {
                 data: response.data.data.map((v: Partial<AccountLine>) => new AccountLine(v)),
                 totalRecords: response.data.totalRecords
@@ -94,19 +91,19 @@ class AccountingService extends BaseService {
             ...(accountLine.dateValeur && { dateValeur: toLocaleIsoString(accountLine.dateValeur) })
         }
 
-        return axios.post(this.apiUrl + "operation/", dataToSend).then(response => {
+        return axios.post(this.apiUrl + "/operation", dataToSend).then(response => {
             return new AccountLine(response.data)
         })
     }
 
     getAllNatures(): Promise<AccountLineNature[]> {
-        return axios.get(this.apiUrl + "nature/").then(response => {
+        return axios.get(this.apiUrl + "/nature").then(response => {
             return response.data
         })
     }
 
     getAllPostes(): Promise<AccountLinePoste[]> {
-        return axios.get(this.apiUrl + "poste/").then(response => {
+        return axios.get(this.apiUrl + "/poste").then(response => {
             return response.data
         })
     }

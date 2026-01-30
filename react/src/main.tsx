@@ -9,6 +9,7 @@ import frLocale from './assets/primereact/Locale-FR.json';
 
 import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';
+import './services/Interceptors';
 
 addLocale('fr', frLocale);
 
