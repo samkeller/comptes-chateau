@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "migration:generate": "typeorm-ts-node-commonjs -d ./src/db/dataSource.ts migration:generate ./src/db/migrations/default",
-    "migration:run": "typeorm-ts-node-commonjs -d ./src/db/dataSource.ts migration:run"
+    "migration:run": "typeorm-ts-node-commonjs -d ./src/db/dataSource.ts migration:run",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

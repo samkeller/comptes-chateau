@@ -8,6 +8,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import ApiRouter from './controllers/ApiRouter';
 import helmet from 'helmet';
+import path from 'path';
 
 export const COOKIE_NAME = "sid";
 
@@ -36,9 +37,9 @@ AppDataSource.initialize().then(() => {
 
     app.use(helmet()); // Headers de sécurité
     app.use(cors({
-        origin: process.env.FRONTEND_URL,
+        origin: true,
         credentials: true
-    }))
+    }));
     app.use(express.json())
     app.use(morgan('combined'))
 
@@ -48,6 +49,15 @@ AppDataSource.initialize().then(() => {
     routes.use("/api", ApiRouter)
 
     app.use(routes)
+
+    // Static react (prod)
+    const clientPath = path.join(__dirname, "../../react/dist");
+
+    app.use(express.static(clientPath));
+
+    app.get("*", (_req, res) => {
+        res.sendFile(path.join(clientPath, "index.html"));
+    });
 
     console.log("Running on port " + process.env.PORT)
 

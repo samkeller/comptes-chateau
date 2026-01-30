@@ -1,24 +1,27 @@
 import { useRef } from 'react';
 import { Toast } from 'primereact/toast';
 import { FileUpload, FileUploadHandlerEvent } from 'primereact/fileupload';
-import { ParseBanquePostale } from '../../Utils/ParseBanquePostalUtils';
+// import { ParseBanquePostale } from '../../Utils/ParseBanquePostalUtils';
 import { PageTemplate } from '../PageTemplate';
 
 function Datas() {
     const toast = useRef<Toast>(null);
 
     const customBase64Uploader = async (event: FileUploadHandlerEvent) => {
+        const { files } = event;
+        console.log(files)
         // convert file to base64 encoded
-        const file = event.files[0];
-        const reader = new FileReader();
+        // TODO: implement parser
+        // const file = event.files[0];
+        // const reader = new FileReader();
 
-        reader.onload = function (e: ProgressEvent<FileReader>) {
-            const fileDatas = e.target?.result
-            if (fileDatas) {
-                const parsed = ParseBanquePostale(fileDatas.toString())
-            }
-        };
-        reader.readAsText(file);
+        // reader.onload = function (e: ProgressEvent<FileReader>) {
+        //     const fileDatas = e.target?.result
+        //     if (fileDatas) {
+        //         const parsed = ParseBanquePostale(fileDatas.toString())
+        //     }
+        // };
+        // reader.readAsText(file);
     }
 
 
