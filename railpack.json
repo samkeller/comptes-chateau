@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "steps": {
+        "build": {
+            "commands": [
+                "...",
+                "npm --prefix node run migration:run"
+            ]
+        }
+    }
+}
