@@ -187,7 +187,7 @@ function AccountBook() {
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                className="w-full"
+                                itemTemplate={(option) => option ? <ColoredLabel data={option} />: null }
                             />
                         )}
                     ></Column>
@@ -206,7 +206,7 @@ function AccountBook() {
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                className="w-full"
+                                itemTemplate={(option) => option ? <ColoredLabel data={option} />: null }
                             />
                         )}
                     ></Column>
