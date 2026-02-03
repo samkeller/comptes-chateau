@@ -5,6 +5,7 @@ import { AccountLinePoste } from "../interfaces/AccountLinePoste"
 import { toLocaleIsoString } from "../Utils/DatesUtils"
 import { LazyTableState } from "../pages/accountBook/AccountBook"
 import BaseService from "./BaseService"
+import LazyParser from "./LazyParser"
 
 export interface LazyLoadResponse {
     data: AccountLine[];
@@ -13,9 +14,7 @@ export interface LazyLoadResponse {
 
 class AccountingService extends BaseService {
 
-
     getAccountingLinesLazy(lazyState: LazyTableState): Promise<LazyLoadResponse> {
-
         const params = new URLSearchParams();
         // default pagination (virtual scroller currently doesn't provide skip/take)
         params.append('skip', '0');
@@ -40,23 +39,15 @@ class AccountingService extends BaseService {
 
                 switch (key) {
                     case 'dateOperation': {
-                        const d = value instanceof Date ? value : new Date(value);
-                        const from = new Date(d);
-                        from.setHours(0, 0, 0, 0);
-                        const to = new Date(d);
-                        to.setHours(23, 59, 59, 999);
-                        params.append('dateOperationFrom', from.toISOString());
-                        params.append('dateOperationTo', to.toISOString());
+                        const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
+                        params.append('dateOperationFrom', toLocaleIsoString(from));
+                        params.append('dateOperationTo', toLocaleIsoString(to));
                         break;
                     }
                     case 'dateValeur': {
-                        const d = value instanceof Date ? value : new Date(value);
-                        const from = new Date(d);
-                        from.setHours(0, 0, 0, 0);
-                        const to = new Date(d);
-                        to.setHours(23, 59, 59, 999);
-                        params.append('dateValeurFrom', from.toISOString());
-                        params.append('dateValeurTo', to.toISOString());
+                        const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
+                        params.append('dateValeurFrom', toLocaleIsoString(from));
+                        params.append('dateValeurTo', toLocaleIsoString(to));
                         break;
                     }
                     case 'operation':

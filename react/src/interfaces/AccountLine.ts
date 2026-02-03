@@ -33,6 +33,12 @@ class AccountLine {
     public get displayDateOperation(): string {
         return parseDateToDisplay(this.dateOperation)
     }
+
+    public get yearMonthKey(): string {
+        const year = this.dateOperation.getFullYear()
+        const month = (this.dateOperation.getMonth() + 1).toString().padStart(2, "0")
+        return `${year}-${month}`
+    }
 }
 
 

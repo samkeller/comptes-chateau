@@ -82,13 +82,22 @@ function AccountBook() {
     const actionsBody = (data: AccountLine) => {
         if (!data) return null
         return (
-            <Button
-                rounded text icon="pi pi-pencil" className="mr-2"
-                onClick={() => {
-                    setEditingLine(data)
-                    setShowAddDialog(true)
-                }}
-            ></Button>
+            <div className="flex">
+
+                <Button
+                    rounded text icon="pi pi-pencil" className="p-1"
+                    tooltip="Modifier"
+                    onClick={() => {
+                        setEditingLine(data)
+                        setShowAddDialog(true)
+                    }}
+                ></Button>
+                <Button
+                    rounded text icon="pi pi-trash" severity="danger" className="p-1"
+                    disabled
+                // TODO DELETION
+                ></Button>
+            </div>
         )
     }
 
@@ -113,7 +122,7 @@ function AccountBook() {
                     value={accountLines}
 
 
-                    onSort={e => setLazyState(prev => ({...prev, sortField: e.sortField, sortOrder: e.sortOrder as SortOrder}))}
+                    onSort={e => setLazyState(prev => ({ ...prev, sortField: e.sortField, sortOrder: e.sortOrder as SortOrder }))}
                     sortField={lazyState.sortField}
                     sortOrder={lazyState.sortOrder}
                     // Filtres & tris
@@ -139,8 +148,7 @@ function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        // TODO: Opérateurs customs less than, greater than, between
-                        showFilterMenu={false}
+                        dataType="date"
                     ></Column>
                     <Column
                         field="dateValeur"
@@ -156,7 +164,7 @@ function AccountBook() {
                             />
                         )}
                         // TODO: Opérateurs customs less than, greater than, between
-                        showFilterMenu={false}
+                        dataType="date"
                     ></Column>
                     <Column
                         field="operation"
@@ -187,7 +195,7 @@ function AccountBook() {
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                itemTemplate={(option) => option ? <ColoredLabel data={option} />: null }
+                                itemTemplate={(option) => option ? <ColoredLabel data={option} /> : null}
                             />
                         )}
                     ></Column>
@@ -206,7 +214,7 @@ function AccountBook() {
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                itemTemplate={(option) => option ? <ColoredLabel data={option} />: null }
+                                itemTemplate={(option) => option ? <ColoredLabel data={option} /> : null}
                             />
                         )}
                     ></Column>
@@ -234,4 +242,3 @@ function AccountBook() {
     )
 }
 
-export default AccountBook
