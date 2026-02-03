@@ -24,7 +24,7 @@ export interface LazyTableState {
     filters: { [key: string]: DataTableFilterMetaData };
 }
 
-function AccountBook() {
+export default function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
 
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
