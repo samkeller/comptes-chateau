@@ -3,6 +3,7 @@ import { requireUnlocked } from "./middlewares/requireUnlocked";
 import OperationRoutes from './OperationControllers';
 import NatureRoutes from './NatureController'
 import PosteRoutes from './PosteController'
+import RecurringExpenseRoutes from './RecurringExpenseController'
 
 const ApiRouter = Router()
 
@@ -12,5 +13,6 @@ ApiRouter.use(requireUnlocked);
 ApiRouter.use("/operation", OperationRoutes)
 ApiRouter.use('/nature', NatureRoutes)
 ApiRouter.use('/poste', PosteRoutes)
+ApiRouter.use('/recurring-expense', RecurringExpenseRoutes)
 
 export default ApiRouter

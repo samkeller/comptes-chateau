@@ -2,19 +2,19 @@ import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 
-@Entity('accounting-line')
-export class AccountingLine {
+@Entity('recurring_expense')
+export class RecurringExpense {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ type: "date" })
-    dateOperation: Date
-
-    @Column({ type: "date", nullable: true })
-    dateValeur: Date
-
     @Column({ type: 'text' })
-    operation: string;
+    label: string;
+
+    @Column({ type: "decimal", precision: 10, scale: 2 })
+    solde: number
+
+    @Column({ type: "boolean", default: true })
+    isActive: boolean
 
     @ManyToOne(() => AccountLineNature)
     @JoinColumn({ name: 'nature_id' })
@@ -23,13 +23,4 @@ export class AccountingLine {
     @ManyToOne(() => AccountLinePoste)
     @JoinColumn({ name: 'poste_id' })
     poste: AccountLinePoste;
-
-    @Column({ type: "decimal", precision: 10, scale: 2 })
-    solde: number
-
-    @Column({ type: "boolean" })
-    isHorsCB: boolean
-
-    @Column({ type: "boolean", default: false })
-    isChecked: boolean
 }
