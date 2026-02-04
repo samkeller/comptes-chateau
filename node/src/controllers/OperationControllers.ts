@@ -5,17 +5,6 @@ import { QueryBuilderService, FilterCondition, SortCondition, PaginationOptions 
 
 const OperationRoutes = Router();
 
-// Legacy endpoint - returns all accounting lines
-OperationRoutes.get('/', (req: Request, res: Response) => {
-    const accountingLineRepo = AppDataSource.getRepository(AccountingLine)
-    accountingLineRepo.find({
-        relations: ['nature', 'poste']
-    }).then(accountingLines => {
-        return res.json(accountingLines);
-    })
-})
-
-// New lazy-load endpoint with filtering and sorting
 OperationRoutes.get('/lazy', (req: Request, res: Response) => {
     try {
         const accountingLineRepo = AppDataSource.getRepository(AccountingLine);

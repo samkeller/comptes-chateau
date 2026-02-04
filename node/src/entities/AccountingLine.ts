@@ -29,4 +29,7 @@ export class AccountingLine {
 
     @Column({ type: "boolean" })
     isHorsCB: boolean
+
+    @Column({ type: "boolean", default: false })
+    isChecked: boolean
 }

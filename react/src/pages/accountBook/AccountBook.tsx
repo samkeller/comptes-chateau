@@ -14,6 +14,8 @@ import AccountingService from "../../services/AccountingService"
 import { FilterMatchMode, SortOrder } from "primereact/api"
 import { AccountLineNature } from "../../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
+import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
+import { InputSwitch } from "primereact/inputswitch"
 
 export interface LazyTableState {
     first: number;
@@ -51,6 +53,9 @@ export default function AccountBook() {
     const [natures, setNatures] = useState<AccountLineNature[]>([])
     const [postes, setPostes] = useState<AccountLinePoste[]>([])
 
+    // Mode d'édition
+    const [isEditMode, setIsEditMode] = useState<boolean>(false)
+
     useEffect(() => {
         // Load natures and postes
         const service = new AccountingService()
@@ -72,9 +77,14 @@ export default function AccountBook() {
         setAccountLines(lines.data)
     }
 
-    const isHorsCbBody = (data: AccountLine) => {
-        if (!data) return null
-        return data.isHorsCB ?
+    const updateLine = async (lineToUpdate: AccountLine) => {
+        await new AccountingService().saveAccountingLine(lineToUpdate);
+        loadAccountLines();
+    };
+
+
+    const isHorsCbBody = (bool: boolean) => {
+        return bool ?
             <i className="pi pi-check text-green-500"></i> :
             <i className="pi pi-times text-red-500"></i>
     }
@@ -114,14 +124,18 @@ export default function AccountBook() {
                 />
             }
             <div className="flex justify-content-end mb-3">
-                <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                <div className="flex flex-column gap-2">
+                    <div className="p-component flex align-items-center gap-2">
+                        <span>Mode d'édition</span>
+                        <InputSwitch checked={isEditMode} onChange={(e) => setIsEditMode(e.value)} />
+                    </div>
+                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                </div>
             </div>
 
             <Card>
-                <DataTable
+                <DataTable<Array<AccountLine>>
                     value={accountLines}
-
-
                     onSort={e => setLazyState(prev => ({ ...prev, sortField: e.sortField, sortOrder: e.sortOrder as SortOrder }))}
                     sortField={lazyState.sortField}
                     sortOrder={lazyState.sortOrder}
@@ -230,8 +244,22 @@ export default function AccountBook() {
                     <Column
                         field="isHorsCb"
                         header="Est hors CB"
-                        body={isHorsCbBody}
+                        body={d => isHorsCbBody(d.isHorsCB)}
                     ></Column>
+                    <Column
+                        header="Checked"
+                        body={(data) => {
+                            return isEditMode ?
+                                <ToggleButton
+                                    onIcon="pi pi-check" offIcon="pi pi-times"
+                                    checked={data.isChecked}
+                                    onChange={(e: ToggleButtonChangeEvent) => updateLine({
+                                        ...data,
+                                        isChecked: e.value
+                                    })}
+                                /> :
+                                isHorsCbBody(data.isChecked)
+                        }} ></Column>
                     <Column
                         header="Actions"
                         body={actionsBody}

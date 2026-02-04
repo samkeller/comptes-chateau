@@ -75,7 +75,7 @@ class AccountingService extends BaseService {
         });
     }
 
-    createAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
+    saveAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
         const dataToSend = {
             ...accountLine,
             dateOperation: accountLine.dateOperation ? toLocaleIsoString(accountLine.dateOperation) : null,

@@ -67,7 +67,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             isHorsCB
         };
         try {
-            await new AccountingService().createAccountingLine(accountLine);
+            await new AccountingService().saveAccountingLine(accountLine);
             refresh();
             hideDialog();
         } catch (error) {
