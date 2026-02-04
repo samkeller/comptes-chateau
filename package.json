@@ -5,7 +5,7 @@
   "scripts": {
     "dev-front": "cd react && npm start",
     "dev-back": "cd node && npm run dev",
-    "dev": "npx concurrently -n 'FRONT,BACK' -c \"blue,magenta\" --kill-others \"npm run dev-front\" \"npm run dev-back\"",
+    "dev": "npx concurrently -n FRONT,BACK -c \"blue,magenta\" --kill-others \"npm run dev-front\" \"npm run dev-back\"",
     "build": "cd react && npm install && npm run build && cd ../node && npm install && npm run build",
     "start": "cd node && npm start"
   },

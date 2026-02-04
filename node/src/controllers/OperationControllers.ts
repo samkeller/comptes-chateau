@@ -109,7 +109,14 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
                 value: req.query.isHorsCB === 'true'
             });
         }
-
+        // isChecked filter (boolean)
+        if (req.query.isChecked !== undefined) {
+            filters.push({
+                field: 'isChecked',
+                operator: 'eq',
+                value: req.query.isChecked === 'true'
+            });
+        }
         // Build query
         let qb = accountingLineRepo.createQueryBuilder('al')
             .leftJoinAndSelect('al.nature', 'nature')

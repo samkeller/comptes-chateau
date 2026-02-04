@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import AccountLine from "../../interfaces/AccountLine"
 import { DataTable, DataTableFilterMetaData } from "primereact/datatable"
-import { Column } from "primereact/column"
+import { Column, ColumnFilterElementTemplateOptions } from "primereact/column"
 import { Card } from "primereact/card"
 import { Button } from "primereact/button"
 import { InputText } from "primereact/inputtext"
@@ -16,6 +16,7 @@ import { AccountLineNature } from "../../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
 import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
 import { InputSwitch } from "primereact/inputswitch"
+import { TriStateCheckbox, TriStateCheckboxChangeEvent } from 'primereact/tristatecheckbox';
 
 export interface LazyTableState {
     first: number;
@@ -43,6 +44,8 @@ export default function AccountBook() {
             operation: { value: "", matchMode: FilterMatchMode.CONTAINS },
             'nature.label': { value: null, matchMode: FilterMatchMode.EQUALS },
             'poste.label': { value: null, matchMode: FilterMatchMode.EQUALS },
+            isHorsCB: { value: null, matchMode: FilterMatchMode.EQUALS },
+            isChecked: { value: null, matchMode: FilterMatchMode.EQUALS }
         }
     });
 
@@ -83,11 +86,15 @@ export default function AccountBook() {
     };
 
 
-    const isHorsCbBody = (bool: boolean) => {
+    const isHorsCBBody = (bool: boolean) => {
         return bool ?
             <i className="pi pi-check text-green-500"></i> :
             <i className="pi pi-times text-red-500"></i>
     }
+
+    const checkedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return <TriStateCheckbox value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} />;
+    };
 
     const actionsBody = (data: AccountLine) => {
         if (!data) return null
@@ -242,12 +249,21 @@ export default function AccountBook() {
                         }
                     ></Column>
                     <Column
-                        field="isHorsCb"
+                        field="isHorsCB"
                         header="Est hors CB"
-                        body={d => isHorsCbBody(d.isHorsCB)}
+                        dataType="boolean"
+                        sortable
+                        filter
+                        filterElement={checkedRowFilterTemplate}
+                        body={d => isHorsCBBody(d.isHorsCB)}
                     ></Column>
                     <Column
+                        field="isChecked"
                         header="Checked"
+                        dataType="boolean"
+                        sortable
+                        filter
+                        filterElement={checkedRowFilterTemplate}
                         body={(data) => {
                             return isEditMode ?
                                 <ToggleButton
@@ -258,7 +274,7 @@ export default function AccountBook() {
                                         isChecked: e.value
                                     })}
                                 /> :
-                                isHorsCbBody(data.isChecked)
+                                isHorsCBBody(data.isChecked)
                         }} ></Column>
                     <Column
                         header="Actions"

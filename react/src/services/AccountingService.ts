@@ -59,6 +59,12 @@ class AccountingService extends BaseService {
                     case 'poste.label':
                         params.append('poste', String(value));
                         break;
+                    case 'isHorsCB':
+                        params.append('isHorsCB', value);
+                        break;
+                    case 'isChecked':
+                        params.append('isChecked', value);
+                        break;
                     default:
                         throw new Error(`Unknown filter key: ${key}`);
                 }
@@ -66,7 +72,7 @@ class AccountingService extends BaseService {
         }
 
         const requestParams = params.toString();
-
+        
         return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
             return {
                 data: response.data.data.map((v: Partial<AccountLine>) => new AccountLine(v)),

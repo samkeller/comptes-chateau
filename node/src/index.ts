@@ -59,13 +59,13 @@ AppDataSource.initialize().then(() => {
         res.sendFile(path.join(clientPath, "index.html"));
     });
 
-    console.log("Running on port " + process.env.PORT)
+    console.info("Running on port " + process.env.PORT)
 
     return app.listen(process.env.PORT);
 })
 
 process.on('SIGINT', function () {
-    console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
+    console.info("\nGracefully shutting down from SIGINT (Ctrl-C)");
     // some other closing procedures go here
     process.exit(0);
 });

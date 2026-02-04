@@ -24,7 +24,6 @@ export class QueryBuilderService {
     ): SelectQueryBuilder<AccountingLine> {
         filters.forEach((filter, index) => {
             const paramName = `param${index}`;
-
             switch (filter.operator) {
                 case 'eq':
                     if (filter.field.includes('.')) {

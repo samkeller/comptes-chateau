@@ -15,7 +15,6 @@ export default class LazyParser {
         const minDate = new Date(2010, 0, 1);
         const maxDate = new Date(2050, 0, 1);
 
-        console.log("dateValue", d, toLocaleIsoString(d));
         switch (operator) {
             case FilterMatchMode.DATE_AFTER: {
                 return { from: d, to: maxDate };
