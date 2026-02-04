@@ -144,6 +144,7 @@ export default function AccountBook() {
                 <DataTable<Array<AccountLine>>
                     value={accountLines}
                     onSort={e => setLazyState(prev => ({ ...prev, sortField: e.sortField, sortOrder: e.sortOrder as SortOrder }))}
+                    removableSort
                     sortField={lazyState.sortField}
                     sortOrder={lazyState.sortOrder}
                     // Filtres & tris
@@ -259,7 +260,7 @@ export default function AccountBook() {
                     ></Column>
                     <Column
                         field="isChecked"
-                        header="Checked"
+                        header="Verif"
                         dataType="boolean"
                         sortable
                         filter
@@ -268,6 +269,7 @@ export default function AccountBook() {
                             return isEditMode ?
                                 <ToggleButton
                                     onIcon="pi pi-check" offIcon="pi pi-times"
+                                    onLabel="Vérifié" offLabel="Non vérifié"
                                     checked={data.isChecked}
                                     onChange={(e: ToggleButtonChangeEvent) => updateLine({
                                         ...data,
