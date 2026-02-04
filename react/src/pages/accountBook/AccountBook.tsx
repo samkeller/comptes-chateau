@@ -125,11 +125,11 @@ export default function AccountBook() {
             }
             <div className="flex justify-content-end mb-3">
                 <div className="flex flex-column gap-2">
-                    <div className="p-component flex align-items-center gap-2">
+                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                    <div className="p-component flex justify-content-end align-items-center gap-2">
                         <span>Mode d'édition</span>
                         <InputSwitch checked={isEditMode} onChange={(e) => setIsEditMode(e.value)} />
                     </div>
-                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
             </div>
 
