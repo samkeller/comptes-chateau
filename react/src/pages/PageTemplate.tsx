@@ -1,42 +1,62 @@
 import ChocoChou from "@assets/images/chocochou.png";
-import { Button } from "primereact/button";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
+import { MenuItem } from "primereact/menuitem";
+import { MegaMenu } from "primereact/megamenu";
 
-export function PageTemplate({ children }: { children: ReactNode }) {
-  const [authService] = useState(new AuthService()) 
+interface PageTemplateProps {
+  pageTitle: string;
+  children: ReactNode;
+}
+
+export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
+  const [authService] = useState(new AuthService())
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = pageTitle + " - Chocosous";
+  }, [pageTitle])
+  
   const logout = async () => {
     await authService.logout();
     navigate("/auth", { replace: true });
   };
 
+  const menuItemsStart: MenuItem[] = [
+    {
+      icon: <i className="pi pi-home" />,
+      command: () => navigate("/"),
+    },
+    {
+      icon: <i className="pi pi-calculator" />,
+      command: () => navigate("/budget"),
+    },
+    {
+      // Séparateur.
+      disabled: true,
+      className: "flex-grow-1"
+    },
+    {
+      icon: <i className="pi pi-power-off text-red-500" />,
+      command: () => logout(),
+    }
+  ]
+
+
   return (
     <div className="p-4">
-      <div
-        className="flex mb-4"
-      >
-        <div className="flex align-items-center">
-          <img src={ChocoChou} className="h-2rem" />
-          <h1 className="text-4xl m-0" >Chocosous</h1>
-        </div>
-        <div className="flex-grow-1"></div>
-        <div>
-          <Button
-            icon="pi pi-power-off"
-            size="large"
-            rounded text
-            tooltip="Déconnexion"
-            className="m-0"
-            severity="danger"
-            aria-label="logout"
-            onClick={() => logout()}
-          />
-        </div>
-
-      </div>
+      <MegaMenu
+        start={
+          <div className="flex align-items-center px-2">
+            <img src={ChocoChou} className="h-2rem" />
+            <h1 className="text-4xl m-0" >Chocosous</h1>
+          </div>
+        }
+        model={menuItemsStart}
+        className="bg-white mb-4 shadow-2"
+        pt={{ menu: { className: "w-full" } }}
+      />
       {children}
     </div>
   );

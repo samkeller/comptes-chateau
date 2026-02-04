@@ -5,11 +5,16 @@ import Datas from "../pages/datas/Datas";
 import AccountBook from "../pages/accountBook/AccountBook";
 import AuthPage from "../pages/AuthPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import Budget from "../pages/budget/Budget";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <AccountBook />,
+  },
+  {
+    path: "/budget",
+    element: <Budget />,
   },
   {
     path: "/datas",

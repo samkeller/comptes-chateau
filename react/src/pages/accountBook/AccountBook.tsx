@@ -119,7 +119,7 @@ export default function AccountBook() {
     }
 
     return (
-        <PageTemplate>
+        <PageTemplate pageTitle="Index">
             {
                 showAddDialog && <AddAccountLineDialog
                     editingLine={editingLine}
