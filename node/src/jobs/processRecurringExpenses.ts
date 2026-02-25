@@ -33,16 +33,17 @@ export async function processRecurringExpenses(
 
     // 2 - Pour chacune de ces lignes, créer une ligne "accounting_line"
     const accountingLinesToCreate = expensesToProcess.map(expense => ({
+        id: 0,
         operation: expense.label,
         solde: expense.solde,
         nature: expense.nature,
         poste: expense.poste,
         source: AccountingLineSource.SYSTEM,
         dateOperation: currentDate,
-        dateValeur: currentDate,
+        dateValeur: null,
         isHorsCB: false,
         isChecked: false
-    } as AccountingLine));
+    }));
 
     const createdLines = await accountingLineService.saveAll(accountingLinesToCreate);
 
@@ -51,7 +52,7 @@ export async function processRecurringExpenses(
         const d = new Date(expense.nextOccurrence);
         expense.nextOccurrence = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
     }
-    
+
     await recurringExpenseService.saveAll(expensesToProcess);
 
     // 4 - Créer un log de succès

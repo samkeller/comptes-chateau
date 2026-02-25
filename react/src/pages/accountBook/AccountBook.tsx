@@ -17,6 +17,7 @@ import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
 import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
 import { InputSwitch } from "primereact/inputswitch"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
+import { Tooltip } from "primereact/tooltip"
 
 export interface LazyTableState {
     first: number;
@@ -201,6 +202,23 @@ export default function AccountBook() {
                             />
                         )}
                         // TODO: Opérateurs customs less than, greater than, between
+                        body={(data: AccountLine) => {
+                            return (
+                                <div>
+                                    {
+                                        data.source === "system" && <>
+                                            <Tooltip target=".custom-icon-is-system" />
+                                            <i 
+                                            className="pi pi-small pi-cog text-xs text-gray-500 mr-1 custom-icon-is-system"
+                                            data-pr-tooltip="Générée automatiquement par le système"
+                                            />
+                                        </>
+
+                                    }
+                                    {data.operation}
+                                </div>
+                            )
+                        }}
                         showFilterMenu={false}
                     ></Column>
                     <Column

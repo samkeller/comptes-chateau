@@ -12,6 +12,7 @@ class AccountLine {
     solde: number = 0
     isHorsCB: boolean = false
     isChecked: boolean = false
+    source: "system" | null = null
 
     constructor(accountLine: Partial<AccountLine>) {
         Object.assign(this, accountLine)

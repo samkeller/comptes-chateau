@@ -8,9 +8,16 @@ class RecurringExpense {
     isActive: boolean = true
     nature: AccountLineNature | null = null
     poste: AccountLinePoste | null = null
+    nextOccurrence: Date = new Date()
+    frequency: "monthly" = "monthly"
 
     constructor(recurringExpense: Partial<RecurringExpense>) {
         Object.assign(this, recurringExpense)
+
+        // Convertir les dates ISO en objets Date
+        if (recurringExpense.nextOccurrence) {
+            this.nextOccurrence = new Date(recurringExpense.nextOccurrence)
+        }
     }
 }
 

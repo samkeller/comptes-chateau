@@ -15,7 +15,7 @@ export class AccountingLine {
     dateOperation: Date
 
     @Column({ type: "date", nullable: true })
-    dateValeur: Date
+    dateValeur: Date | null
 
     @Column({ type: 'text' })
     operation: string;

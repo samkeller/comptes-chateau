@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
 import { MenuItem } from "primereact/menuitem";
 import { MegaMenu } from "primereact/megamenu";
+import { Splitter } from "primereact/splitter";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -45,7 +46,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
 
   return (
-    <div className="p-4">
+    <div className="px-4 py-2">
       <MegaMenu
         start={
           <div className="flex align-items-center px-2">
@@ -54,7 +55,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
         }
         model={menuItemsStart}
-        className="bg-white mb-4 shadow-2"
+        className="border-none"
         pt={{ menu: { className: "w-full" } }}
       />
       {children}
