@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
 import { MenuItem } from "primereact/menuitem";
 import { MegaMenu } from "primereact/megamenu";
-import { Splitter } from "primereact/splitter";
 
 interface PageTemplateProps {
   pageTitle: string;
