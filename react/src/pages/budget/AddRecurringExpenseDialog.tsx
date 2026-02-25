@@ -12,6 +12,7 @@ import RecurringExpenseService from '../../services/RecurringExpenseService';
 import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
+import { Calendar } from 'primereact/calendar';
 
 interface AddRecurringExpenseDialogProps {
     editingExpense: RecurringExpense | null;
@@ -25,6 +26,8 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
     const [poste, setPoste] = useState<AccountLinePoste | null>(editingExpense?.poste || null);
     const [solde, setSolde] = useState<number>(editingExpense?.solde || 0);
     const [isActive, setIsActive] = useState<boolean>(editingExpense?.isActive ?? true);
+    const [nextOccurrence, setNextOccurrence] = useState<Date>(editingExpense?.nextOccurrence || new Date());
+    const [frequency] = useState("monthly");
 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
@@ -58,7 +61,8 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             nature,
             poste,
             solde,
-            isActive
+            isActive,
+            nextOccurrence
         };
         try {
             await new RecurringExpenseService().saveRecurringExpense(expense);
@@ -83,7 +87,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
     return (
         <Dialog
             visible
-            header={editingExpense?.id ? "Modifier une dépense mensuelle" : "Ajouter une dépense mensuelle"}
+            header={editingExpense?.id ? "Modifier une dépense récurrente" : "Ajouter une dépense récurrente"}
             footer={footer}
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}
@@ -134,6 +138,27 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
                         <label htmlFor="isActive">Actif</label>
                         <InputSwitch id="isActive" checked={isActive} onChange={(e) => setIsActive(e.value)} />
                     </div>
+                </div>
+                <div className='flex gap-1'>
+                    <FloatLabel className='flex-1'>
+                        <Calendar
+                            id='nextOccurrence'
+                            dateFormat="dd/mm/yy"
+                            value={nextOccurrence}
+                            onChange={(e) => e.value && setNextOccurrence(e.value)}
+                            className='w-full'
+                        />
+                        <label htmlFor="nextOccurrence">Prochaine activation</label>
+                    </FloatLabel>
+                    <FloatLabel className='flex-1'>
+                        <Dropdown id="frequency"
+                            value={frequency}
+                            options={[{ label: "Mensuelle", value: "monthly" }]}
+                            disabled
+                            className='w-full'
+                        />
+                        <label htmlFor="frequency">Fréquence</label>
+                    </FloatLabel>
                 </div>
             </div>
         </Dialog>
