@@ -1,6 +1,5 @@
 import { FilterMatchMode } from "primereact/api";
 import { DataTableFilterMetaData } from "primereact/datatable";
-import { toLocaleIsoString } from "../Utils/DatesUtils";
 
 export default class LazyParser {
 

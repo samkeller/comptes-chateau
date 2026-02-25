@@ -16,7 +16,7 @@ import { AccountLineNature } from "../../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
 import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
 import { InputSwitch } from "primereact/inputswitch"
-import { TriStateCheckbox, TriStateCheckboxChangeEvent } from 'primereact/tristatecheckbox';
+import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 
 export interface LazyTableState {
     first: number;

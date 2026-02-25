@@ -26,7 +26,7 @@ function Datas() {
 
 
     return (
-        <PageTemplate>
+        <PageTemplate pageTitle="Datas">
             <div className="card flex justify-content-center">
                 <Toast ref={toast}></Toast>
                 <FileUpload
