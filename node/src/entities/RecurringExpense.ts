@@ -2,6 +2,10 @@ import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 
+export enum RecurringExpenseFrequency {
+    MONTHLY = 'monthly'
+}
+
 @Entity('recurring_expense')
 export class RecurringExpense {
     @PrimaryGeneratedColumn()
@@ -23,4 +27,10 @@ export class RecurringExpense {
     @ManyToOne(() => AccountLinePoste)
     @JoinColumn({ name: 'poste_id' })
     poste: AccountLinePoste;
+
+    @Column({ type: "date", nullable: false, default: () => "CURRENT_DATE" })
+    nextOccurrence: Date;
+
+    @Column({ type: "simple-enum", enum: RecurringExpenseFrequency, default: RecurringExpenseFrequency.MONTHLY })
+    frequency: RecurringExpenseFrequency
 }

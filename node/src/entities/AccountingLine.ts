@@ -2,6 +2,10 @@ import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 
+export enum AccountingLineSource {
+    SYSTEM = 'system'
+}
+
 @Entity('accounting-line')
 export class AccountingLine {
     @PrimaryGeneratedColumn()
@@ -32,4 +36,7 @@ export class AccountingLine {
 
     @Column({ type: "boolean", default: false })
     isChecked: boolean
+
+    @Column({ type: "simple-enum", nullable: true, enum: AccountingLineSource })
+    source?: AccountingLineSource
 }

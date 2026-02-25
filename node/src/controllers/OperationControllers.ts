@@ -2,8 +2,10 @@ import { Router, Request, Response } from "express";
 import { AccountingLine } from "../entities/AccountingLine";
 import { AppDataSource } from "../db/dataSource";
 import { QueryBuilderService, FilterCondition, SortCondition, PaginationOptions } from "../services/QueryBuilderService";
+import AccountingLineService from "../services/AccountingLineService";
 
 const OperationRoutes = Router();
+const accountingLineService = new AccountingLineService();
 
 OperationRoutes.get('/lazy', (req: Request, res: Response) => {
     try {
@@ -122,6 +124,7 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
             .leftJoinAndSelect('al.nature', 'nature')
             .leftJoinAndSelect('al.poste', 'poste');
 
+        // TODO: accountingLineService
         // Apply filters
         qb = QueryBuilderService.applyFilters(qb, filters);
 
@@ -151,11 +154,7 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
 })
 
 OperationRoutes.post('/', (req: Request, res: Response) => {
-    const accountingLineRepo = AppDataSource.getRepository(AccountingLine)
-
-    // TODO add validation (https://github.com/typestack/class-validator)
-
-    accountingLineRepo.save(req.body).then(accountingLine => {
+    accountingLineService.save(req.body).then(accountingLine => {
         return res.json(accountingLine);
     })
 })
