@@ -11,7 +11,7 @@ import { AccountLineNature } from '../../interfaces/AccountLineNature';
 import { AccountLinePoste } from '../../interfaces/AccountLinePoste';
 import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
-import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../Utils/DatesUtils';
+import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../utils/DatesUtils';
 import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
 
 interface AddAcountLineDialogProps {

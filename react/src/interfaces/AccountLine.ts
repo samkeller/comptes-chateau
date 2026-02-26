@@ -1,4 +1,4 @@
-import { parseDateToDisplay } from "../Utils/DatesUtils"
+import { parseDateToDisplay } from "../utils/DatesUtils"
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
 

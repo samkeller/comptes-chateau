@@ -18,6 +18,7 @@ import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
 import { InputSwitch } from "primereact/inputswitch"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Tooltip } from "primereact/tooltip"
+import { toMonetaryAmount } from "../../utils/NumberUtils"
 
 export interface LazyTableState {
     first: number;
@@ -262,10 +263,7 @@ export default function AccountBook() {
                         field="solde"
                         header="Solde"
                         sortable
-                        body={(data: AccountLine) => data ?
-                            new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.solde) :
-                            null
-                        }
+                        body={(data: AccountLine) => toMonetaryAmount(data.solde)}
                     ></Column>
                     <Column
                         field="isHorsCB"

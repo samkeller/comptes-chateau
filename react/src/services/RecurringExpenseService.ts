@@ -1,7 +1,7 @@
 import axios from "axios"
 import RecurringExpense from "../interfaces/RecurringExpense"
 import BaseService from "./BaseService"
-import { toLocaleIsoString } from "../Utils/DatesUtils"
+import { toLocaleIsoString } from "../utils/DatesUtils"
 
 class RecurringExpenseService extends BaseService {
 

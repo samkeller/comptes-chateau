@@ -1,6 +1,5 @@
 interface ColoredLabelProps {
     data: {
-        id: number;
         label: string;
         color: string;
     }
