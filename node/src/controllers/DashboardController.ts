@@ -1,11 +1,11 @@
 import { Router, Request, Response } from "express";
 import DashboardService from "../services/DashboardService";
-import { parseLocaleIsoDate } from "../utils/DateUtils";
+import { parseApiDateString } from "../utils/ApiDateUtils";
 
 const DashboardRoutes = Router();
 
 /**
- * GET /api/dashboard/monthly-by-poste?from=2025-01&to=2026-02
+ * GET /api/dashboard/monthly-by-poste?from=2025-01-01&to=2026-02-28
  * Agrège les opérations par mois et par poste
  */
 DashboardRoutes.get("/monthly-by-poste", async (req: Request, res: Response) => {
@@ -14,13 +14,12 @@ DashboardRoutes.get("/monthly-by-poste", async (req: Request, res: Response) => 
         const toMonth = req.query.to as string | undefined;
         const posteIdsParam = req.query.posteIds as string | undefined;
 
-        // Format expected: DD/MMM/YYYY
-        if (!fromMonth || !toMonth) throw new Error("Les paramètres 'from' et 'to' sont requis au format DD/MM/YYYY");
+        if (!fromMonth || !toMonth) throw new Error("Les paramètres 'from' et 'to' sont requis au format YYYY-MM-DD");
         if (!posteIdsParam || posteIdsParam.trim() === "") throw new Error("Le paramètre 'posteIds' est requis et doit contenir au moins un ID de poste");
 
         const dashboardService = new DashboardService();
-        const fromDate = parseLocaleIsoDate(fromMonth);
-        const toDate = parseLocaleIsoDate(toMonth);
+        const fromDate = parseApiDateString(fromMonth);
+        const toDate = parseApiDateString(toMonth);
         const posteIds = posteIdsParam.split(",")
             .map((value) => parseInt(value.trim(), 10))
             .filter((value) => !Number.isNaN(value));

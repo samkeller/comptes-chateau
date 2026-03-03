@@ -1,7 +1,7 @@
 import axios from "axios"
 import RecurringExpense from "../interfaces/RecurringExpense"
 import BaseService from "./BaseService"
-import { toLocaleIsoString } from "../utils/DatesUtils"
+import { formatApiDate } from "./ApiDateCodec"
 
 class RecurringExpenseService extends BaseService {
 
@@ -14,7 +14,7 @@ class RecurringExpenseService extends BaseService {
     saveRecurringExpense(expense: Partial<RecurringExpense>): Promise<RecurringExpense> {
          const dataToSend = {
             ...expense,
-            ...(expense.nextOccurrence && { nextOccurrence: toLocaleIsoString(expense.nextOccurrence) })
+                ...(expense.nextOccurrence && { nextOccurrence: formatApiDate(expense.nextOccurrence) })
         }
         
         return axios.post(this.apiUrl + "/recurring-expense/save", dataToSend).then(response => {

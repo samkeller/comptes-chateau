@@ -1,5 +1,6 @@
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
+import { parseApiDate } from "../services/ApiDateCodec"
 
 class RecurringExpense {
     id: number = 0
@@ -16,7 +17,10 @@ class RecurringExpense {
 
         // Convertir les dates ISO en objets Date
         if (recurringExpense.nextOccurrence) {
-            this.nextOccurrence = new Date(recurringExpense.nextOccurrence)
+            const parsedDate = parseApiDate(recurringExpense.nextOccurrence)
+            if (parsedDate) {
+                this.nextOccurrence = parsedDate
+            }
         }
     }
 }

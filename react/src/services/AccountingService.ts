@@ -2,7 +2,7 @@ import axios from "axios"
 import AccountLine from "../interfaces/AccountLine"
 import { AccountLineNature } from "../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../interfaces/AccountLinePoste"
-import { toLocaleIsoString } from "../utils/DatesUtils"
+import { formatApiDate } from "./ApiDateCodec"
 import { LazyTableState } from "../pages/accountBook/AccountBook"
 import BaseService from "./BaseService"
 import LazyParser from "./LazyParser"
@@ -40,14 +40,14 @@ class AccountingService extends BaseService {
                 switch (key) {
                     case 'dateOperation': {
                         const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
-                        params.append('dateOperationFrom', toLocaleIsoString(from));
-                        params.append('dateOperationTo', toLocaleIsoString(to));
+                        params.append('dateOperationFrom', formatApiDate(from));
+                        params.append('dateOperationTo', formatApiDate(to));
                         break;
                     }
                     case 'dateValeur': {
                         const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
-                        params.append('dateValeurFrom', toLocaleIsoString(from));
-                        params.append('dateValeurTo', toLocaleIsoString(to));
+                        params.append('dateValeurFrom', formatApiDate(from));
+                        params.append('dateValeurTo', formatApiDate(to));
                         break;
                     }
                     case 'label':
@@ -84,8 +84,8 @@ class AccountingService extends BaseService {
     saveAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
         const dataToSend = {
             ...accountLine,
-            dateOperation: accountLine.dateOperation ? toLocaleIsoString(accountLine.dateOperation) : null,
-            ...(accountLine.dateValeur && { dateValeur: toLocaleIsoString(accountLine.dateValeur) })
+            dateOperation: accountLine.dateOperation ? formatApiDate(accountLine.dateOperation) : null,
+            ...(accountLine.dateValeur && { dateValeur: formatApiDate(accountLine.dateValeur) })
         }
 
         return axios.post(this.apiUrl + "/operation", dataToSend).then(response => {

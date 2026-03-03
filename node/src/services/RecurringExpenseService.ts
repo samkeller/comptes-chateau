@@ -1,6 +1,7 @@
 import { EntityManager, LessThanOrEqual } from "typeorm";
 import { AppDataSource } from "../db/dataSource";
 import { RecurringExpense } from "../entities/RecurringExpense";
+import { normalizeApiDateInput } from "../utils/ApiDateUtils";
 
 export default class RecurringExpenseService {
 
@@ -12,7 +13,6 @@ export default class RecurringExpenseService {
             AppDataSource.getRepository(RecurringExpense);
 
     }
-
     async getAllRecurringExpenses() {
         return this.recurringExpenseRepo.find({
             relations: ['nature', 'poste'],
@@ -32,12 +32,22 @@ export default class RecurringExpenseService {
 
     async saveAll(expensesToProcess: RecurringExpense[]) {
         // TODO add validation (https://github.com/typestack/class-validator)
-        return this.recurringExpenseRepo.save(expensesToProcess)
+        return this.recurringExpenseRepo.save(expensesToProcess.map((expense) => (
+            {
+                ...expense,
+                nextOccurrence: normalizeApiDateInput(expense.nextOccurrence) ?? undefined,
+            }
+        )))
     }
 
     async save(expenseToProcess: Partial<RecurringExpense>) {
         // TODO add validation (https://github.com/typestack/class-validator)
-        return this.recurringExpenseRepo.save(expenseToProcess)
+        return this.recurringExpenseRepo.save((
+            {
+                ...expenseToProcess,
+                nextOccurrence: normalizeApiDateInput(expenseToProcess.nextOccurrence) ?? undefined,
+            }
+        ))
     }
 }
 

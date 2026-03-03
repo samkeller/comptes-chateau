@@ -1,6 +1,7 @@
 import { parseDateToDisplay } from "../utils/DatesUtils"
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
+import { parseApiDate, parseApiDateTime } from "../services/ApiDateCodec"
 
 class AccountLine {
     id: number = 0
@@ -20,16 +21,19 @@ class AccountLine {
         Object.assign(this, accountLine)
         // Convertir les dates ISO en objets Date
         if (accountLine.dateOperation) {
-            this.dateOperation = new Date(accountLine.dateOperation)
+            const parsedDateOperation = parseApiDate(accountLine.dateOperation)
+            if (parsedDateOperation) {
+                this.dateOperation = parsedDateOperation
+            }
         }
         if (accountLine.dateValeur) {
-            this.dateValeur = new Date(accountLine.dateValeur)
+            this.dateValeur = parseApiDate(accountLine.dateValeur)
         }
         if (accountLine.createdAt) {
-            this.createdAt = new Date(accountLine.createdAt)
+            this.createdAt = parseApiDateTime(accountLine.createdAt) ?? undefined
         }
         if (accountLine.updatedAt) {
-            this.updatedAt = new Date(accountLine.updatedAt)
+            this.updatedAt = parseApiDateTime(accountLine.updatedAt) ?? undefined
         }
     }
 

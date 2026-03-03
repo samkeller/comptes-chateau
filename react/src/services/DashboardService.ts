@@ -1,7 +1,7 @@
 import axios from "axios";
 import BaseService from "./BaseService";
 import { MonthlyAggregateByPoste } from "../interfaces/MonthlyAggregateByPoste";
-import { toLocaleIsoString } from "../utils/DatesUtils";
+import { formatApiDate } from "./ApiDateCodec";
 
 class DashboardService extends BaseService {
     /**
@@ -15,8 +15,8 @@ class DashboardService extends BaseService {
         posteIds: number[]
     ): Promise<MonthlyAggregateByPoste[]> {
         const params = new URLSearchParams();
-        if (fromMonth) params.append("from", toLocaleIsoString(fromMonth));
-        if (toMonth) params.append("to", toLocaleIsoString(toMonth));
+        if (fromMonth) params.append("from", formatApiDate(fromMonth));
+        if (toMonth) params.append("to", formatApiDate(toMonth));
         params.append("posteIds", posteIds.join(","));
 
         const query = params.toString();

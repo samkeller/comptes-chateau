@@ -3,6 +3,7 @@ import { AccountingLine } from "../entities/AccountingLine";
 import { AppDataSource } from "../db/dataSource";
 import { QueryBuilderService, FilterCondition, SortCondition, PaginationOptions } from "../services/QueryBuilderService";
 import AccountingLineService from "../services/AccountingLineService";
+import { parseApiDateString } from "../utils/ApiDateUtils";
 
 const OperationRoutes = Router();
 const accountingLineService = new AccountingLineService();
@@ -27,14 +28,14 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
             filters.push({
                 field: 'dateOperation',
                 operator: 'gte',
-                value: new Date(req.query.dateOperationFrom as string)
+                value: parseApiDateString(req.query.dateOperationFrom as string)
             });
         }
         if (req.query.dateOperationTo) {
             filters.push({
                 field: 'dateOperation',
                 operator: 'lte',
-                value: new Date(req.query.dateOperationTo as string)
+                value: parseApiDateString(req.query.dateOperationTo as string)
             });
         }
 
@@ -43,14 +44,14 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
             filters.push({
                 field: 'dateValeur',
                 operator: 'gte',
-                value: new Date(req.query.dateValeurFrom as string)
+                value: parseApiDateString(req.query.dateValeurFrom as string)
             });
         }
         if (req.query.dateValeurTo) {
             filters.push({
                 field: 'dateValeur',
-                operator: 'eq',
-                value: new Date(req.query.dateValeurTo as string)
+                operator: 'lte',
+                value: parseApiDateString(req.query.dateValeurTo as string)
             });
         }
 
