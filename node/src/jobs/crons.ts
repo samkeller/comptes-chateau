@@ -3,7 +3,9 @@ import jobLog from './jobLog';
 import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
 
-cron.schedule("37 * * * *", async () => {
+// Crons - Exécute tous les jours à minuit
+// 0 0 0 * * * -> At 00:00 (midnight) every day
+cron.schedule("0 0 * * *", async () => {
     await runJob();
 });
 
