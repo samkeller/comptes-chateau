@@ -1,6 +1,6 @@
 {
   "name": "comptes-chateau",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "dev-front": "cd react && npm start",
@@ -9,6 +9,7 @@
     "build": "cd react && npm install && npm run build && cd ../node && npm install && npm run build",
     "start": "cd node && npm start"
   },
+  "packageManager": "npm@11.6.2",
   "keywords": [],
   "author": "",
   "license": "ISC",
