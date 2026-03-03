@@ -17,7 +17,7 @@ const AuthRoutes = Router();
 // Rate limiting sur les routes ouvertes
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 tentatives max
+  max: 20, // 20 tentatives max
   message: 'Trop de tentatives de connexion, réessayez plus tard',
   standardHeaders: true,
   legacyHeaders: false,
