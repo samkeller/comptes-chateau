@@ -9,6 +9,7 @@ import 'dotenv/config';
 import ApiRouter from './controllers/ApiRouter';
 import helmet from 'helmet';
 import path from 'path';
+import "./jobs/crons"; // Lancer les crons
 
 export const COOKIE_NAME = "sid";
 
