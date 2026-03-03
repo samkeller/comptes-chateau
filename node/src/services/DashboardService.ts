@@ -37,7 +37,7 @@ export default class DashboardService {
             .addSelect("poste.id", "posteId")
             .addSelect("poste.label", "posteLabel")
             .addSelect("poste.color", "posteColor")
-            .addSelect("SUM(al.solde)", "total")
+            .addSelect("SUM(al.credit - al.debit)", "total")
             .innerJoin("al.poste", "poste")
             .groupBy("year")
             .addGroupBy("month")

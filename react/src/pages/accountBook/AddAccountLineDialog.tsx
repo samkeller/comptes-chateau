@@ -5,7 +5,6 @@ import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
-import { Checkbox } from 'primereact/checkbox';
 import AccountLine from '../../interfaces/AccountLine';
 import { AccountLineNature } from '../../interfaces/AccountLineNature';
 import { AccountLinePoste } from '../../interfaces/AccountLinePoste';
@@ -23,11 +22,10 @@ interface AddAcountLineDialogProps {
 export default function AddAccountLineDialog({ editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
     const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : "");
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
-    const [operation, setOperation] = useState<string>(editingLine?.operation || '');
+    const [label, setLabel] = useState<string>(editingLine?.label || '');
     const [nature, setNature] = useState<AccountLineNature | null>(editingLine?.nature || null);
     const [poste, setPoste] = useState<AccountLinePoste | null>(editingLine?.poste || null);
-    const [solde, setSolde] = useState<number>(editingLine?.solde || 0);
-    const [isHorsCB, setIsHorsCB] = useState<boolean>(editingLine?.isHorsCB || false);
+    const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
@@ -60,11 +58,11 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             id: editingLine ? editingLine.id : 0,
             dateOperation: parseDDMMYYYYToDate(dateOperation),
             dateValeur: dateValeur ? parseDDMMYYYYToDate(dateValeur) : null,
-            operation,
+            label,
             nature,
             poste,
-            solde,
-            isHorsCB
+            debit: amount < 0 ? (Math.abs(amount) || 0) : 0,
+            credit: amount > 0 ? (amount || 0) : 0,
         };
         try {
             await new AccountingService().saveAccountingLine(accountLine);
@@ -94,7 +92,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}
         >
-            <div className="flex flex-column gap-3 py-2">
+            <div className="flex flex-column gap-4 pt-4">
                 <div className='flex gap-1'>
                     <FloatLabel className='flex-1'>
                         <Calendar id="dateOperation"
@@ -114,14 +112,14 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                             dateFormat="dd/mm/yy"
                             className='w-full'
                         />
-                        <label htmlFor="dateValeur">Date de valeur <small>(facultatif)</small></label>
+                        <label htmlFor="dateValeur">Date de valeur <small>(optionnel)</small></label>
                     </FloatLabel>
                 </div>
                 <FloatLabel className='flex-1'>
                     <InputText
                         id="operation"
-                        value={operation}
-                        onChange={(e) => setOperation(e.target.value)}
+                        value={label}
+                        onChange={(e) => setLabel(e.target.value)}
                         className='w-full'
                     />
                     <label htmlFor="operation">Opération</label>
@@ -153,14 +151,27 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>
                 </div>
-                <div className='flex gap-1'>
+                <div className='flex gap-2'>
                     <FloatLabel className='flex-1'>
-                        <InputNumber id="solde" value={solde} onValueChange={(e) => setSolde(e.value || 0)} mode="currency" currency="EUR" locale="fr-FR" className='w-full' />
-                        <label htmlFor="solde">Montant</label>
+                        <InputNumber
+                            id="amount"
+                            value={amount}
+                            onValueChange={(e) => setAmount(e.value || 0)}
+                            mode="currency" currency="EUR"
+                            locale="fr-FR"
+                            className='w-full'
+                            invalid={amount === 0}
+                        />
+                        <label htmlFor="amount">Montant</label>
                     </FloatLabel>
-                    <div className="flex align-items-center gap-1">
-                        <Checkbox id="isHorsCB" checked={isHorsCB} onChange={(e) => setIsHorsCB(e.checked || false)} />
-                        <label htmlFor="isHorsCB">Hors CB</label>
+                    <div className="flex align-items-center">
+                        <small>
+                            {
+                                amount < 0 ?
+                                    "Débit" :
+                                    "Crédit"
+                            }
+                        </small>
                     </div>
                 </div>
             </div>

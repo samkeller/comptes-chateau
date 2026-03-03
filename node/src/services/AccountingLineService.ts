@@ -18,7 +18,7 @@ export default class AccountingLineService {
         return this.accountingLineRepo.save(accounttingLine);
     }
 
-    async saveAll(accountingLines: AccountingLine[]) {
+    async saveAll(accountingLines: Partial<AccountingLine>[]) {
         // TODO add validation (https://github.com/typestack/class-validator)
         return this.accountingLineRepo.save(accountingLines);
     }

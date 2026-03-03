@@ -43,10 +43,9 @@ export default function AccountBook() {
         filters: {
             dateValeur: { value: null, matchMode: FilterMatchMode.DATE_IS },
             dateOperation: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            operation: { value: "", matchMode: FilterMatchMode.CONTAINS },
+            label: { value: "", matchMode: FilterMatchMode.CONTAINS },
             'nature.label': { value: null, matchMode: FilterMatchMode.EQUALS },
             'poste.label': { value: null, matchMode: FilterMatchMode.EQUALS },
-            isHorsCB: { value: null, matchMode: FilterMatchMode.EQUALS },
             isChecked: { value: null, matchMode: FilterMatchMode.EQUALS }
         }
     });
@@ -88,7 +87,7 @@ export default function AccountBook() {
     };
 
 
-    const isHorsCBBody = (bool: boolean) => {
+    const boolIconBody = (bool: boolean) => {
         return bool ?
             <i className="pi pi-check text-green-500"></i> :
             <i className="pi pi-times text-red-500"></i>
@@ -191,7 +190,7 @@ export default function AccountBook() {
                         dataType="date"
                     ></Column>
                     <Column
-                        field="operation"
+                        field="label"
                         header="Opération"
                         sortable
                         filter
@@ -209,14 +208,14 @@ export default function AccountBook() {
                                     {
                                         data.source === "system" && <>
                                             <Tooltip target=".custom-icon-is-system" />
-                                            <i 
-                                            className="pi pi-small pi-cog text-xs text-gray-500 mr-1 custom-icon-is-system"
-                                            data-pr-tooltip="Générée automatiquement par le système"
+                                            <i
+                                                className="pi pi-small pi-cog text-xs text-gray-500 mr-1 custom-icon-is-system"
+                                                data-pr-tooltip="Générée automatiquement par le système"
                                             />
                                         </>
 
                                     }
-                                    {data.operation}
+                                    {data.label}
                                 </div>
                             )
                         }}
@@ -260,19 +259,10 @@ export default function AccountBook() {
                         )}
                     ></Column>
                     <Column
-                        field="solde"
-                        header="Solde"
+                        field="amount"
+                        header="Montant"
                         sortable
-                        body={(data: AccountLine) => toMonetaryAmount(data.solde)}
-                    ></Column>
-                    <Column
-                        field="isHorsCB"
-                        header="Est hors CB"
-                        dataType="boolean"
-                        sortable
-                        filter
-                        filterElement={checkedRowFilterTemplate}
-                        body={d => isHorsCBBody(d.isHorsCB)}
+                        body={(data: AccountLine) => toMonetaryAmount(data.total)}
                     ></Column>
                     <Column
                         field="isChecked"
@@ -292,7 +282,7 @@ export default function AccountBook() {
                                         isChecked: e.value
                                     })}
                                 /> :
-                                isHorsCBBody(data.isChecked)
+                                boolIconBody(data.isChecked)
                         }} ></Column>
                     <Column
                         header="Actions"

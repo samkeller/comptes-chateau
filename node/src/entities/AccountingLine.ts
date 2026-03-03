@@ -17,7 +17,7 @@ export enum AccountingLineSource {
     IMPORT = "import"
 }
 
-@Entity("accounting_line")
+@Entity("account_line")
 @Check(`"debit" >= 0`)
 @Check(`"credit" >= 0`)
 @Check(`NOT ("debit" > 0 AND "credit" > 0)`)
@@ -54,6 +54,9 @@ export class AccountingLine {
 
     @Column({ type: "varchar", length: 255 })
     label: string;
+
+    @Column({ type: "boolean", default: false })
+    isChecked: boolean;
 
     @Column({
         type: "enum",

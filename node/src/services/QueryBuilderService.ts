@@ -55,7 +55,13 @@ export class QueryBuilderService {
                     break;
 
                 case 'in':
-                    qb.andWhere(`al.${filter.field} IN (:...${paramName})`, { [paramName]: filter.value });
+                    // Relations fields: useless ?
+                    if (filter.field.includes('.')) {
+                        const [relation, field] = filter.field.split('.');
+                        qb.andWhere(`${relation}.${field} IN (:...${paramName})`, { [paramName]: filter.value });
+                    } else {
+                        qb.andWhere(`al.${filter.field} IN (:...${paramName})`, { [paramName]: filter.value });
+                    }
                     break;
 
                 case 'isNull':

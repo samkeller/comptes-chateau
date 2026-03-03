@@ -1,5 +1,4 @@
-import { AccountingLine, AccountingLineSource } from "../entities/AccountingLine";
-import { RecurringExpense } from "../entities/RecurringExpense";
+import {  AccountingLineSource } from "../entities/AccountingLine";
 import AccountingLineService from "../services/AccountingLineService";
 import RecurringExpenseService from "../services/RecurringExpenseService";
 import JobExecutionLogService from "../services/JobExecutionLogService";
@@ -31,18 +30,17 @@ export async function processRecurringExpenses(
         };
     }
 
-    // 2 - Pour chacune de ces lignes, créer une ligne "accounting_line"
+    // 2 - Pour chacune de ces lignes, créer une ligne "account_line"
     const accountingLinesToCreate = expensesToProcess.map(expense => ({
         id: 0,
-        operation: expense.label,
-        solde: expense.solde,
+        label: expense.label,
+        debit: expense.solde < 0 ? Math.abs(expense.solde) : 0,
+        credit: expense.solde > 0 ? expense.solde : 0,
         nature: expense.nature,
         poste: expense.poste,
         source: AccountingLineSource.SYSTEM,
         dateOperation: currentDate,
-        dateValeur: null,
-        isHorsCB: false,
-        isChecked: false
+        dateValeur: null
     }));
 
     const createdLines = await accountingLineService.saveAll(accountingLinesToCreate);

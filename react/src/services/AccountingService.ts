@@ -50,8 +50,8 @@ class AccountingService extends BaseService {
                         params.append('dateValeurTo', toLocaleIsoString(to));
                         break;
                     }
-                    case 'operation':
-                        params.append('operation', String(value));
+                    case 'label':
+                        params.append('label', String(value));
                         break;
                     case 'nature.label':
                         params.append('nature', String(value));
@@ -59,11 +59,11 @@ class AccountingService extends BaseService {
                     case 'poste.label':
                         params.append('poste', String(value));
                         break;
-                    case 'isHorsCB':
-                        params.append('isHorsCB', value);
+                    case 'source':
+                        params.append('source', String(value));
                         break;
                     case 'isChecked':
-                        params.append('isChecked', value);
+                        params.append('isChecked', value === true ? 'true' : 'false');
                         break;
                     default:
                         throw new Error(`Unknown filter key: ${key}`);

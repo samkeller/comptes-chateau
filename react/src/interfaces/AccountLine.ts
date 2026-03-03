@@ -6,13 +6,15 @@ class AccountLine {
     id: number = 0
     dateOperation: Date = new Date()
     dateValeur: Date | null = null
-    operation: string | null = ""
+    label: string = ""
     nature: AccountLineNature | null = null
     poste: AccountLinePoste | null = null
-    solde: number = 0
-    isHorsCB: boolean = false
+    debit: number = 0
+    credit: number = 0
     isChecked: boolean = false
-    source: "system" | null = null
+    source: "system" | "manual" | "import" | null = null
+    createdAt?: Date
+    updatedAt?: Date
 
     constructor(accountLine: Partial<AccountLine>) {
         Object.assign(this, accountLine)
@@ -23,6 +25,16 @@ class AccountLine {
         if (accountLine.dateValeur) {
             this.dateValeur = new Date(accountLine.dateValeur)
         }
+        if (accountLine.createdAt) {
+            this.createdAt = new Date(accountLine.createdAt)
+        }
+        if (accountLine.updatedAt) {
+            this.updatedAt = new Date(accountLine.updatedAt)
+        }
+    }
+
+    public get total(): number {
+        return this.credit - this.debit
     }
 
     public get displayDateValeur(): string {

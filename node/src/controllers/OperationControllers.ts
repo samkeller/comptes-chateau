@@ -54,12 +54,12 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
             });
         }
 
-        // operation filter (text search)
-        if (req.query.operation) {
+        // label filter (text search)
+        if (req.query.label) {
             filters.push({
-                field: 'operation',
+                field: 'label',
                 operator: 'like',
-                value: req.query.operation as string
+                value: req.query.label as string
             });
         }
 
@@ -87,31 +87,6 @@ OperationRoutes.get('/lazy', (req: Request, res: Response) => {
             });
         }
 
-        // solde filter (number - range)
-        if (req.query.soldeMin) {
-            filters.push({
-                field: 'solde',
-                operator: 'gte',
-                value: parseFloat(req.query.soldeMin as string)
-            });
-        }
-        if (req.query.soldeMax) {
-            filters.push({
-                field: 'solde',
-                operator: 'lte',
-                value: parseFloat(req.query.soldeMax as string)
-            });
-        }
-
-        // isHorsCB filter (boolean)
-        if (req.query.isHorsCB !== undefined) {
-            filters.push({
-                field: 'isHorsCB',
-                operator: 'eq',
-                value: req.query.isHorsCB === 'true'
-            });
-        }
-        // isChecked filter (boolean)
         if (req.query.isChecked !== undefined) {
             filters.push({
                 field: 'isChecked',
