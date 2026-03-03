@@ -13,8 +13,6 @@ const colors = {
  * @param message Le message à afficher
  */
 function jobLog(level: "INFO" | "ERROR" | "WARN" | "DEBUG", message: string) {
-    const timestamp = new Date().toISOString();
-
     const colorMap = {
         INFO: colors.green,
         WARN: colors.yellow,
@@ -23,7 +21,7 @@ function jobLog(level: "INFO" | "ERROR" | "WARN" | "DEBUG", message: string) {
     };
 
     console.log(
-        `${colors.gray}[${timestamp}]${colors.reset} ${colorMap[level]}[${level}]${colors.reset} ${message}`
+        `${colors.gray}${colors.reset} ${colorMap[level]}[${level}]${colors.reset} ${message}`
     );
 }
 

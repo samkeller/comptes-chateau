@@ -3,13 +3,14 @@ import jobLog from './jobLog';
 import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
 
-cron.schedule("25 * * * *", async () => {
+cron.schedule("32 * * * *", async () => {
     await runJob();
 });
 
-async function setup() {
-    jobLog("INFO", "Starting cron job");
-    return await AppDataSource.initialize();
+async function ensureDataSource() {
+    if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+    }
 }
 
 async function cleanup() {
@@ -21,7 +22,8 @@ async function runJob() {
     const currentDate = new Date();
 
     try {
-        await setup();
+        jobLog("INFO", "Starting cron job");
+        await ensureDataSource();
 
         await AppDataSource.transaction(async (manager) => {
             await processRecurringExpenses(manager, currentDate);
