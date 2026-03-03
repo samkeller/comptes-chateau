@@ -1,15 +1,70 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
+import {
+    Column,
+    Entity,
+    PrimaryGeneratedColumn,
+    ManyToOne,
+    JoinColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+    Check
+} from "typeorm";
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 
 export enum AccountingLineSource {
-    SYSTEM = 'system'
+    SYSTEM = "system",
+    MANUAL = "manual",
+    IMPORT = "import"
 }
 
-@Entity('accounting-line')
+@Entity("accounting_line")
+@Check(`"debit" >= 0`)
+@Check(`"credit" >= 0`)
+@Check(`NOT ("debit" > 0 AND "credit" > 0)`)
 export class AccountingLine {
+
     @PrimaryGeneratedColumn()
     id: number
+
+    /* ========================
+       RELATIONS
+    ======================== */
+
+    @ManyToOne(() => AccountLineNature, { nullable: true })
+    @JoinColumn({ name: "nature_id" })
+    nature?: AccountLineNature;
+
+    @ManyToOne(() => AccountLinePoste, { nullable: true })
+    @JoinColumn({ name: "poste_id" })
+    poste?: AccountLinePoste;
+
+    /* ========================
+       MONTANTS (mouvement)
+    ======================== */
+
+    @Column({ type: "decimal", precision: 15, scale: 2, default: 0 })
+    debit: number;
+
+    @Column({ type: "decimal", precision: 15, scale: 2, default: 0 })
+    credit: number;
+
+    /* ========================
+       META
+    ======================== */
+
+    @Column({ type: "varchar", length: 255 })
+    label: string;
+
+    @Column({
+        type: "enum",
+        enum: AccountingLineSource,
+        default: AccountingLineSource.MANUAL
+    })
+    source: AccountingLineSource;
+
+    /* ========================
+       DATES
+    ======================== */
 
     @Column({ type: "date" })
     dateOperation: Date
@@ -17,26 +72,9 @@ export class AccountingLine {
     @Column({ type: "date", nullable: true })
     dateValeur: Date | null
 
-    @Column({ type: 'text' })
-    operation: string;
+    @CreateDateColumn()
+    createdAt: Date;
 
-    @ManyToOne(() => AccountLineNature)
-    @JoinColumn({ name: 'nature_id' })
-    nature: AccountLineNature;
-
-    @ManyToOne(() => AccountLinePoste)
-    @JoinColumn({ name: 'poste_id' })
-    poste: AccountLinePoste;
-
-    @Column({ type: "decimal", precision: 10, scale: 2 })
-    solde: number
-
-    @Column({ type: "boolean" })
-    isHorsCB: boolean
-
-    @Column({ type: "boolean", default: false })
-    isChecked: boolean
-
-    @Column({ type: "simple-enum", nullable: true, enum: AccountingLineSource })
-    source?: AccountingLineSource
+    @UpdateDateColumn()
+    updatedAt: Date;
 }

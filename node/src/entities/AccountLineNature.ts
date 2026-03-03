@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('account-line-nature')
+@Entity('account_line_nature')
 export class AccountLineNature {
     @PrimaryGeneratedColumn()
     id: number;
