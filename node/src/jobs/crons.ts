@@ -3,7 +3,7 @@ import jobLog from './jobLog';
 import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
 
-cron.schedule("32 * * * *", async () => {
+cron.schedule("37 * * * *", async () => {
     await runJob();
 });
 

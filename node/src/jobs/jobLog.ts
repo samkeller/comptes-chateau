@@ -21,7 +21,7 @@ function jobLog(level: "INFO" | "ERROR" | "WARN" | "DEBUG", message: string) {
     };
 
     console.log(
-        `${colors.gray}${colors.reset} ${colorMap[level]}[${level}]${colors.reset} ${message}`
+        `${colors.gray}${colors.reset}${colorMap[level]}[${level}]${colors.reset} ${message}`
     );
 }
 
