@@ -12,6 +12,7 @@ import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../utils/DatesUtils';
 import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
+import { useGlobalToast } from '../../components/GlobalToast';
 
 interface AddAcountLineDialogProps {
     editingLine: AccountLine | null;
@@ -30,6 +31,8 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [loading, setLoading] = useState(true);
+    const showGlobalToast = useGlobalToast();
+
 
     useEffect(() => {
         const service = new AccountingService();
@@ -67,6 +70,11 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         try {
             await new AccountingService().saveAccountingLine(accountLine);
             refresh();
+            showGlobalToast({
+                severity: 'success',
+                summary: editingLine ? "Dépense modifiée" : "Dépense ajoutée",
+                detail: editingLine ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
+            })
             hideDialog();
         } catch (error) {
             console.error('Error creating account line', error);

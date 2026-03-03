@@ -13,6 +13,7 @@ import AccountingService from '../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
 import { Calendar } from 'primereact/calendar';
+import { useGlobalToast } from '../../components/GlobalToast';
 
 interface AddRecurringExpenseDialogProps {
     editingExpense: RecurringExpense | null;
@@ -32,6 +33,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [loading, setLoading] = useState(true);
+    const showGlobalToast = useGlobalToast();
 
     useEffect(() => {
         const accountingService = new AccountingService();
@@ -67,6 +69,11 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
         try {
             await new RecurringExpenseService().saveRecurringExpense(expense);
             refresh();
+            showGlobalToast({
+                severity: 'success',
+                summary: editingExpense ? "Dépense récurrente modifiée" : "Dépense récurrente ajoutée",
+                detail: editingExpense ? "La dépense récurrente a été modifiée avec succès." : "La dépense récurrente a été ajoutée avec succès."
+            });
             hideDialog();
         } catch (error) {
             console.error('Error saving recurring expense', error);

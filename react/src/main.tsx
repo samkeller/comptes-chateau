@@ -11,6 +11,7 @@ import "./config/chartJsSetup";
 import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';
 import './services/Interceptors';
+import { GlobalToastProvider } from './components/GlobalToast';
 
 addLocale('fr', frLocale);
 
@@ -22,7 +23,9 @@ createRoot(document.getElementById('root')!).render(
 
   <StrictMode>
     <PrimeReactProvider value={primeReactOptions}>
-      <RouterProvider router={router} />
+      <GlobalToastProvider>
+        <RouterProvider router={router} />
+      </GlobalToastProvider>
     </PrimeReactProvider>
   </StrictMode>,
 )

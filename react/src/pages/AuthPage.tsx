@@ -5,6 +5,7 @@ import { Card } from "primereact/card";
 import AuthService from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 import ChocoChou from "@assets/images/chocochou.png";
+import { useGlobalToast } from "../components/GlobalToast";
 
 export default function AuthPage() {
     const [password, setPassword] = useState("");
@@ -13,6 +14,7 @@ export default function AuthPage() {
 
     const [authService] = useState(new AuthService());
     let navigate = useNavigate();
+    const showGlobalToast = useGlobalToast();
 
     useEffect(() => { setError(null) }, [password])
 
@@ -22,7 +24,13 @@ export default function AuthPage() {
         authService.login(password)
             .then(() => navigate("/"))
             .catch(() => setError("Mot de passe incorrect"))
-            .finally(() => setLoading(false))
+            .finally(() => {
+                showGlobalToast({
+                    severity: "success",
+                    detail: "Connexion réussie ! 😽",
+                })
+                setLoading(false)
+            })
     };
 
     return (

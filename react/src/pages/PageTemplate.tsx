@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
 import { MenuItem } from "primereact/menuitem";
 import { MegaMenu } from "primereact/megamenu";
+import { useGlobalToast } from "../components/GlobalToast";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -13,6 +14,7 @@ interface PageTemplateProps {
 export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [authService] = useState(new AuthService())
   const navigate = useNavigate();
+  const showGlobalToast = useGlobalToast();
 
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
@@ -21,6 +23,10 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const logout = async () => {
     await authService.logout();
     navigate("/auth", { replace: true });
+    showGlobalToast({
+      severity: "info",
+      detail: "Déconnexion réussie ! 👋",
+    })
   };
 
   const menuItemsStart: MenuItem[] = [
