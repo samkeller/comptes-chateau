@@ -92,7 +92,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}
         >
-            <div className="flex flex-column gap-3 py-2">
+            <div className="flex flex-column gap-4 pt-4">
                 <FloatLabel className='flex-1'>
                     <InputText
                         id="label"
