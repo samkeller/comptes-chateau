@@ -14,7 +14,6 @@ async function ensureDataSource() {
 }
 
 async function cleanup() {
-    jobLog("INFO", "Finished cron job");
     await AppDataSource.destroy();
 }
 
@@ -30,6 +29,7 @@ async function runJob() {
         });
 
         await cleanup();
+        jobLog("INFO", "Finished cron job");
     } catch (error) {
         jobLog("ERROR", `Error executing cron job: ${error}`);
         await cleanup();
