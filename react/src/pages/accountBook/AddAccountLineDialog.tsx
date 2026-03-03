@@ -75,7 +75,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
 
     const footer = <div>
         <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
-        <Button label="Ajouter" icon="pi pi-check" onClick={handleSubmit} />
+        <Button label={editingLine?.id ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
     </div>
 
     if (loading) {

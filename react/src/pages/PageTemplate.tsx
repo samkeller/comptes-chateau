@@ -17,13 +17,22 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
   }, [pageTitle])
-  
+
   const logout = async () => {
     await authService.logout();
     navigate("/auth", { replace: true });
   };
 
   const menuItemsStart: MenuItem[] = [
+    {
+      template: () => (
+        <div className="flex align-items-center px-2 cursor-pointer">
+          <img src={ChocoChou} className="h-2rem" />
+          <h1 className="text-4xl m-0" >Chocosous</h1>
+        </div>
+      ),
+      command: () => navigate("/"),
+    },
     {
       icon: <i className="pi pi-home" />,
       command: () => navigate("/"),
@@ -47,12 +56,6 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   return (
     <div className="px-4 py-2">
       <MegaMenu
-        start={
-          <div className="flex align-items-center px-2">
-            <img src={ChocoChou} className="h-2rem" />
-            <h1 className="text-4xl m-0" >Chocosous</h1>
-          </div>
-        }
         model={menuItemsStart}
         className="border-none"
         pt={{ menu: { className: "w-full" } }}
