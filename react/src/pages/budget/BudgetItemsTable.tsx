@@ -1,5 +1,4 @@
 import { Card } from "primereact/card";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Fragment } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -97,7 +96,9 @@ export default function BudgetItemsTable() {
                                                 <td className="p-2 border-1 surface-border">{line.label}</td>
                                                 <td className="text-right p-2 border-1 surface-border">{toMonetaryAmount(line.amount)}</td>
                                                 <td className="text-right p-2 border-1 surface-border">
-                                                    {`${((line.amount / totalBudget) * 100).toFixed(2)} %`}
+                                                    {totalBudget > 0
+                                                        ? `${((line.amount / totalBudget) * 100).toFixed(2)} %`
+                                                        : "0.00 %"}
                                                 </td>
                                             </tr>
                                         ))}

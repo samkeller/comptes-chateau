@@ -38,6 +38,12 @@ export default function Index() {
         return "text-green-500";
     };
 
+    const daysRemainingInMonth = useMemo(() => {
+        const today = new Date();
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return lastDay.getDate() - today.getDate();
+    }, []);
+
     return (
         <PageTemplate pageTitle="Dashboard">
             {loading && (
@@ -80,7 +86,7 @@ export default function Index() {
                                 </div>
                             </div>
                             <div className="text-500 mt-2">
-                                {budgetProgress.toFixed(1)}% consommé • {overview.daysRemainingInMonth} jour(s) restant(s)
+                                {budgetProgress.toFixed(1)}% consommé • {daysRemainingInMonth} jour(s) restant(s)
                             </div>
                         </Card>
                     </div>

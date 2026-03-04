@@ -1,7 +1,7 @@
-import { EntityManager } from "typeorm";
 import { AppDataSource } from "../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
+import { AccountBalanceBaseline } from "../entities/AccountBalanceBaseline";
 
 export interface MonthlyPosteAggregate {
     year: number;
@@ -24,35 +24,25 @@ export interface DashboardOverview {
     forecastBalance: number;
     monthExpenses: number;
     monthlyBudget: number;
-    daysRemainingInMonth: number;
-    budgetLines: DashboardBudgetLine[];
 }
 
 export default class DashboardService {
-    private accountingLineRepo;
-    private budgetItemRepo;
 
-    constructor(manager?: EntityManager) {
-        this.accountingLineRepo = manager
-            ? manager.getRepository(AccountingLine)
-            : AppDataSource.getRepository(AccountingLine);
-
-        this.budgetItemRepo = manager
-            ? manager.getRepository(BudgetItem)
-            : AppDataSource.getRepository(BudgetItem);
-    }
-
+    constructor(
+        private accountingLineRepo = AppDataSource.getRepository(AccountingLine),
+        private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
+        private accountBalanceBaselineRepo = AppDataSource.getRepository(AccountBalanceBaseline)
+    ) { }
     async getOverview(): Promise<DashboardOverview> {
-        const [currentBalanceRaw, forecastBalanceRaw, monthExpensesRaw, budgetLines] = await Promise.all([
-            this.accountingLineRepo
-                .createQueryBuilder("al")
-                .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
-                .where("al.isChecked = :isChecked", { isChecked: true })
-                .getRawOne<{ value: string | number }>(),
-            this.accountingLineRepo
-                .createQueryBuilder("al")
-                .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
-                .getRawOne<{ value: string | number }>(),
+        const baseline = await this.accountBalanceBaselineRepo.findOne({ where: { id: 1 } });
+
+        // Cas fallback si jamais on n'a pas de baseline en base (ex: première utilisation), on part de 0
+        const baselineAmount = baseline ? Number(baseline.amount) : 0;
+        const baseLineDate = baseline ? baseline.effectiveDate : new Date(1960, 0, 1);
+
+        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines] = await Promise.all([
+            this.getBalanceDeltaSinceDate(true, baseLineDate),
+            this.getBalanceDeltaSinceDate(false, baseLineDate),
             this.getMonthExpensesRaw(),
             this.budgetItemRepo.find({
                 where: { isActive: true },
@@ -61,19 +51,12 @@ export default class DashboardService {
         ]);
 
         const monthlyBudget = budgetLines.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
-
+        
         return {
-            currentBalance: Number(currentBalanceRaw?.value ?? 0),
-            forecastBalance: Number(forecastBalanceRaw?.value ?? 0),
+            currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
+            forecastBalance: baselineAmount + Number(forecastDeltaRaw?.value ?? 0),
             monthExpenses: Number(monthExpensesRaw?.value ?? 0),
-            monthlyBudget,
-            daysRemainingInMonth: this.getDaysRemainingInMonth(),
-            budgetLines: budgetLines.map((line) => ({
-                id: line.id,
-                category: line.category,
-                label: line.label,
-                amount: Number(line.amount)
-            }))
+            monthlyBudget
         };
     }
 
@@ -128,6 +111,28 @@ export default class DashboardService {
         }));
     }
 
+    /**
+     * Calcule la différence de solde depuis une date donnée (coalesce sum of credit - debit)
+     * @param checkedOnly Permet de réutiliser la fonction pour les deux calculs de solde (current vs forecast)
+     * @param fromDate
+     * @returns 
+     */
+    private async getBalanceDeltaSinceDate(
+        checkedOnly: boolean,
+        fromDate: Date
+    ): Promise<{ value: string | number } | undefined> {
+        let qb = this.accountingLineRepo
+            .createQueryBuilder("al")
+            .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
+            .where("al.dateOperation >= :fromDate", { fromDate });
+
+        if (checkedOnly) {
+            qb = qb.andWhere("al.isChecked = :isChecked", { isChecked: true });
+        }
+
+        return qb.getRawOne<{ value: string | number }>();
+    }
+
     private async getMonthExpensesRaw(): Promise<{ value: string | number } | undefined> {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -142,9 +147,4 @@ export default class DashboardService {
             .getRawOne<{ value: string | number }>();
     }
 
-    private getDaysRemainingInMonth(): number {
-        const now = new Date();
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return Math.max(0, lastDay.getDate() - now.getDate());
-    }
 }
