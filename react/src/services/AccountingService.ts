@@ -16,9 +16,8 @@ class AccountingService extends BaseService {
 
     getAccountingLinesLazy(lazyState: LazyTableState): Promise<LazyLoadResponse> {
         const params = new URLSearchParams();
-        // default pagination (virtual scroller currently doesn't provide skip/take)
-        params.append('skip', '0');
-        params.append('take', '100');
+        params.append('skip', String(lazyState.first));
+        params.append('take', String(lazyState.rows));
 
         // Sorts
         if (lazyState.sortField) {

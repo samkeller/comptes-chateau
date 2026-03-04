@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import AccountLine from "../../interfaces/AccountLine"
-import { DataTable, DataTableFilterMetaData } from "primereact/datatable"
+import { DataTable, DataTableFilterMetaData, DataTablePageEvent } from "primereact/datatable"
 import { Column, ColumnFilterElementTemplateOptions } from "primereact/column"
 import { Card } from "primereact/card"
 import { Button } from "primereact/button"
@@ -21,8 +21,17 @@ import { Tooltip } from "primereact/tooltip"
 import { toMonetaryAmount } from "../../utils/NumberUtils"
 
 export interface LazyTableState {
+    /**
+     * Premier index d'élement à récupérer.
+     */
     first: number;
+    /**
+     * Nombre d'éléments à récupérer.
+     */
     rows: number;
+    /**
+     * Numéro de page (commence à 1).
+     */
     page: number;
     sortField?: string;
     sortOrder: SortOrder;
@@ -31,12 +40,14 @@ export interface LazyTableState {
 
 export default function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
+    const [loading, setLoading] = useState<boolean>(false)
+    const [totalRecords, setTotalRecords] = useState<number>(0)
 
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
 
     const [lazyState, setLazyState] = useState<LazyTableState>({
         first: 0,
-        rows: 10,
+        rows: 50,
         page: 1,
         sortField: 'dateOperation',
         sortOrder: -1, // DESC
@@ -67,8 +78,6 @@ export default function AccountBook() {
             setNatures(n)
             setPostes(p)
         })
-        // Load account lines
-        loadAccountLines()
     }, [])
 
     useEffect(() => {
@@ -76,9 +85,15 @@ export default function AccountBook() {
     }, [lazyState]);
 
     const loadAccountLines = async () => {
-        const service = new AccountingService()
-        const lines = await service.getAccountingLinesLazy(lazyState)
-        setAccountLines(lines.data)
+        setLoading(true)
+        try {
+            const service = new AccountingService()
+            const lines = await service.getAccountingLinesLazy(lazyState)
+            setAccountLines(lines.data)
+            setTotalRecords(lines.totalRecords)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const updateLine = async (lineToUpdate: AccountLine) => {
@@ -144,15 +159,44 @@ export default function AccountBook() {
             <Card>
                 <DataTable<Array<AccountLine>>
                     value={accountLines}
-                    onSort={e => setLazyState(prev => ({ ...prev, sortField: e.sortField, sortOrder: e.sortOrder as SortOrder }))}
+                    lazy
+                    loading={loading}
+
+                    // Pagination
+                    totalRecords={totalRecords}
+                    paginator
+                    rowsPerPageOptions={[10, 25, 50, 100]}
+                    paginatorClassName="flex-nowrap overflow-x-auto"
+                    paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} opérations"
+                    first={lazyState.first}
+                    rows={lazyState.rows}
+                    onPage={(e: DataTablePageEvent) => setLazyState(prev => ({
+                        ...prev,
+                        first: e.first,
+                        rows: e.rows,
+                        page: (e.page ?? 0) + 1
+                    }))}
+                    // Tri
+                    onSort={e => setLazyState(prev => ({
+                        ...prev,
+                        sortField: e.sortField,
+                        sortOrder: e.sortOrder as SortOrder,
+                        first: 0,
+                        page: 1
+                    }))}
                     removableSort
                     sortField={lazyState.sortField}
                     sortOrder={lazyState.sortOrder}
-                    // Filtres & tris
-                    lazy
+                    // Filtres
                     filterDisplay="row"
                     filters={lazyState.filters}
-                    onFilter={e => setLazyState(prev => ({ ...prev, filters: e.filters as LazyTableState['filters'] }))}
+                    onFilter={e => setLazyState(prev => ({
+                        ...prev,
+                        filters: e.filters as LazyTableState['filters'],
+                        first: 0,
+                        page: 1
+                    }))}
 
                     // Style
                     size="small"
