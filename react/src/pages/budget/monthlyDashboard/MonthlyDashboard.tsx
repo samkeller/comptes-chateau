@@ -11,6 +11,7 @@ import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
 import MonthlyPosteTable from "./MonthlyPosteTable";
+import { TabPanel, TabView } from "primereact/tabview";
 
 export default function MonthlyDashboard() {
     const [dashboardData, setDashboardData] = useState<MonthlyAggregateByPoste[]>([]);
@@ -18,6 +19,7 @@ export default function MonthlyDashboard() {
 
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [selectedPostes, setSelectedPostes] = useState<AccountLinePoste[]>([]);
+    const [tabActiveIndex, setTabActiveIndex] = useState<number>(0);
 
     const [dateRange, setDateRange] = useState<(Date | null)[]>(() => {
         // Calcul de la période : 12 derniers mois
@@ -100,8 +102,15 @@ export default function MonthlyDashboard() {
             )}
             {!loading && dashboardData.length > 0 && (
                 <div className="flex flex-column gap-4">
-                    <MonthlyPosteChart data={dashboardData} />
-                    <MonthlyPosteTable data={dashboardData} />
+                    <TabView activeIndex={tabActiveIndex} onTabChange={(e) => setTabActiveIndex(e.index)}>
+                        <TabPanel header="Graphique">
+                            <MonthlyPosteChart data={dashboardData} />
+                        </TabPanel>
+                        <TabPanel header="Tableau">
+                            <MonthlyPosteTable data={dashboardData} />
+
+                        </TabPanel>
+                    </TabView>
                 </div>
             )}
         </Card>

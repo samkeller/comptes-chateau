@@ -4,6 +4,18 @@ import { parseApiDateString } from "../utils/ApiDateUtils";
 
 const DashboardRoutes = Router();
 
+DashboardRoutes.get("/overview", async (_req: Request, res: Response) => {
+    try {
+        const dashboardService = new DashboardService();
+        const data = await dashboardService.getOverview();
+
+        return res.json(data);
+    } catch (error) {
+        console.error("Error in dashboard overview endpoint:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 /**
  * GET /api/dashboard/monthly-by-poste?from=2025-01-01&to=2026-02-28
  * Agrège les opérations par mois et par poste

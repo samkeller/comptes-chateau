@@ -40,10 +40,16 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
   const navigationItems: MenuItem[] = [
     {
-      label: "Comptes",
+      label: "Home",
       icon: "pi pi-home",
       className: location.pathname === "/" ? "surface-200" : undefined,
       command: () => navigateTo("/"),
+    },
+    {
+      label: "Comptes",
+      icon: "pi pi-book",
+      className: location.pathname.startsWith("/comptes") ? "surface-200" : undefined,
+      command: () => navigateTo("/comptes"),
     },
     {
       label: "Budget",
@@ -85,7 +91,6 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
               text
               rounded
               aria-label={isDesktopMenuVisible ? "Masquer le menu" : "Afficher le menu"}
-              severity={isDesktopMenuVisible ? undefined : "secondary"}
               onClick={() => setIsDesktopMenuVisible((prev) => !prev)}
             />
           </div>

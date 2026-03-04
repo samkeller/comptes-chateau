@@ -2,6 +2,7 @@ import axios from "axios";
 import BaseService from "./BaseService";
 import { MonthlyAggregateByPoste } from "../interfaces/MonthlyAggregateByPoste";
 import { formatApiDate } from "./ApiDateCodec";
+import { DashboardOverview } from "../interfaces/DashboardOverview";
 
 class DashboardService extends BaseService {
     /**
@@ -23,6 +24,10 @@ class DashboardService extends BaseService {
         const url = `${this.apiUrl}/dashboard/monthly-by-poste${query ? `?${query}` : ""}`;
 
         return axios.get(url).then((response) => response.data);
+    }
+
+    getOverview(): Promise<DashboardOverview> {
+        return axios.get(`${this.apiUrl}/dashboard/overview`).then((response) => response.data);
     }
 }
 

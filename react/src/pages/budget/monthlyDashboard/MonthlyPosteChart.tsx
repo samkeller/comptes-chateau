@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Line } from "react-chartjs-2";
-import { ChartData, ChartDataset, ChartOptions } from "chart.js";
+import { ChartData, ChartDataset, ChartOptions, TooltipItem } from "chart.js";
 import { MonthlyAggregateByPoste } from "../../../interfaces/MonthlyAggregateByPoste";
 import { toMonetaryAmount } from "../../../utils/NumberUtils";
 
@@ -69,9 +69,14 @@ export default function MonthlyPosteChart({ data }: MonthlyPosteChartProps) {
             tooltip: {
                 mode: "index",
                 intersect: false,
+                filter: (tooltipItem: TooltipItem<"line">) => {
+                    // Ne pas afficher les tooltips pour les points à 0
+                    // (car on ne les affiche pas sur le graphique)
+                    return tooltipItem.parsed.y !== 0;
+
+                },
                 callbacks: {
-                    label: (context) => {
-                        if (context.dataset.data[context.dataIndex] === 0) return; // ne pas afficher les points à 0
+                    label: (context: TooltipItem<"line">) => {
                         const label = context.dataset.label || "";
                         const value = context.parsed.y;
                         if (typeof value !== "number") return label;
