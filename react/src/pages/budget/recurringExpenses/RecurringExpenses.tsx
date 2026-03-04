@@ -1,12 +1,12 @@
 import { Card } from "primereact/card";
 import { useEffect, useState } from "react";
-import RecurringExpense from "../../interfaces/RecurringExpense";
-import RecurringExpenseService from "../../services/RecurringExpenseService";
+import RecurringExpense from "../../../interfaces/RecurringExpense";
+import RecurringExpenseService from "../../../services/RecurringExpenseService";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import AddRecurringExpenseDialog from "./AddRecurringExpenseDialog";
-import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
+import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { Message } from "primereact/message";
 import { formatDistance } from "date-fns";
 import { Tooltip } from "primereact/tooltip";

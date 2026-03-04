@@ -90,7 +90,7 @@ export default function BudgetItemsTable() {
                                         {group.lines.map((line, index) => (
                                             <tr key={line.id}>
                                                 {index === 0 && (
-                                                    <td rowSpan={group.lines.length + 1} className="border-1 surface-border font-semibold align-top">
+                                                    <td rowSpan={group.lines.length + 1} className="border-1 p-2 surface-border font-semibold align-top">
                                                         {group.label}
                                                     </td>
                                                 )}

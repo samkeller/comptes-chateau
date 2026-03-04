@@ -1,5 +1,5 @@
 import { PageTemplate } from "../PageTemplate";
-import RecurringExpenses from "./RecurringExpenses";
+import RecurringExpenses from "./recurringExpenses/RecurringExpenses";
 import BudgetItemsTable from "./BudgetItemsTable";
 import { Message } from "primereact/message";
 

@@ -5,15 +5,15 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
-import RecurringExpense from '../../interfaces/RecurringExpense';
-import { AccountLineNature } from '../../interfaces/AccountLineNature';
-import { AccountLinePoste } from '../../interfaces/AccountLinePoste';
-import RecurringExpenseService from '../../services/RecurringExpenseService';
-import AccountingService from '../../services/AccountingService';
+import RecurringExpense from '../../../interfaces/RecurringExpense';
+import { AccountLineNature } from '../../../interfaces/AccountLineNature';
+import { AccountLinePoste } from '../../../interfaces/AccountLinePoste';
+import RecurringExpenseService from '../../../services/RecurringExpenseService';
+import AccountingService from '../../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
-import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
+import { ColoredLabel } from '../../../components/datatableBodys/ColoredLabel';
 import { Calendar } from 'primereact/calendar';
-import { useGlobalToast } from '../../components/GlobalToast';
+import { useGlobalToast } from '../../../components/GlobalToast';
 
 interface AddRecurringExpenseDialogProps {
     editingExpense: RecurringExpense | null;

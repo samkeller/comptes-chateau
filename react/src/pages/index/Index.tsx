@@ -5,8 +5,7 @@ import DashboardService from "../../services/DashboardService";
 import { DashboardOverview } from "../../interfaces/DashboardOverview";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
-import MonthlyDashboard from "../budget/monthlyDashboard/MonthlyDashboard";
-
+import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
 
 export default function Index() {
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
