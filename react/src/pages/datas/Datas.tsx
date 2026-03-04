@@ -28,6 +28,7 @@ function Datas() {
     return (
         <PageTemplate pageTitle="Datas">
             <div className="card flex justify-content-center">
+                <h3>Work in progress, nothing to see here 👀</h3>
                 <Toast ref={toast}></Toast>
                 <FileUpload
                     mode="basic" accept="csv"
