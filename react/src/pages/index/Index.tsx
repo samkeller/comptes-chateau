@@ -59,7 +59,7 @@ export default function Index() {
                             <div className={`text-4xl font-bold ${getBalanceClass(overview.currentBalance)}`}>
                                 {toMonetaryAmount(overview.currentBalance)}
                             </div>
-                            <div className="text-500 mt-2">Opérations checkées uniquement</div>
+                            <div className="text-500 mt-2">Opérations validées uniquement</div>
                         </Card>
                     </div>
 
@@ -68,7 +68,7 @@ export default function Index() {
                             <div className={`text-4xl font-bold ${getBalanceClass(overview.forecastBalance)}`}>
                                 {toMonetaryAmount(overview.forecastBalance)}
                             </div>
-                            <div className="text-500 mt-2">Toutes les opérations (checkées + à venir)</div>
+                            <div className="text-500 mt-2">Toutes les opérations (validées + à venir)</div>
                         </Card>
                     </div>
 

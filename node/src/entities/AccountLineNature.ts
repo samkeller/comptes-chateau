@@ -10,4 +10,7 @@ export class AccountLineNature {
 
     @Column({ type: 'varchar', length: 7 })
     color: string;
+
+    @Column({ type: 'bool', default: false })
+    isHorsCompte: boolean
 }

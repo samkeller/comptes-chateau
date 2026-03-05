@@ -122,7 +122,9 @@ export default class DashboardService {
         let qb = this.accountingLineRepo
             .createQueryBuilder("al")
             .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
-            .where("al.dateOperation >= :fromDate", { fromDate });
+            .where("al.dateOperation >= :fromDate", { fromDate })
+            .leftJoin("al.nature", "nature")
+            .andWhere("nature.isHorsCompte = false");
 
         if (checkedOnly) {
             qb = qb.andWhere("al.isChecked = :isChecked", { isChecked: true });
