@@ -197,6 +197,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
+                        style={{maxWidth: "200px"}}
                     ></Column>
                     <Column
                         field="dateValeur"
@@ -213,6 +214,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
+                        style={{maxWidth: "200px"}}
                     ></Column>
                     <Column
                         field="label"
@@ -297,6 +299,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
+                        style={{maxWidth: "200px"}}
                     ></Column>
                     <Column
                         field="isChecked"
