@@ -1,8 +1,8 @@
 import axios from "axios";
 import BaseService from "./BaseService";
 import { MonthlyAggregateByPoste } from "../interfaces/MonthlyAggregateByPoste";
-import { formatApiDate } from "./ApiDateCodec";
 import { DashboardOverview } from "../interfaces/DashboardOverview";
+import DashboardMonthlyByPosteQueryCodec from "./dashboardQuery/DashboardMonthlyByPosteQueryCodec";
 
 class DashboardService extends BaseService {
     /**
@@ -15,10 +15,11 @@ class DashboardService extends BaseService {
         toMonth: Date,
         posteIds: number[]
     ): Promise<MonthlyAggregateByPoste[]> {
-        const params = new URLSearchParams();
-        if (fromMonth) params.append("from", formatApiDate(fromMonth));
-        if (toMonth) params.append("to", formatApiDate(toMonth));
-        params.append("posteIds", posteIds.join(","));
+        const params = DashboardMonthlyByPosteQueryCodec.toQueryParams({
+            from: fromMonth,
+            to: toMonth,
+            posteIds
+        });
 
         const query = params.toString();
         const url = `${this.apiUrl}/dashboard/monthly-by-poste${query ? `?${query}` : ""}`;

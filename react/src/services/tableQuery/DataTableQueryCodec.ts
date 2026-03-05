@@ -59,6 +59,10 @@ export interface DataTableLazyState {
  * Convertit un état DataTable PrimeReact en contrat de query API generique.
  */
 export default class DataTableQueryCodec {
+    /**
+     * Construit le contrat API complet (pagination + tri + filtres)
+     * a partir du state lazy PrimeReact.
+     */
     static toQuery(lazyState: DataTableLazyState): TableQuery {
         return {
             pagination: this.toPagination(lazyState),
@@ -95,7 +99,11 @@ export default class DataTableQueryCodec {
     }
 
     /**
-     * Convertit DataTableFilterMeta en contrat de filtres generic.
+        * Convertit DataTableFilterMeta en contrat de filtres API.
+        *
+        * - Les filtres simples deviennent `type: "simple"`.
+        * - Les filtres composés deviennent `type: "operator"`.
+        * - Les valeurs vides sont ignorees pour eviter des filtres inutiles.
      */
     static toFilters(filtersMeta: DataTableFilterMeta): TableFilter[] {
         const filters: TableFilter[] = [];
@@ -151,7 +159,12 @@ export default class DataTableQueryCodec {
     }
 
     /**
-     * Encode le contrat de query en req.query HTTP.
+        * Encode le contrat de query en `req.query` HTTP.
+        *
+        * Format emis:
+        * - `skip` / `take`
+        * - `sortField` / `sortOrder`
+        * - `filters` (JSON stringifie) si present
      */
     static toQueryParams(lazyState: DataTableLazyState): URLSearchParams {
         const query = this.toQuery(lazyState);

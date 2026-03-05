@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import DashboardService from "../services/DashboardService";
-import { parseApiDateString } from "../utils/ApiDateUtils";
+import DashboardMonthlyByPosteQueryParser from "../services/queryMappers/parsers/DashboardMonthlyByPosteQueryParser";
+import { QueryParamsValidationError } from "../services/queryMappers/parsers/QueryParamsParser";
 
 const DashboardRoutes = Router();
 
@@ -22,24 +23,17 @@ DashboardRoutes.get("/overview", async (_req: Request, res: Response) => {
  */
 DashboardRoutes.get("/monthly-by-poste", async (req: Request, res: Response) => {
     try {
-        const fromMonth = req.query.from as string | undefined;
-        const toMonth = req.query.to as string | undefined;
-        const posteIdsParam = req.query.posteIds as string | undefined;
-
-        if (!fromMonth || !toMonth) throw new Error("Les paramètres 'from' et 'to' sont requis au format YYYY-MM-DD");
-        if (!posteIdsParam || posteIdsParam.trim() === "") throw new Error("Le paramètre 'posteIds' est requis et doit contenir au moins un ID de poste");
+        const query = DashboardMonthlyByPosteQueryParser.parse(req.query);
 
         const dashboardService = new DashboardService();
-        const fromDate = parseApiDateString(fromMonth);
-        const toDate = parseApiDateString(toMonth);
-        const posteIds = posteIdsParam.split(",")
-            .map((value) => parseInt(value.trim(), 10))
-            .filter((value) => !Number.isNaN(value));
-
-        const data = await dashboardService.getMonthlyByPoste(fromDate, toDate, posteIds);
+        const data = await dashboardService.getMonthlyByPoste(query.from, query.to, query.posteIds);
 
         return res.json(data);
     } catch (error) {
+        if (error instanceof QueryParamsValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+
         console.error("Error in monthly-by-poste endpoint:", error);
         res.status(500).json({ error: "Internal server error" });
     }

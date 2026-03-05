@@ -90,11 +90,9 @@ export default class DashboardService {
 
         // Filtres de dates
         if (fromMonth) {
-            console.log("Filtering from month:", fromMonth);
             qb = qb.andWhere("al.dateOperation >= :fromMonth", { fromMonth });
         }
         if (toMonth) {
-            console.log("Filtering to month:", toMonth);
             qb = qb.andWhere("al.dateOperation <= :toMonth", { toMonth });
         }
         qb = qb.andWhere("poste.id IN (:...posteIds)", { posteIds });
