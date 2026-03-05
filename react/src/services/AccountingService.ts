@@ -3,9 +3,8 @@ import AccountLine from "../interfaces/AccountLine"
 import { AccountLineNature } from "../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../interfaces/AccountLinePoste"
 import { formatApiDate } from "./ApiDateCodec"
-import { LazyTableState } from "../pages/accountBook/AccountBook"
 import BaseService from "./BaseService"
-import LazyParser from "./LazyParser"
+import DataTableQueryCodec, { DataTableLazyState } from "./tableQuery/DataTableQueryCodec"
 
 export interface LazyLoadResponse {
     data: AccountLine[];
@@ -14,63 +13,8 @@ export interface LazyLoadResponse {
 
 class AccountingService extends BaseService {
 
-    getAccountingLinesLazy(lazyState: LazyTableState): Promise<LazyLoadResponse> {
-        const params = new URLSearchParams();
-        params.append('skip', String(lazyState.first));
-        params.append('take', String(lazyState.rows));
-
-        // Sorts
-        if (lazyState.sortField) {
-            const sortOrder = lazyState.sortOrder === -1 ? 'DESC' : 'ASC';
-            params.append('sortField', lazyState.sortField);
-            params.append('sortOrder', sortOrder);
-        }
-
-        // Filters
-        if (lazyState.filters) {
-            Object.keys(lazyState.filters).forEach(key => {
-                const meta = lazyState.filters[key];
-                if (!meta) return;
-
-                const value = meta.value;
-
-                if (value === null || value === undefined || value === '') return;
-
-                switch (key) {
-                    case 'dateOperation': {
-                        const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
-                        params.append('dateOperationFrom', formatApiDate(from));
-                        params.append('dateOperationTo', formatApiDate(to));
-                        break;
-                    }
-                    case 'dateValeur': {
-                        const { from, to } = LazyParser.parseDateFilter(value, meta.matchMode);
-                        params.append('dateValeurFrom', formatApiDate(from));
-                        params.append('dateValeurTo', formatApiDate(to));
-                        break;
-                    }
-                    case 'label':
-                        params.append('label', String(value));
-                        break;
-                    case 'nature.label':
-                        params.append('nature', String(value));
-                        break;
-                    case 'poste.label':
-                        params.append('poste', String(value));
-                        break;
-                    case 'source':
-                        params.append('source', String(value));
-                        break;
-                    case 'isChecked':
-                        params.append('isChecked', value === true ? 'true' : 'false');
-                        break;
-                    default:
-                        throw new Error(`Unknown filter key: ${key}`);
-                }
-            });
-        }
-
-        const requestParams = params.toString();
+    getAccountingLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
+        const requestParams = DataTableQueryCodec.toQueryParams(lazyState).toString();
         
         return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
             return {

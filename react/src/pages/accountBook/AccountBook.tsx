@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import AccountLine from "../../interfaces/AccountLine"
-import { DataTable, DataTableFilterMetaData, DataTablePageEvent } from "primereact/datatable"
+import { DataTable, DataTablePageEvent } from "primereact/datatable"
 import { Column, ColumnFilterElementTemplateOptions } from "primereact/column"
 import { Card } from "primereact/card"
 import { Button } from "primereact/button"
@@ -19,24 +19,8 @@ import { InputSwitch } from "primereact/inputswitch"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Tooltip } from "primereact/tooltip"
 import { toMonetaryAmount } from "../../utils/NumberUtils"
-
-export interface LazyTableState {
-    /**
-     * Premier index d'élement à récupérer.
-     */
-    first: number;
-    /**
-     * Nombre d'éléments à récupérer.
-     */
-    rows: number;
-    /**
-     * Numéro de page (commence à 1).
-     */
-    page: number;
-    sortField?: string;
-    sortOrder: SortOrder;
-    filters: { [key: string]: DataTableFilterMetaData };
-}
+import { InputNumber } from "primereact/inputnumber"
+import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCodec"
 
 export default function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
@@ -45,7 +29,7 @@ export default function AccountBook() {
 
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
 
-    const [lazyState, setLazyState] = useState<LazyTableState>({
+    const [lazyState, setLazyState] = useState<DataTableLazyState>({
         first: 0,
         rows: 50,
         page: 1,
@@ -57,6 +41,7 @@ export default function AccountBook() {
             label: { value: "", matchMode: FilterMatchMode.CONTAINS },
             'nature.label': { value: null, matchMode: FilterMatchMode.EQUALS },
             'poste.label': { value: null, matchMode: FilterMatchMode.EQUALS },
+            amount: { value: "", matchMode: FilterMatchMode.EQUALS },
             isChecked: { value: null, matchMode: FilterMatchMode.EQUALS }
         }
     });
@@ -181,9 +166,7 @@ export default function AccountBook() {
                     onSort={e => setLazyState(prev => ({
                         ...prev,
                         sortField: e.sortField,
-                        sortOrder: e.sortOrder as SortOrder,
-                        first: 0,
-                        page: 1
+                        sortOrder: e.sortOrder as SortOrder
                     }))}
                     removableSort
                     sortField={lazyState.sortField}
@@ -193,9 +176,7 @@ export default function AccountBook() {
                     filters={lazyState.filters}
                     onFilter={e => setLazyState(prev => ({
                         ...prev,
-                        filters: e.filters as LazyTableState['filters'],
-                        first: 0,
-                        page: 1
+                        filters: e.filters
                     }))}
 
                     // Style
@@ -203,6 +184,7 @@ export default function AccountBook() {
                 >
                     <Column
                         field="dateOperation"
+                        dataType="date"
                         header="Date opération"
                         body={(v: AccountLine) => v ? v.displayDateOperation : null}
                         sortable
@@ -215,12 +197,13 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        dataType="date"
                     ></Column>
                     <Column
                         field="dateValeur"
+                        dataType="date"
                         header="Date valeur"
                         body={(v: AccountLine) => v ? v.displayDateValeur : null}
+                        sortable
                         filter
                         filterElement={(options) => (
                             <Calendar
@@ -230,11 +213,10 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        // TODO: Opérateurs customs less than, greater than, between
-                        dataType="date"
                     ></Column>
                     <Column
                         field="label"
+                        dataType="text"
                         header="Opération"
                         sortable
                         filter
@@ -263,7 +245,6 @@ export default function AccountBook() {
                                 </div>
                             )
                         }}
-                        showFilterMenu={false}
                     ></Column>
                     <Column
                         field="nature.label"
@@ -304,9 +285,18 @@ export default function AccountBook() {
                     ></Column>
                     <Column
                         field="amount"
+                        dataType="numeric"
                         header="Montant"
                         sortable
                         body={(data: AccountLine) => toMonetaryAmount(data.total)}
+                        filter
+                        filterElement={(options) => (
+                            <InputNumber
+                                value={options.value || ''}
+                                onChange={(e) => options.filterApplyCallback(e.value)}
+                                className="w-full"
+                            />
+                        )}
                     ></Column>
                     <Column
                         field="isChecked"
