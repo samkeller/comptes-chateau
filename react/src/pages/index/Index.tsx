@@ -63,7 +63,7 @@ export default function Index() {
     }) => (
 
         <Card
-            title={<span className="flex align-content-center">
+            title={<span className="flex align-content-center gap-2">
                 {title}
                 <TooltipInfoIcon tooltipText={tooltipText} />
             </span>}

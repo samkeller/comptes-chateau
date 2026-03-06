@@ -32,7 +32,7 @@ export default function TooltipInfoIcon({ tooltipText, type = "info" }: TooltipI
         <>
             <Tooltip target={"." + customId}  position={getPosition()}/>
             <i
-                className={customId + " " + (type === "info" ? infoClassNames : warningClassNames)}
+                className={customId + " my-auto " + (type === "info" ? infoClassNames : warningClassNames)}
                 data-pr-tooltip={tooltipText}
             />
 
