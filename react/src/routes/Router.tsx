@@ -7,6 +7,7 @@ import AuthPage from "../pages/AuthPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import Budget from "../pages/budget/Budget";
 import Index from "../pages/index/Index";
+import Setup from "../pages/setup/Setup";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
   {
     path: "/datas",
     element: <Datas />,
+  },
+  {
+    path: "/setup",
+    element: <Setup />,
   },
   {
     path: "/auth",

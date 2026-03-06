@@ -21,6 +21,9 @@ import { Tooltip } from "primereact/tooltip"
 import { toMonetaryAmount } from "../../utils/NumberUtils"
 import { InputNumber } from "primereact/inputnumber"
 import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCodec"
+import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
+import AccountLinePosteService from "../../services/AccountLinePosteService"
+import AccountLineNatureService from "../../services/AccountLineNatureService"
 
 export default function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
@@ -58,8 +61,9 @@ export default function AccountBook() {
 
     useEffect(() => {
         // Load natures and postes
-        const service = new AccountingService()
-        Promise.all([service.getAllNatures(), service.getAllPostes()]).then(([n, p]) => {
+        const natureService = new AccountLineNatureService()
+        const posteService = new AccountLinePosteService()
+        Promise.all([natureService.getAllNatures(), posteService.getAllPostes()]).then(([n, p]) => {
             setNatures(n)
             setPostes(p)
         })
@@ -85,13 +89,6 @@ export default function AccountBook() {
         await new AccountingService().saveAccountingLine(lineToUpdate);
         loadAccountLines();
     };
-
-
-    const boolIconBody = (bool: boolean) => {
-        return bool ?
-            <i className="pi pi-check text-green-500"></i> :
-            <i className="pi pi-times text-red-500"></i>
-    }
 
     const checkedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
         return <TriStateCheckbox value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} />;
@@ -319,7 +316,7 @@ export default function AccountBook() {
                                         isChecked: e.value
                                     })}
                                 /> :
-                                boolIconBody(data.isChecked)
+                                <BooleanIcon value={data.isChecked} />
                         }} ></Column>
                     <Column
                         header="Actions"

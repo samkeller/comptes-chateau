@@ -63,6 +63,12 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
       className: location.pathname.startsWith("/datas") ? "surface-200" : undefined,
       command: () => navigateTo("/datas"),
     },
+    {
+      label: "Configuration",
+      icon: "pi pi-cog",
+      className: location.pathname.startsWith("/setup") ? "surface-200" : undefined,
+      command: () => navigateTo("/setup"),
+    },
   ]
 
   const brand = (

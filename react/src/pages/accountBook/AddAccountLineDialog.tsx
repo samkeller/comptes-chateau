@@ -13,6 +13,8 @@ import { FloatLabel } from 'primereact/floatlabel';
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from '../../utils/DatesUtils';
 import { ColoredLabel } from '../../components/datatableBodys/ColoredLabel';
 import { useGlobalToast } from '../../components/GlobalToast';
+import AccountLinePosteService from '../../services/AccountLinePosteService';
+import AccountLineNatureService from '../../services/AccountLineNatureService';
 
 interface AddAcountLineDialogProps {
     editingLine: AccountLine | null;
@@ -35,10 +37,11 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
 
 
     useEffect(() => {
-        const service = new AccountingService();
+        const natureService = new AccountLineNatureService();
+        const posteService = new AccountLinePosteService();
         Promise.all([
-            service.getAllNatures(),
-            service.getAllPostes()
+            natureService.getAllNatures(),
+            posteService.getAllPostes()
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
             setPostes(postesData);
@@ -143,7 +146,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                             itemTemplate={(option) => <ColoredLabel data={option.value} />}
                             valueTemplate={(option) => <ColoredLabel data={option.value} />}
                         />
-                        <label htmlFor="nature">Nature</label>
+                        <label htmlFor="nature">Nature <small>(optionnel)</small></label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
                         <Dropdown
@@ -156,7 +159,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                             itemTemplate={(option) => <ColoredLabel data={option.value} />}
                             valueTemplate={(option) => <ColoredLabel data={option.value} />}
                         />
-                        <label htmlFor="poste">Poste</label>
+                        <label htmlFor="poste">Poste <small>(optionnel)</small></label>
                     </FloatLabel>
                 </div>
                 <div className='flex gap-2'>

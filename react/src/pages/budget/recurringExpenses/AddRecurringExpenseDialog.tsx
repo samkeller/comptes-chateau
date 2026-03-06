@@ -9,11 +9,12 @@ import RecurringExpense from '../../../interfaces/RecurringExpense';
 import { AccountLineNature } from '../../../interfaces/AccountLineNature';
 import { AccountLinePoste } from '../../../interfaces/AccountLinePoste';
 import RecurringExpenseService from '../../../services/RecurringExpenseService';
-import AccountingService from '../../../services/AccountingService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { ColoredLabel } from '../../../components/datatableBodys/ColoredLabel';
 import { Calendar } from 'primereact/calendar';
 import { useGlobalToast } from '../../../components/GlobalToast';
+import AccountLineNatureService from '../../../services/AccountLineNatureService';
+import AccountLinePosteService from '../../../services/AccountLinePosteService';
 
 interface AddRecurringExpenseDialogProps {
     editingExpense: RecurringExpense | null;
@@ -36,10 +37,11 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
     const showGlobalToast = useGlobalToast();
 
     useEffect(() => {
-        const accountingService = new AccountingService();
+        const natureService = new AccountLineNatureService();
+        const posteService = new AccountLinePosteService();
         Promise.all([
-            accountingService.getAllNatures(),
-            accountingService.getAllPostes()
+            natureService.getAllNatures(),
+            posteService.getAllPostes()
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
             setPostes(postesData);

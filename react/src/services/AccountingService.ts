@@ -1,7 +1,5 @@
 import axios from "axios"
 import AccountLine from "../interfaces/AccountLine"
-import { AccountLineNature } from "../interfaces/AccountLineNature"
-import { AccountLinePoste } from "../interfaces/AccountLinePoste"
 import { formatApiDate } from "./ApiDateCodec"
 import BaseService from "./BaseService"
 import DataTableQueryCodec, { DataTableLazyState } from "./tableQuery/DataTableQueryCodec"
@@ -36,17 +34,6 @@ class AccountingService extends BaseService {
         })
     }
 
-    getAllNatures(): Promise<AccountLineNature[]> {
-        return axios.get(this.apiUrl + "/nature").then(response => {
-            return response.data
-        })
-    }
-
-    getAllPostes(): Promise<AccountLinePoste[]> {
-        return axios.get(this.apiUrl + "/poste").then(response => {
-            return response.data
-        })
-    }
 }
 
 export default AccountingService

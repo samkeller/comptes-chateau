@@ -6,12 +6,12 @@ import MonthlyPosteChart from "./MonthlyPosteChart";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { MultiSelect } from "primereact/multiselect";
 import { AccountLinePoste } from "../../../interfaces/AccountLinePoste";
-import AccountingService from "../../../services/AccountingService";
 import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
 import MonthlyPosteTable from "./MonthlyPosteTable";
 import { TabPanel, TabView } from "primereact/tabview";
+import AccountLinePosteService from "../../../services/AccountLinePosteService";
 
 export default function MonthlyDashboard() {
     const [dashboardData, setDashboardData] = useState<MonthlyAggregateByPoste[]>([]);
@@ -33,7 +33,7 @@ export default function MonthlyDashboard() {
     useEffect(() => {
         loadDashboardData();
         // Charger la liste des postes pour le filtre
-        new AccountingService().getAllPostes().then(postes => {
+        new AccountLinePosteService().getAllPostes().then(postes => {
             setPostes(postes);
             setSelectedPostes(postes); // Par défaut, tous les postes sont sélectionnés
         });

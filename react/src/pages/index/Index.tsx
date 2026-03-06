@@ -6,7 +6,7 @@ import { DashboardOverview } from "../../interfaces/DashboardOverview";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
-import { Tooltip } from "primereact/tooltip";
+import TooltipInfoIcon from "../../components/TooltipInfoIcon";
 
 export default function Index() {
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -62,11 +62,7 @@ export default function Index() {
         <Card
             title={<span className="flex align-content-center">
                 {title}
-                <Tooltip target=".title-explaining" />
-                <i
-                    className="title-explaining pi pi-info-circle ml-2 my-auto text-sm text-500"
-                    data-pr-tooltip={tooltipText}
-                />
+                <TooltipInfoIcon tooltipText={tooltipText} />
             </span>}
             className="h-full"
         >
@@ -92,7 +88,7 @@ export default function Index() {
                             title="Solde actuel"
                             value={toMonetaryAmount(overview.currentBalance)}
                             description="Opérations validées uniquement"
-                            tooltipText="Prend en compte uniquement les opérations 'validées' dont les natures de dépenses sont liées au compte en banque. eprésente l'état actuel du compte."
+                            tooltipText="Prend en compte uniquement les opérations 'validées' dont les natures de dépenses sont liées au compte en banque. Représente l'état actuel du compte."
                             className={getBalanceClass(overview.currentBalance)}
                         />
                     </div>
