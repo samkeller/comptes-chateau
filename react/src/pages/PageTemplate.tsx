@@ -1,12 +1,11 @@
 import ChocoChou from "@assets/images/chocochou.png";
 import { ReactNode, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
-import { MenuItem } from "primereact/menuitem";
-import { Menu } from "primereact/menu";
 import { useGlobalToast } from "../components/GlobalToast";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
+import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -17,7 +16,6 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
   const navigate = useNavigate();
-  const location = useLocation();
   const showGlobalToast = useGlobalToast();
 
   useEffect(() => {
@@ -38,41 +36,8 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
     setIsMobileMenuVisible(false);
   }
 
-  const navigationItems: MenuItem[] = [
-    {
-      label: "Home",
-      icon: "pi pi-home",
-      className: location.pathname === "/" ? "surface-200" : undefined,
-      command: () => navigateTo("/"),
-    },
-    {
-      label: "Comptes",
-      icon: "pi pi-book",
-      className: location.pathname.startsWith("/comptes") ? "surface-200" : undefined,
-      command: () => navigateTo("/comptes"),
-    },
-    {
-      label: "Budget",
-      icon: "pi pi-calculator",
-      className: location.pathname.startsWith("/budget") ? "surface-200" : undefined,
-      command: () => navigateTo("/budget"),
-    },
-    {
-      label: "Données",
-      icon: "pi pi-database",
-      className: location.pathname.startsWith("/datas") ? "surface-200" : undefined,
-      command: () => navigateTo("/datas"),
-    },
-    {
-      label: "Configuration",
-      icon: "pi pi-cog",
-      className: location.pathname.startsWith("/setup") ? "surface-200" : undefined,
-      command: () => navigateTo("/setup"),
-    },
-  ]
-
   const brand = (
-    <button className="flex align-items-center gap-2 border-none bg-transparent p-0 text-left color-inherit cursor-pointer" onClick={() => navigateTo("/")}> 
+    <button className="flex align-items-center gap-2 border-none bg-transparent p-0 text-left color-inherit cursor-pointer" onClick={() => navigateTo("/")}>
       <img src={ChocoChou} className="h-3rem" />
       <h1 className="text-2xl m-0">Chocosous</h1>
     </button>
@@ -113,7 +78,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
       <div className="flex-1 min-h-0 md:flex overflow-hidden">
         {isDesktopMenuVisible && (
           <aside className="p-3 border-right-1 surface-border hidden md:block md:w-18rem h-full overflow-y-auto">
-            <Menu model={navigationItems} className="w-full border-none" />
+            <AppNavigationMenu navigateTo={navigateTo} />
           </aside>
         )}
 
@@ -124,7 +89,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           className="w-18rem"
         >
           <div className="flex flex-column h-full">
-            <Menu model={navigationItems} className="w-full border-none" />
+            <AppNavigationMenu navigateTo={navigateTo} />
           </div>
         </Sidebar>
 

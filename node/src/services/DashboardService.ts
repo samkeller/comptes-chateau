@@ -24,6 +24,8 @@ export interface DashboardOverview {
     forecastBalance: number;
     monthExpenses: number;
     monthlyBudget: number;
+    operationsToCheckInAccountCount: number;
+    operationsToCheckHorsCompteCount: number;
 }
 
 export default class DashboardService {
@@ -40,14 +42,15 @@ export default class DashboardService {
         const baselineAmount = baseline ? Number(baseline.amount) : 0;
         const baseLineDate = baseline ? baseline.effectiveDate : new Date(1960, 0, 1);
 
-        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines] = await Promise.all([
+        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts] = await Promise.all([
             this.getBalanceDeltaSinceDate(true, baseLineDate),
             this.getBalanceDeltaSinceDate(false, baseLineDate),
             this.getMonthExpensesRaw(),
             this.budgetItemRepo.find({
                 where: { isActive: true },
                 order: { category: "ASC", sortOrder: "ASC", id: "ASC" }
-            })
+            }),
+            this.getOperationsToCheckCounts()
         ]);
 
         const monthlyBudget = budgetLines.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
@@ -56,7 +59,9 @@ export default class DashboardService {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
             forecastBalance: baselineAmount + Number(forecastDeltaRaw?.value ?? 0),
             monthExpenses: Number(monthExpensesRaw?.value ?? 0),
-            monthlyBudget
+            monthlyBudget,
+            operationsToCheckInAccountCount: toCheckCounts.inAccount,
+            operationsToCheckHorsCompteCount: toCheckCounts.horsCompte
         };
     }
 
@@ -145,6 +150,26 @@ export default class DashboardService {
             .andWhere("al.dateOperation >= :monthStart", { monthStart })
             .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart })
             .getRawOne<{ value: string | number }>();
+    }
+
+    private async getOperationsToCheckCounts(): Promise<{ inAccount: number; horsCompte: number }> {
+        const rawCounts = await this.accountingLineRepo
+            .createQueryBuilder("al")
+            .leftJoin("al.nature", "nature")
+            .select(
+                "SUM(CASE WHEN al.isChecked = false AND (nature.id IS NULL OR nature.isHorsCompte = false) THEN 1 ELSE 0 END)",
+                "inAccount"
+            )
+            .addSelect(
+                "SUM(CASE WHEN al.isChecked = false AND nature.isHorsCompte = true THEN 1 ELSE 0 END)",
+                "horsCompte"
+            )
+            .getRawOne<{ inAccount: string | number | null; horsCompte: string | number | null }>();
+
+        return {
+            inAccount: Number(rawCounts?.inAccount ?? 0),
+            horsCompte: Number(rawCounts?.horsCompte ?? 0)
+        };
     }
 
 }

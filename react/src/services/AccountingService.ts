@@ -9,6 +9,12 @@ export interface LazyLoadResponse {
     totalRecords: number;
 }
 
+export interface CheckBatchInput {
+    id: number;
+    isChecked: boolean;
+    dateValeur: Date;
+}
+
 class AccountingService extends BaseService {
 
     getAccountingLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
@@ -26,12 +32,24 @@ class AccountingService extends BaseService {
         const dataToSend = {
             ...accountLine,
             dateOperation: accountLine.dateOperation ? formatApiDate(accountLine.dateOperation) : null,
-            ...(accountLine.dateValeur && { dateValeur: formatApiDate(accountLine.dateValeur) })
+            dateValeur: accountLine.dateValeur ? formatApiDate(accountLine.dateValeur) : null,
         }
 
         return axios.post(this.apiUrl + "/operation", dataToSend).then(response => {
             return new AccountLine(response.data)
         })
+    }
+
+    checkBatch(checks: CheckBatchInput[]): Promise<number> {
+        const payload = {
+            checks: checks.map((check) => ({
+                id: check.id,
+                isChecked: check.isChecked,
+                dateValeur: formatApiDate(check.dateValeur)
+            }))
+        };
+
+        return axios.post(this.apiUrl + "/operation/check-batch", payload).then((response) => response.data.updatedCount);
     }
 
 }

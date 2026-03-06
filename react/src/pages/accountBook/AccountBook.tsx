@@ -24,6 +24,7 @@ import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCode
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
+import TooltipInfoIcon from "../../components/TooltipInfoIcon"
 
 type RelationFilterOption = {
     id: number | "null";
@@ -134,7 +135,7 @@ export default function AccountBook() {
     }
 
     return (
-        <PageTemplate pageTitle="Index">
+        <PageTemplate pageTitle="Comptes">
             {
                 showAddDialog && <AddAccountLineDialog
                     editingLine={editingLine}
@@ -151,6 +152,7 @@ export default function AccountBook() {
                     <div className="p-component flex justify-content-end align-items-center gap-2">
                         <span>Mode d'édition</span>
                         <InputSwitch checked={isEditMode} onChange={(e) => setIsEditMode(e.value)} />
+                        <TooltipInfoIcon tooltipText="Vérifier ligne ici applique la date du jour comme date de valeur. Pour une autre date, utiliser 'Modifier'" type="warning" />
                     </div>
                 </div>
             </div>
@@ -211,7 +213,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        style={{maxWidth: "200px"}}
+                        style={{ maxWidth: "200px" }}
                     ></Column>
                     <Column
                         field="dateValeur"
@@ -228,7 +230,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        style={{maxWidth: "200px"}}
+                        style={{ maxWidth: "200px" }}
                     ></Column>
                     <Column
                         field="label"
@@ -327,7 +329,7 @@ export default function AccountBook() {
                                 className="w-full"
                             />
                         )}
-                        style={{maxWidth: "200px"}}
+                        style={{ maxWidth: "200px" }}
                     ></Column>
                     <Column
                         field="isChecked"
@@ -344,7 +346,8 @@ export default function AccountBook() {
                                     checked={data.isChecked}
                                     onChange={(e: ToggleButtonChangeEvent) => updateLine({
                                         ...data,
-                                        isChecked: e.value
+                                        isChecked: e.value,
+                                        dateValeur: e.value ? (data.dateValeur ?? new Date()) : null
                                     })}
                                 /> :
                                 <BooleanIcon value={data.isChecked} />

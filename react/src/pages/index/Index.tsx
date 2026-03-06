@@ -7,10 +7,13 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
 import TooltipInfoIcon from "../../components/TooltipInfoIcon";
+import { Button } from "primereact/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Index() {
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const loadOverview = async () => {
@@ -83,7 +86,7 @@ export default function Index() {
 
             {!loading && overview && (
                 <div className="grid">
-                    <div className="col-12 md:col-4">
+                    <div className="col-12 md:col-6 lg:col-3">
                         <IndicatorCard
                             title="Solde actuel"
                             value={toMonetaryAmount(overview.currentBalance)}
@@ -92,7 +95,7 @@ export default function Index() {
                             className={getBalanceClass(overview.currentBalance)}
                         />
                     </div>
-                    <div className="col-12 md:col-4">
+                    <div className="col-12 md:col-6 lg:col-3">
                         <IndicatorCard
                             title="Solde prévisionnel"
                             value={toMonetaryAmount(overview.forecastBalance)}
@@ -101,7 +104,7 @@ export default function Index() {
                             className={getBalanceClass(overview.forecastBalance)}
                         />
                     </div>
-                    <div className="col-12 md:col-4">
+                    <div className="col-12 md:col-6 lg:col-3">
                         <Card title="Dépenses du mois" className="h-full">
                             <div className="text-4xl font-bold text-900">
                                 {toMonetaryAmount(overview.monthExpenses)} / {toMonetaryAmount(overview.monthlyBudget)}
@@ -116,6 +119,24 @@ export default function Index() {
                             </div>
                             <div className="text-500 mt-2">
                                 {budgetProgress.toFixed(1)}% consommé • {daysRemainingInMonth} jour(s) restant(s)
+                            </div>
+                        </Card>
+                    </div>
+                    <div className="col-12 md:col-6 lg:col-3">
+                        <Card title="Opérations à vérifier" className="h-full">
+                            <div className="text-4xl font-bold text-900">
+                                {overview.operationsToCheckInAccountCount}
+                                &nbsp; <small className="text-500 text-xl">sur le compte</small>
+                            </div>
+                            <div className="text-500 mt-2">
+                                 {overview.operationsToCheckHorsCompteCount} hors compte
+                            </div>
+                            <div className="mt-3 w-full flex justify-content-end">
+                                <Button
+                                    label="Vérifications"
+                                    icon="pi pi-arrow-right"
+                                    onClick={() => navigate("/comptes/verifications")}
+                                />
                             </div>
                         </Card>
                     </div>

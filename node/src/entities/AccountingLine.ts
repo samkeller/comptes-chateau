@@ -21,6 +21,7 @@ export enum AccountingLineSource {
 @Check(`"debit" >= 0`)
 @Check(`"credit" >= 0`)
 @Check(`NOT ("debit" > 0 AND "credit" > 0)`)
+@Check(`(("isChecked" = true AND "dateValeur" IS NOT NULL) OR ("isChecked" = false AND "dateValeur" IS NULL))`)
 export class AccountingLine {
 
     @PrimaryGeneratedColumn()

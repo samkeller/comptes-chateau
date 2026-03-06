@@ -31,7 +31,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
         {
             label: "M1",
             dateOperation: new Date("2026-01-04"),
-            dateValeur: null,
+            dateValeur: new Date("2026-01-05"),
             source: AccountingLineSource.MANUAL,
             poste: posteMaison,
             debit: 100,
@@ -51,7 +51,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
         {
             label: "M3",
             dateOperation: new Date("2026-02-08"),
-            dateValeur: null,
+            dateValeur: new Date("2026-02-09"),
             source: AccountingLineSource.MANUAL,
             poste: posteMaison,
             debit: 0,
@@ -61,7 +61,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
         {
             label: "V1",
             dateOperation: new Date("2026-01-07"),
-            dateValeur: null,
+            dateValeur: new Date("2026-01-08"),
             source: AccountingLineSource.MANUAL,
             poste: posteVoyage,
             debit: 0,
@@ -71,7 +71,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
         {
             label: "V2",
             dateOperation: new Date("2026-03-01"),
-            dateValeur: null,
+            dateValeur: new Date("2026-03-02"),
             source: AccountingLineSource.MANUAL,
             poste: posteVoyage,
             debit: 10,

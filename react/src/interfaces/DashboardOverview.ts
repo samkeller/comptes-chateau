@@ -12,4 +12,6 @@ export interface DashboardOverview {
     forecastBalance: number;
     monthExpenses: number;
     monthlyBudget: number;
+    operationsToCheckInAccountCount: number;
+    operationsToCheckHorsCompteCount: number;
 }

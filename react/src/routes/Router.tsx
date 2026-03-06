@@ -1,13 +1,14 @@
 import {
   createBrowserRouter,
 } from "react-router-dom";
-import Datas from "../pages/datas/Datas";
+import Datas from "../pages/accountChecks/DatasImport";
 import AccountBook from "../pages/accountBook/AccountBook";
 import AuthPage from "../pages/AuthPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import Budget from "../pages/budget/Budget";
 import Index from "../pages/index/Index";
 import Setup from "../pages/setup/Setup";
+import AccountChecks from "../pages/accountChecks/AccountChecks";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: "/comptes",
     element: <AccountBook />,
+  },
+  {
+    path: "/comptes/verifications",
+    element: <AccountChecks />,
   },
   {
     path: "/budget",

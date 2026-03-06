@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireUnlocked } from "./middlewares/requireUnlocked";
-import OperationRoutes from './OperationControllers';
+import OperationRoutes from './OperationController';
 import NatureRoutes from './NatureController'
 import PosteRoutes from './PosteController'
 import RecurringExpenseRoutes from './RecurringExpenseController'
