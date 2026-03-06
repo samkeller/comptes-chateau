@@ -46,11 +46,6 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
             setPostes(postesData);
-
-            if (!editingLine) {
-                setNature(naturesData[0] || null);
-                setPoste(postesData[0] || null);
-            }
             setLoading(false);
         });
     }, [editingLine]);
@@ -188,9 +183,11 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                             id="nature"
                             value={nature}
                             options={natureOptions}
-                            onChange={(e) => setNature(e.value)}
+                            onChange={(e) => setNature(e.value ?? null)}
                             placeholder="Sélectionner une nature"
                             className="w-full"
+                            dataKey="id"
+                            showClear
                             itemTemplate={(option) => <ColoredLabel data={option.value} />}
                             valueTemplate={renderSelectedLabel}
                         />
@@ -202,9 +199,11 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                             id="poste"
                             value={poste}
                             options={posteOptions}
-                            onChange={(e) => setPoste(e.value)}
+                            onChange={(e) => setPoste(e.value ?? null)}
                             placeholder="Sélectionner un poste"
                             className="w-full"
+                            dataKey="id"
+                            showClear
                             itemTemplate={(option) => <ColoredLabel data={option.value} />}
                             valueTemplate={renderSelectedLabel}
                         />
