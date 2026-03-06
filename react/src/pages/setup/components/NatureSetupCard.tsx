@@ -15,6 +15,7 @@ import AccountLineNatureService, { SaveNaturePayload } from "../../../services/A
 import TooltipInfoIcon from "../../../components/TooltipInfoIcon";
 
 const NEW_NATURE_ROW_ID = -1;
+const NATURE_CONFIRM_GROUP = "nature-setup-delete";
 
 const buildEmptyNatureDraft = (): SaveNaturePayload => ({
     label: "",
@@ -29,6 +30,10 @@ export default function NatureSetupCard() {
     const [loading, setLoading] = useState<boolean>(true);
 
     const showToast = useGlobalToast();
+
+    const [draftByNatureId, setDraftByNatureId] = useState<Record<number, SaveNaturePayload>>({
+        [NEW_NATURE_ROW_ID]: buildEmptyNatureDraft()
+    });
 
     useEffect(() => {
         loadNatures();
@@ -46,9 +51,7 @@ export default function NatureSetupCard() {
         }
     }
 
-    const [draftByNatureId, setDraftByNatureId] = useState<Record<number, SaveNaturePayload>>({
-        [NEW_NATURE_ROW_ID]: buildEmptyNatureDraft()
-    });
+
 
     const tableRows: AccountLineNature[] = [
         ...natures,
@@ -119,7 +122,7 @@ export default function NatureSetupCard() {
                 [NEW_NATURE_ROW_ID]: buildEmptyNatureDraft()
             }));
             showToast({ severity: "success", summary: "Natures", detail: "Nature créée" });
-            showToast({ severity: "success", summary: "Natures", detail: "Nature creee" });
+            loadNatures();
         } catch (error) {
             showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
         }
@@ -171,16 +174,19 @@ export default function NatureSetupCard() {
     };
 
     const requestDeleteNature = (nature: AccountLineNature) => {
-        confirmDialog({
+        const dialog = confirmDialog({
+            group: NATURE_CONFIRM_GROUP,
             header: "Supprimer la nature",
             message: `La nature \"${nature.label}\" sera supprimee. ${nature.linkedAccountLines ?? 0} operation(s) liee(s) perdront leur nature. Continuer ?`,
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
             accept: async () => {
+
                 try {
                     await service.deleteNature(nature.id);
                     await loadNatures();
                     showToast({ severity: "success", summary: "Natures", detail: "Nature supprimee" });
+                    dialog.hide();
                 } catch (error) {
                     showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
                 }
@@ -190,7 +196,7 @@ export default function NatureSetupCard() {
 
     return (
         <Card title="Natures de depense" className="h-full">
-            <ConfirmDialog />
+            <ConfirmDialog group={NATURE_CONFIRM_GROUP} />
             <DataTable value={tableRows} loading={loading} size="small" dataKey="id" responsiveLayout="scroll">
                 <Column
                     header="Label"
@@ -255,7 +261,7 @@ export default function NatureSetupCard() {
                             {
                                 isEditingNature(row) ?
                                     isNewNatureRow(row) ?
-                                        <Button icon="pi pi-plus" text className="p-button-sm" onClick={createNature} /> :
+                                        <Button icon="pi pi-plus" text className="p-button-sm" onClick={() => createNature()} /> :
                                         <Button icon="pi pi-check" text className="p-button-sm" onClick={() => saveNature(row.id)} /> :
                                     !isNewNatureRow(row) &&
                                     <Button icon="pi pi-pencil" text className="p-button-sm" onClick={() => startEditNature(row)} />

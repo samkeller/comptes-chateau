@@ -12,6 +12,7 @@ import { DEFAULT_SETUP_COLOR, extractApiError, fromColorPickerValue, isHexColor,
 import AccountLinePosteService, { SavePostePayload } from "../../../services/AccountLinePosteService";
 
 const NEW_POSTE_ROW_ID = -1;
+const POSTE_CONFIRM_GROUP = "poste-setup-delete";
 
 const buildEmptyPosteDraft = (): SavePostePayload => ({
     label: "",
@@ -114,7 +115,7 @@ export default function PosteSetupCard() {
                 [NEW_POSTE_ROW_ID]: buildEmptyPosteDraft()
             }));
             showToast({ severity: "success", summary: "Postes", detail: "Poste créé" });
-            showToast({ severity: "success", summary: "Postes", detail: "Poste cree" });
+            loadPostes()
         } catch (error) {
             showToast({ severity: "error", summary: "Postes", detail: extractApiError(error) });
         }
@@ -160,12 +161,15 @@ export default function PosteSetupCard() {
     };
 
     const requestDeletePoste = (poste: AccountLinePoste) => {
-        confirmDialog({
+        const dialog = confirmDialog({
+            group: POSTE_CONFIRM_GROUP,
             header: "Supprimer le poste",
             message: `Le poste \"${poste.label}\" sera supprime. ${poste.linkedAccountLines ?? 0} operation(s) liee(s) passeront a null. Continuer ?`,
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
             accept: async () => {
+                dialog.hide();
+
                 try {
                     await service.deletePoste(poste.id);
                     await loadPostes();
@@ -179,7 +183,7 @@ export default function PosteSetupCard() {
 
     return (
         <Card title="Postes de depense" className="h-full">
-            <ConfirmDialog />
+            <ConfirmDialog group={POSTE_CONFIRM_GROUP} />
             <DataTable value={tableRows} loading={loading} size="small" dataKey="id" responsiveLayout="scroll">
                 <Column
                     header="Label"
