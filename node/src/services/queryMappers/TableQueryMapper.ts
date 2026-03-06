@@ -241,17 +241,24 @@ export function createNumericEqualsSimpleFilterHandler<TEntity extends ObjectLit
     fieldSql: string,
     paramName: string
 ): TableFilterHandler<TEntity> {
+    const isNullFilterValue = (value: unknown): boolean => {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value === "string") {
+            return value.trim().toLowerCase() === "null";
+        }
+
+        return false;
+    };
+
     const applyNumericEqualsConstraint = (
         qb: WhereExpressionBuilder,
         constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
         suffix: string,
         useOr: boolean
     ): void => {
-        const value = Number(constraint.value);
-        if (Number.isNaN(value)) {
-            return;
-        }
-
         const append = (sql: string, params: Record<string, unknown>): void => {
             if (useOr) {
                 qb.orWhere(sql, params);
@@ -259,6 +266,29 @@ export function createNumericEqualsSimpleFilterHandler<TEntity extends ObjectLit
             }
             qb.andWhere(sql, params);
         };
+
+        const appendRaw = (sql: string): void => {
+            if (useOr) {
+                qb.orWhere(sql);
+                return;
+            }
+            qb.andWhere(sql);
+        };
+
+        if (isNullFilterValue(constraint.value)) {
+            if (constraint.matchMode === "notEquals") {
+                appendRaw(`${fieldSql} IS NOT NULL`);
+                return;
+            }
+
+            appendRaw(`${fieldSql} IS NULL`);
+            return;
+        }
+
+        const value = Number(constraint.value);
+        if (Number.isNaN(value)) {
+            return;
+        }
 
         if (constraint.matchMode === "notEquals") {
             append(`${fieldSql} <> :${paramName}${suffix}`, { [`${paramName}${suffix}`]: value });

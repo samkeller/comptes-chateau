@@ -56,7 +56,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             dateValeur: new Date("2026-03-02"),
             source: AccountingLineSource.MANUAL,
             nature: natureCharges,
-            poste: posteLoisirs,
+            poste: undefined,
             debit: 20,
             credit: 0,
             isChecked: true
@@ -77,7 +77,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-03-15"),
             dateValeur: new Date("2026-03-01"),
             source: AccountingLineSource.MANUAL,
-            nature: natureRevenus,
+            nature: undefined,
             poste: posteLoisirs,
             debit: 0,
             credit: 120,
@@ -273,6 +273,54 @@ describe("OperationControllers /lazy integration", () => {
         const labels = response.body.data.map((line: { label: string }) => line.label);
 
         expect(labels).toEqual(["L1", "L3"]);
+    });
+
+    it("filters by nature.label equals null", async () => {
+        const response = await request(app)
+            .get("/operation/lazy")
+            .query({
+                skip: "0",
+                take: "50",
+                sortField: "amount",
+                sortOrder: "ASC",
+                filters: JSON.stringify([
+                    {
+                        type: "simple",
+                        field: "nature.label",
+                        matchMode: "equals",
+                        value: "null"
+                    }
+                ])
+            });
+
+        expect(response.status).toBe(200);
+        const labels = response.body.data.map((line: { label: string }) => line.label);
+
+        expect(labels).toEqual(["L4"]);
+    });
+
+    it("filters by poste.label equals null", async () => {
+        const response = await request(app)
+            .get("/operation/lazy")
+            .query({
+                skip: "0",
+                take: "50",
+                sortField: "amount",
+                sortOrder: "ASC",
+                filters: JSON.stringify([
+                    {
+                        type: "simple",
+                        field: "poste.label",
+                        matchMode: "equals",
+                        value: "null"
+                    }
+                ])
+            });
+
+        expect(response.status).toBe(200);
+        const labels = response.body.data.map((line: { label: string }) => line.label);
+
+        expect(labels).toEqual(["L2"]);
     });
 
     it("filters by isChecked equals true", async () => {

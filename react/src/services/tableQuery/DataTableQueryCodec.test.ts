@@ -72,6 +72,23 @@ describe("DataTableQueryCodec", () => {
         ]);
     });
 
+    it("keeps explicit null sentinel values", () => {
+        const filters: DataTableFilterMeta = {
+            "nature.label": { value: "null", matchMode: "equals" }
+        };
+
+        const mapped = DataTableQueryCodec.toFilters(filters);
+
+        expect(mapped).toEqual([
+            {
+                type: "simple",
+                field: "nature.label",
+                matchMode: "equals",
+                value: "null"
+            }
+        ]);
+    });
+
     it("maps operator filters and drops empty constraints", () => {
         const filters: DataTableFilterMeta = {
             amount: {

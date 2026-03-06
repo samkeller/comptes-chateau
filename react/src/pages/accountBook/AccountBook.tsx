@@ -25,6 +25,13 @@ import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
 
+type RelationFilterOption = {
+    id: number | "null";
+    label: string;
+    color?: string;
+    isNullOption?: boolean;
+}
+
 export default function AccountBook() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
     const [loading, setLoading] = useState<boolean>(false)
@@ -55,6 +62,16 @@ export default function AccountBook() {
     // Données annexes
     const [natures, setNatures] = useState<AccountLineNature[]>([])
     const [postes, setPostes] = useState<AccountLinePoste[]>([])
+
+    const natureFilterOptions: RelationFilterOption[] = [
+        { id: "null", label: "- Vide -", isNullOption: true },
+        ...natures
+    ]
+
+    const posteFilterOptions: RelationFilterOption[] = [
+        { id: "null", label: "- Vide -", isNullOption: true },
+        ...postes
+    ]
 
     // Mode d'édition
     const [isEditMode, setIsEditMode] = useState<boolean>(false)
@@ -255,11 +272,18 @@ export default function AccountBook() {
                         filterElement={(options) => (
                             <Dropdown
                                 value={options.value}
-                                options={natures}
+                                options={natureFilterOptions}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                itemTemplate={(option) => option ? <ColoredLabel data={option} /> : null}
+                                showClear
+                                itemTemplate={(option: RelationFilterOption) =>
+                                    option ?
+                                        option.isNullOption ?
+                                            <span>{option.label}</span> :
+                                            <ColoredLabel data={option as AccountLineNature} />
+                                        : null
+                                }
                             />
                         )}
                     ></Column>
@@ -274,11 +298,18 @@ export default function AccountBook() {
                         filterElement={(options) => (
                             <Dropdown
                                 value={options.value}
-                                options={postes}
+                                options={posteFilterOptions}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 optionLabel="label"
                                 optionValue="id"
-                                itemTemplate={(option) => option ? <ColoredLabel data={option} /> : null}
+                                showClear
+                                itemTemplate={(option: RelationFilterOption) =>
+                                    option ?
+                                        option.isNullOption ?
+                                            <span>{option.label}</span> :
+                                            <ColoredLabel data={option as AccountLinePoste} />
+                                        : null
+                                }
                             />
                         )}
                     ></Column>

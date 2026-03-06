@@ -301,4 +301,34 @@ describe("operationTableQueryConfig", () => {
             }
         ]);
     });
+
+    it("maps relation null filters to IS NULL / IS NOT NULL", () => {
+        const qb = new MockQueryBuilder();
+
+        operationTableQueryConfig.filterHandlers["nature.label"].applySimple?.(qb as never, {
+            type: "simple",
+            field: "nature.label",
+            matchMode: "equals",
+            value: "null"
+        });
+        operationTableQueryConfig.filterHandlers["poste.label"].applySimple?.(qb as never, {
+            type: "simple",
+            field: "poste.label",
+            matchMode: "notEquals",
+            value: "null"
+        });
+
+        expect(qb.whereCalls).toEqual([
+            {
+                kind: "and",
+                sql: "nature.id IS NULL",
+                params: undefined
+            },
+            {
+                kind: "and",
+                sql: "poste.id IS NOT NULL",
+                params: undefined
+            }
+        ]);
+    });
 });
