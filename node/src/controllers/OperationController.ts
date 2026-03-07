@@ -52,4 +52,14 @@ OperationRoutes.post('/check-batch', async (req: Request<unknown, unknown, Opera
     }
 });
 
+OperationRoutes.get('/unchecked', async (_req: Request, res: Response) => {
+    try {
+        const data = await operationService.getAllUncheckedLines();
+        return res.json(data);
+    } catch (error) {
+        console.error('Error in unchecked operations endpoint:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default OperationRoutes

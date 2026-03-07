@@ -19,7 +19,7 @@ class AccountingService extends BaseService {
 
     getAccountingLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
         const requestParams = DataTableQueryCodec.toQueryParams(lazyState).toString();
-        
+
         return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
             return {
                 data: response.data.data.map((v: Partial<AccountLine>) => new AccountLine(v)),
@@ -50,6 +50,12 @@ class AccountingService extends BaseService {
         };
 
         return axios.post(this.apiUrl + "/operation/check-batch", payload).then((response) => response.data.updatedCount);
+    }
+
+    getAllUncheckedLines(): Promise<AccountLine[]> {
+        return axios.get(`${this.apiUrl}/operation/unchecked`).then((response) => {
+            return response.data.map((v: Partial<AccountLine>) => new AccountLine(v));
+        });
     }
 
 }

@@ -1,7 +1,6 @@
 import {
   createBrowserRouter,
 } from "react-router-dom";
-import Datas from "../pages/accountChecks/DatasImport";
 import AccountBook from "../pages/accountBook/AccountBook";
 import AuthPage from "../pages/AuthPage";
 import NotFoundPage from "../pages/NotFoundPage";
@@ -26,10 +25,6 @@ const router = createBrowserRouter([
   {
     path: "/budget",
     element: <Budget />,
-  },
-  {
-    path: "/datas",
-    element: <Datas />,
   },
   {
     path: "/setup",

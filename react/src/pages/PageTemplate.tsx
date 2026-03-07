@@ -77,7 +77,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
       <div className="flex-1 min-h-0 md:flex overflow-hidden">
         {isDesktopMenuVisible && (
-          <aside className="p-3 border-right-1 surface-border hidden md:block md:w-18rem h-full overflow-y-auto">
+          <aside className="p-3 border-right-1 surface-border hidden md:block md:w-16rem h-full overflow-y-auto">
             <AppNavigationMenu navigateTo={navigateTo} />
           </aside>
         )}

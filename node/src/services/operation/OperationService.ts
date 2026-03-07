@@ -90,6 +90,17 @@ export default class OperationService {
         }
     }
 
+    async getAllUncheckedLines(): Promise<AccountLine[]> {
+        return this.accountLineRepo
+            .createQueryBuilder("al")
+            .leftJoinAndSelect("al.nature", "nature")
+            .leftJoinAndSelect("al.poste", "poste")
+            .where("al.isChecked = :isChecked", { isChecked: false })
+            .orderBy("al.dateOperation", "DESC")
+            .addOrderBy("al.id", "DESC")
+            .getMany();
+    }
+
     private validateAndNormalizeCheckItem(check: OperationBatchCheckInput, index: number): {
         id: number;
         isChecked: boolean;
