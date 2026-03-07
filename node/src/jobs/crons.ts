@@ -15,10 +15,6 @@ async function ensureDataSource() {
     }
 }
 
-async function cleanup() {
-    await AppDataSource.destroy();
-}
-
 async function runJob() {
     const currentDate = new Date();
 
@@ -30,10 +26,8 @@ async function runJob() {
             await processRecurringExpenses(manager, currentDate);
         });
 
-        await cleanup();
         jobLog("INFO", "Finished cron job");
     } catch (error) {
         jobLog("ERROR", `Error executing cron job: ${error}`);
-        await cleanup();
     }
 }
