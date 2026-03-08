@@ -25,6 +25,10 @@ const buildEmptyNatureDraft = (): SaveNaturePayload => ({
 
 const service = new AccountLineNatureService();
 
+type NatureTableRow = AccountLineNature & {
+    uiEditing: boolean;
+}
+
 export default function NatureSetupCard() {
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -53,30 +57,31 @@ export default function NatureSetupCard() {
 
 
 
-    const tableRows: AccountLineNature[] = [
-        ...natures,
-        new AccountLineNature({
+    const tableRows: NatureTableRow[] = [
+        ...natures.map((nature) => {
+            const draft = draftByNatureId[nature.id];
+            if (!draft) {
+                return {
+                    ...nature,
+                    uiEditing: false
+                };
+            }
+
+            return {
+                ...nature,
+                ...draft,
+                uiEditing: true
+            };
+        }),
+        {
             id: NEW_NATURE_ROW_ID,
             ...draftByNatureId[NEW_NATURE_ROW_ID],
-            linkedAccountLines: 0
-        })
+            linkedAccountLines: 0,
+            uiEditing: true
+        } as NatureTableRow
     ];
 
-    const isNewNatureRow = (row: AccountLineNature): boolean => row.id === NEW_NATURE_ROW_ID;
-    const isEditingNature = (row: AccountLineNature): boolean => draftByNatureId[row.id] !== undefined;
-
-    const getRowDraft = (row: AccountLineNature): SaveNaturePayload => {
-        const existingDraft = draftByNatureId[row.id];
-        if (existingDraft) {
-            return existingDraft;
-        }
-
-        return {
-            label: row.label,
-            color: row.color,
-            isHorsCompte: row.isHorsCompte
-        };
-    };
+    const isNewNatureRow = (row: NatureTableRow): boolean => row.id === NEW_NATURE_ROW_ID;
 
     const updateRowDraft = (rowId: number, patch: Partial<SaveNaturePayload>) => {
         setDraftByNatureId((prev) => {
@@ -197,16 +202,22 @@ export default function NatureSetupCard() {
     return (
         <Card title="Natures de depense" className="h-full">
             <ConfirmDialog group={NATURE_CONFIRM_GROUP} />
-            <DataTable value={tableRows} loading={loading} size="small" dataKey="id" responsiveLayout="scroll">
+            <DataTable
+                value={tableRows}
+                loading={loading}
+                size="small"
+                dataKey="id"
+                cellMemo
+            >
                 <Column
                     header="Label"
-                    body={(row: AccountLineNature) => {
-                        if (!isEditingNature(row))
+                    body={(row: NatureTableRow) => {
+                        if (!row.uiEditing)
                             return row.label;
 
                         return (
                             <InputText
-                                value={getRowDraft(row).label}
+                                value={row.label}
                                 onChange={(event) => updateRowDraft(row.id, { label: event.target.value })}
                                 className="w-full"
                                 placeholder={isNewNatureRow(row) ? "Nouvelle nature" : undefined}
@@ -216,8 +227,8 @@ export default function NatureSetupCard() {
                 />
                 <Column
                     header="Couleur"
-                    body={(row: AccountLineNature) => {
-                        if (!isEditingNature(row)) {
+                    body={(row: NatureTableRow) => {
+                        if (!row.uiEditing) {
                             return (
                                 <span className="inline-flex align-items-center gap-2">
                                     <span className="border-circle inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
@@ -228,7 +239,7 @@ export default function NatureSetupCard() {
                         return (
                             <ColorPicker
                                 format="hex"
-                                value={toColorPickerValue(getRowDraft(row).color)}
+                                value={toColorPickerValue(row.color)}
                                 onChange={(event: ColorPickerChangeEvent) => updateRowDraft(row.id, {
                                     color: fromColorPickerValue(event.value)
                                 })}
@@ -238,13 +249,13 @@ export default function NatureSetupCard() {
                 />
                 <Column
                     header={<span>Hors compte <TooltipInfoIcon tooltipText="Non pris en compte dans le solde du compte." /> </span>}
-                    body={(row: AccountLineNature) => {
-                        if (!isEditingNature(row))
+                    body={(row: NatureTableRow) => {
+                        if (!row.uiEditing)
                             return <BooleanIcon value={row.isHorsCompte} />;
 
                         return (
                             <Checkbox
-                                checked={getRowDraft(row).isHorsCompte}
+                                checked={row.isHorsCompte}
                                 onChange={(event: CheckboxChangeEvent) => updateRowDraft(row.id, { isHorsCompte: !!event.checked })}
                             />
                         );
@@ -252,14 +263,14 @@ export default function NatureSetupCard() {
                 />
                 <Column
                     header="Ops liées"
-                    body={(row: AccountLineNature) => isNewNatureRow(row) ? "-" : (row.linkedAccountLines ?? 0)}
+                    body={(row: NatureTableRow) => isNewNatureRow(row) ? "-" : (row.linkedAccountLines ?? 0)}
                 />
                 <Column
                     header="Actions"
-                    body={(row: AccountLineNature) => (
+                    body={(row: NatureTableRow) => (
                         <div className="flex gap-1">
                             {
-                                isEditingNature(row) ?
+                                row.uiEditing ?
                                     isNewNatureRow(row) ?
                                         <Button icon="pi pi-plus" text className="p-button-sm" onClick={() => createNature()} /> :
                                         <Button icon="pi pi-check" text className="p-button-sm" onClick={() => saveNature(row.id)} /> :

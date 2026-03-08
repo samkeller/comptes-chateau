@@ -3,18 +3,19 @@
   "version": "1.0.1",
   "main": "index.js",
   "scripts": {
+    "install:all": "npm install && cd react && npm install && cd ../node && npm install",
     "dev-front": "cd react && npm start",
     "dev-back": "cd node && npm run dev",
     "dev": "npx concurrently -n FRONT,BACK -c \"blue,magenta\" --kill-others \"npm run dev-front\" \"npm run dev-back\"",
     "build": "cd react && npm install && npm run build && cd ../node && npm install && npm run build",
     "start": "cd node && npm start"
   },
-  "packageManager": "npm@11.6.2",
+  "packageManager": "npm@11.11.0",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.2.1"
   }
 }

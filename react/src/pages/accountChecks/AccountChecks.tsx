@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageTemplate } from "../PageTemplate";
 import { Card } from "primereact/card";
-import { DataTable } from "primereact/datatable";
+import { DataTable, DataTableSelectionMultipleChangeEvent } from "primereact/datatable";
 import { Column } from "primereact/column";
 import AccountLine from "../../interfaces/AccountLine";
 import AccountingService from "../../services/AccountingService";
@@ -17,15 +17,13 @@ import BanquePostaleImportReportPanel from "./BanquePostaleImportReportPanel";
 
 export default function AccountChecks() {
     const [accountLines, setAccountLines] = useState<AccountLine[]>([]);
-    const [selectedLines, setSelectedLines] = useState<AccountLine[]>([]);
-    const [draftDatesById, setDraftDatesById] = useState<Record<number, Date>>({});
     const [importReport, setImportReport] = useState<BanquePostaleImportReport | null>(null);
 
     const [loading, setLoading] = useState<boolean>(false);
     const [submitting, setSubmitting] = useState<boolean>(false);
     const showGlobalToast = useGlobalToast();
 
-    const selectedIds = useMemo(() => new Set(selectedLines.map((line) => line.id)), [selectedLines]);
+    const selectedLines = useMemo(() => accountLines.filter((line) => line.isChecked), [accountLines]);
 
     useEffect(() => {
         loadUncheckedLines();
@@ -52,21 +50,19 @@ export default function AccountChecks() {
     const handleCsvImport = (csvData: BanquePostaleCsvData) => {
         const prefillResult = buildBanquePostalePrefillResult(csvData, accountLines);
 
-        const lineById = new Map(accountLines.map((line) => [line.id, line]));
-
-        setSelectedLines((previousSelection) => {
-            const mergedIds = new Set(previousSelection.map((line) => line.id));
-            prefillResult.selectedOperationIds.forEach((id) => mergedIds.add(id));
-
-            return Array.from(mergedIds)
-                .map((id) => lineById.get(id))
-                .filter((line): line is AccountLine => Boolean(line));
-        });
-
-        setDraftDatesById((previousDrafts) => ({
-            ...previousDrafts,
-            ...prefillResult.draftDatesById
-        }));
+        setAccountLines((prev) =>
+            prev.map((line) => {
+                // Si la ligne est dans les résultats du pré-remplissage, on la marque comme cochée et on met à jour sa date de valeur.
+                if (prefillResult.selectedOperationIds.has(line.id)) {
+                    return new AccountLine({
+                        ...line,
+                        isChecked: true,
+                        dateValeur: prefillResult.draftDatesById[line.id]
+                    });
+                }
+                return line;
+            })
+        );
 
         setImportReport(prefillResult.report);
 
@@ -88,24 +84,24 @@ export default function AccountChecks() {
         });
     };
 
-    const onSelectionChange = (event: { value: AccountLine[] | null }) => {
-        const nextSelection = event.value ?? [];
-        const nextSelectionIds = new Set(nextSelection.map((line: AccountLine) => line.id));
+    const onSelectionChange = (event: DataTableSelectionMultipleChangeEvent<AccountLine[]>) => {
+        const nextSelectedIds = new Set((event.value).map((line) => line.id));
 
-        setSelectedLines(nextSelection);
-        setDraftDatesById((previousDrafts) => {
-            const nextDrafts: Record<number, Date> = {};
-
-            nextSelection.forEach((line: AccountLine) => {
-                nextDrafts[line.id] = previousDrafts[line.id] ?? new Date();
-            });
-
-            return nextDrafts;
-        });
-
-        if (nextSelectionIds.size === 0) {
-            setDraftDatesById({});
-        }
+        setAccountLines((prev) =>
+            prev.map((line) => {
+                // Ligne déjà sélectionnée -> pas de changement
+                const shouldBeChecked = nextSelectedIds.has(line.id);
+                if (shouldBeChecked === line.isChecked) {
+                    return line;
+                }
+                // Sinon, checker/déchecker la ligne et mettre à jour la date de valeur si besoin
+                return new AccountLine({
+                    ...line,
+                    isChecked: shouldBeChecked,
+                    dateValeur: shouldBeChecked ? (line.dateValeur ?? new Date()) : line.dateValeur
+                });
+            })
+        );
     };
 
     const updateDateForLine = (lineId: number, date: Date | null) => {
@@ -113,10 +109,13 @@ export default function AccountChecks() {
             return;
         }
 
-        setDraftDatesById((previousDrafts) => ({
-            ...previousDrafts,
-            [lineId]: date
-        }));
+        setAccountLines((prev) =>
+            prev.map((line) =>
+                line.id === lineId
+                    ? new AccountLine({ ...line, dateValeur: date })
+                    : line
+            )
+        );
     };
 
     const submitBatchCheck = async () => {
@@ -130,7 +129,7 @@ export default function AccountChecks() {
                 selectedLines.map((line) => ({
                     id: line.id,
                     isChecked: true,
-                    dateValeur: draftDatesById[line.id] ?? new Date()
+                    dateValeur: line.dateValeur ?? new Date()
                 }))
             );
 
@@ -140,8 +139,6 @@ export default function AccountChecks() {
                 detail: `${selectedLines.length} opération(s) validée(s).`
             });
 
-            setSelectedLines([]);
-            setDraftDatesById({});
             await loadUncheckedLines();
         } catch (error) {
             console.error("Error while checking operations", error);
@@ -238,11 +235,11 @@ export default function AccountChecks() {
                             header="Date valeur"
                             body={(line: AccountLine) => (
                                 <Calendar
-                                    value={draftDatesById[line.id] ?? null}
+                                    value={line.dateValeur}
                                     onChange={(event) => updateDateForLine(line.id, event.value ?? null)}
                                     dateFormat="dd/mm/yy"
                                     className="w-full"
-                                    disabled={!selectedIds.has(line.id)}
+                                    disabled={!line.isChecked}
                                 />
                             )}
                             style={{ width: "14rem" }}

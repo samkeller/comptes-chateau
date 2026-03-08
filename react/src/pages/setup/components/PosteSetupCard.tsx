@@ -21,6 +21,10 @@ const buildEmptyPosteDraft = (): SavePostePayload => ({
 
 const service = new AccountLinePosteService();
 
+type PosteTableRow = AccountLinePoste & {
+    uiEditing: boolean;
+}
+
 export default function PosteSetupCard() {
     const showToast = useGlobalToast();
 
@@ -47,29 +51,31 @@ export default function PosteSetupCard() {
         [NEW_POSTE_ROW_ID]: buildEmptyPosteDraft()
     });
 
-    const tableRows: AccountLinePoste[] = [
-        ...postes,
-        new AccountLinePoste({
+    const tableRows: PosteTableRow[] = [
+        ...postes.map((poste) => {
+            const draft = draftByPosteId[poste.id];
+            if (!draft) {
+                return {
+                    ...poste,
+                    uiEditing: false
+                };
+            }
+
+            return {
+                ...poste,
+                ...draft,
+                uiEditing: true
+            };
+        }),
+        {
             id: NEW_POSTE_ROW_ID,
             ...draftByPosteId[NEW_POSTE_ROW_ID],
-            linkedAccountLines: 0
-        })
+            linkedAccountLines: 0,
+            uiEditing: true
+        } as PosteTableRow
     ];
 
-    const isNewPosteRow = (row: AccountLinePoste): boolean => row.id === NEW_POSTE_ROW_ID;
-    const isEditingPoste = (row: AccountLinePoste): boolean => draftByPosteId[row.id] !== undefined;
-
-    const getRowDraft = (row: AccountLinePoste): SavePostePayload => {
-        const existingDraft = draftByPosteId[row.id];
-        if (existingDraft) {
-            return existingDraft;
-        }
-
-        return {
-            label: row.label,
-            color: row.color
-        };
-    };
+    const isNewPosteRow = (row: PosteTableRow): boolean => row.id === NEW_POSTE_ROW_ID;
 
     const updateRowDraft = (rowId: number, patch: Partial<SavePostePayload>) => {
         setDraftByPosteId((prev) => {
@@ -184,17 +190,23 @@ export default function PosteSetupCard() {
     return (
         <Card title="Postes de depense" className="h-full">
             <ConfirmDialog group={POSTE_CONFIRM_GROUP} />
-            <DataTable value={tableRows} loading={loading} size="small" dataKey="id" responsiveLayout="scroll">
+            <DataTable
+                value={tableRows}
+                loading={loading}
+                size="small"
+                dataKey="id"
+                cellMemo
+            >
                 <Column
                     header="Label"
-                    body={(row: AccountLinePoste) => {
-                        if (!isEditingPoste(row)) {
+                    body={(row: PosteTableRow) => {
+                        if (!row.uiEditing) {
                             return row.label;
                         }
 
                         return (
                             <InputText
-                                value={getRowDraft(row).label}
+                                value={row.label}
                                 onChange={(event) => updateRowDraft(row.id, { label: event.target.value })}
                                 className="w-full"
                                 placeholder={isNewPosteRow(row) ? "Nouveau poste" : undefined}
@@ -204,8 +216,8 @@ export default function PosteSetupCard() {
                 />
                 <Column
                     header="Couleur"
-                    body={(row: AccountLinePoste) => {
-                        if (!isEditingPoste(row)) {
+                    body={(row: PosteTableRow) => {
+                        if (!row.uiEditing) {
                             return (
                                 <span className="inline-flex align-items-center gap-2">
                                     <span className="border-circle inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
@@ -216,7 +228,7 @@ export default function PosteSetupCard() {
                         return (
                             <ColorPicker
                                 format="hex"
-                                value={toColorPickerValue(getRowDraft(row).color)}
+                                value={toColorPickerValue(row.color)}
                                 onChange={(event: ColorPickerChangeEvent) => updateRowDraft(row.id, {
                                     color: fromColorPickerValue(event.value)
                                 })}
@@ -226,14 +238,14 @@ export default function PosteSetupCard() {
                 />
                 <Column
                     header="Ops liees"
-                    body={(row: AccountLinePoste) => isNewPosteRow(row) ? "-" : (row.linkedAccountLines ?? 0)}
+                    body={(row: PosteTableRow) => isNewPosteRow(row) ? "-" : (row.linkedAccountLines ?? 0)}
                 />
                 <Column
                     header="Actions"
-                    body={(row: AccountLinePoste) => (
+                    body={(row: PosteTableRow) => (
                         <div className="flex gap-1">
                             {
-                                isEditingPoste(row) ?
+                                row.uiEditing ?
                                     isNewPosteRow(row) ?
                                         <Button icon="pi pi-plus" text className="p-button-sm" onClick={createPoste} /> :
                                         <Button icon="pi pi-check" text className="p-button-sm" onClick={() => savePoste(row.id)} /> :

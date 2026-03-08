@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import AccountLine from "../../interfaces/AccountLine"
 import { DataTable, DataTablePageEvent } from "primereact/datatable"
 import { Column, ColumnFilterElementTemplateOptions } from "primereact/column"
@@ -73,10 +73,6 @@ export default function AccountBook() {
         { id: "null", label: "- Vide -", isNullOption: true },
         ...postes
     ]
-
-    // Mode d'édition
-    const [isEditMode, setIsEditMode] = useState<boolean>(false)
-
     useEffect(() => {
         // Load natures and postes
         const natureService = new AccountLineNatureService()
@@ -102,11 +98,6 @@ export default function AccountBook() {
             setLoading(false)
         }
     }
-
-    const updateLine = async (lineToUpdate: AccountLine) => {
-        await new AccountingService().saveAccountingLine(lineToUpdate);
-        loadAccountLines();
-    };
 
     const checkedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
         return <TriStateCheckbox value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} />;
@@ -149,11 +140,6 @@ export default function AccountBook() {
             <div className="flex justify-content-end mb-3">
                 <div className="flex flex-column gap-2">
                     <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
-                    <div className="p-component flex justify-content-end align-items-center gap-2">
-                        <span>Mode d'édition</span>
-                        <InputSwitch checked={isEditMode} onChange={(e) => setIsEditMode(e.value)} />
-                        <TooltipInfoIcon tooltipText="Vérifier ligne ici applique la date du jour comme date de valeur. Pour une autre date, utiliser 'Modifier'" type="warning" />
-                    </div>
                 </div>
             </div>
 
@@ -338,20 +324,7 @@ export default function AccountBook() {
                         sortable
                         filter
                         filterElement={checkedRowFilterTemplate}
-                        body={(data) => {
-                            return isEditMode ?
-                                <ToggleButton
-                                    onIcon="pi pi-check" offIcon="pi pi-times"
-                                    onLabel="Vérifié" offLabel="Non vérifié"
-                                    checked={data.isChecked}
-                                    onChange={(e: ToggleButtonChangeEvent) => updateLine({
-                                        ...data,
-                                        isChecked: e.value,
-                                        dateValeur: e.value ? (data.dateValeur ?? new Date()) : null
-                                    })}
-                                /> :
-                                <BooleanIcon value={data.isChecked} />
-                        }} ></Column>
+                        body={(data) => <BooleanIcon value={data.isChecked} />}></Column>
                     <Column
                         header="Actions"
                         body={actionsBody}
