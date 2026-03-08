@@ -4,83 +4,84 @@ Application full-stack TypeScript:
 
 - **Frontend**: React + PrimeReact dans `react/`
 - **Backend**: Node.js + TypeORM + PostgreSQL dans `node/`
-- **Shared**: interfaces/DTO alignés entre front et back
+- **Shared**: interfaces/DTO alignes entre front et back
 
-Objectif Copilot: proposer du code simple, typed, compatible avec la structure existante.
+Objectif Copilot: proposer du code simple, type, compatible avec la structure existante.
 
 ## Tech Stack
 
 - Front: React, TypeScript, PrimeReact, Vite
 - Back: Node.js, TypeScript, TypeORM, PostgreSQL
 
-## Structure attendue
+## Structure Attendue
 
 ### Frontend (`react/src`)
 
-- `pages/` pour les écrans
-- `components/` pour l’UI réutilisable
+- `pages/` pour les ecrans
+- `components/` pour l'UI reutilisable
 - `services/` pour les appels HTTP
-- `interfaces/` pour les types métier/DTO
+- `interfaces/` pour les types metier/DTO
 - `utils/` pour helpers purs
 
 ### Backend (`node/src`)
 
-- `controllers/` pour HTTP + validation d’entrée
-- `services/` pour la logique métier
+- `controllers/` pour HTTP + validation d'entree
+- `services/` pour la logique metier
 - `entities/` pour le mapping DB TypeORM
-- `db/migrations/` pour l’historique de schéma
+- `db/migrations/` pour l'historique de schema
 - `utils/` pour helpers transverses
 
-## Conventions de code
+## Core Rules
 
-- TypeScript strict: **pas de `any`** sauf cas exceptionnel justifié
+- TypeScript strict: pas de `any` sauf cas exceptionnel justifie
 - Composants React fonctionnels + hooks
-- Props, retours de fonctions, DTOs explicitement typés
+- Props, retours de fonctions, DTOs explicitement types
 - Nommage: `PascalCase` (composants/classes), `camelCase` (fonctions/variables), `UPPER_SNAKE_CASE` (constantes)
+- Utiliser PrimeReact avant de creer des composants UI custom
+- Controlleurs fins, logique metier dans les services
+- Validation des entrees a la frontiere API
+- Gestion systematique des erreurs async avec propagation coherente
 
-## Règles Frontend
+## Migration Policy (Mandatory)
 
-- Utiliser PrimeReact avant de créer des composants UI custom
-- Garder les composants de présentation simples; déplacer la logique data dans `services/` ou helpers
-- Gérer explicitement les états `loading`, `error`, `empty`
-- Éviter les styles inline si la thématisation/classes existent déjà
+- Ne jamais creer une migration manuellement
+- Toujours passer par la CLI TypeORM
+- Si un changement de schema est necessaire, proposer la commande CLI au lieu d'ecrire un fichier de migration a la main
 
-## Règles Backend
+Commandes backend de reference:
 
-- Contrôleurs fins, logique métier dans les services
-- Validation des entrées (params/body/query) à la frontière API
-- Gestion systématique des erreurs async (`try/catch` + propagation)
-- Réponses API cohérentes et typées
-
-### Commandes backend de référence
-
-- Générer une migration: `npm run typeorm -- migration:generate ./src/db/migrations/[migration-name]` (sans extension)
-- Exécuter les migrations: `npm run typeorm -- migration:run`
+- Generer une migration: `npm run typeorm -- migration:generate ./src/db/migrations/[migration-name]`
+- Executer les migrations: `npm run typeorm -- migration:run`
 - Tester le cron: `npm run build` puis `node dist/jobs/index.js`
 
-### Politique migrations (obligatoire)
+## Shared Types Contract
 
-- Ne **jamais** créer une migration manuellement
-- Toujours passer par la CLI TypeORM
-- Si un changement de schéma est nécessaire, proposer la commande CLI au lieu d’écrire un fichier de migration à la main
+- Reutiliser les memes shapes de donnees quand possible
+- Si un contrat back change, mettre a jour front + types dans la meme PR
+- Preferer des mappings explicites `Entity -> DTO`
 
-## Shared types (Front/Back)
+## Instruction Modules
 
-- Réutiliser les mêmes shapes de données quand possible
-- Si un contrat back change, mettre à jour front + types dans la même PR
-- Préférer des mappings explicites Entity -> DTO
+Use these specialized instruction files with this root guidance:
 
-## Ce que Copilot doit produire
+- [TypeScript Standards](./instructions/typescript.instructions.md)
+- [Testing Standards](./instructions/testing.instructions.md)
+- [Documentation Standards](./instructions/documentation.instructions.md)
+- [Security Guidelines](./instructions/security.instructions.md)
+- [Performance Guidelines](./instructions/performance.instructions.md)
+- [Code Review Standards](./instructions/code-review.instructions.md)
 
-- Composants/pages React typés et cohérents avec l’existant
-- Routes/contrôleurs/services backend bien séparés
-- Entités TypeORM alignées au schéma + migrations via CLI
-- Tests front/back centrés sur les règles métier et régressions
+## Expected Copilot Output
 
-## Ce qu’il faut éviter
+- Composants/pages React types et coherents avec l'existant
+- Routes/controleurs/services backend bien separes
+- Entites TypeORM alignees au schema + migrations via CLI
+- Tests front/back centres sur les regles metier et regressions
 
-- `any` non justifié
-- Logique métier dans les contrôleurs
-- Erreurs async non gérées
-- Duplication de logique déjà présente dans services/utils
+## Avoid
+
+- `any` non justifie
+- Logique metier dans les controleurs
+- Erreurs async non gerees
+- Duplication de logique deja presente dans services/utils
 - Changements de structure de dossiers sans raison explicite
