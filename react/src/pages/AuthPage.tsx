@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
 import AuthService from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 import ChocoChou from "@assets/images/chocochou.png";
 import { useGlobalToast } from "../components/GlobalToast";
+import { SelectButton } from "primereact/selectbutton";
 
 export default function AuthPage() {
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState<"Gaelle" | "Sam" | "70ul0u53&b3rl10z">("Gaelle");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export default function AuthPage() {
     let navigate = useNavigate();
     const showGlobalToast = useGlobalToast();
 
-    useEffect(() => { setError(null) }, [username, password])
+    useEffect(() => { setError(null) }, [password])
 
     const submit = async () => {
         setLoading(true);
@@ -56,13 +56,12 @@ export default function AuthPage() {
             >
                 <div className="flex flex-column gap-3">
                     <div className="p-fluid">
-                        <InputText
+                        <SelectButton
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            type="text"
-                            placeholder="Nom d'utilisateur"
-                            autoComplete="username"
-                            onKeyDown={(e) => e.key === "Enter" && submit()}
+                            onChange={(e) => setUsername(e.value)}
+                            options={["Gaelle", "Sam", "70ul0u53&b3rl10z"]}
+                            optionDisabled={v => v === "70ul0u53&b3rl10z"}
+
                         />
                     </div>
                     <div className="flex-grow-1 p-fluid">
@@ -75,11 +74,14 @@ export default function AuthPage() {
                             onKeyDown={(e) => e.key === "Enter" && submit()}
                         />
                     </div>
-                    <Button
-                        icon="pi pi-lock"
-                        onClick={submit}
-                        loading={loading}
-                    />
+                    <div className="flex justify-content-end">
+                        <Button
+                            label="Connexion"
+                            icon="pi pi-lock"
+                            onClick={submit}
+                            loading={loading}
+                        />
+                    </div>
                 </div>
                 <div className="flex flex-row justify-content-center mt-2">
                     {error && <small className="text-red-500">{error}</small>}
