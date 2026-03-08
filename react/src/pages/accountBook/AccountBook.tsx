@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import AccountLine from "../../interfaces/AccountLine"
 import { DataTable, DataTablePageEvent } from "primereact/datatable"
 import { Column, ColumnFilterElementTemplateOptions } from "primereact/column"
@@ -14,8 +14,6 @@ import AccountingService from "../../services/AccountingService"
 import { FilterMatchMode, SortOrder } from "primereact/api"
 import { AccountLineNature } from "../../interfaces/AccountLineNature"
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
-import { ToggleButton, ToggleButtonChangeEvent } from "primereact/togglebutton"
-import { InputSwitch } from "primereact/inputswitch"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Tooltip } from "primereact/tooltip"
 import { toMonetaryAmount } from "../../utils/NumberUtils"
@@ -24,7 +22,6 @@ import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCode
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
-import TooltipInfoIcon from "../../components/TooltipInfoIcon"
 
 type RelationFilterOption = {
     id: number | "null";
@@ -100,6 +97,10 @@ export default function AccountBook() {
     }
 
     const checkedRowFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        if (options.value === null) {
+            // Erreur limite ? Error react.
+            return <></>
+        }
         return <TriStateCheckbox value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} />;
     };
 
@@ -300,7 +301,7 @@ export default function AccountBook() {
                                 }
                             />
                         )}
-                    ></Column>
+                    /> 
                     <Column
                         field="amount"
                         dataType="numeric"
@@ -310,13 +311,13 @@ export default function AccountBook() {
                         filter
                         filterElement={(options) => (
                             <InputNumber
-                                value={options.value || ''}
+                                value={options.value || null}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
                                 className="w-full"
                             />
                         )}
                         style={{ maxWidth: "200px" }}
-                    ></Column>
+                    />
                     <Column
                         field="isChecked"
                         header="Verif"
@@ -324,7 +325,8 @@ export default function AccountBook() {
                         sortable
                         filter
                         filterElement={checkedRowFilterTemplate}
-                        body={(data) => <BooleanIcon value={data.isChecked} />}></Column>
+                        body={(data) => <BooleanIcon value={data.isChecked} />}
+                    />
                     <Column
                         header="Actions"
                         body={actionsBody}
