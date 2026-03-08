@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireUnlocked } from "./middlewares/requireUnlocked";
+import { requireAuthenticated } from "./middlewares/requireAuthenticated";
 import OperationRoutes from './OperationController';
 import NatureRoutes from './NatureController'
 import PosteRoutes from './PosteController'
@@ -10,7 +10,7 @@ import BudgetRoutes from './BudgetController'
 const ApiRouter = Router()
 
 // Appliquer le middleware de sécurité pour TOUTES les routes du router
-ApiRouter.use(requireUnlocked);
+ApiRouter.use(requireAuthenticated);
 
 ApiRouter.use("/operation", OperationRoutes)
 ApiRouter.use('/nature', NatureRoutes)

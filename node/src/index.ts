@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
+import getPgSessionStoreInstance from './config/PGSession';
 
 import AuthRoutes from './controllers/AuthController';
 import morgan from 'morgan';
@@ -26,6 +27,7 @@ AppDataSource.initialize().then(() => {
     app.use(session({
         name: COOKIE_NAME,
         secret: APP_SECRET,
+        store: getPgSessionStoreInstance(),
         resave: false,
         saveUninitialized: false,
         cookie: {

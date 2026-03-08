@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import { InputText } from "primereact/inputtext";
 import AuthService from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 import ChocoChou from "@assets/images/chocochou.png";
 import { useGlobalToast } from "../components/GlobalToast";
 
 export default function AuthPage() {
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -16,21 +18,24 @@ export default function AuthPage() {
     let navigate = useNavigate();
     const showGlobalToast = useGlobalToast();
 
-    useEffect(() => { setError(null) }, [password])
+    useEffect(() => { setError(null) }, [username, password])
 
     const submit = async () => {
         setLoading(true);
         setError(null);
-        authService.login(password)
-            .then(() => navigate("/"))
-            .catch(() => setError("Mot de passe incorrect"))
-            .finally(() => {
-                showGlobalToast({
-                    severity: "success",
-                    detail: "Connexion réussie ! 😽",
-                })
-                setLoading(false)
-            })
+
+        try {
+            await authService.login(username, password);
+            showGlobalToast({
+                severity: "success",
+                detail: "Connexion réussie ! 😽",
+            });
+            navigate("/");
+        } catch {
+            setError("Identifiants incorrects");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -49,7 +54,17 @@ export default function AuthPage() {
                 title="Passer la choco-sécurité"
                 className="w-full sm:w-30rem"
             >
-                <div className="flex flex-line gap-3">
+                <div className="flex flex-column gap-3">
+                    <div className="p-fluid">
+                        <InputText
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            type="text"
+                            placeholder="Nom d'utilisateur"
+                            autoComplete="username"
+                            onKeyDown={(e) => e.key === "Enter" && submit()}
+                        />
+                    </div>
                     <div className="flex-grow-1 p-fluid">
                         <Password
                             value={password}

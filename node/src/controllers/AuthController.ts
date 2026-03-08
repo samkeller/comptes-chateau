@@ -2,15 +2,8 @@ import bcrypt from "bcrypt";
 import { Router } from "express";
 import { COOKIE_NAME } from "..";
 import rateLimit from "express-rate-limit";
-
-const masterPassword = process.env.MASTER_PASSWORD;
-
-if (!masterPassword) {
-  throw new Error("MASTER_PASSWORD environment variable is not set");
-}
-
-// Hash au démarrage pour comparaison sécurisée
-const masterHash = bcrypt.hashSync(masterPassword, 10);
+import { AppDataSource } from "../db/dataSource";
+import { User } from "../entities/User";
 
 const AuthRoutes = Router();
 
@@ -26,18 +19,59 @@ const loginLimiter = rateLimit({
 AuthRoutes.use(loginLimiter);
 
 AuthRoutes.post("/login", async (req, res) => {
-  const { password } = req.body;
+  const username = typeof req.body?.username === "string" ? req.body.username.trim().toLowerCase() : "";
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
 
-  if (!password) return res.sendStatus(400);
+  if (!username || !password) {
+    return res.sendStatus(400);
+  }
 
   try {
-    const isValid = await bcrypt.compare(password, masterHash);
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo
+      .createQueryBuilder("ua")
+      .addSelect("ua.passwordHash")
+      .where("LOWER(ua.username) = :username", { username })
+      .getOne();
+
+    if (!user) {
+      return res.sendStatus(401);
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return res.sendStatus(401);
 
-    req.session.unlocked = true;
-    res.json({ ok: true });
-  } catch (error) {
-    res.sendStatus(500);
+    req.session.userId = user.id;
+    req.session.username = user.username;
+
+    return res.json({
+      id: user.id,
+      username: user.username,
+    });
+  } catch {
+    return res.sendStatus(500);
+  }
+});
+
+AuthRoutes.get("/me", async (req, res) => {
+  if (typeof req.session.userId !== "number") {
+    return res.sendStatus(401);
+  }
+
+  try {
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo.findOne({ where: { id: req.session.userId } });
+
+    if (!user) {
+      return res.sendStatus(401);
+    }
+
+    return res.json({
+      id: user.id,
+      username: user.username,
+    });
+  } catch {
+    return res.sendStatus(500);
   }
 });
 
