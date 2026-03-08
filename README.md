@@ -18,14 +18,14 @@ Application full-stack TypeScript pour la gestion comptable (operations, natures
 |  |- src/components/        # composants reutilisables
 |  |- src/services/          # appels HTTP
 |  |- src/interfaces/        # types metier/DTO
-|  \- src/utils/            # helpers purs
+|  \- src/utils/             # helpers purs
 |
 |- node/                     # API Node/Express
 |  |- src/controllers/       # couche HTTP + validation d'entree
 |  |- src/services/          # logique metier
 |  |- src/entities/          # mapping TypeORM
 |  |- src/db/migrations/     # migrations SQL generees via CLI
-|  \- src/utils/            # helpers transverses
+|  \- src/utils/             # helpers transverses
 |
 \- docs/                     # documentation projet
 ```
@@ -114,9 +114,9 @@ node dist/jobs/index.js
 
 - TypeScript strict: eviter `any` (preferer `unknown` + narrowing explicite)
 - Separation des responsabilites:
-	- controllers: entree/sortie HTTP + validation
-	- services: regles metier
-	- entities: persistence
+  - controllers: entree/sortie HTTP + validation
+  - services: regles metier
+  - entities: persistence
 - Mapping explicite `Entity -> DTO`
 - Gestion d'erreurs async coherente
 - PrimeReact prioritaire pour les composants UI
@@ -128,3 +128,20 @@ node dist/jobs/index.js
 - Pas de secrets dans le code
 - Requetes DB parametrees via TypeORM
 - Tests a chaque changement de comportement metier
+
+
+## Cadrage metier actuel (reponses confirmees)
+
+Les points suivants sont valides a date.
+
+1. Finalite produit:
+   application simple de gestion des comptes du foyer (couple).
+2. Regles metier:
+   pas de regles formelles pour l'instant.
+3. Vocabulaire metier minimal:
+   `nature` = type d'operation (CB, cheque, etc.),
+   `poste` = categorie ad-hoc libre.
+4. Gouvernance:
+   arbitrages fonctionnels via un "conseil de famille" (vous + votre femme).
+5. Roles et permissions:
+   rien de specifique prevu pour l'instant.
