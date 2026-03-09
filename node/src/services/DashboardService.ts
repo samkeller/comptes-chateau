@@ -129,7 +129,7 @@ export default class DashboardService {
             .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
             .where("al.dateOperation >= :fromDate", { fromDate })
             .leftJoin("al.nature", "nature")
-            .andWhere("nature.isHorsCompte = false");
+            .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
 
         if (checkedOnly) {
             qb = qb.andWhere("al.isChecked = :isChecked", { isChecked: true });

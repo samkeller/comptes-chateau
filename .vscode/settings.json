@@ -9,6 +9,7 @@
     "typescript"
   ],
   "chat.tools.terminal.autoApprove": {
-    "npm test": true
+    "npm test": true,
+    "npx vitest": true
   }
 }
