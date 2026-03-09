@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
-import getPgSessionStoreInstance from './modules/core/config/PGSession';
+import getPgSessionStoreInstance from './config/PGSession';
 
 import AuthRoutes from './modules/core/controllers/AuthController';
 import morgan from 'morgan';

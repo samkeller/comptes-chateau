@@ -1,7 +1,7 @@
 import { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { JobExecutionLog, JobExecutionStatus } from "../entities/JobExecutionLog";
-import jobLog from "../jobs/jobLog";
+import jobLog from "../../../jobs/jobLog";
 
 export default class JobExecutionLogService {
     private jobExecutionLogRepo;

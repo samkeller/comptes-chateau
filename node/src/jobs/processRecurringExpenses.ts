@@ -1,7 +1,7 @@
-import {  AccountingLineSource } from "../entities/AccountingLine";
-import AccountingLineService from "../services/AccountingLineService";
-import RecurringExpenseService from "../services/RecurringExpenseService";
-import JobExecutionLogService from "../../core/services/JobExecutionLogService";
+import { AccountingLineSource } from "../modules/accounts/entities/AccountingLine";
+import AccountingLineService from "../modules/accounts/services/AccountingLineService";
+import RecurringExpenseService from "../modules/accounts/services/RecurringExpenseService";
+import JobExecutionLogService from "../modules/core/services/JobExecutionLogService";
 import { EntityManager } from "typeorm";
 
 export async function processRecurringExpenses(

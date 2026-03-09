@@ -6,7 +6,7 @@ import AccountingLineService, { AccountingLineValidationError } from "../Account
 import TableQueryMapper from "../queryMappers/TableQueryMapper";
 import operationTableQueryConfig from "../queryMappers/operationTableQueryConfig";
 import TableQueryParser, { TableQueryValidationError } from "../queryMappers/parsers/TableQueryParser";
-import { normalizeApiDateInput } from "../../../core/utils/ApiDateUtils";
+import { normalizeApiDateInput } from "../../../../utils/ApiDateUtils";
 import { OperationBatchCheckInput, OperationBatchCheckPayload } from "./OperationDtos";
 import { OperationNotFoundError, OperationValidationError } from "./OperationErrors";
 

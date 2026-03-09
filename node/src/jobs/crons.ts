@@ -1,6 +1,6 @@
 import { AppDataSource } from '../db/dataSource';
-import jobLog from '../modules/core/jobs/jobLog';
-import { processRecurringExpenses } from '../modules/accounts/jobs/processRecurringExpenses';
+import jobLog from './jobLog';
+import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
 
 // Crons - Exécute tous les jours à minuit

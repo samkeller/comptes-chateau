@@ -9,7 +9,7 @@ import {
     createTextSimpleFilterHandler,
     TableQueryMapperConfig
 } from "./TableQueryMapper";
-import { parseApiDateString } from "../../../core/utils/ApiDateUtils";
+import { parseApiDateString } from "../../../../utils/ApiDateUtils";
 
 const AMOUNT_SQL = "(al.credit - al.debit)";
 
