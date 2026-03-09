@@ -14,6 +14,6 @@ export const AppDataSource = new DataSource({
    database: process.env.DB_NAME,
    schema: process.env.DB_SCHEMA,
 
-   entities: [`${__dirname}/../entities/*.{ts,js}`],
+   entities: [`${__dirname}/../modules/**/entities/*.{ts,js}`],
    migrations: [`${__dirname}/**/migrations/*.{ts,js}`]
 })

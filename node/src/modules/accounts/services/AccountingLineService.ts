@@ -1,7 +1,7 @@
 import { EntityManager, In } from "typeorm";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
-import { normalizeApiDateInput } from "../utils/ApiDateUtils";
+import { normalizeApiDateInput } from "../../core/utils/ApiDateUtils";
 
 export class AccountingLineValidationError extends Error {
     constructor(message: string) {

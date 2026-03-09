@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
 
 export interface BudgetItemDto {

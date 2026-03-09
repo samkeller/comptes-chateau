@@ -1,12 +1,12 @@
 import { ParsedQs } from "qs";
 import { In } from "typeorm";
-import { AppDataSource } from "../../db/dataSource";
+import { AppDataSource } from "../../../../db/dataSource";
 import { AccountingLine as AccountLine } from "../../entities/AccountingLine";
 import AccountingLineService, { AccountingLineValidationError } from "../AccountingLineService";
 import TableQueryMapper from "../queryMappers/TableQueryMapper";
 import operationTableQueryConfig from "../queryMappers/operationTableQueryConfig";
 import TableQueryParser, { TableQueryValidationError } from "../queryMappers/parsers/TableQueryParser";
-import { normalizeApiDateInput } from "../../utils/ApiDateUtils";
+import { normalizeApiDateInput } from "../../../core/utils/ApiDateUtils";
 import { OperationBatchCheckInput, OperationBatchCheckPayload } from "./OperationDtos";
 import { OperationNotFoundError, OperationValidationError } from "./OperationErrors";
 

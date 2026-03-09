@@ -5,13 +5,13 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { AccountingLine, AccountingLineSource } from "../entities/AccountingLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
-import SetupTestDb from "../tests/SetupTests";
+import SetupTestDb from "../../../tests/SetupTests";
 
 let testDataSource: DataSource;
 let posteMaisonId: number;
 let posteVoyageId: number;
 
-vi.mock("../db/dataSource", () => ({
+vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
         getRepository: <T>(entity: new () => T) => testDataSource.getRepository(entity)
     }

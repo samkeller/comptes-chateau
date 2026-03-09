@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import { Router } from "express";
-import { COOKIE_NAME } from "..";
+import { COOKIE_NAME } from "../../../index";
 import rateLimit from "express-rate-limit";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 
 const AuthRoutes = Router();

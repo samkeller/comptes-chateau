@@ -1,5 +1,5 @@
 import { EntityManager, Repository } from "typeorm";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountingLine } from "../entities/AccountingLine";
 import { NatureDto, SaveNaturePayload } from "./nature/NatureDtos";

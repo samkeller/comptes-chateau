@@ -1,5 +1,5 @@
 import { ParsedQs } from "qs";
-import { parseApiDateString } from "../../../utils/ApiDateUtils";
+import { parseApiDateString } from "../../../../core/utils/ApiDateUtils";
 
 export class QueryParamsValidationError extends Error {
     constructor(message: string) {

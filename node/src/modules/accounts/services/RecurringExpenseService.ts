@@ -1,7 +1,7 @@
 import { EntityManager, LessThanOrEqual } from "typeorm";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { RecurringExpense } from "../entities/RecurringExpense";
-import { normalizeApiDateInput } from "../utils/ApiDateUtils";
+import { normalizeApiDateInput } from "../../core/utils/ApiDateUtils";
 
 export default class RecurringExpenseService {
 

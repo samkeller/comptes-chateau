@@ -1,5 +1,5 @@
 import { EntityManager, Repository } from "typeorm";
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { AccountingLine } from "../entities/AccountingLine";
 import { PosteDto, SavePostePayload } from "./poste/PosteDtos";

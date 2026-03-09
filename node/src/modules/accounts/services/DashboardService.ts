@@ -1,4 +1,4 @@
-import { AppDataSource } from "../db/dataSource";
+import { AppDataSource } from "../../../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
 import { AccountBalanceBaseline } from "../entities/AccountBalanceBaseline";

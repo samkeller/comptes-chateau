@@ -1,13 +1,13 @@
 import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
-import getPgSessionStoreInstance from './config/PGSession';
+import getPgSessionStoreInstance from './modules/core/config/PGSession';
 
-import AuthRoutes from './controllers/AuthController';
+import AuthRoutes from './modules/core/controllers/AuthController';
 import morgan from 'morgan';
 import cors from 'cors';
 import 'dotenv/config';
-import ApiRouter from './controllers/ApiRouter';
+import ApiRouter from './ApiRouter';
 import helmet from 'helmet';
 import path from 'path';
 import "./jobs/crons"; // Lancer les crons
