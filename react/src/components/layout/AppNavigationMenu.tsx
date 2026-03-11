@@ -12,7 +12,7 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
     const location = useLocation();
     const currentPath = location.pathname;
 
-    const items: MenuItem[] = [
+    const startItems: MenuItem[] = [
         {
             label: "Home",
             icon: "pi pi-home",
@@ -54,5 +54,21 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
         }
     ];
 
-    return <Menu model={items} className="w-full border-none" />;
+    const endItems: MenuItem[] = [
+        {
+            label: "Kanban",
+            icon: "pi pi-th-large",
+            className: currentPath.startsWith("/kanban") ? "surface-200" : undefined,
+            command: () => navigateTo("/kanban")
+        },
+    ]
+
+    return (
+        <div className="flex flex-column h-full">
+            <Menu model={startItems} className="w-full border-none" />
+            <div className="flex-grow-1"></div>
+            <Menu model={endItems} className="w-full border-none" />
+        </div>
+    )
+
 }

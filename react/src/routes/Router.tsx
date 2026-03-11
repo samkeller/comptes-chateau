@@ -8,6 +8,7 @@ import Budget from "../pages/budget/Budget";
 import Index from "../pages/index/Index";
 import Setup from "../pages/setup/Setup";
 import AccountChecks from "../pages/accountChecks/AccountChecks";
+import KanbanPage from "../pages/kanban/KanbanPage";
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: "/setup",
     element: <Setup />,
+  },
+  {
+    path: "/kanban",
+    element: <KanbanPage />,
   },
   {
     path: "/auth",
