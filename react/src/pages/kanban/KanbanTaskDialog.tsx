@@ -8,6 +8,7 @@ import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
+import { showGlobalToast } from "../../services/GlobalToast";
 
 
 interface KanbanTaskDialogProps {
@@ -23,11 +24,39 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
      */
     const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
 
-    async function handleSubmit() {
-        service.saveKanbanTask(taskData)
-        closeDialog(true);
+    function handleSubmit() {
+        service.saveKanbanTask(taskData).then(v => {
+             showGlobalToast({
+                severity: "success",
+                summary: "Tâche modifiée.",
+            })
+            closeDialog(true);
+        })
     }
 
+    async function deleteTask() {
+         service.deleteTask(taskData.id).then(v => {
+            showGlobalToast({
+                severity: "success",
+                summary: "Tâche supprimée.",
+            })
+            closeDialog(true);
+        })
+    }
+
+    const header = (
+        <div className="flex justify-content-between align-items-center w-full">
+            {taskData.title}
+            <Button 
+                link
+                icon="pi pi-trash"
+                severity="danger"
+                className="p-0"
+                tooltip="Supprimer"
+                onClick={deleteTask}
+            />
+        </div>
+    );
     const footer = (
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={() => closeDialog(false)} />
@@ -38,13 +67,15 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
 
     return (
         <Dialog
-            visible onHide={() => closeDialog(false)}
+
+            visible
+            onHide={() => closeDialog(false)}
             style={{ width: '50vw' }}
             closeOnEscape
             maximizable
             dismissableMask
-            
-            // header={task.selectedColumn ? "Modifier la tâche" : "Ajouter une tâche"}
+            draggable={false}
+            header={header}
             footer={footer}
         >
             <div className="pt-4 flex flex-column gap-4">

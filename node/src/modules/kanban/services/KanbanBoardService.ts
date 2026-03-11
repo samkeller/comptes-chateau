@@ -6,7 +6,6 @@ import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanTask } from "../entities/KanbanTask";
 
 export default class KanbanBoardService {
-
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
     private kanbanColumnRepo = AppDataSource.getRepository(KanbanColumn);
 
@@ -53,5 +52,15 @@ export default class KanbanBoardService {
 
         return this.kanbanTaskRepo.save(existingTask);
 
+    }
+
+    async deleteTask(queryId: number) {
+        const existingTask = await this.kanbanTaskRepo.findOneBy({ id: queryId });
+
+        // TODO, custom error class
+        if (!existingTask)
+            throw new Error("KANBAN_TASK_NOT_FOUND");
+
+        await this.kanbanTaskRepo.delete({ id: queryId });
     }
 }

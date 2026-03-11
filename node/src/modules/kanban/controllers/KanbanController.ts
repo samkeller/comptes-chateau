@@ -62,4 +62,18 @@ export default class KanbanController {
         }
     }
 
+    deleteTask = async (req: Request, res: Response): Promise<Response> => {
+        const queryId = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+
+        if (isNaN(queryId) || queryId <= 0)
+            return res.status(400).send("Invalid task ID");
+
+        try {
+            await this.boardService.deleteTask(queryId);
+            return res.status(204).send();
+        } catch (error) {
+            return res.status(500).send("Error deleting task");
+        }
+    }
+
 }

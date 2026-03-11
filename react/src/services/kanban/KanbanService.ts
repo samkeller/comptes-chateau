@@ -6,6 +6,7 @@ import KanbanTask from "../../interfaces/kanban/KanbanTask";
 
 export default class KanbanService extends BaseService {
 
+
     private kanbanApiUrl = this.apiUrl + "/kanban";
 
     getBoardData(): Promise<KanbanBoardDataDto> {
@@ -18,6 +19,10 @@ export default class KanbanService extends BaseService {
 
     saveKanbanTask(task: KanbanTask): Promise<KanbanTask> {
         return axios.patch(this.kanbanApiUrl + "/task/" + task.id, task).then(res => res.data);
+    }
+
+    deleteTask(taskId: number): Promise<void> {
+        return axios.delete(this.kanbanApiUrl + "/task/" + taskId);
     }
 }
 

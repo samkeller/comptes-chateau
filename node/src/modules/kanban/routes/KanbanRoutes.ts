@@ -7,10 +7,6 @@ const kanbanController = new KanbanController();
 KanbanRoutes.get("/board", kanbanController.getBoard);
 KanbanRoutes.post("/task", kanbanController.createTask);
 KanbanRoutes.patch("/task/:id", kanbanController.saveTask);
-// KanbanRoutes.patch("/tasks/:id/move", kanbanController.moveTask);
-// KanbanRoutes.patch("/tasks/:id/archive", kanbanController.archiveTask);
-// KanbanRoutes.post("/tasks/:id/comments", kanbanController.addComment);
-// KanbanRoutes.post("/tasks/:id/checklist", kanbanController.addChecklistItem);
-// KanbanRoutes.patch("/checklist/:id", kanbanController.updateChecklistItem);
+KanbanRoutes.delete("/task/:id", kanbanController.deleteTask);
 
 export default KanbanRoutes;

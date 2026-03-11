@@ -6,6 +6,7 @@ import KanbanColumn from "../../interfaces/kanban/KanbanColumn"
 import KanbanTaskCard from "./KanbanTaskCard"
 import { InputText } from "primereact/inputtext"
 import KanbanService from "../../services/kanban/KanbanService"
+import { showGlobalToast } from "../../services/GlobalToast"
 
 interface KanbanColumnProps {
     column: KanbanColumn
@@ -21,9 +22,12 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
     function handleAddTask() {
         kanbanService.createKanbanTask({
             title: newTaskTitle,
-            
             columnId: column.id,
         }).then(task => {
+            showGlobalToast({
+                severity: "success",
+                summary: "Tâche créée.",
+            })
             setSelectedTask(task);
             setNewTaskTitle("");
             reloadTasks();
