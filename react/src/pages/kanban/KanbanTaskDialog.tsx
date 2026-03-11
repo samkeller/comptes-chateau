@@ -4,11 +4,11 @@ import { Dropdown } from "primereact/dropdown";
 import { useState } from "react";
 import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
-import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import { showGlobalToast } from "../../services/GlobalToast";
+import EditableString from "../../components/form/EditableString";
 
 
 interface KanbanTaskDialogProps {
@@ -25,8 +25,8 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
     const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
 
     function handleSubmit() {
-        service.saveKanbanTask(taskData).then(v => {
-             showGlobalToast({
+        service.saveKanbanTask(taskData).then(() => {
+            showGlobalToast({
                 severity: "success",
                 summary: "Tâche modifiée.",
             })
@@ -35,7 +35,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
     }
 
     async function deleteTask() {
-         service.deleteTask(taskData.id).then(v => {
+        service.deleteTask(taskData.id).then(() => {
             showGlobalToast({
                 severity: "success",
                 summary: "Tâche supprimée.",
@@ -45,13 +45,20 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
     }
 
     const header = (
-        <div className="flex justify-content-between align-items-center w-full">
-            {taskData.title}
-            <Button 
-                link
+        <div className="flex justify-content-between align-items-center w-full pr-3">
+            <EditableString
+                value={taskData.title}
+                onValidate={newValue => setTaskData({
+                    ...taskData,
+                    title: newValue
+                })}
+            />
+            <Button
+                rounded
+                text
                 icon="pi pi-trash"
                 severity="danger"
-                className="p-0"
+                className="py-0 h-2rem w-2rem"
                 tooltip="Supprimer"
                 onClick={deleteTask}
             />
@@ -89,16 +96,6 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                         optionLabel="label"
                     />
                     <label htmlFor="category-dropdown">Catégorie</label>
-                </FloatLabel>
-
-                <FloatLabel>
-                    <InputText
-                        id="title-input"
-                        className="w-full"
-                        value={taskData.title}
-                        onChange={e => setTaskData({ ...taskData, title: e.target.value })}
-                    />
-                    <label htmlFor="title-input">Titre</label>
                 </FloatLabel>
                 <FloatLabel>
                     <InputTextarea
