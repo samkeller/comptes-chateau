@@ -7,34 +7,31 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import KanbanService from "../../services/kanban/KanbanService";
-import { SaveKanbanTaskDto } from "../../services/kanban/dto/SaveKanbanTaskDto";
+import KanbanTask from "../../interfaces/kanban/KanbanTask";
 
-export interface EditKanbanTaskDialogDTO {
-    selectedColumn: KanbanColumn | null;
-}
-interface EditKanbanTaskDialogProps {
+
+interface KanbanTaskDialogProps {
     columns: KanbanColumn[],
-    datas: EditKanbanTaskDialogDTO,
+    task: KanbanTask,
     closeDialog: (reloadList: boolean) => void
 }
 
-export default function EditKanbanTaskDialog({ columns, datas, closeDialog }: EditKanbanTaskDialogProps) {
+export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanTaskDialogProps) {
     const service = new KanbanService();
-    const [formData, setFormData] = useState<SaveKanbanTaskDto>({
-        columnId: datas.selectedColumn?.id || columns[0]?.id || 0,
-        title: "",
-    })
+    /**
+     * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
+     */
+    const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
 
     async function handleSubmit() {
-        service.saveKanbanTask(formData)
+        service.saveKanbanTask(taskData)
         closeDialog(true);
-        console.log(formData);
     }
 
     const footer = (
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={() => closeDialog(false)} />
-            {/* <Button label={formData.selectedColumn ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} /> */}
+            {/* <Button label={task.selectedColumn ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} /> */}
             <Button label={"Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
         </div>
     );
@@ -43,7 +40,11 @@ export default function EditKanbanTaskDialog({ columns, datas, closeDialog }: Ed
         <Dialog
             visible onHide={() => closeDialog(false)}
             style={{ width: '50vw' }}
-            // header={formData.selectedColumn ? "Modifier la tâche" : "Ajouter une tâche"}
+            closeOnEscape
+            maximizable
+            dismissableMask
+            
+            // header={task.selectedColumn ? "Modifier la tâche" : "Ajouter une tâche"}
             footer={footer}
         >
             <div className="pt-4 flex flex-column gap-4">
@@ -51,9 +52,9 @@ export default function EditKanbanTaskDialog({ columns, datas, closeDialog }: Ed
                 <FloatLabel>
                     <Dropdown
                         inputId="category-dropdown"
-                        value={columns.find(c => c.id === formData.columnId) || null}
+                        value={columns.find(c => c.id === taskData.columnId) || null}
                         options={columns}
-                        onChange={e => e.value && setFormData({ ...formData, columnId: e.value.id })}
+                        onChange={e => e.value && setTaskData({ ...taskData, columnId: e.value.id })}
                         optionLabel="label"
                     />
                     <label htmlFor="category-dropdown">Catégorie</label>
@@ -63,8 +64,8 @@ export default function EditKanbanTaskDialog({ columns, datas, closeDialog }: Ed
                     <InputText
                         id="title-input"
                         className="w-full"
-                        value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        value={taskData.title}
+                        onChange={e => setTaskData({ ...taskData, title: e.target.value })}
                     />
                     <label htmlFor="title-input">Titre</label>
                 </FloatLabel>
@@ -72,8 +73,8 @@ export default function EditKanbanTaskDialog({ columns, datas, closeDialog }: Ed
                     <InputTextarea
                         id="description-input"
                         className="w-full"
-                        value={formData.description}
-                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        value={taskData.description || ""}
+                        onChange={e => setTaskData({ ...taskData, description: e.target.value })}
                     />
                     <label htmlFor="description-input">Description</label>
                 </FloatLabel>

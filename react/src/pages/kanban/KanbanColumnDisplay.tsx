@@ -1,7 +1,7 @@
 import { Card } from "primereact/card"
 import KanbanTask from "../../interfaces/kanban/KanbanTask"
 import { Button } from "primereact/button"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import KanbanColumn from "../../interfaces/kanban/KanbanColumn"
 import KanbanTaskCard from "./KanbanTaskCard"
 import { InputText } from "primereact/inputtext"
@@ -10,23 +10,21 @@ import KanbanService from "../../services/kanban/KanbanService"
 interface KanbanColumnProps {
     column: KanbanColumn
     tasks: KanbanTask[]
+    setSelectedTask: (task: KanbanTask) => void
     reloadTasks: () => void
 }
 
-export default function KanbanColumnDisplay({ column, tasks, reloadTasks }: KanbanColumnProps) {
+export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, reloadTasks }: KanbanColumnProps) {
     const kanbanService = new KanbanService();
     const [newTaskTitle, setNewTaskTitle] = useState("");
 
-    useEffect(() => {
-        console.log("Column", column);
-        console.log("Tasks", tasks);
-    }, [column, tasks])
-
     function handleAddTask() {
-        kanbanService.saveKanbanTask({
+        kanbanService.createKanbanTask({
             title: newTaskTitle,
+            
             columnId: column.id,
-        }).then(() => {
+        }).then(task => {
+            setSelectedTask(task);
             setNewTaskTitle("");
             reloadTasks();
         })
@@ -46,6 +44,7 @@ export default function KanbanColumnDisplay({ column, tasks, reloadTasks }: Kanb
                 <div key={task.id} className="kanban-task">
                     <KanbanTaskCard
                         task={task}
+                        setSelectedTask={setSelectedTask}
                     />
                 </div>
             ))}

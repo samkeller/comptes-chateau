@@ -5,7 +5,7 @@ import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
 import KanbanColumn from "../../interfaces/kanban/KanbanColumn";
-import EditKanbanTaskDialog from "./EditKanbanTaskDialog";
+import KanbanTaskDialog from "./KanbanTaskDialog";
 import FillRemainingHeight from "../../components/layout/FillRemainingHeight";
 
 
@@ -17,7 +17,7 @@ export default function KanbanPage() {
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const [showDialog, setShowDialog] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
 
 
     useEffect(() => {
@@ -46,17 +46,17 @@ export default function KanbanPage() {
 
                     <div className="flex flex-row w-full h-full gap-3">
                         {
-                            showDialog && (
-                                <></>
-                                // <EditKanbanTaskDialog
-                                //     columns={columns}
-                                //     closeDialog={(reloadList) => {
-                                //         setShowDialog(false);
-                                //         if (reloadList) {
-                                //             loadBoard();
-                                //         }
-                                //     }}
-                                // />
+                            selectedTask && (
+                                <KanbanTaskDialog
+                                    columns={columns}
+                                    task={selectedTask}
+                                    closeDialog={(reloadList) => {
+                                        setSelectedTask(null);
+                                        if (reloadList) {
+                                            loadBoard();
+                                        }
+                                    }}
+                                />
                             )
                         }
                         {
@@ -66,6 +66,7 @@ export default function KanbanPage() {
                                         column={column}
                                         tasks={tasks.filter(t => t.columnId === column.id)}
                                         reloadTasks={loadBoard}
+                                        setSelectedTask={setSelectedTask}
                                     />
                                 </div>
                             ))

@@ -5,8 +5,8 @@ const KanbanRoutes = Router();
 const kanbanController = new KanbanController();
 
 KanbanRoutes.get("/board", kanbanController.getBoard);
-KanbanRoutes.post("/task", kanbanController.saveTask);
-// KanbanRoutes.patch("/tasks/:id", kanbanController.updateTask);
+KanbanRoutes.post("/task", kanbanController.createTask);
+KanbanRoutes.patch("/task/:id", kanbanController.saveTask);
 // KanbanRoutes.patch("/tasks/:id/move", kanbanController.moveTask);
 // KanbanRoutes.patch("/tasks/:id/archive", kanbanController.archiveTask);
 // KanbanRoutes.post("/tasks/:id/comments", kanbanController.addComment);

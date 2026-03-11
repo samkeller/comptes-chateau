@@ -1,6 +1,7 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
 import { KanbanBoardDto } from "../dto/KanbanBoardDto";
+import { KanbanTaskDto } from "../dto/KanbanTaskDto";
 import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanTask } from "../entities/KanbanTask";
 
@@ -24,13 +25,12 @@ export default class KanbanBoardService {
         }
     }
 
-    async saveTask(body: CreateKanbanTaskDto): Promise<KanbanTask> {
+    async createTask(body: CreateKanbanTaskDto): Promise<KanbanTask> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
 
-        if (!column) {
-            // TODO, custom error class
+        // TODO, custom error class
+        if (!column)
             throw new Error("KANBAN_COLUMN_NOT_FOUND");
-        }
 
         const task = this.kanbanTaskRepo.create({
             title: body.title,
@@ -38,5 +38,20 @@ export default class KanbanBoardService {
         });
 
         return this.kanbanTaskRepo.save(task);
+    }
+
+    async saveTask(task: KanbanTaskDto): Promise<KanbanTask> {
+        const existingTask = await this.kanbanTaskRepo.findOneBy({ id: task.id });
+
+        // TODO, custom error class
+        if (!existingTask)
+            throw new Error("KANBAN_TASK_NOT_FOUND");
+
+        existingTask.columnId = task.columnId;
+        existingTask.title = task.title;
+        existingTask.description = task.description;
+
+        return this.kanbanTaskRepo.save(existingTask);
+
     }
 }
