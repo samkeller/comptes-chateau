@@ -13,12 +13,20 @@ import {
     DndContext,
     DragEndEvent,
     DragOverlay,
+    PointerSensor,
     closestCorners,
+    useSensor,
+    useSensors,
 } from "@dnd-kit/core";
 
 
 
 export default function KanbanPage() {
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 5 },
+        }),
+    );
     const service = new KanbanService();
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
@@ -55,6 +63,10 @@ export default function KanbanPage() {
         const draggedTask = tasks.find(t => t.id === draggedTaskId);
         if (!draggedTask || draggedTask.columnId === targetColumnId) return;
 
+        setTasks(prev => prev.map(t =>
+            t.id === draggedTaskId ? new KanbanTask({ ...t, columnId: targetColumnId }) : t
+        ));
+
         const updatedTask = new KanbanTask({
             ...draggedTask,
             columnId: targetColumnId,
@@ -71,6 +83,7 @@ export default function KanbanPage() {
     return (
         <PageTemplate pageTitle="Kanban">
             <DndContext
+                sensors={sensors}
                 collisionDetection={closestCorners}
                 onDragEnd={handleDragEnd}
                 onDragStart={(event) => setActiveId(event.active.id as number)}
