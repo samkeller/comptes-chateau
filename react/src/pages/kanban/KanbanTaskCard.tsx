@@ -34,7 +34,7 @@ export default function KanbanTaskCard({ task, setSelectedTask, isDragging }: Ka
         >
             <Card
                 title={header}
-                className={"p-2 border-round cursor-pointer bg-gray-700 hover:bg-gray-600 " + (dragState ? "opacity-50" : "")}
+                className={"p-2 border-round cursor-pointer " + (dragState ? "opacity-50" : "")}
                 onClick={() => setSelectedTask(task)}
             >
                 <small>{task.description}</small>

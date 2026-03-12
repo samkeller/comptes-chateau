@@ -1,4 +1,3 @@
-import { Card } from "primereact/card"
 import KanbanTask from "../../interfaces/kanban/KanbanTask"
 import { Button } from "primereact/button"
 import { useMemo, useState } from "react"
@@ -10,6 +9,7 @@ import { compareTaskPriority } from "./atoms/PriorityFlag"
 import { CreateKanbanTaskDto } from "../../services/kanban/dto/CreateKanbanTaskDto"
 import PriorityFlagSelect from "./atoms/PriorityFlagSelect"
 import { useDroppable } from "@dnd-kit/core"
+import { Card } from "primereact/card"
 
 interface KanbanColumnProps {
     column: KanbanColumn
@@ -46,23 +46,14 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
     return (
         <div
             ref={setNodeRef}
+            className="flex flex-column h-full p-2 border-1 surface-border border-round"
             style={{
-                position: "relative",
                 boxShadow: isOver ? "0 0 0 4px rgba(41, 121, 255, 0.18)" : undefined,
                 transition: "box-shadow 0.15s ease",
-                borderRadius: "6px",
-                height: "100%",
             }}
         >
-            <Card
-                title={column.label}
-                className="h-full"
-                pt={{
-                    body: { className: "h-full" },
-                    content: { className: "h-full flex flex-column gap-2" }
-                }}
-
-            >
+            <h2>{column.label}</h2>
+            <div className="flex flex-column gap-2 flex-grow-1">
                 {sortedTasks.map(task => (
                     <div key={task.id} className="kanban-task">
                         <KanbanTaskCard
@@ -72,12 +63,18 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                         />
                     </div>
                 ))}
-                <div className="flex-grow-1"></div>
+            </div>
+            <Card
+                pt={{
+                    body: {className: "p-0"},
+                    content: {className: "p-3"},
+                }}
+            >
 
                 <div className="flex flex-row flex-shrink-0">
                     <InputText
                         placeholder="Ajouter une tâche..."
-                        className="flex-grow-1 "
+                        className="flex-grow-1"
                         value={newTask.title}
                         onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                     />
@@ -85,8 +82,8 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                         priority={newTask.priority}
                         onChange={(priority) => {
                             console.log("new", priority)
-                            setNewTask({ ...newTask, priority: priority})}
-                        }
+                            setNewTask({ ...newTask, priority: priority })
+                        }}
                     />
                     <Button
                         className="flex-shrink-0"
@@ -97,6 +94,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                     />
                 </div>
             </Card>
+                        
         </div>
     )
 }
