@@ -15,7 +15,6 @@ import {
     DragOverlay,
     closestCorners,
 } from "@dnd-kit/core";
-import { Divider } from "primereact/divider";
 
 
 
@@ -82,7 +81,7 @@ export default function KanbanPage() {
                     </div>
                 ) : (
                     <FillRemainingHeight>
-                        <div className="flex flex-row w-full h-full">
+                        <div className="flex flex-row w-full h-full gap-3">
                             {
                                 selectedTask && (
                                     <KanbanTaskDialog
@@ -98,21 +97,15 @@ export default function KanbanPage() {
                                 )
                             }
                             {
-                                columns.map((column, index) => (
-                                    <div className="flex-1 flex" key={column.id}>
-                                        <div className="flex-grow-1">
-                                            <KanbanColumnDisplay
-                                                column={column}
-                                                tasks={tasks.filter(t => t.columnId === column.id)}
-                                                reloadTasks={loadBoard}
-                                                setSelectedTask={setSelectedTask}
-                                                activeId={activeId}
-                                            />
-                                        </div>
-                                        {
-                                            index < columns.length - 1 &&
-                                            <Divider layout="vertical" className="flex-shrink-0" />
-                                        }
+                                columns.map(column => (
+                                    <div className="flex-1" key={column.id}>
+                                        <KanbanColumnDisplay
+                                            column={column}
+                                            tasks={tasks.filter(t => t.columnId === column.id)}
+                                            reloadTasks={loadBoard}
+                                            setSelectedTask={setSelectedTask}
+                                            activeId={activeId}
+                                        />
                                     </div>
                                 ))
                             }
