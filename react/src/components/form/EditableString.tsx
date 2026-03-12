@@ -70,7 +70,7 @@ export default function EditableString({
 
     if (isEditing) {
         return (
-            <div className={"w-full flex align-items-center gap-2 " + (className ?? "")}>
+            <div className={"w-full flex items-center gap-2 " + (className ?? "")}>
                 <InputText
                     className="w-full px-2 py-1"
                     value={draftValue}
@@ -88,7 +88,7 @@ export default function EditableString({
                         void validateEdition();
                     }}
                     loading={isSaving}
-                    className={"py-0 h-2rem w-2rem"}
+                    className={"py-0 h-8 w-8"}
                     disabled={isSaving}
                 />
                 <Button
@@ -97,7 +97,7 @@ export default function EditableString({
                     tooltip="Annuler"
                     tooltipOptions={{ position: "top" }}
                     onClick={cancelEdition}
-                    className={"py-0 h-2rem w-2rem"}
+                    className={"py-0 h-8 w-8"}
                     disabled={isSaving}
                 />
             </div>
@@ -106,7 +106,7 @@ export default function EditableString({
 
     return (
         <div
-            className={"w-full flex align-items-center justify-content-between gap-2 " + (className ?? "")}
+            className={"w-full flex items-center justify-between gap-2 " + (className ?? "")}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
@@ -119,7 +119,7 @@ export default function EditableString({
                     icon="pi pi-pencil"
                     visible={isHovering && !disabled}
                     onClick={startEdition}
-                    className={"py-0 h-2rem w-2rem " + customTooltipClass}
+                    className={"py-0 h-8 w-8 " + customTooltipClass}
                     data-pr-tooltip="Modifier"
                 />
             </>

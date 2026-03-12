@@ -21,9 +21,9 @@ export default function BanquePostaleImportReportPanel({ report, close }: Banque
     const ambiguityCount = report.ambiguities.length;
 
     return (
-        <div className="flex flex-column gap-3 surface-100 border-1 surface-border border-round p-3 shadow-1">
-            <div className="flex">
-                <div className="flex flex-column gap-2">
+        <div className="flex flex-col gap-6 bg-surface-100 border border-surface rounded-border p-6 shadow-sm">
+            <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-2">
                     <h3>Résultat import CSV - {report.csvOperationCount} operation(s) lue(s)</h3>
                     <Message severity={appliedCount > 0 ? "success" : "warn"} text={`${appliedCount} operation(s) pre-remplie(s)`} />
                 </div>

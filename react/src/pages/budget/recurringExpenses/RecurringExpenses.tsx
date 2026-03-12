@@ -63,7 +63,7 @@ export default function RecurringExpenses() {
             }
             <Card title="Dépenses récurrentes" className="flex-1">
                 <Message text="Les dépenses récurrentes sont automatiquement ajoutées comme opérations à une fréquence donnée." className="mb-2" />
-                <div className="flex justify-content-end mb-3">
+                <div className="flex justify-end mb-6">
                     <Button label="Ajouter" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
                 <DataTable<Array<RecurringExpense>>

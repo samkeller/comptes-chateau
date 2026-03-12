@@ -219,8 +219,8 @@ export default function PosteSetupCard() {
                     body={(row: PosteTableRow) => {
                         if (!row.uiEditing) {
                             return (
-                                <span className="inline-flex align-items-center gap-2">
-                                    <span className="border-circle inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
+                                <span className="inline-flex items-center gap-2">
+                                    <span className="rounded-full inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
                                 </span>
                             );
                         }

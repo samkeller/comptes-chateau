@@ -6,7 +6,7 @@ import { Message } from "primereact/message";
 export default function Budget() {
     return (
         <PageTemplate pageTitle="Budget">
-            <div className="flex flex-column gap-3 w-full">
+            <div className="flex flex-col gap-6 w-full">
                 <Message
                     severity="info"
                     text="Note: le budget mensuel et les dépenses récurrentes sont affichés côte à côte mais restent indépendants pour l'instant."

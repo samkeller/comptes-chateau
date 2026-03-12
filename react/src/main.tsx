@@ -2,9 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { APIOptions, PrimeReactProvider, addLocale } from 'primereact/api';
 import './assets/index.css'
-import "primereact/resources/themes/lara-dark-teal/theme.css"
-import "../node_modules/primeflex/primeflex.css";
-import 'primeicons/primeicons.css';
 import frLocale from './assets/primereact/Locale-FR.json';
 import "./config/chartJsSetup";
 

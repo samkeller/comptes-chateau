@@ -36,7 +36,7 @@ export default function BanquePostaleCsvImport({ disabled = false, onImport, onE
     };
 
     return (
-        <div className="flex flex-column gap-2">
+        <div className="flex flex-col gap-2">
             <FileUpload
                 ref={fileUploadRef}
                 mode="basic"

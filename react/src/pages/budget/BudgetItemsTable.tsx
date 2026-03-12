@@ -66,7 +66,7 @@ export default function BudgetItemsTable() {
     return (
         <Card title="Budget mensuel">
             {loading && (
-                <div className="flex justify-content-center p-4">
+                <div className="flex justify-center p-12">
                     <ProgressSpinner />
                 </div>
             )}
@@ -76,11 +76,11 @@ export default function BudgetItemsTable() {
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse" style={{borderSpacing: 0}}>
                             <thead>
-                                <tr className="surface-100">
-                                    <th className="text-left p-2 border-1 surface-border">Catégorie</th>
-                                    <th className="text-left p-2 border-1 surface-border">Libellé</th>
-                                    <th className="text-right p-2 border-1 surface-border">Montant</th>
-                                    <th className="text-right p-2 border-1 surface-border">Poids</th>
+                                <tr className="bg-surface-100">
+                                    <th className="text-left p-2 border border-surface">Catégorie</th>
+                                    <th className="text-left p-2 border border-surface">Libellé</th>
+                                    <th className="text-right p-2 border border-surface">Montant</th>
+                                    <th className="text-right p-2 border border-surface">Poids</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -89,32 +89,32 @@ export default function BudgetItemsTable() {
                                         {group.lines.map((line, index) => (
                                             <tr key={line.id}>
                                                 {index === 0 && (
-                                                    <td rowSpan={group.lines.length + 1} className="border-1 p-2 surface-border font-semibold align-top">
+                                                    <td rowSpan={group.lines.length + 1} className="border p-2 border-surface font-semibold align-top">
                                                         {group.label}
                                                     </td>
                                                 )}
-                                                <td className="p-2 border-1 surface-border">{line.label}</td>
-                                                <td className="text-right p-2 border-1 surface-border">{toMonetaryAmount(line.amount)}</td>
-                                                <td className="text-right p-2 border-1 surface-border">
+                                                <td className="p-2 border border-surface">{line.label}</td>
+                                                <td className="text-right p-2 border border-surface">{toMonetaryAmount(line.amount)}</td>
+                                                <td className="text-right p-2 border border-surface">
                                                     {totalBudget > 0
                                                         ? `${((line.amount / totalBudget) * 100).toFixed(2)} %`
                                                         : "0.00 %"}
                                                 </td>
                                             </tr>
                                         ))}
-                                        <tr key={`subtotal-${group.category}`} className="surface-50 p-0">
-                                            <td className="p-2 border-1 surface-border font-semibold">Sous-total</td>
-                                            <td className="text-right p-2 border-1 surface-border font-semibold">{toMonetaryAmount(group.subtotal)}</td>
-                                            <td className="text-right p-2 border-1 surface-border font-semibold">{group.percentage.toFixed(2)} %</td>
+                                        <tr key={`subtotal-${group.category}`} className="bg-surface-50 p-0">
+                                            <td className="p-2 border border-surface font-semibold">Sous-total</td>
+                                            <td className="text-right p-2 border border-surface font-semibold">{toMonetaryAmount(group.subtotal)}</td>
+                                            <td className="text-right p-2 border border-surface font-semibold">{group.percentage.toFixed(2)} %</td>
                                         </tr>
                                     </Fragment>
                                 ))}
                             </tbody>
                             <tfoot>
-                                <tr className="surface-200 p-0">
-                                    <td className="p-2 border-1 surface-border font-bold" colSpan={2}>TOTAL</td>
-                                    <td className="text-right p-2 border-1 surface-border font-bold">{toMonetaryAmount(totalBudget)}</td>
-                                    <td className="text-right p-2 border-1 surface-border font-bold">100.00 %</td>
+                                <tr className="bg-surface-200 p-0">
+                                    <td className="p-2 border border-surface font-bold" colSpan={2}>TOTAL</td>
+                                    <td className="text-right p-2 border border-surface font-bold">{toMonetaryAmount(totalBudget)}</td>
+                                    <td className="text-right p-2 border border-surface font-bold">100.00 %</td>
                                 </tr>
                             </tfoot>
                         </table>

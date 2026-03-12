@@ -55,7 +55,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
 
     const renderSelectedLabel = (option?: { value?: AccountLineNature | AccountLinePoste } | null) => {
         if (!option?.value) {
-            return <span className="text-color-secondary">Sélectionner</span>;
+            return <span className="text-muted-color">Sélectionner</span>;
         }
 
         return <ColoredLabel data={option.value} />;
@@ -120,7 +120,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             style={{ width: "60vw" }}
             onHide={hideDialog}
         >
-            <div className="flex flex-column gap-4 pt-4">
+            <div className="flex flex-col gap-12 pt-12">
                 <div className="flex gap-1">
                     <FloatLabel className="flex-1">
                         <Calendar
@@ -133,7 +133,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                         <label htmlFor="dateOperation">Date d'opération</label>
                     </FloatLabel>
                 </div>
-                <div className="flex align-items-center gap-2">
+                <div className="flex items-center gap-2">
                     <ToggleButton
                         onIcon="pi pi-check"
                         offIcon="pi pi-times"
@@ -226,7 +226,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
                         <label htmlFor="amount">Montant</label>
                     </FloatLabel>
 
-                    <div className="flex align-items-center">
+                    <div className="flex items-center">
                         <small>{amount < 0 ? "Débit" : "Crédit"}</small>
                     </div>
                 </div>

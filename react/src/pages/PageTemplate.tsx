@@ -37,16 +37,16 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   }
 
   const brand = (
-    <button className="flex align-items-center gap-2 border-none bg-transparent p-0 text-left color-inherit cursor-pointer" onClick={() => navigateTo("/")}>
-      <img src={ChocoChou} className="h-3rem" />
+    <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
+      <img src={ChocoChou} className="h-12" />
       <h1 className="text-2xl m-0">Chocosous</h1>
     </button>
   )
 
   return (
-    <div className="h-screen flex flex-column overflow-hidden">
-      <header className="flex align-items-center justify-content-between px-4 py-3 border-bottom-1 surface-border">
-        <div className="flex align-items-center gap-2">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <header className="flex items-center justify-between px-12 py-6 border-b border-surface">
+        <div className="flex items-center gap-2">
           <div className="md:hidden">
             <Button
               icon="pi pi-bars"
@@ -77,7 +77,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
       <div className="flex-1 min-h-0 md:flex overflow-hidden">
         {isDesktopMenuVisible && (
-          <aside className="p-3 border-right-1 surface-border hidden md:block md:w-16rem h-full overflow-y-auto">
+          <aside className="p-6 border-r border-surface hidden md:block md:w-64 h-full overflow-y-auto">
             <AppNavigationMenu navigateTo={navigateTo} />
           </aside>
         )}
@@ -86,14 +86,14 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           visible={isMobileMenuVisible}
           onHide={() => setIsMobileMenuVisible(false)}
           position="left"
-          className="w-18rem"
+          className="w-72"
         >
-          <div className="flex flex-column h-full">
+          <div className="flex flex-col h-full">
             <AppNavigationMenu navigateTo={navigateTo} />
           </div>
         </Sidebar>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-3">
+        <main className="flex-1 min-h-0 overflow-y-auto px-12 py-6">
           {children}
         </main>
       </div>

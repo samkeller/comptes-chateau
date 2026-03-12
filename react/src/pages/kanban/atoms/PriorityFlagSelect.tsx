@@ -48,7 +48,7 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
             />
             <OverlayPanel ref={op}>
                 <ListBox
-                    className="border-none"
+                    className="border-surface-900"
                     value={priority}
                     onChange={v => {
                         v.value && onChange(v.value)

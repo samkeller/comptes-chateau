@@ -63,7 +63,7 @@ export default function Index() {
     }) => (
 
         <Card
-            title={<span className="flex align-content-center gap-2">
+            title={<span className="flex content-center gap-2">
                 {title}
                 <TooltipInfoIcon tooltipText={tooltipText} />
             </span>}
@@ -72,21 +72,21 @@ export default function Index() {
             <h2 className={`text-4xl font-bold ${className ?? ""}`} >
                 {value}
             </h2>
-            <div className="text-500 mt-2">{description}</div>
+            <div className="text-surface-500 mt-2">{description}</div>
         </Card>
     )
 
     return (
         <PageTemplate pageTitle="Dashboard">
             {loading && (
-                <div className="flex justify-content-center p-4">
+                <div className="flex justify-center p-12">
                     <ProgressSpinner />
                 </div>
             )}
 
             {!loading && overview && (
-                <div className="grid">
-                    <div className="col-12 md:col-6 lg:col-3">
+                <div className="grid grid-cols-12 gap-6">
+                    <div className="col-span-12 md:col-span-6 lg:col-span-3">
                         <IndicatorCard
                             title="Solde actuel"
                             value={toMonetaryAmount(overview.currentBalance)}
@@ -95,7 +95,7 @@ export default function Index() {
                             className={getBalanceClass(overview.currentBalance)}
                         />
                     </div>
-                    <div className="col-12 md:col-6 lg:col-3">
+                    <div className="col-span-12 md:col-span-6 lg:col-span-3">
                         <IndicatorCard
                             title="Solde prévisionnel"
                             value={toMonetaryAmount(overview.forecastBalance)}
@@ -104,34 +104,34 @@ export default function Index() {
                             className={getBalanceClass(overview.forecastBalance)}
                         />
                     </div>
-                    <div className="col-12 md:col-6 lg:col-3">
+                    <div className="col-span-12 md:col-span-6 lg:col-span-3">
                         <Card title="Dépenses du mois" className="h-full">
-                            <div className="text-4xl font-bold text-900">
+                            <div className="text-4xl font-bold text-surface-900">
                                 {toMonetaryAmount(overview.monthExpenses)} / {toMonetaryAmount(overview.monthlyBudget)}
                             </div>
-                            <div className="mt-3">
-                                <div className="w-full surface-200 border-round overflow-hidden" style={{ height: "0.7rem" }}>
+                            <div className="mt-6">
+                                <div className="w-full bg-surface-200 rounded-border overflow-hidden" style={{ height: "0.7rem" }}>
                                     <div
-                                        className="bg-primary"
+                                        className="bg-primary text-primary-contrast"
                                         style={{ width: `${budgetProgress}%`, height: "100%" }}
                                     />
                                 </div>
                             </div>
-                            <div className="text-500 mt-2">
+                            <div className="text-surface-500 mt-2">
                                 {budgetProgress.toFixed(1)}% consommé • {daysRemainingInMonth} jour(s) restant(s)
                             </div>
                         </Card>
                     </div>
-                    <div className="col-12 md:col-6 lg:col-3">
+                    <div className="col-span-12 md:col-span-6 lg:col-span-3">
                         <Card title="Opérations à vérifier" className="h-full">
-                            <div className="text-4xl font-bold text-900">
+                            <div className="text-4xl font-bold text-surface-900">
                                 {overview.operationsToCheckInAccountCount}
-                                &nbsp; <small className="text-500 text-xl">sur le compte</small>
+                                &nbsp; <small className="text-surface-500 text-xl">sur le compte</small>
                             </div>
-                            <div className="text-500 mt-2">
+                            <div className="text-surface-500 mt-2">
                                  {overview.operationsToCheckHorsCompteCount} hors compte
                             </div>
-                            <div className="mt-3 w-full flex justify-content-end">
+                            <div className="mt-6 w-full flex justify-end">
                                 <Button
                                     label="Vérifications"
                                     icon="pi pi-arrow-right"
@@ -141,7 +141,7 @@ export default function Index() {
                         </Card>
                     </div>
 
-                    <div className="col-12">
+                    <div className="col-span-12">
                         <MonthlyDashboard />
                     </div>
                 </div>

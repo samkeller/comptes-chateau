@@ -7,7 +7,7 @@ interface ColoredLabelProps {
 
 export function ColoredLabel({ data }: ColoredLabelProps) {
     return (
-        <div className="flex align-items-center">
+        <div className="flex items-center">
             <span
             aria-hidden="true"
             style={{

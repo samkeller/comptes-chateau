@@ -62,7 +62,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                 className="h-full"
                 pt={{
                     body: { className: "h-full" },
-                    content: { className: "h-full flex flex-column gap-2" }
+                    content: { className: "h-full flex flex-col gap-2" }
                 }}
 
             >
@@ -87,12 +87,12 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                         />
                     </div>
                 )}
-                <div className="flex-grow-1"></div>
+                <div className="grow"></div>
 
-                <div className="flex flex-row flex-shrink-0 py-2">
+                <div className="flex flex-row shrink-0 py-2">
                     <InputText
                         placeholder="Ajouter une tâche..."
-                        className="flex-grow-1 "
+                        className="grow "
                         value={newTask.title}
                         onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                     />
@@ -105,7 +105,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                         }
                     />
                     <Button
-                        className="flex-shrink-0"
+                        className="shrink-0"
                         text
                         icon="pi pi-plus"
                         rounded

@@ -76,7 +76,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
     }
 
     const header = (
-        <div className="flex justify-content-between align-items-center w-full pr-3">
+        <div className="flex justify-between items-center w-full pr-6">
             <EditableString
                 value={taskData.title}
                 onValidate={newValue => setTaskData({
@@ -89,7 +89,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                 text
                 icon="pi pi-trash"
                 severity="danger"
-                className="py-0 h-2rem w-2rem"
+                className="py-0 h-8 w-8"
                 tooltip="Supprimer"
                 onClick={deleteTask}
             />
@@ -115,7 +115,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
             header={header}
             footer={footer}
         >
-            <div className="pt-4 flex flex-column gap-4">
+            <div className="pt-12 flex flex-col gap-12">
 
                 <FloatLabel>
                     <Dropdown
@@ -136,7 +136,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                         optionLabel="label"
                         optionValue="value"
                         itemTemplate={option => (
-                            <div className="flex align-items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <PriorityFlag priority={option.value} />
                                 <span>{option.label}</span>
                             </div>
@@ -147,7 +147,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                             }
 
                             return (
-                                <div className="flex align-items-center gap-2">
+                                <div className="flex items-center gap-2">
                                     <PriorityFlag priority={option.value} />
                                     <span>{option.label}</span>
                                 </div>

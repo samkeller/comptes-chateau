@@ -138,8 +138,8 @@ export default function AccountBook() {
                     refresh={loadAccountLines}
                 />
             }
-            <div className="flex justify-content-end mb-3">
-                <div className="flex flex-column gap-2">
+            <div className="flex justify-end mb-6">
+                <div className="flex flex-col gap-2">
                     <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
             </div>

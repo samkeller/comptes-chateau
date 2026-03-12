@@ -11,7 +11,7 @@ export default function TooltipInfoIcon({ tooltipText, type = "info" }: TooltipI
     // id ajoute des ":" -> on les remplace par des "-" pour éviter les problèmes de sélecteurs CSS
     const customId = "tooltip-info-icon-" + id.replace(/:/g, "-");
 
-    const infoClassNames = "pi pi-info-circle text-500";
+    const infoClassNames = "pi pi-info-circle text-surface-500";
     const warningClassNames = "pi pi-exclamation-triangle text-orange-500";
 
     /**

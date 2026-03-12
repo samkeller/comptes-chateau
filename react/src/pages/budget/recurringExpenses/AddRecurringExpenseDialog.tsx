@@ -101,7 +101,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             style={{ width: '60vw' }}
             onHide={() => hideDialog()}
         >
-            <div className="flex flex-column gap-4 pt-4">
+            <div className="flex flex-col gap-12 pt-12">
                 <FloatLabel className='flex-1'>
                     <InputText
                         id="label"
@@ -138,12 +138,12 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>
                 </div>
-                <div className='flex gap-1 align-items-center'>
+                <div className='flex gap-1 items-center'>
                     <FloatLabel className='flex-1'>
                         <InputNumber id="solde" value={solde} onValueChange={(e) => setSolde(e.value || 0)} mode="currency" currency="EUR" locale="fr-FR" className='w-full' />
                         <label htmlFor="solde">Montant</label>
                     </FloatLabel>
-                    <div className="flex align-items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <label htmlFor="isActive">Actif</label>
                         <InputSwitch id="isActive" checked={isActive} onChange={(e) => setIsActive(e.value)} />
                     </div>

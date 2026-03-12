@@ -7,7 +7,7 @@ interface AppNavigationMenuProps {
 }
 
 export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps) {
-    const subItemClassName = " ml-4"
+    const subItemClassName = " ml-12"
 
     const location = useLocation();
     const currentPath = location.pathname;
@@ -16,7 +16,7 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
         {
             label: "Home",
             icon: "pi pi-home",
-            className: currentPath === "/" ? "surface-200" : undefined,
+            className: currentPath === "/" ? "bg-surface-200" : undefined,
             command: () => navigateTo("/")
         },
         {
@@ -27,7 +27,7 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
                     icon: "pi pi-book",
                     className: subItemClassName + (
                         currentPath === "/comptes" || currentPath === "/comptes/" ?
-                            " surface-200" :
+                            " bg-surface-200" :
                             ""
                     ),
                     command: () => navigateTo("/comptes"),
@@ -35,7 +35,7 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
                 {
                     label: "Vérifications",
                     icon: "pi pi-check-square",
-                    className: subItemClassName + (currentPath.startsWith("/comptes/verifications") ? " surface-200" : ""),
+                    className: subItemClassName + (currentPath.startsWith("/comptes/verifications") ? " bg-surface-200" : ""),
                     command: () => navigateTo("/comptes/verifications")
                 },
             ]
@@ -43,13 +43,13 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
         {
             label: "Budget",
             icon: "pi pi-calculator",
-            className: currentPath.startsWith("/budget") ? "surface-200" : undefined,
+            className: currentPath.startsWith("/budget") ? "bg-surface-200" : undefined,
             command: () => navigateTo("/budget")
         },
         {
             label: "Configuration",
             icon: "pi pi-cog",
-            className: currentPath.startsWith("/setup") ? "surface-200" : undefined,
+            className: currentPath.startsWith("/setup") ? "bg-surface-200" : undefined,
             command: () => navigateTo("/setup")
         }
     ];
@@ -58,16 +58,16 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
         {
             label: "Kanban",
             icon: "pi pi-th-large",
-            className: currentPath.startsWith("/kanban") ? "surface-200" : undefined,
+            className: currentPath.startsWith("/kanban") ? "bg-surface-200" : undefined,
             command: () => navigateTo("/kanban")
         },
     ]
 
     return (
-        <div className="flex flex-column h-full">
-            <Menu model={startItems} className="w-full border-none" />
-            <div className="flex-grow-1"></div>
-            <Menu model={endItems} className="w-full border-none" />
+        <div className="flex flex-col h-full">
+            <Menu model={startItems} className="w-full border-0" />
+            <div className="grow"></div>
+            <Menu model={endItems} className="w-full border-0" />
         </div>
     )
 

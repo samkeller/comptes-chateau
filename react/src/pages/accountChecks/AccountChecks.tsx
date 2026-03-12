@@ -155,19 +155,19 @@ export default function AccountChecks() {
 
     return (
         <PageTemplate pageTitle="Vérifications opérations">
-            <div className="flex flex-column gap-3">
+            <div className="flex flex-col gap-6">
                 <Card>
-                    <div className="flex flex-column gap-3">
-                        <div className="flex flex-column lg:flex-row lg:align-items-center lg:justify-content-between gap-3">
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                             <div>
                                 <h2 className="m-0 text-2xl">Vérifier les opérations</h2>
-                                <p className="m-0 text-600 line-height-3">
+                                <p className="m-0 text-surface-600 leading-normal">
                                     - Mode manuel: sélectionne dans le tableau puis valide. <br />
                                     - Import CSV: optionnel pour pré-remplir.
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap align-items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <Button
                                     label={`Valider (${selectedLines.length})`}
                                     icon="pi pi-check"
@@ -182,7 +182,7 @@ export default function AccountChecks() {
                     </div>
                 </Card>
                 <Card>
-                    <div className="flex flex-column gap-3">
+                    <div className="flex flex-col gap-6">
                         <BanquePostaleCsvImport
                             disabled={loading || submitting}
                             onImport={handleCsvImport}
@@ -196,7 +196,7 @@ export default function AccountChecks() {
                             />
                         )}
                     </div>
-                    <div className="border-top-1 surface-border my-4" />
+                    <div className="border-t border-surface my-12" />
                     <DataTable<AccountLine[]>
                         value={accountLines}
                         dataKey="id"

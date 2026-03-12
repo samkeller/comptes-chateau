@@ -1,3 +1,28 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "primereact/resources/themes/lara-dark-teal/theme.css" layer(components);
+@import "primeicons/primeicons.css" layer(components);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-surface-0: var(--surface-0);
+  --color-surface-50: var(--surface-50);
+  --color-surface-100: var(--surface-100);
+  --color-surface-200: var(--surface-200);
+  --color-surface-300: var(--surface-300);
+  --color-surface-400: var(--surface-400);
+  --color-surface-500: var(--surface-500);
+  --color-surface-600: var(--surface-600);
+  --color-surface-700: var(--surface-700);
+  --color-surface-800: var(--surface-800);
+  --color-surface-900: var(--surface-900);
+  --color-surface: var(--surface-border);
+  --color-primary: var(--primary-color);
+  --color-muted-color: var(--text-color-secondary);
+  --radius-border: var(--border-radius);
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
@@ -13,4 +38,28 @@
 
 body {
   margin: 0;
+}
+
+/* PrimeReact form components are inline-flex by default.
+   .p-fluid made them flex + 100% width. Replicate via utility. */
+.p-fluid .p-password,
+.p-fluid .p-inputtext,
+.p-fluid .p-dropdown,
+.p-fluid .p-multiselect,
+.p-fluid .p-inputnumber,
+.p-fluid .p-calendar,
+.p-fluid .p-selectbutton,
+.p-fluid .p-autocomplete {
+  display: flex;
+  width: 100%;
+}
+
+.p-fluid .p-inputtext,
+.p-fluid .p-selectbutton > .p-button {
+  width: 100%;
+}
+
+.p-fluid .p-icon-field {
+  display: flex;
+  width: 100%;
 }

@@ -96,12 +96,12 @@ export default function MonthlyDashboard() {
             </div>
 
             {loading && (
-                <div className="flex justify-content-center p-4">
+                <div className="flex justify-center p-12">
                     <ProgressSpinner />
                 </div>
             )}
             {!loading && dashboardData.length > 0 && (
-                <div className="flex flex-column gap-4">
+                <div className="flex flex-col gap-12">
                     <TabView activeIndex={tabActiveIndex} onTabChange={(e) => setTabActiveIndex(e.index)}>
                         <TabPanel header="Graphique">
                             <MonthlyPosteChart data={dashboardData} />

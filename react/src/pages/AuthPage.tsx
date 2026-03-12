@@ -39,23 +39,23 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="flex align-items-center justify-content-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen">
             <Card
                 header={
                     <div className="text-center">
                         <img
                             src={ChocoChou}
                             alt="Chat triste"
-                            className="w-full border-round mb-3"
+                            className="w-full rounded-border mb-6"
                             style={{ maxHeight: 260, objectFit: "cover" }}
                         />
                     </div>
                 }
                 title="Passer la choco-sécurité"
-                className="w-full sm:w-30rem"
+                className="w-full sm:w-[30rem]"
             >
-                <div className="flex flex-column gap-3">
-                    <div className="p-fluid">
+                <div className="p-fluid flex flex-col gap-6">
+                    <div>
                         <SelectButton
                             value={username}
                             onChange={(e) => setUsername(e.value)}
@@ -64,17 +64,15 @@ export default function AuthPage() {
 
                         />
                     </div>
-                    <div className="flex-grow-1 p-fluid">
-                        <Password
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            feedback={false}
-                            toggleMask
-                            placeholder="Mot de passe"
-                            onKeyDown={(e) => e.key === "Enter" && submit()}
-                        />
-                    </div>
-                    <div className="flex justify-content-end">
+                    <Password
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        feedback={false}
+                        toggleMask
+                        placeholder="Mot de passe"
+                        onKeyDown={(e) => e.key === "Enter" && submit()}
+                    />
+                    <div className="flex justify-end">
                         <Button
                             label="Connexion"
                             icon="pi pi-lock"
@@ -83,7 +81,7 @@ export default function AuthPage() {
                         />
                     </div>
                 </div>
-                <div className="flex flex-row justify-content-center mt-2">
+                <div className="flex flex-row justify-center mt-2">
                     {error && <small className="text-red-500">{error}</small>}
                 </div>
             </Card>

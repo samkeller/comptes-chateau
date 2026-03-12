@@ -98,12 +98,12 @@ export default function KanbanPage() {
                 onDragStart={(event) => setActiveId(event.active.id as number)}
             >
                 {loading ? (
-                    <div className="w-full flex justify-content-center p-5">
+                    <div className="w-full flex justify-center p-20">
                         <ProgressSpinner />
                     </div>
                 ) : (
                     <FillRemainingHeight>
-                        <div className="flex flex-row w-full h-full gap-3">
+                        <div className="flex flex-row w-full h-full gap-6">
                             {
                                 selectedTask && (
                                     <KanbanTaskDialog
@@ -144,9 +144,9 @@ export default function KanbanPage() {
                             pointerEvents: "none",
                         }}>
                             <Card
-                                className="p-2 border-round bg-gray-700"
+                                className="p-2 rounded-border bg-gray-700"
                                 title={(
-                                    <div className="flex align-items-center justify-content-between">
+                                    <div className="flex items-center justify-between">
                                         <span>{activeTask.title}</span>
                                         <PriorityFlag priority={activeTask.priority} />
                                     </div>
