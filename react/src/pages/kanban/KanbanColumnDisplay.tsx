@@ -5,7 +5,6 @@ import { useMemo, useState } from "react"
 import KanbanColumn from "../../interfaces/kanban/KanbanColumn"
 import KanbanTaskCard from "./KanbanTaskCard"
 import { InputText } from "primereact/inputtext"
-import KanbanService from "../../services/kanban/KanbanService"
 import { compareTaskPriority } from "./atoms/PriorityFlag"
 import { CreateKanbanTaskDto } from "../../services/kanban/dto/CreateKanbanTaskDto"
 import PriorityFlagSelect from "./atoms/PriorityFlagSelect"
@@ -20,7 +19,6 @@ interface KanbanColumnProps {
 }
 
 export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, reloadTasks, activeId }: KanbanColumnProps) {
-    const kanbanService = new KanbanService();
     const [newTask, setNewTask] = useState<CreateKanbanTaskDto>({
         title: "",
         columnId: column.id,
@@ -36,11 +34,13 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
     }, [tasks]);
 
     function handleAddTask() {
-        kanbanService.createKanbanTask(newTask).then(task => {
-            setSelectedTask(task);
-            setNewTask({ ...newTask, title: "" });
-            reloadTasks();
-        })
+        setSelectedTask(
+            {
+                ...newTask,
+                id: 0,
+                description: "",
+            }
+        );
     }
 
     return (
@@ -85,7 +85,8 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                         priority={newTask.priority}
                         onChange={(priority) => {
                             console.log("new", priority)
-                            setNewTask({ ...newTask, priority: priority})}
+                            setNewTask({ ...newTask, priority: priority })
+                        }
                         }
                     />
                     <Button

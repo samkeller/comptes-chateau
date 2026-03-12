@@ -25,19 +25,44 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
         value,
         label: getPriorityLabel(value),
     }));
+
     /**
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
      */
     const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
 
-    function handleSubmit() {
-        service.saveKanbanTask(taskData).then(() => {
-            showGlobalToast({
-                severity: "success",
-                summary: "Tâche modifiée.",
-            })
-            closeDialog(true);
-        })
+    const isCreation = task.id === 0;
+
+    async function handleSubmit() {
+
+
+        if (isCreation) {
+            // Si l'id de la tâche est 0, c'est qu'on est en train de créer une nouvelle tâche, donc on appelle la méthode de création
+            await service.createKanbanTask(taskData)
+                .catch(() => {
+                    // TODO: Gestion des erreurs plus fine
+                    showGlobalToast({
+                        severity: "error",
+                        summary: "Erreur lors de la création de la tâche.",
+                    });
+                    throw new Error("Erreur lors de la création de la tâche.");
+                });
+        } else {
+            // Sinon, on est en train de modifier une tâche existante, donc on appelle la méthode de modification
+            await service.saveKanbanTask(taskData).catch(() => {
+                // TODO: Gestion des erreurs plus fine
+                showGlobalToast({
+                    severity: "error",
+                    summary: "Erreur lors de la modification de la tâche.",
+                });
+                throw new Error("Erreur lors de la modification de la tâche.");
+            });
+        }
+        showGlobalToast({
+            severity: "success",
+            summary: isCreation ? "Tâche ajoutée." : "Tâche modifiée.",
+        });
+        closeDialog(true);
     }
 
     async function deleteTask() {
@@ -73,8 +98,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
     const footer = (
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={() => closeDialog(false)} />
-            {/* <Button label={task.selectedColumn ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} /> */}
-            <Button label={"Modifier"} icon="pi pi-check" onClick={handleSubmit} />
+            <Button label={isCreation ? "Ajouter" : "Modifier"} icon="pi pi-check" onClick={handleSubmit} />
         </div>
     );
 
@@ -138,6 +162,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                         className="w-full"
                         value={taskData.description || ""}
                         onChange={e => setTaskData({ ...taskData, description: e.target.value })}
+                        rows={10}
                     />
                     <label htmlFor="description-input">Description</label>
                 </FloatLabel>
