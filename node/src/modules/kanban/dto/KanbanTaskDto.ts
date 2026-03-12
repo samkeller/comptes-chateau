@@ -1,8 +1,9 @@
-import { KanbanColumnDto } from "./KanbanColumnDto";
+import { KanbanTaskPriority } from "./KanbanTaskPriority";
 
 export interface KanbanTaskDto {
     id: number;
     title: string;
     description: string | null;
-    columnId: number; 
+    columnId: number;
+    priority: KanbanTaskPriority;
 }

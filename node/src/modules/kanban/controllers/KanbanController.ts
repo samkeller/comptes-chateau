@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import KanbanBoardService from "../services/KanbanBoardService";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
 import { KanbanTaskDto } from "../dto/KanbanTaskDto";
+import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../dto/KanbanTaskPriority";
 
 export default class KanbanController {
     private readonly boardService = new KanbanBoardService();
@@ -22,10 +23,15 @@ export default class KanbanController {
             return res.status(400).send("Invalid task payload");
         }
 
+        if (body.priority !== undefined && !this.isValidPriority(body.priority)) {
+            return res.status(400).send("Invalid task payload");
+        }
+
         try {
             const payload: CreateKanbanTaskDto = {
                 title: body.title.trim(),
                 columnId: body.columnId,
+                priority: body.priority,
             };
 
             const task = await this.boardService.createTask(payload);
@@ -43,7 +49,7 @@ export default class KanbanController {
 
         const body = req.body as Partial<KanbanTaskDto>;
 
-        if (typeof body.title !== "string" || body.title.trim().length === 0 || typeof body.columnId !== "number" || !Number.isInteger(body.columnId)) {
+        if (typeof body.title !== "string" || body.title.trim().length === 0 || typeof body.columnId !== "number" || !Number.isInteger(body.columnId) || !this.isValidPriority(body.priority)) {
             return res.status(400).send("Invalid task payload");
         }
 
@@ -53,6 +59,7 @@ export default class KanbanController {
                 title: body.title.trim(),
                 description: body.description ?? null,
                 columnId: body.columnId,
+                priority: body.priority,
             };
 
             const task = await this.boardService.saveTask(payload);
@@ -76,4 +83,8 @@ export default class KanbanController {
         }
     }
 
+
+    private isValidPriority(priority: unknown): priority is KanbanTaskPriority {
+        return typeof priority === "string" && KANBAN_TASK_PRIORITIES.includes(priority as KanbanTaskPriority);
+    }
 }

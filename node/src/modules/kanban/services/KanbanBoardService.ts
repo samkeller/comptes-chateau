@@ -34,6 +34,7 @@ export default class KanbanBoardService {
         const task = this.kanbanTaskRepo.create({
             title: body.title,
             column,
+            priority: body.priority ?? "normal",
         });
 
         return this.kanbanTaskRepo.save(task);
@@ -49,6 +50,7 @@ export default class KanbanBoardService {
         existingTask.columnId = task.columnId;
         existingTask.title = task.title;
         existingTask.description = task.description;
+        existingTask.priority = task.priority;
 
         return this.kanbanTaskRepo.save(existingTask);
 
