@@ -5,11 +5,10 @@ import { useDraggable } from "@dnd-kit/core";
 
 interface KanbanTaskCardProps {
     task: KanbanTask,
-    setSelectedTask: (task: KanbanTask) => void,
-    isDragging?: boolean
+    setSelectedTask: (task: KanbanTask) => void
 }
 
-export default function KanbanTaskCard({ task, setSelectedTask, isDragging }: KanbanTaskCardProps) {
+export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCardProps) {
     const { attributes, listeners, setNodeRef, isDragging: dragState } = useDraggable({
         id: task.id,
     });
@@ -27,14 +26,14 @@ export default function KanbanTaskCard({ task, setSelectedTask, isDragging }: Ka
             {...listeners}
             {...attributes}
             style={{
-                opacity: dragState || isDragging ? 0.5 : 1,
+                opacity: dragState ? 0.8 : 1,
                 cursor: "grab",
                 transition: "opacity 0.2s ease",
             }}
         >
             <Card
                 title={header}
-                className={"p-2 border-round cursor-pointer " + (dragState ? "opacity-50" : "")}
+                className={"p-2 border-round cursor-pointer" }
                 onClick={() => setSelectedTask(task)}
             >
                 <small>{task.description}</small>

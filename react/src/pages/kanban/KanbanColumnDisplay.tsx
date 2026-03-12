@@ -55,19 +55,17 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
             <h2>{column.label}</h2>
             <div className="flex flex-column gap-2 flex-grow-1">
                 {sortedTasks.map(task => (
-                    <div key={task.id} className="kanban-task">
-                        <KanbanTaskCard
-                            task={task}
-                            setSelectedTask={setSelectedTask}
-                            isDragging={activeId === task.id}
-                        />
-                    </div>
+                    <KanbanTaskCard
+                        key={task.id}
+                        task={task}
+                        setSelectedTask={setSelectedTask}
+                    />
                 ))}
             </div>
             <Card
                 pt={{
-                    body: {className: "p-0"},
-                    content: {className: "p-3"},
+                    body: { className: "p-0" },
+                    content: { className: "p-3" },
                 }}
             >
 
@@ -94,7 +92,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                     />
                 </div>
             </Card>
-                        
+
         </div>
     )
 }
