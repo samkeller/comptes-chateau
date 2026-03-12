@@ -10,7 +10,7 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 
 ## Tech Stack
 
-- Front: React, TypeScript, PrimeReact, Vite
+- Front: React, TypeScript, PrimeReact, Tailwind, Vite
 - Back: Node.js, TypeScript, TypeORM, PostgreSQL
 
 ## Structure Attendue
@@ -38,6 +38,7 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 - Props, retours de fonctions, DTOs explicitement types
 - Nommage: `PascalCase` (composants/classes), `camelCase` (fonctions/variables), `UPPER_SNAKE_CASE` (constantes)
 - Utiliser PrimeReact avant de creer des composants UI custom
+- Utiliser Tailwind avant de creer des classes CSS custom
 - Controlleurs fins, logique metier dans les services
 - Validation des entrees a la frontiere API
 - Gestion systematique des erreurs async avec propagation coherente
