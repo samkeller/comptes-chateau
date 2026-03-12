@@ -74,7 +74,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
                 ))}
                 <div className="flex-grow-1"></div>
 
-                <div className="flex flex-row flex-shrink-0">
+                <div className="flex flex-row flex-shrink-0 py-2">
                     <InputText
                         placeholder="Ajouter une tâche..."
                         className="flex-grow-1 "
