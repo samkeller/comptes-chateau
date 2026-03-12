@@ -19,6 +19,7 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
+import KanbanTaskCard from "./KanbanTaskCard";
 
 
 
@@ -124,7 +125,6 @@ export default function KanbanPage() {
                                         <KanbanColumnDisplay
                                             column={column}
                                             tasks={tasks.filter(t => t.columnId === column.id)}
-                                            reloadTasks={loadBoard}
                                             setSelectedTask={setSelectedTask}
                                             activeId={activeId}
                                             ghostTask={overColumnId === column.id ? activeTask : null}
@@ -143,17 +143,10 @@ export default function KanbanPage() {
                             opacity: 0.92,
                             pointerEvents: "none",
                         }}>
-                            <Card
-                                className="p-2 rounded-border bg-gray-700"
-                                title={(
-                                    <div className="flex items-center justify-between">
-                                        <span>{activeTask.title}</span>
-                                        <PriorityFlag priority={activeTask.priority} />
-                                    </div>
-                                )}
-                            >
-                                <small>{activeTask.description}</small>
-                            </Card>
+                            <KanbanTaskCard 
+                                task={activeTask}
+                                setSelectedTask={() => {}}
+                            />
                         </div>
                     ) : null}
                 </DragOverlay>

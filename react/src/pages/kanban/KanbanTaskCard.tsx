@@ -2,6 +2,7 @@ import { Card } from "primereact/card";
 import KanbanTask from "../../interfaces/kanban/KanbanTask"
 import PriorityFlag from "./atoms/PriorityFlag";
 import { useDraggable } from "@dnd-kit/core";
+import Markdown from "react-markdown";
 
 interface KanbanTaskCardProps {
     task: KanbanTask,
@@ -34,10 +35,10 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
                 className="p-2 rounded-border cursor-pointer bg-gray-700 hover:bg-gray-600"
                 onClick={() => setSelectedTask(task)}
             >
-                <small
-                    className="line-clamp-5"
-                >
-                    {task.description}
+                <small className="line-clamp-5" >
+                    <Markdown>
+                        {task.description}
+                    </Markdown>
                 </small>
             </Card>
         </div>
