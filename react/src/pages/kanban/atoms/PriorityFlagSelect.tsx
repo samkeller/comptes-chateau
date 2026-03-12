@@ -1,9 +1,9 @@
 import { Button } from "primereact/button";
 import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { ListBox } from "primereact/listbox";
-import PriorityFlag, { getPriorityLabel } from "./PriorityFlag";
+import PriorityFlag, { getPriorityColor, getPriorityLabel } from "./PriorityFlag";
 import { SelectItem } from "primereact/selectitem";
 
 interface PriorityFlagSelectProps {
@@ -11,19 +11,10 @@ interface PriorityFlagSelectProps {
     onChange: (priority: KanbanTaskPriority) => void
 }
 
-
-function getPriorityColorSeverity(priority: KanbanTaskPriority): "danger" | "info" | undefined {
-    if (priority === "high")
-        return "danger";
-    if (priority === "low")
-        return "info";
-}
-
 export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagSelectProps) {
 
     const op = useRef<OverlayPanel>(null);
     const [showMenu, setShowMenu] = useState(false);
-    const severity = useMemo(() => getPriorityColorSeverity(priority), [priority]);
 
     const menuData: SelectItem[] = KANBAN_TASK_PRIORITIES.map(v => {
         return {
@@ -36,7 +27,7 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
         <>
             <Button
                 icon={`pi pi-flag-fill`}
-                severity={severity}
+                style={{ color: getPriorityColor(priority) }}
                 text
                 rounded
                 size="small"
@@ -48,7 +39,7 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
             />
             <OverlayPanel ref={op}>
                 <ListBox
-                    className="border-surface-900"
+                    className="border-0"
                     value={priority}
                     onChange={v => {
                         v.value && onChange(v.value)
@@ -57,9 +48,8 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
                     options={menuData}
                     itemTemplate={option => <PriorityFlag priority={option.value} />}
                     pt={{
-                        item: {
-                            className: "inline"
-                        }
+                        item: { className: "inline" },
+                        wrapper: { className: "overlow-none"}
                     }}
                 />
             </OverlayPanel>

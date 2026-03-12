@@ -11,15 +11,15 @@ export function compareTaskPriority(left: KanbanTaskPriority, right: KanbanTaskP
     return PRIORITY_RANK[right] - PRIORITY_RANK[left];
 }
 
-function getPriorityColor(priority: KanbanTaskPriority): string {
+export function getPriorityColor(priority: KanbanTaskPriority): string {
     if (priority === "high") {
         return "var(--red-500)";
     }
 
     if (priority === "low") {
-        return "var(--blue-500)";
+        return "var(--green-500)";
     }
-    return "var(--primary-color)";
+    return "var(--yellow-500)";
 }
 
 export function getPriorityLabel(priority: KanbanTaskPriority): string {
@@ -36,6 +36,10 @@ export function getPriorityLabel(priority: KanbanTaskPriority): string {
 
 export default function PriorityFlag({ priority }: { priority: KanbanTaskPriority }) {
     return (
-        <i className="pi pi-flag-fill" style={{ color: getPriorityColor(priority) }} data-pr-tooltip={getPriorityLabel(priority)} />
+        <i
+            className="pi pi-flag-fill"
+            style={{ color: getPriorityColor(priority) }}
+            data-pr-tooltip={getPriorityLabel(priority)}
+        />
     )
 }
