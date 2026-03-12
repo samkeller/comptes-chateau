@@ -74,7 +74,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={() => closeDialog(false)} />
             {/* <Button label={task.selectedColumn ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} /> */}
-            <Button label={"Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
+            <Button label={"Modifier"} icon="pi pi-check" onClick={handleSubmit} />
         </div>
     );
 
