@@ -15,7 +15,7 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
 
     const header = (
         <div className="flex items-center justify-between">
-            <span>{task.title}</span>
+            <span className="line-clamp-1">{task.title}</span>
             <PriorityFlag priority={task.priority} />
         </div>
     );
@@ -34,7 +34,11 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
                 className="p-2 rounded-border cursor-pointer bg-gray-700 hover:bg-gray-600"
                 onClick={() => setSelectedTask(task)}
             >
-                <small>{task.description}</small>
+                <small
+                    className="line-clamp-5"
+                >
+                    {task.description}
+                </small>
             </Card>
         </div>
     )
