@@ -39,7 +39,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const brand = (
     <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
       <img src={ChocoChou} className="h-12" />
-      <h1 className="text-2xl m-0">Chocosous</h1>
+      <h1 className="text-2xl m-0 font-semibold">Chocosous</h1>
     </button>
   )
 
