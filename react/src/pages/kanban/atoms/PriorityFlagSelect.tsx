@@ -39,7 +39,8 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
                 severity={severity}
                 text
                 rounded
-                className="p-button-sm"
+                size="small"
+                tooltip="Priorité"
                 onClick={(e) => {
                     setShowMenu(!showMenu);
                     op.current?.toggle(e);
