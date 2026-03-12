@@ -14,11 +14,14 @@ interface KanbanColumnProps {
     column: KanbanColumn
     tasks: KanbanTask[]
     setSelectedTask: (task: KanbanTask) => void
-    reloadTasks: () => void
     activeId: number | null
+    /**
+     * Affiche une carte fantôme lors du drag and drop pour indiquer où la tâche sera déposée.
+     */
+    ghostTask: KanbanTask | null
 }
 
-export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, reloadTasks, activeId }: KanbanColumnProps) {
+export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId, ghostTask }: KanbanColumnProps) {
     const [newTask, setNewTask] = useState<CreateKanbanTaskDto>({
         title: "",
         columnId: column.id,
@@ -64,14 +67,26 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, re
 
             >
                 {sortedTasks.map(task => (
-                    <div key={task.id} className="kanban-task">
+                    activeId === task.id ? null : (
+                        <div
+                            key={task.id}
+                            style={activeId ? { pointerEvents: "none" } : undefined}
+                        >
+                            <KanbanTaskCard
+                                task={task}
+                                setSelectedTask={setSelectedTask}
+                            />
+                        </div>
+                    )
+                ))}
+                {ghostTask && (
+                    <div style={{ opacity: 0.4, pointerEvents: "none" }}>
                         <KanbanTaskCard
-                            task={task}
+                            task={ghostTask}
                             setSelectedTask={setSelectedTask}
-                            isDragging={activeId === task.id}
                         />
                     </div>
-                ))}
+                )}
                 <div className="flex-grow-1"></div>
 
                 <div className="flex flex-row flex-shrink-0 py-2">
