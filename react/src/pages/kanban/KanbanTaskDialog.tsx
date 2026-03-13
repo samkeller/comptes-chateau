@@ -11,17 +11,20 @@ import EditableString from "../../components/form/EditableString";
 import { KanbanTaskPriority } from "../../interfaces/kanban/KanbanTaskPriority";
 import PriorityFlag, { getPriorityLabel } from "./atoms/PriorityFlag";
 import { SelectItem } from "primereact/selectitem";
-import { Divider } from "primereact/divider";
 import MarkdownEditor from "../../components/form/markdown/MarkdownEditor";
+import { AutoComplete } from "primereact/autocomplete";
+import { useMemo } from "react";
+import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 
 
 interface KanbanTaskDialogProps {
     columns: KanbanColumn[],
+    allTags: string[],
     task: KanbanTask,
     closeDialog: (reloadList: boolean) => void
 }
 
-export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanTaskDialogProps) {
+export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }: KanbanTaskDialogProps) {
     const service = new KanbanService();
 
     /**
@@ -37,15 +40,67 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
      */
     const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
+    const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
     const isCreation = task.id === 0;
 
+    function normalizeTags(tags: string[] | null | undefined): string[] {
+        if (!tags || tags.length === 0) {
+            return [];
+        }
+
+        const uniqueTags = new Set<string>();
+        for (const tag of tags) {
+            const normalized = tag.trim();
+            if (normalized.length > 0) {
+                uniqueTags.add(normalized.slice(0, 32));
+            }
+        }
+
+        return [...uniqueTags].slice(0, 15);
+    }
+
+    const availableTags = useMemo(() => {
+        const selectedTags = new Set(taskData.tags);
+
+        return allTags.filter(tag => !selectedTags.has(tag));
+    }, [allTags, taskData.tags]);
+
+    function addTag(rawTag: string) {
+        const normalizedTag = normalizeTags([rawTag])[0];
+        if (!normalizedTag) {
+            return;
+        }
+
+        setTaskData(previous => ({
+            ...previous,
+            tags: normalizeTags([...previous.tags, normalizedTag]),
+        }));
+        setTagSuggestions([]);
+    }
+
+    function completeTagSearch(query: string) {
+        const normalizedQuery = query.trim();
+        if (normalizedQuery.length === 0) {
+            setTagSuggestions(availableTags.slice(0, 8));
+            return;
+        }
+
+        setTagSuggestions(
+            availableTags.filter(tag => tag.includes(normalizedQuery)).slice(0, 8),
+        );
+    }
+
     async function handleSubmit() {
+        const normalizedTaskData = {
+            ...taskData,
+            tags: normalizeTags(taskData.tags),
+        };
 
 
         if (isCreation) {
             // Si l'id de la tâche est 0, c'est qu'on est en train de créer une nouvelle tâche, donc on appelle la méthode de création
-            await service.createKanbanTask(taskData)
+            await service.createKanbanTask(normalizedTaskData)
                 .catch(() => {
                     // TODO: Gestion des erreurs plus fine
                     showGlobalToast({
@@ -56,7 +111,7 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                 });
         } else {
             // Sinon, on est en train de modifier une tâche existante, donc on appelle la méthode de modification
-            await service.saveKanbanTask(taskData).catch(() => {
+            await service.saveKanbanTask(normalizedTaskData).catch(() => {
                 // TODO: Gestion des erreurs plus fine
                 showGlobalToast({
                     severity: "error",
@@ -162,12 +217,34 @@ export default function KanbanTaskDialog({ columns, task, closeDialog }: KanbanT
                         />
                         <label htmlFor="priority-dropdown">Priorité</label>
                     </FloatLabel>
+                    <FloatLabel>
+                        <AutoComplete
+                            inputId="tags-input"
+                            multiple
+                            value={taskData.tags}
+                            suggestions={tagSuggestions}
+                            completeMethod={event => completeTagSearch(event.query)}
+                            onChange={event => setTaskData({ ...taskData, tags: event.value })}
+                            onKeyDown={event => {
+                                if (
+                                    (event.key === "Enter" || event.key === ",")
+                                ) {
+                                    event.preventDefault();
+                                    const valueStr: string = (event.target as any).value;
+                                    addTag(valueStr);
+                                    (event.target as any).value = "";
+                                }
+                            }}
+                            itemTemplate={option => <KanbanTagDisplay tag={option} />}
+                            selectedItemTemplate={option => <KanbanTagDisplay tag={option} />}
+                        />
+                        <label htmlFor="tags-input">Tags</label>
+                    </FloatLabel>
                 </div>
-                <Divider className="my-0" />
                 <div
                     className="w-full"
                 >
-                    <MarkdownEditor 
+                    <MarkdownEditor
                         value={taskData.description || ""}
                         onChange={e => setTaskData({ ...taskData, description: e })}
                     />

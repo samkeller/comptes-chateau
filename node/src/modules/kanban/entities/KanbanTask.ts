@@ -13,6 +13,9 @@ export class KanbanTask {
     @Column({ type: "text", nullable: true })
     description: string | null;
 
+    @Column({ type: "text", array: true, default: () => "'{}'" })
+    tags: string[];
+
     @Column({
         type: "enum",
         enum: KANBAN_TASK_PRIORITIES,

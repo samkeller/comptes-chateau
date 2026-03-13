@@ -6,4 +6,5 @@ export interface KanbanTaskDto {
     description: string | null;
     columnId: number;
     priority: KanbanTaskPriority;
+    tags?: string[];
 }

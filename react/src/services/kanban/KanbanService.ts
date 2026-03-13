@@ -13,6 +13,10 @@ export default class KanbanService extends BaseService {
         return axios.get(this.kanbanApiUrl + "/board").then(res => res.data);
     }
 
+    getAllTags(): Promise<string[]> {
+        return axios.get(this.kanbanApiUrl + "/tags").then(res => res.data);
+    }
+
     createKanbanTask(formData: CreateKanbanTaskDto): Promise<KanbanTask> {
         return axios.post(this.kanbanApiUrl + "/task", formData).then(res => res.data);
     }

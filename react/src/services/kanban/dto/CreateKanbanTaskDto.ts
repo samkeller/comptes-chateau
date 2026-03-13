@@ -8,4 +8,5 @@ export interface CreateKanbanTaskDto {
     title: string;
     priority: KanbanTaskPriority;
     description?: string | null;
+    tags?: string[];
 }

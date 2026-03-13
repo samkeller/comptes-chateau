@@ -24,6 +24,15 @@ export default class KanbanBoardService {
         }
     }
 
+    async getAllTags(): Promise<string[]> {
+        const rows = await this.kanbanTaskRepo.createQueryBuilder("task")
+            .select("DISTINCT UNNEST(tags)", "tag")
+            .orderBy("tag", "ASC")
+            .getRawMany();
+
+        return rows.map(row => row.tag);
+    }
+
     async createTask(body: CreateKanbanTaskDto): Promise<KanbanTask> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
 
@@ -34,6 +43,7 @@ export default class KanbanBoardService {
         const task = this.kanbanTaskRepo.create({
             title: body.title,
             description: body.description ?? null,
+            tags: this.normalizeTags(body.tags),
             column,
             priority: body.priority ?? "normal",
         });
@@ -53,6 +63,10 @@ export default class KanbanBoardService {
         existingTask.description = task.description;
         existingTask.priority = task.priority;
 
+        if (task.tags !== undefined) {
+            existingTask.tags = this.normalizeTags(task.tags);
+        }
+
         return this.kanbanTaskRepo.save(existingTask);
 
     }
@@ -65,5 +79,21 @@ export default class KanbanBoardService {
             throw new Error("KANBAN_TASK_NOT_FOUND");
 
         await this.kanbanTaskRepo.delete({ id: queryId });
+    }
+
+    private normalizeTags(tags: string[] | undefined): string[] {
+        if (!tags || tags.length === 0) {
+            return [];
+        }
+
+        const uniqueTags = new Set<string>();
+        for (const tag of tags) {
+            const normalized = tag.trim().toLowerCase();
+            if (normalized.length > 0) {
+                uniqueTags.add(normalized);
+            }
+        }
+
+        return [...uniqueTags];
     }
 }

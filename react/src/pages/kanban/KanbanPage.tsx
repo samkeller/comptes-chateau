@@ -1,6 +1,7 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
 import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
@@ -18,6 +19,8 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import KanbanTaskCard from "./KanbanTaskCard";
+import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
+import { MultiSelect } from "primereact/multiselect";
 
 
 
@@ -31,23 +34,29 @@ export default function KanbanPage() {
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
+    const [allTags, setAllTags] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
     const [activeId, setActiveId] = useState<number | null>(null);
     const [overColumnId, setOverColumnId] = useState<number | null>(null);
 
+    // Filters
+    const [activeTagFilters, setActiveTagFilters] = useState<string[]>([]);
+
 
     useEffect(() => {
-        loadBoard();
+        loadData();
     }, []);
 
-    function loadBoard() {
+    function loadData() {
         setLoading(true);
-        service.getBoardData()
-            .then(boardData => {
+        Promise.all([service.getBoardData(), service.getAllTags()])
+            .then(([boardData, tagData]) => {
                 setColumns(boardData.columns);
                 setTasks(boardData.tasks);
+                setAllTags(tagData);
+                setActiveTagFilters(tagData);
                 setLoading(false);
             });
     }
@@ -80,11 +89,21 @@ export default function KanbanPage() {
         });
 
         service.saveKanbanTask(updatedTask).then(() => {
-            loadBoard();
+            loadData();
         });
     }
 
     const activeTask = activeId ? tasks.find(t => t.id === activeId) ?? null : null;
+
+    const displayedTasks = useMemo(() => {
+        if (activeTagFilters.length === 0) {
+            return tasks;
+        }
+
+        const selectedTags = new Set(activeTagFilters);
+
+        return tasks.filter(task => task.tags.some(tag => selectedTags.has(tag.trim().toLowerCase())));
+    }, [tasks, activeTagFilters]);
 
 
     return (
@@ -102,34 +121,49 @@ export default function KanbanPage() {
                     </div>
                 ) : (
                     <FillRemainingHeight>
-                        <div className="flex flex-row w-full h-full gap-6">
-                            {
-                                selectedTask && (
-                                    <KanbanTaskDialog
-                                        columns={columns}
-                                        task={selectedTask}
-                                        closeDialog={(reloadList) => {
-                                            setSelectedTask(null);
-                                            if (reloadList) {
-                                                loadBoard();
-                                            }
-                                        }}
-                                    />
-                                )
-                            }
-                            {
-                                columns.map(column => (
-                                    <div className="flex-1" key={column.id}>
-                                        <KanbanColumnDisplay
-                                            column={column}
-                                            tasks={tasks.filter(t => t.columnId === column.id)}
-                                            setSelectedTask={setSelectedTask}
-                                            activeId={activeId}
-                                            ghostTask={overColumnId === column.id ? activeTask : null}
+                        <div className="flex flex-col w-full h-full gap-3">
+                            <div className="flex items-center justify-end gap-2">
+                                <i className="pi pi-filter" />
+                                <MultiSelect
+                                    value={activeTagFilters}
+                                    options={allTags.map(tag => ({ label: tag, value: tag }))}
+                                    onChange={(e) => setActiveTagFilters(e.value)}
+                                    placeholder="Tags"
+                                    className="w-60"
+                                    itemTemplate={(option) => option && <KanbanTagDisplay tag={option.value} />}
+                                    selectedItemTemplate={(option) => option && <KanbanTagDisplay tag={option} />}
+                                />
+                            </div>
+                            <div className="flex flex-row w-full h-full gap-6">
+                                {
+                                    selectedTask && (
+                                        <KanbanTaskDialog
+                                            columns={columns}
+                                            allTags={allTags.map(entry => entry)}
+                                            task={selectedTask}
+                                            closeDialog={(reloadList) => {
+                                                setSelectedTask(null);
+                                                if (reloadList) {
+                                                    loadData();
+                                                }
+                                            }}
                                         />
-                                    </div>
-                                ))
-                            }
+                                    )
+                                }
+                                {
+                                    columns.map(column => (
+                                        <div className="flex-1" key={column.id}>
+                                            <KanbanColumnDisplay
+                                                column={column}
+                                                tasks={displayedTasks.filter(t => t.columnId === column.id)}
+                                                setSelectedTask={setSelectedTask}
+                                                activeId={activeId}
+                                                ghostTask={overColumnId === column.id ? activeTask : null}
+                                            />
+                                        </div>
+                                    ))
+                                }
+                            </div>
                         </div>
                     </FillRemainingHeight>
                 )}
@@ -141,9 +175,8 @@ export default function KanbanPage() {
                             opacity: 0.92,
                             pointerEvents: "none",
                         }}>
-                            <KanbanTaskCard 
+                            <KanbanTaskCard
                                 task={activeTask}
-                                setSelectedTask={() => {}}
                             />
                         </div>
                     ) : null}

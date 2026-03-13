@@ -26,6 +26,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
         title: "",
         columnId: column.id,
         priority: "normal",
+        tags: [],
     });
 
     const { setNodeRef, isOver } = useDroppable({
@@ -42,6 +43,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                 ...newTask,
                 id: 0,
                 description: "",
+                tags: [],
             }
         );
     }
@@ -99,7 +101,6 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                     <PriorityFlagSelect
                         priority={newTask.priority}
                         onChange={(priority) => {
-                            console.log("new", priority)
                             setNewTask({ ...newTask, priority: priority })
                         }
                         }

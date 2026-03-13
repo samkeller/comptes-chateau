@@ -16,6 +16,15 @@ export default class KanbanController {
         }
     };
 
+    getAllTags = async (_req: Request, res: Response): Promise<Response> => {
+        try {
+            const tags = await this.boardService.getAllTags();
+            return res.json(tags);
+        } catch (error) {
+            return res.status(500).send("Error fetching kanban tags");
+        }
+    };
+
     createTask = async (req: Request, res: Response): Promise<Response> => {
         const body = req.body as Partial<CreateKanbanTaskDto>;
 
@@ -31,12 +40,17 @@ export default class KanbanController {
             return res.status(400).send("Invalid task payload");
         }
 
+        if (body.tags !== undefined && !this.isValidTags(body.tags)) {
+            return res.status(400).send("Invalid task payload");
+        }
+
         try {
             const payload: CreateKanbanTaskDto = {
                 title: body.title.trim(),
                 columnId: body.columnId,
                 priority: body.priority,
                 description: body.description ?? null,
+                tags: body.tags,
             };
 
             const task = await this.boardService.createTask(payload);
@@ -58,6 +72,10 @@ export default class KanbanController {
             return res.status(400).send("Invalid task payload");
         }
 
+        if (body.tags !== undefined && !this.isValidTags(body.tags)) {
+            return res.status(400).send("Invalid task payload");
+        }
+
         try {
             const payload: KanbanTaskDto = {
                 id: queryId,
@@ -65,6 +83,7 @@ export default class KanbanController {
                 description: body.description ?? null,
                 columnId: body.columnId,
                 priority: body.priority,
+                tags: body.tags,
             };
 
             const task = await this.boardService.saveTask(payload);
@@ -91,5 +110,17 @@ export default class KanbanController {
 
     private isValidPriority(priority: unknown): priority is KanbanTaskPriority {
         return typeof priority === "string" && KANBAN_TASK_PRIORITIES.includes(priority as KanbanTaskPriority);
+    }
+
+    private isValidTags(tags: unknown): tags is string[] {
+        if (!Array.isArray(tags)) {
+            return false;
+        }
+
+        if (tags.length > 15) {
+            return false;
+        }
+
+        return tags.every(tag => typeof tag === "string" && tag.trim().length > 0 && tag.trim().length <= 32);
     }
 }

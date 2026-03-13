@@ -1,0 +1,9 @@
+/* On sait pas pourquoi .p-autocomplete en multi a un style KO */
+.p-component.p-autocomplete.p-autocomplete-multiple {
+    height: 100%;
+}
+
+/* On sait pas pourquoi .p-autocomplete en multi a un style KO */
+.p-component.p-autocomplete.p-autocomplete-multiple>ul.p-autocomplete-multiple-container {
+    padding: 0.25rem 0.5rem!important;
+}
