@@ -7,4 +7,5 @@ export interface CreateKanbanTaskDto {
     columnId: number;
     title: string;
     priority: KanbanTaskPriority;
+    description?: string | null;
 }

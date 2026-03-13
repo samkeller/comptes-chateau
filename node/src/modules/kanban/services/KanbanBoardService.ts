@@ -33,6 +33,7 @@ export default class KanbanBoardService {
 
         const task = this.kanbanTaskRepo.create({
             title: body.title,
+            description: body.description ?? null,
             column,
             priority: body.priority ?? "normal",
         });

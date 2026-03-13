@@ -27,11 +27,16 @@ export default class KanbanController {
             return res.status(400).send("Invalid task payload");
         }
 
+        if (body.description !== undefined && body.description !== null && typeof body.description !== "string") {
+            return res.status(400).send("Invalid task payload");
+        }
+
         try {
             const payload: CreateKanbanTaskDto = {
                 title: body.title.trim(),
                 columnId: body.columnId,
                 priority: body.priority,
+                description: body.description ?? null,
             };
 
             const task = await this.boardService.createTask(payload);

@@ -35,11 +35,11 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
                 className="p-2 rounded-border cursor-pointer bg-gray-700 hover:bg-gray-600"
                 onClick={() => setSelectedTask(task)}
             >
-                <small className="line-clamp-5" >
-                    <Markdown>
+                <div className="line-clamp-3 tiptap">
+                    <Markdown >
                         {task.description}
                     </Markdown>
-                </small>
+                </div>
             </Card>
         </div>
     )

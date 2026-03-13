@@ -4,6 +4,7 @@
 @import "primereact/resources/themes/lara-dark-teal/theme.css" layer(components);
 @import "primeicons/primeicons.css" layer(components);
 @import "tailwindcss/utilities.css" layer(utilities);
+@import "./styles/MarkdownStyles.css" layer(components);
 
 @theme {
   --color-surface-0: var(--surface-0);

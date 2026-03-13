@@ -1,13 +1,11 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
 import { useEffect, useState } from "react";
-import { Card } from "primereact/card";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
 import KanbanColumn from "../../interfaces/kanban/KanbanColumn";
 import KanbanTaskDialog from "./KanbanTaskDialog";
-import PriorityFlag from "./atoms/PriorityFlag";
 import FillRemainingHeight from "../../components/layout/FillRemainingHeight";
 import {
     DndContext,
