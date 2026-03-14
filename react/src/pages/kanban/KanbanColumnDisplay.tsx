@@ -38,16 +38,10 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
     }, [tasks]);
 
     function handleAddTask() {
-        setSelectedTask(
-            {
-                ...newTask,
-                id: 0,
-                description: "",
-                tags: [],
-                assignees: [],
-                priority: "normal",
-            }
-        );
+        setSelectedTask(new KanbanTask({
+            ...newTask,
+            id: 0,
+        }))
     }
 
     return (

@@ -45,10 +45,10 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
     /**
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
      */
-    const [taskData, setTaskData] = useState<CreateKanbanTaskDto>({ 
+    const [taskData, setTaskData] = useState<CreateKanbanTaskDto>({
         ...task,
         assigneeIds: task.assignees.map(assignee => assignee.id),
-     });
+    });
     const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
     const isCreation = task.id === 0;
@@ -152,7 +152,7 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
         closeDialog(true);
     }
 
-    async function deleteTask() {
+    function deleteTask() {
         service.deleteTask(task.id).then(() => {
             showGlobalToast({
                 severity: "success",
@@ -162,8 +162,19 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
         })
     }
 
+    function markTaskAsDone() {
+        service.markTaskAsDone(task.id).then(() => {
+            showGlobalToast({
+                severity: "success",
+                summary: "Tâche terminée !! o/",
+                detail:" Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
+            })
+            closeDialog(true);
+        })
+    }
+
     const header = (
-        <div className="flex justify-between items-center w-full pr-6">
+        <div className="flex justify-between items-center w-full gap-2 pr-6">
             <TailwindTag>
                 {task.id === 0 ? "New" : `#${task.id}`}
             </TailwindTag>
@@ -176,6 +187,23 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
                     })}
                 />
             </div>
+            {!isCreation && !task.isDone && (
+                <Button
+                    rounded
+                    text
+                    icon="pi pi-check"
+                    severity="success"
+                    className="py-0 h-8 w-8"
+                    tooltip="Marquer comme terminée"
+                    onClick={markTaskAsDone}
+                />
+            )}
+            {!isCreation && task.isDone && (
+                <span className="flex items-center gap-1 text-green-400 text-sm px-1">
+                    <i className="pi pi-check-circle" />
+                    Terminée
+                </span>
+            )}
             <Button
                 rounded
                 text

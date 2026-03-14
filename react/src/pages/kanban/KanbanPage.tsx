@@ -42,7 +42,7 @@ export default function KanbanPage() {
     const [activeId, setActiveId] = useState<number | null>(null);
     const [overColumnId, setOverColumnId] = useState<number | null>(null);
 
-    const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [] });
+    const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
     useEffect(() => {
         loadData().catch(() => {
@@ -113,7 +113,9 @@ export default function KanbanPage() {
             byTag
             : byTag.filter(task => task.assignees.some(assignee => filters.users.some(user => user.id === assignee.id)));
 
-        return byTagsAndUsers;
+        return filters.showDone
+            ? byTagsAndUsers
+            : byTagsAndUsers.filter(task => !task.isDone);
     }, [tasks, filters]);
 
 

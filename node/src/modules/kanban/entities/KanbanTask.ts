@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { KanbanColumn } from "./KanbanColumn";
 import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../dto/KanbanTaskPriority";
 import { User } from "../../core/entities/User";
@@ -46,6 +46,16 @@ export class KanbanTask {
         },
     })
     assignees: User[];
+
+    @Column({ type: "boolean", default: false })
+    isDone: boolean;
+
+    @Column({ type: "int", nullable: true })
+    doneByUserId: number | null;
+
+    @ManyToOne(() => User, { nullable: true })
+    @JoinColumn({ name: "doneByUserId" })
+    doneBy: User | null;
 
     @CreateDateColumn()
     createdAt: Date;

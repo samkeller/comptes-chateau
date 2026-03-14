@@ -109,6 +109,18 @@ export default class KanbanBoardService {
         await this.kanbanTaskRepo.delete({ id: queryId });
     }
 
+    async markTaskAsDone(taskId: number, userId: number): Promise<void> {
+        const task = await this.kanbanTaskRepo.findOne({ where: { id: taskId }, relations: { assignees: true } });
+        if (!task) throw new Error("KANBAN_TASK_NOT_FOUND");
+
+        const user = await this.userRepo.findOneBy({ id: userId });
+        if (!user) throw new Error("KANBAN_USER_NOT_FOUND");
+
+        task.isDone = true;
+        task.doneByUserId = userId;
+        await this.kanbanTaskRepo.save(task);
+    }
+
     private normalizeTags(tags: string[] | undefined): string[] {
         if (!tags || tags.length === 0) {
             return [];
@@ -163,7 +175,9 @@ export default class KanbanBoardService {
             columnId: task.columnId,
             priority: task.priority,
             tags: task.tags,
-            assignees: task.assignees
+            assignees: task.assignees,
+            isDone: task.isDone,
+            doneByUserId: task.doneByUserId ?? null,
         };
     }
 }

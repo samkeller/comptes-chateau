@@ -15,7 +15,7 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 
 ## Structure Attendue
 
-### Frontend (`react/src`)
+### Frontend (`./react/src`)
 
 - `pages/` pour les ecrans
 - `components/` pour l'UI reutilisable
@@ -23,7 +23,7 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 - `interfaces/` pour les types metier/DTO
 - `utils/` pour helpers purs
 
-### Backend (`node/src`)
+### Backend (`./node/src`)
 
 - `controllers/` pour HTTP + validation d'entree
 - `services/` pour la logique metier

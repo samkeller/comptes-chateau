@@ -1,11 +1,13 @@
+import { Button } from "primereact/button";
 import { MultiSelect } from "primereact/multiselect";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 import { User } from "@/interfaces/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
 
 export interface KanbanFiltersData {
-    users: User[],
-    tags: string[]
+    users: User[];
+    tags: string[];
+    showDone: boolean;
 }
 interface KanbanFiltersProps {
     allUsers: User[];
@@ -41,6 +43,13 @@ export default function KanbanFilters({ allUsers, allTags, filters, changeFilter
                     </div>
                 )}
                 selectedItemTemplate={(option) => option && <UserAvatar user={option} />}
+            />
+            <Button
+                label="Terminées"
+                icon={filters.showDone ? "pi pi-check-circle" : "pi pi-circle"}
+                outlined={!filters.showDone}
+                size="small"
+                onClick={() => changeFilters({ ...filters, showDone: !filters.showDone })}
             />
             <i className="pi pi-filter" />
         </div>

@@ -25,6 +25,11 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
     const header = (
         <>
             <div className="flex items-center justify-between gap-3">
+                {task.isDone && (
+                    <span className="absolute top-2 right-2 text-green-400 text-xs flex items-center gap-1">
+                        <i className="pi pi-check-circle" />
+                    </span>
+                )}
                 <div className="flex items-center gap-1">
                     <TailwindTag>
                         {`#${task.id}`}
@@ -65,14 +70,18 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
             ref={setNodeRef}
             {...listeners}
             {...attributes}
-            className="group"
+            className="group relative"
             style={{
                 cursor: "grab",
             }}
         >
             <Card
                 title={header}
-                className="cursor-pointer rounded-xl border border-surface bg-slate-800/90 p-2 shadow-sm transition-all duration-200 hover:border-cyan-300/60 hover:shadow-lg"
+                className={`cursor-pointer rounded-xl border p-2 shadow-sm transition-all duration-200 hover:shadow-lg ${
+                    task.isDone
+                        ? "border-green-500/40 bg-slate-800/50 opacity-60 hover:border-green-400/60"
+                        : "border-surface bg-slate-800/90 hover:border-cyan-300/60"
+                }`}
                 pt={{
                     title: { className: "m-0" },
                     content: { className: "pt-2" },

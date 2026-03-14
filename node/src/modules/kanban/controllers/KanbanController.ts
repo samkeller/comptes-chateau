@@ -131,6 +131,25 @@ export default class KanbanController {
         }
     }
 
+    markTaskAsDone = async (req: Request, res: Response): Promise<Response> => {
+        const taskId = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+        if (isNaN(taskId) || taskId <= 0) return res.status(400).send("Invalid task ID");
+        const connectedUser = req.session.userId;
+        if (!connectedUser) return res.status(401).send("Not authenticated");
+        try {
+            await this.boardService.markTaskAsDone(taskId, connectedUser);
+            return res.status(200).json("ok");
+        } catch (error) {
+            if (error instanceof Error && error.message === "KANBAN_TASK_NOT_FOUND") {
+                return res.status(404).send("Task not found");
+            }
+            if (error instanceof Error && error.message === "KANBAN_USER_NOT_FOUND") {
+                return res.status(404).send("User not found");
+            }
+            return res.status(500).send("Error marking task as done");
+        }
+    }
+
 
     private isValidPriority(priority: unknown): priority is KanbanTaskPriority {
         return typeof priority === "string" && KANBAN_TASK_PRIORITIES.includes(priority as KanbanTaskPriority);

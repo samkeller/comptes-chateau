@@ -9,4 +9,6 @@ export interface KanbanTaskDto {
     priority: KanbanTaskPriority;
     tags?: string[];
     assignees?: User[];
+    isDone: boolean;
+    doneByUserId?: number | null;
 }

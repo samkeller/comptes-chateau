@@ -11,6 +11,8 @@ export default class KanbanTask {
     priority: KanbanTaskPriority = "normal";
     tags: string[] = [];
     assignees: User[] = [];
+    isDone: boolean = false;
+    doneByUserId: number | null = null;
     
     constructor(partial: Partial<KanbanTask>) {
         Object.assign(this, partial);
