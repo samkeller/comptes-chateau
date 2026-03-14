@@ -4,10 +4,29 @@
     "source.fixAll.ts": "always",
     "source.fixAll.eslint": "always"
   },
+  "eslint.workingDirectories": [
+    {
+      "directory": "react",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "node",
+      "changeProcessCWD": true
+    }
+  ],
   "eslint.validate": [
     "javascript",
     "typescript"
   ],
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.vite/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
   "chat.tools.terminal.autoApprove": {
     "npm test": true,
     "npx vitest": true

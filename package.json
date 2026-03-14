@@ -4,11 +4,13 @@
   "main": "index.js",
   "scripts": {
     "install:all": "npm install && cd react && npm install && cd ../node && npm install",
-    "dev-front": "cd react && npm start",
-    "dev-back": "cd node && npm run dev",
-    "dev": "npx concurrently -n FRONT,BACK -c \"blue,magenta\" --kill-others \"npm run dev-front\" \"npm run dev-back\"",
-    "build": "cd react && npm install && npm run build && cd ../node && npm install && npm run build",
-    "start": "cd node && npm start"
+    "dev": "concurrently \"npm:dev:react\" \"npm:dev:node\"",
+    "dev:react": "npm --prefix react start",
+    "dev:node": "npm --prefix node run dev",
+
+    "build": "npm run build:react && npm run build:node",
+    "build:react": "npm --prefix react run build",
+    "build:node": "npm --prefix node run build",
   },
   "packageManager": "npm@11.11.0",
   "keywords": [],
