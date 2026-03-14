@@ -1,10 +1,11 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../../core/entities/User";
+import { toUserDto } from "../../core/dto/UserDto";
 import { CreateKanbanCommentDto } from "../dto/CreateKanbanCommentDto";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
 import { KanbanBoardDto } from "../dto/KanbanBoardDto";
 import { KanbanCommentDto } from "../dto/KanbanCommentDto";
-import { KanbanTaskDto } from "../dto/KanbanTaskDto";
+import { KanbanTaskDto, toKanbanTaskDto } from "../dto/KanbanTaskDto";
 import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
@@ -37,8 +38,8 @@ export default class KanbanBoardService {
 
         return {
             columns: columns,
-            tasks: tasks.map(task => this.toTaskDto(task)),
-            users: users,
+            tasks: tasks.map(toKanbanTaskDto),
+            users: users.map(toUserDto),
         }
     }
 
@@ -51,7 +52,7 @@ export default class KanbanBoardService {
         return rows.map(row => row.tag);
     }
 
-    async createTask(body: CreateKanbanTaskDto): Promise<KanbanTask> {
+    async createTask(body: CreateKanbanTaskDto): Promise<KanbanTaskDto> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
         const assignees = await this.resolveAssignees(body.assigneeIds);
 
@@ -69,10 +70,10 @@ export default class KanbanBoardService {
         });
         const savedTask = await this.kanbanTaskRepo.save(task);
 
-        return this.loadTaskOrThrow(savedTask.id);
+        return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
     }
 
-    async saveTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTask> {
+    async saveTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTaskDto> {
         const existingTask = await this.kanbanTaskRepo.findOne({
             where: { id },
             relations: {
@@ -99,7 +100,7 @@ export default class KanbanBoardService {
 
         const savedTask = await this.kanbanTaskRepo.save(existingTask);
 
-        return this.loadTaskOrThrow(savedTask.id);
+        return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
 
     }
 
@@ -226,17 +227,4 @@ export default class KanbanBoardService {
         return task;
     }
 
-    private toTaskDto(task: KanbanTask): KanbanTaskDto {
-        return {
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            columnId: task.columnId,
-            priority: task.priority,
-            tags: task.tags,
-            assignees: task.assignees,
-            isDone: task.isDone,
-            doneByUserId: task.doneByUserId ?? null,
-        };
-    }
 }

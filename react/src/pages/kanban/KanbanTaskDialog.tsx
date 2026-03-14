@@ -54,37 +54,6 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
 
     const isCreation = task.id === 0;
 
-    function normalizeTags(tags: string[] | null | undefined): string[] {
-        if (!tags || tags.length === 0) {
-            return [];
-        }
-
-        const uniqueTags = new Set<string>();
-        for (const tag of tags) {
-            const normalized = tag.trim();
-            if (normalized.length > 0) {
-                uniqueTags.add(normalized.slice(0, 32));
-            }
-        }
-
-        return [...uniqueTags].slice(0, 15);
-    }
-
-    function normalizeAssigneeIds(assigneeIds: number[] | null | undefined): number[] {
-        if (!assigneeIds || assigneeIds.length === 0) {
-            return [];
-        }
-
-        const uniqueIds = new Set<number>();
-        for (const id of assigneeIds) {
-            if (Number.isInteger(id) && id > 0) {
-                uniqueIds.add(id);
-            }
-        }
-
-        return [...uniqueIds].slice(0, 20);
-    }
-
     const availableTags = useMemo(() => {
         const selectedTags = new Set(taskData.tags);
 
@@ -92,14 +61,14 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
     }, [allTags, taskData.tags]);
 
     function addTag(rawTag: string) {
-        const normalizedTag = normalizeTags([rawTag])[0];
-        if (!normalizedTag) {
+        const trimmed = rawTag.trim();
+        if (!trimmed) {
             return;
         }
 
         setTaskData({
             ...taskData,
-            tags: [...(taskData.tags || []), normalizedTag],
+            tags: [...(taskData.tags || []), trimmed],
         });
         setTagSuggestions([]);
     }
@@ -117,61 +86,56 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
     }
 
     async function handleSubmit() {
-        const normalizedTaskData = {
-            ...taskData,
-            tags: normalizeTags(taskData.tags),
-            assigneeIds: normalizeAssigneeIds(taskData.assigneeIds),
-        };
-
-
-        if (isCreation) {
-            // Si l'id de la tâche est 0, c'est qu'on est en train de créer une nouvelle tâche, donc on appelle la méthode de création
-            await service.createKanbanTask(normalizedTaskData)
-                .catch(() => {
-                    // TODO: Gestion des erreurs plus fine
-                    showGlobalToast({
-                        severity: "error",
-                        summary: "Erreur lors de la création de la tâche.",
-                    });
-                    throw new Error("Erreur lors de la création de la tâche.");
-                });
-        } else {
-            // Sinon, on est en train de modifier une tâche existante, donc on appelle la méthode de modification
-            await service.saveKanbanTask(normalizedTaskData, task.id).catch(() => {
-                // TODO: Gestion des erreurs plus fine
-                showGlobalToast({
-                    severity: "error",
-                    summary: "Erreur lors de la modification de la tâche.",
-                });
-                throw new Error("Erreur lors de la modification de la tâche.");
+        try {
+            if (isCreation) {
+                await service.createKanbanTask(taskData);
+            } else {
+                await service.saveKanbanTask(taskData, task.id);
+            }
+            showGlobalToast({
+                severity: "success",
+                summary: isCreation ? "Tâche ajoutée." : "Tâche modifiée.",
+            });
+            closeDialog(true);
+        } catch {
+            showGlobalToast({
+                severity: "error",
+                summary: isCreation ? "Erreur lors de la création de la tâche." : "Erreur lors de la modification de la tâche.",
             });
         }
-        showGlobalToast({
-            severity: "success",
-            summary: isCreation ? "Tâche ajoutée." : "Tâche modifiée.",
-        });
-        closeDialog(true);
     }
 
-    function deleteTask() {
-        service.deleteTask(task.id).then(() => {
+    async function deleteTask() {
+        try {
+            await service.deleteTask(task.id);
             showGlobalToast({
                 severity: "success",
                 summary: "Tâche supprimée.",
-            })
+            });
             closeDialog(true);
-        })
+        } catch {
+            showGlobalToast({
+                severity: "error",
+                summary: "Erreur lors de la suppression.",
+            });
+        }
     }
 
-    function markTaskAsDone() {
-        service.markTaskAsDone(task.id).then(() => {
+    async function markTaskAsDone() {
+        try {
+            await service.markTaskAsDone(task.id);
             showGlobalToast({
                 severity: "success",
                 summary: "Tâche terminée !! o/",
                 detail: "Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
-            })
+            });
             closeDialog(true);
-        })
+        } catch {
+            showGlobalToast({
+                severity: "error",
+                summary: "Erreur lors de la mise à jour.",
+            });
+        }
     }
 
     const header = (
@@ -291,6 +255,7 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
                                         (event.key === "Enter" || event.key === ",")
                                     ) {
                                         event.preventDefault();
+                                        // WORKAROUND: PrimeReact AutoComplete doesn't expose typed input value on onKeyDown
                                         const valueStr: string = (event.target as any).value;
                                         addTag(valueStr);
                                         (event.target as any).value = "";

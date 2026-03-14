@@ -18,9 +18,10 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import KanbanTaskCard from "./KanbanTaskCard";
-import UserService from "../../services/UserService";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
+import { showGlobalToast } from "../../services/GlobalToast";
+import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
 
 export default function KanbanPage() {
     const sensors = useSensors(
@@ -29,7 +30,6 @@ export default function KanbanPage() {
         }),
     );
     const service = new KanbanService();
-    const userService = new UserService();
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -53,16 +53,15 @@ export default function KanbanPage() {
     async function loadData() {
         setLoading(true);
         try {
-            const [boardData, tagsData, usersData] = await Promise.all([
+            const [boardData, tagsData] = await Promise.all([
                 service.getBoardData(),
                 service.getAllTags(),
-                userService.getAllUsers(),
             ]);
 
-            setColumns(boardData.columns.map(column => new KanbanColumn(column)));
-            setTasks(boardData.tasks.map(task => new KanbanTask(task)));
+            setColumns(boardData.columns);
+            setTasks(boardData.tasks);
             setAllTags(tagsData);
-            setAllUsers(usersData);
+            setAllUsers(boardData.users);
         } finally {
             setLoading(false);
         }
@@ -86,18 +85,14 @@ export default function KanbanPage() {
         const draggedTask = tasks.find(t => t.id === draggedTaskId);
         if (!draggedTask || draggedTask.columnId === targetColumnId) return;
 
-        setTasks(prev => prev.map(t =>
-            t.id === draggedTaskId ? new KanbanTask({ ...t, columnId: targetColumnId }) : t
-        ));
-
-        const updatedTask = new KanbanTask({
+        const updatedTask: CreateKanbanTaskDto = {
             ...draggedTask,
             columnId: targetColumnId,
-        });
+        };
 
-        service.saveKanbanTask(updatedTask, draggedTaskId).then(() => {
-            loadData();
-        });
+        service.saveKanbanTask(updatedTask, draggedTaskId)
+            .then(() => loadData())
+            .catch(() => showGlobalToast({ severity: "error", summary: "Erreur lors du déplacement de la tâche." }));
     }
 
     const activeTask = activeId ? tasks.find(t => t.id === activeId) ?? null : null;

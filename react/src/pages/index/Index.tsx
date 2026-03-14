@@ -126,9 +126,7 @@ export default function Index() {
         "Todo: Ajouter un poste de dépense 'Sauce algerienne'",
     ];
 
-    const randomQuote = inspiringQuotes[
-        Math.floor(Math.random() * inspiringQuotes.length)
-    ];
+    const [randomQuote] = useState(() => inspiringQuotes[Math.floor(Math.random() * inspiringQuotes.length)]);
     return (
         <PageTemplate pageTitle="Dashboard">
             {loading && (

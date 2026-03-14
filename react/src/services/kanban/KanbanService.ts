@@ -4,13 +4,21 @@ import { KanbanBoardDataDto } from "./dto/KanbanBoardDataDto";
 import { CreateKanbanTaskDto } from "./dto/CreateKanbanTaskDto";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import { KanbanComment } from "../../interfaces/kanban/KanbanComment";
+import KanbanColumn from "@/interfaces/kanban/KanbanColumn";
+import { User } from "@/interfaces/User";
 
 export default class KanbanService extends BaseService {
     
     private kanbanApiUrl = this.apiUrl + "/kanban";
 
     getBoardData(): Promise<KanbanBoardDataDto> {
-        return axios.get(this.kanbanApiUrl + "/board").then(res => res.data);
+        return axios.get(this.kanbanApiUrl + "/board").then(res => {
+            return {
+                columns: res.data.columns.map((column: any) => new KanbanColumn(column)),
+                tasks: res.data.tasks.map((task: any) => new KanbanTask(task)),
+                users: res.data.users.map((user: any) => new User(user)),
+            }
+        });
     }
 
     getAllTags(): Promise<string[]> {

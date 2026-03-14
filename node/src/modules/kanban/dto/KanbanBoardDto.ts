@@ -1,9 +1,9 @@
 import { KanbanColumnDto } from "./KanbanColumnDto";
 import { KanbanTaskDto } from "./KanbanTaskDto";
-import { User } from "../../core/entities/User";
+import { UserDto } from "../../core/dto/UserDto";
 
 export interface KanbanBoardDto {
     columns: KanbanColumnDto[];
     tasks: KanbanTaskDto[];
-    users: User[];
+    users: UserDto[];
 }
