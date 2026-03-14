@@ -2,18 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import Markdown from "react-markdown";
 import KanbanService from "../../services/kanban/KanbanService";
-import UserService from "../../services/UserService";
 import MarkdownEditor from "../../components/form/markdown/MarkdownEditor";
 import UserAvatar from "../../components/atoms/UserAvatar";
 import { KanbanComment } from "../../interfaces/kanban/KanbanComment";
-import { User } from "../../interfaces/User";
 import { showGlobalToast } from "../../services/GlobalToast";
+import { useConnectedUser } from "../../context/ConnectedUserContext";
+import { User } from "@/interfaces/User";
 
 interface KanbanCommentSectionProps {
     taskId: number;
 }
 
-function formatDate(iso: string): string {
+function toCommentDateFormat(iso: string): string {
     return new Date(iso).toLocaleString("fr-FR", {
         day: "2-digit",
         month: "short",
@@ -25,26 +25,21 @@ function formatDate(iso: string): string {
 
 export default function KanbanCommentSection({ taskId }: KanbanCommentSectionProps) {
     const service = useRef(new KanbanService()).current;
-    const userService = useRef(new UserService()).current;
+    const { connectedUser } = useConnectedUser();
 
     const [comments, setComments] = useState<KanbanComment[]>([]);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [newContent, setNewContent] = useState<string>("");
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        Promise.all([
-            service.getTaskComments(taskId),
-            userService.me(),
-        ]).then(([fetchedComments, me]) => {
-            setComments(fetchedComments);
-            setCurrentUser(me);
-        }).catch(() => {
-            showGlobalToast({ severity: "error", summary: "Impossible de charger les commentaires." });
-        }).finally(() => {
-            setLoading(false);
-        });
+        service.getTaskComments(taskId)
+            .then(setComments)
+            .catch(() => {
+                showGlobalToast({ severity: "error", summary: "Impossible de charger les commentaires." });
+            }).finally(() => {
+                setLoading(false);
+            });
     }, [taskId]);
 
     async function handleSubmit() {
@@ -92,7 +87,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
                         username: comment.authorUsername,
                         avatar: comment.authorAvatar,
                     });
-                    const isOwn = currentUser?.id === comment.authorId;
+                    const isOwn = connectedUser?.id === comment.authorId;
 
                     return (
                         <div key={comment.id} className="flex gap-2 group">
@@ -105,7 +100,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
                                         {comment.authorUsername}
                                     </span>
                                     <span className="text-xs text-slate-400">
-                                        {formatDate(comment.createdAt)}
+                                        {toCommentDateFormat(comment.createdAt)}
                                     </span>
                                     {isOwn && (
                                         <Button

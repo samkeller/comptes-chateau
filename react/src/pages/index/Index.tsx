@@ -9,16 +9,15 @@ import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
 import TooltipInfoIcon from "../../components/TooltipInfoIcon";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../services/UserService";
-import { User } from "../../interfaces/User";
 import UserAvatar from "../../components/atoms/UserAvatar";
 import { Divider } from "primereact/divider";
+import { useConnectedUser } from "../../context/ConnectedUserContext";
 
 export default function Index() {
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const navigate = useNavigate();
-    const [user, setUser] = useState<User | null>(null)
+    const { connectedUser: user } = useConnectedUser();
 
     useEffect(() => {
         const loadOverview = async () => {
@@ -26,8 +25,6 @@ export default function Index() {
                 setLoading(true);
                 const data = await new DashboardService().getOverview();
                 setOverview(data);
-                const connectedUser = await new UserService().me()
-                setUser(connectedUser)
             } finally {
                 setLoading(false);
             }
@@ -54,34 +51,6 @@ export default function Index() {
         const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         return lastDay.getDate() - today.getDate();
     }, []);
-
-    const IndicatorCard = ({
-        title,
-        value,
-        description,
-        tooltipText,
-        className
-    }: {
-        title: string;
-        value: string;
-        description: string,
-        tooltipText: string,
-        className?: string
-    }) => (
-
-        <Card
-            title={<span className="flex content-center gap-2">
-                {title}
-                <TooltipInfoIcon tooltipText={tooltipText} />
-            </span>}
-            className="h-full"
-        >
-            <h2 className={`text-4xl font-bold ${className ?? ""}`} >
-                {value}
-            </h2>
-            <div className="text-surface-500 mt-2">{description}</div>
-        </Card>
-    )
 
     const inspiringQuotes = [
         "Un budget équilibré est le reflet d'une vie équilibrée. Ou d'un mensonge bien tenu.",
@@ -127,6 +96,7 @@ export default function Index() {
     ];
 
     const [randomQuote] = useState(() => inspiringQuotes[Math.floor(Math.random() * inspiringQuotes.length)]);
+
     return (
         <PageTemplate pageTitle="Dashboard">
             {loading && (

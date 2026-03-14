@@ -7,6 +7,7 @@ import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
+import { ConnectedUserProvider } from "../context/ConnectedUserContext";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -112,7 +113,9 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         </Sidebar>
 
         <main className="flex-1 min-h-0 overflow-y-auto px-12 py-6">
-          {children}
+          <ConnectedUserProvider>
+            {children}
+          </ConnectedUserProvider>
         </main>
       </div>
     </div>

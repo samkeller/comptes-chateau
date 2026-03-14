@@ -1,8 +1,8 @@
 import { Dialog } from "primereact/dialog";
 import UserAvatar from "./atoms/UserAvatar";
 import { Button } from "primereact/button";
-import { User } from "../interfaces/User";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useConnectedUser } from "../context/ConnectedUserContext";
 import { useNavigate } from "react-router-dom";
 import UserService from "../services/UserService";
 
@@ -28,29 +28,22 @@ const availableAvatars = Object.keys(availableAvatarsUrls).map((filePath) => {
 });
 
 export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) {
-    const userService = new UserService()
-    const [user, setUser] = useState<User | null>(null)
-    const navigate = useNavigate()
-
-    useEffect(() => {
-        userService.me().then(setUser)
-    }, [])
+    const [userService] = useState(() => new UserService());
+    const { connectedUser, refreshUser } = useConnectedUser();
+    const navigate = useNavigate();
 
     function changeUserAvatar(avatarFileName: string) {
-        if (!user) return;
+        if (!connectedUser) return;
 
-        userService.changeAvatar(avatarFileName).then((updatedUser) =>
-            setUser(updatedUser)
-        )
-
+        userService.changeAvatar(avatarFileName).then(() => refreshUser());
     }
 
     return (
         <>
-            {user !== null && (
+            {connectedUser !== null && (
                 <Dialog
                     visible={true} onHide={hideDialog}
-                    header={`Réglages - ${user.username}`}
+                    header={`Réglages - ${connectedUser.username}`}
                     className="w-[50vw]"
                 >
                     <div>
@@ -61,7 +54,7 @@ export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) 
                                 availableAvatars.map(({ fileName, displayName }) => (
                                     <Button
                                         key={"avatar-config-dialog-" + fileName}
-                                        outlined={fileName !== user.avatar}
+                                        outlined={fileName !== connectedUser.avatar}
                                         className="w-[48px] h-[48px] p-0 flex justify-center items-center"
                                         onClick={() => changeUserAvatar(fileName)}
                                     >
