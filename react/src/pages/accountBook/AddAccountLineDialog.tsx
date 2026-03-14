@@ -13,7 +13,7 @@ import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
 import AccountingService from "../../services/AccountingService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
-import { useGlobalToast } from "../../components/GlobalToast";
+import { useGlobalToast } from "../../context/GlobalToastContext";
 import AccountLinePosteService from "../../services/AccountLinePosteService";
 import AccountLineNatureService from "../../services/AccountLineNatureService";
 

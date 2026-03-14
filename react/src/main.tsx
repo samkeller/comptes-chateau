@@ -8,7 +8,8 @@ import "./config/chartJsSetup";
 import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';
 import './services/Interceptors';
-import { GlobalToastProvider } from './components/GlobalToast';
+import { GlobalToastProvider } from './context/GlobalToastContext';
+import { ConnectedUserProvider } from './context/ConnectedUserContext';
 
 addLocale('fr', frLocale);
 
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PrimeReactProvider value={primeReactOptions}>
       <GlobalToastProvider>
-        <RouterProvider router={router} />
+        <ConnectedUserProvider>
+          <RouterProvider router={router} />
+        </ConnectedUserProvider>
       </GlobalToastProvider>
     </PrimeReactProvider>
   </StrictMode>,

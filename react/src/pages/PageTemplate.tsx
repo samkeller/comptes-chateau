@@ -2,12 +2,11 @@ import ChocoChou from "@assets/images/chocochou.png";
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
-import { useGlobalToast } from "../components/GlobalToast";
+import { useGlobalToast } from "../context/GlobalToastContext";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
-import { ConnectedUserProvider } from "../context/ConnectedUserContext";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -113,9 +112,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         </Sidebar>
 
         <main className="flex-1 min-h-0 overflow-y-auto px-12 py-6">
-          <ConnectedUserProvider>
             {children}
-          </ConnectedUserProvider>
         </main>
       </div>
     </div>

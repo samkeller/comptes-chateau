@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import AuthService from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 import ChocoChou from "@assets/images/chocochou.png";
-import { useGlobalToast } from "../components/GlobalToast";
+import { useGlobalToast } from "../context/GlobalToastContext";
 import { SelectButton } from "primereact/selectbutton";
 
 export default function AuthPage() {

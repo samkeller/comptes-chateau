@@ -8,7 +8,7 @@ import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { BooleanIcon } from "../../../components/datatableBodys/BooleanIcon";
-import { useGlobalToast } from "../../../components/GlobalToast";
+import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLineNature } from "../../../interfaces/AccountLineNature";
 import { DEFAULT_SETUP_COLOR, extractApiError, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
 import AccountLineNatureService, { SaveNaturePayload } from "../../../services/AccountLineNatureService";

@@ -12,7 +12,7 @@ import RecurringExpenseService from '../../../services/RecurringExpenseService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { ColoredLabel } from '../../../components/datatableBodys/ColoredLabel';
 import { Calendar } from 'primereact/calendar';
-import { useGlobalToast } from '../../../components/GlobalToast';
+import { useGlobalToast } from '../../../context/GlobalToastContext';
 import AccountLineNatureService from '../../../services/AccountLineNatureService';
 import AccountLinePosteService from '../../../services/AccountLinePosteService';
 

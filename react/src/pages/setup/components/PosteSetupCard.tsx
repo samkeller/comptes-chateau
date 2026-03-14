@@ -6,7 +6,7 @@ import { ColorPicker, ColorPickerChangeEvent } from "primereact/colorpicker";
 import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { useGlobalToast } from "../../../components/GlobalToast";
+import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLinePoste } from "../../../interfaces/AccountLinePoste";
 import { DEFAULT_SETUP_COLOR, extractApiError, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
 import AccountLinePosteService, { SavePostePayload } from "../../../services/AccountLinePosteService";

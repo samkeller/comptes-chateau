@@ -8,7 +8,7 @@ import AccountingService from "../../services/AccountingService";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
-import { useGlobalToast } from "../../components/GlobalToast";
+import { useGlobalToast } from "../../context/GlobalToastContext";
 import BanquePostaleCsvImport from "./BanquePostaleCsvImport";
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon";
 import { BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
