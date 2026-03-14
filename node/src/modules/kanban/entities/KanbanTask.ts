@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { KanbanColumn } from "./KanbanColumn";
 import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../dto/KanbanTaskPriority";
+import { User } from "../../core/entities/User";
 
 @Entity("kanban_task")
 export class KanbanTask {
@@ -31,6 +32,20 @@ export class KanbanTask {
 
     @ManyToOne(() => KanbanColumn, column => column.kanbanTasks, { nullable: false })
     column: KanbanColumn;
+
+    @ManyToMany(() => User, { nullable: true })
+    @JoinTable({
+        name: "kanban_task_assignee",
+        joinColumn: {
+            name: "taskId",
+            referencedColumnName: "id",
+        },
+        inverseJoinColumn: {
+            name: "userId",
+            referencedColumnName: "id",
+        },
+    })
+    assignees: User[];
 
     @CreateDateColumn()
     createdAt: Date;

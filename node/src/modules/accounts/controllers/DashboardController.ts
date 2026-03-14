@@ -5,10 +5,14 @@ import { QueryParamsValidationError } from "../services/queryMappers/parsers/Que
 
 const DashboardRoutes = Router();
 
-DashboardRoutes.get("/overview", async (_req: Request, res: Response) => {
+DashboardRoutes.get("/overview", async (req: Request, res: Response) => {
     try {
+        if (typeof req.session.userId !== "number") {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         const dashboardService = new DashboardService();
-        const data = await dashboardService.getOverview();
+        const data = await dashboardService.getOverview(req.session.userId);
 
         return res.json(data);
     } catch (error) {

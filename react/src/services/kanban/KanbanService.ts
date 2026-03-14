@@ -21,8 +21,8 @@ export default class KanbanService extends BaseService {
         return axios.post(this.kanbanApiUrl + "/task", formData).then(res => res.data);
     }
 
-    saveKanbanTask(task: KanbanTask): Promise<KanbanTask> {
-        return axios.patch(this.kanbanApiUrl + "/task/" + task.id, task).then(res => res.data);
+    saveKanbanTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTask> {
+        return axios.patch(this.kanbanApiUrl + "/task/" + id, task).then(res => res.data);
     }
 
     deleteTask(taskId: number): Promise<void> {

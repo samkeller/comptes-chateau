@@ -12,9 +12,6 @@ class AuthService extends BaseService {
         return axios.post(this.baseUrl + "/auth/logout")
     }
 
-    me(): Promise<User> {
-        return axios.get(this.baseUrl + "/auth/me").then((r) => r.data as User)
-    }
 }
 
 export default AuthService

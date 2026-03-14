@@ -39,17 +39,16 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
             />
             <OverlayPanel ref={op}>
                 <ListBox
-                    className="border-0"
+                    className="border-0 text-xs"
                     value={priority}
                     onChange={v => {
                         v.value && onChange(v.value)
                         op.current?.hide();
                     }}
                     options={menuData}
-                    itemTemplate={option => <PriorityFlag priority={option.value} />}
+                    itemTemplate={option => <PriorityFlag priority={option.value} showLabel={true}  />}
                     pt={{
-                        item: { className: "inline" },
-                        wrapper: { className: "overlow-none"}
+                        list:{className: "flex gap-2"},
                     }}
                 />
             </OverlayPanel>

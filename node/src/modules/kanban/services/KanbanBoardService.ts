@@ -1,26 +1,40 @@
 import { AppDataSource } from "../../../db/dataSource";
+import { User } from "../../core/entities/User";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
 import { KanbanBoardDto } from "../dto/KanbanBoardDto";
 import { KanbanTaskDto } from "../dto/KanbanTaskDto";
 import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanTask } from "../entities/KanbanTask";
+import { In } from "typeorm";
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
     private kanbanColumnRepo = AppDataSource.getRepository(KanbanColumn);
+    private userRepo = AppDataSource.getRepository(User);
 
     async getColumns(): Promise<KanbanColumn[]> {
         return this.kanbanColumnRepo.find();
     }
 
     async getBoardData(): Promise<KanbanBoardDto> {
-
-        const columns = await this.kanbanColumnRepo.find();
-        const tasks = await this.kanbanTaskRepo.find();
+        const [columns, tasks, users] = await Promise.all([
+            this.kanbanColumnRepo.find(),
+            this.kanbanTaskRepo.find({
+                relations: {
+                    assignees: true,
+                },
+            }),
+            this.userRepo.find({
+                order: {
+                    username: "ASC",
+                },
+            }),
+        ]);
 
         return {
             columns: columns,
-            tasks: tasks,
+            tasks: tasks.map(task => this.toTaskDto(task)),
+            users: users,
         }
     }
 
@@ -35,6 +49,7 @@ export default class KanbanBoardService {
 
     async createTask(body: CreateKanbanTaskDto): Promise<KanbanTask> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
+        const assignees = await this.resolveAssignees(body.assigneeIds);
 
         // TODO, custom error class
         if (!column)
@@ -46,13 +61,20 @@ export default class KanbanBoardService {
             tags: this.normalizeTags(body.tags),
             column,
             priority: body.priority ?? "normal",
+            assignees,
         });
+        const savedTask = await this.kanbanTaskRepo.save(task);
 
-        return this.kanbanTaskRepo.save(task);
+        return this.loadTaskOrThrow(savedTask.id);
     }
 
-    async saveTask(task: KanbanTaskDto): Promise<KanbanTask> {
-        const existingTask = await this.kanbanTaskRepo.findOneBy({ id: task.id });
+    async saveTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTask> {
+        const existingTask = await this.kanbanTaskRepo.findOne({
+            where: { id },
+            relations: {
+                assignees: true,
+            },
+        });
 
         // TODO, custom error class
         if (!existingTask)
@@ -60,14 +82,20 @@ export default class KanbanBoardService {
 
         existingTask.columnId = task.columnId;
         existingTask.title = task.title;
-        existingTask.description = task.description;
-        existingTask.priority = task.priority;
+        existingTask.description = task.description || null;
+        existingTask.priority = task.priority || "normal";
 
         if (task.tags !== undefined) {
             existingTask.tags = this.normalizeTags(task.tags);
         }
 
-        return this.kanbanTaskRepo.save(existingTask);
+        if (task.assigneeIds !== undefined) {
+            existingTask.assignees = await this.resolveAssignees(task.assigneeIds);
+        }
+
+        const savedTask = await this.kanbanTaskRepo.save(existingTask);
+
+        return this.loadTaskOrThrow(savedTask.id);
 
     }
 
@@ -95,5 +123,47 @@ export default class KanbanBoardService {
         }
 
         return [...uniqueTags];
+    }
+
+    private async resolveAssignees(assigneeIds: number[] | undefined): Promise<User[]> {
+        if (!assigneeIds || assigneeIds.length === 0) {
+            return [];
+        }
+
+        const uniqueIds = [...new Set(assigneeIds)];
+        const users = await this.userRepo.findBy({ id: In(uniqueIds) });
+
+        if (users.length !== uniqueIds.length) {
+            throw new Error("KANBAN_ASSIGNEE_NOT_FOUND");
+        }
+
+        return users;
+    }
+
+    private async loadTaskOrThrow(id: number): Promise<KanbanTask> {
+        const task = await this.kanbanTaskRepo.findOne({
+            where: { id },
+            relations: {
+                assignees: true,
+            },
+        });
+
+        if (!task) {
+            throw new Error("KANBAN_TASK_NOT_FOUND");
+        }
+
+        return task;
+    }
+
+    private toTaskDto(task: KanbanTask): KanbanTaskDto {
+        return {
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            columnId: task.columnId,
+            priority: task.priority,
+            tags: task.tags,
+            assignees: task.assignees
+        };
     }
 }

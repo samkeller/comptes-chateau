@@ -1,7 +1,6 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
-import { useEffect, useState } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
@@ -19,10 +18,9 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import KanbanTaskCard from "./KanbanTaskCard";
-import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
-import { MultiSelect } from "primereact/multiselect";
-
-
+import UserService from "../../services/UserService";
+import { User } from "../../interfaces/User";
+import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
 
 export default function KanbanPage() {
     const sensors = useSensors(
@@ -31,34 +29,43 @@ export default function KanbanPage() {
         }),
     );
     const service = new KanbanService();
+    const userService = new UserService();
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
     const [allTags, setAllTags] = useState<string[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+
     const [loading, setLoading] = useState<boolean>(true);
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
     const [activeId, setActiveId] = useState<number | null>(null);
     const [overColumnId, setOverColumnId] = useState<number | null>(null);
 
-    // Filters
-    const [activeTagFilters, setActiveTagFilters] = useState<string[]>([]);
-
+    const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [] });
 
     useEffect(() => {
-        loadData();
+        loadData().catch(() => {
+            setLoading(false);
+        });
     }, []);
 
-    function loadData() {
+    async function loadData() {
         setLoading(true);
-        Promise.all([service.getBoardData(), service.getAllTags()])
-            .then(([boardData, tagData]) => {
-                setColumns(boardData.columns);
-                setTasks(boardData.tasks);
-                setAllTags(tagData);
-                setActiveTagFilters(tagData);
-                setLoading(false);
-            });
+        try {
+            const [boardData, tagsData, usersData] = await Promise.all([
+                service.getBoardData(),
+                service.getAllTags(),
+                userService.getAllUsers(),
+            ]);
+
+            setColumns(boardData.columns.map(column => new KanbanColumn(column)));
+            setTasks(boardData.tasks.map(task => new KanbanTask(task)));
+            setAllTags(tagsData);
+            setAllUsers(usersData);
+        } finally {
+            setLoading(false);
+        }
     }
 
     function handleDragOver(event: DragOverEvent) {
@@ -88,7 +95,7 @@ export default function KanbanPage() {
             columnId: targetColumnId,
         });
 
-        service.saveKanbanTask(updatedTask).then(() => {
+        service.saveKanbanTask(updatedTask, draggedTaskId).then(() => {
             loadData();
         });
     }
@@ -96,14 +103,18 @@ export default function KanbanPage() {
     const activeTask = activeId ? tasks.find(t => t.id === activeId) ?? null : null;
 
     const displayedTasks = useMemo(() => {
-        if (activeTagFilters.length === 0) {
-            return tasks;
-        }
+        const selectedTags = new Set(filters.tags);
+        const byTag = selectedTags.size === 0
+            ? tasks
+            : tasks.filter(task => task.tags.some(tag => selectedTags.has(tag.trim().toLowerCase())));
 
-        const selectedTags = new Set(activeTagFilters);
 
-        return tasks.filter(task => task.tags.some(tag => selectedTags.has(tag.trim().toLowerCase())));
-    }, [tasks, activeTagFilters]);
+        const byTagsAndUsers = filters.users.length === 0 ?
+            byTag
+            : byTag.filter(task => task.assignees.some(assignee => filters.users.some(user => user.id === assignee.id)));
+
+        return byTagsAndUsers;
+    }, [tasks, filters]);
 
 
     return (
@@ -122,24 +133,19 @@ export default function KanbanPage() {
                 ) : (
                     <FillRemainingHeight>
                         <div className="flex flex-col w-full h-full gap-3">
-                            <div className="flex items-center justify-end gap-2">
-                                <i className="pi pi-filter" />
-                                <MultiSelect
-                                    value={activeTagFilters}
-                                    options={allTags.map(tag => ({ label: tag, value: tag }))}
-                                    onChange={(e) => setActiveTagFilters(e.value)}
-                                    placeholder="Tags"
-                                    className="w-60"
-                                    itemTemplate={(option) => option && <KanbanTagDisplay tag={option.value} />}
-                                    selectedItemTemplate={(option) => option && <KanbanTagDisplay tag={option} />}
-                                />
-                            </div>
+                            <KanbanFilters
+                                allUsers={allUsers}
+                                allTags={allTags}
+                                filters={filters}
+                                changeFilters={setFilters}
+                            />
                             <div className="flex flex-row w-full h-full gap-6">
                                 {
                                     selectedTask && (
                                         <KanbanTaskDialog
                                             columns={columns}
                                             allTags={allTags.map(entry => entry)}
+                                            allUsers={allUsers.map(user => new User(user))}
                                             task={selectedTask}
                                             closeDialog={(reloadList) => {
                                                 setSelectedTask(null);

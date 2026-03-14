@@ -44,6 +44,8 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                 id: 0,
                 description: "",
                 tags: [],
+                assignees: [],
+                priority: "normal",
             }
         );
     }
@@ -51,22 +53,15 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
     return (
         <div
             ref={setNodeRef}
-            style={{
-                position: "relative",
-                boxShadow: isOver ? "0 0 0 4px rgba(41, 121, 255, 0.18)" : undefined,
-                transition: "box-shadow 0.15s ease",
-                borderRadius: "6px",
-                height: "100%",
-            }}
+            className={"h-full border rounded-xl p-0.5 " + (isOver ? "border-cyan-300/60 shadow-lg" : " border-surface shadow-sm")}
         >
             <Card
                 title={column.label}
                 className="h-full"
                 pt={{
                     body: { className: "h-full" },
-                    content: { className: "h-full flex flex-col gap-2" }
+                    content: { className: "h-full flex flex-col gap-4" }
                 }}
-
             >
                 {sortedTasks.map(task => (
                     activeId === task.id ? null : (

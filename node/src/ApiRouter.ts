@@ -7,6 +7,7 @@ import RecurringExpenseRoutes from './modules/accounts/controllers/RecurringExpe
 import DashboardRoutes from './modules/accounts/controllers/DashboardController'
 import BudgetRoutes from './modules/accounts/controllers/BudgetController'
 import KanbanRoutes from './modules/kanban/routes/KanbanRoutes'
+import UserRoutes from "./modules/core/controllers/UserController";
 
 const ApiRouter = Router()
 
@@ -20,5 +21,6 @@ ApiRouter.use('/recurring-expense', RecurringExpenseRoutes)
 ApiRouter.use('/dashboard', DashboardRoutes)
 ApiRouter.use('/budget', BudgetRoutes)
 ApiRouter.use('/kanban', KanbanRoutes)
+ApiRouter.use('/users', UserRoutes)
 
 export default ApiRouter

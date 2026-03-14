@@ -47,33 +47,13 @@ AuthRoutes.post("/login", async (req, res) => {
     return res.json({
       id: user.id,
       username: user.username,
+      avatar: user.avatar,
     });
   } catch {
     return res.sendStatus(500);
   }
 });
 
-AuthRoutes.get("/me", async (req, res) => {
-  if (typeof req.session.userId !== "number") {
-    return res.sendStatus(401);
-  }
-
-  try {
-    const userRepo = AppDataSource.getRepository(User);
-    const user = await userRepo.findOne({ where: { id: req.session.userId } });
-
-    if (!user) {
-      return res.sendStatus(401);
-    }
-
-    return res.json({
-      id: user.id,
-      username: user.username,
-    });
-  } catch {
-    return res.sendStatus(500);
-  }
-});
 
 AuthRoutes.post("/logout", (req, res) => {
   req.session.destroy((err) => {

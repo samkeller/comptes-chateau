@@ -6,6 +6,7 @@ import { useGlobalToast } from "../components/GlobalToast";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
+import UserConfigDialog from "../components/UserConfigDialog";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -13,6 +14,7 @@ interface PageTemplateProps {
 }
 
 export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
   const navigate = useNavigate();
@@ -45,6 +47,10 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      {
+        showConfigDialog &&
+        <UserConfigDialog hideDialog={() => setShowConfigDialog(false)} />
+      }
       <header className="flex items-center justify-between px-12 py-6 border-b border-surface">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
@@ -67,12 +73,24 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
           {brand}
         </div>
-        <Button
-          icon="pi pi-power-off"
-          severity="danger"
-          text
-          onClick={logout}
-        />
+        <div className="flex flex-row gap-2">
+          <Button
+            icon="pi pi-cog"
+            text
+            rounded
+            size="small"
+            tooltip="Réglages"
+            onClick={() => setShowConfigDialog(true)}
+          />
+          <Button
+            icon="pi pi-power-off"
+            severity="danger"
+            text
+            rounded
+            tooltip="Déconnexion"
+            onClick={logout}
+          />
+        </div>
       </header>
 
       <div className="flex-1 min-h-0 md:flex overflow-hidden">

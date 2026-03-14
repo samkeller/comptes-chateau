@@ -14,4 +14,5 @@ export interface DashboardOverview {
     monthlyBudget: number;
     operationsToCheckInAccountCount: number;
     operationsToCheckHorsCompteCount: number;
+    assignedKanbanTasksCount: number;
 }

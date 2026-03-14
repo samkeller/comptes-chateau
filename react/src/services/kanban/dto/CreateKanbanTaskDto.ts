@@ -9,4 +9,5 @@ export interface CreateKanbanTaskDto {
     priority: KanbanTaskPriority;
     description?: string | null;
     tags?: string[];
+    assigneeIds?: number[];
 }

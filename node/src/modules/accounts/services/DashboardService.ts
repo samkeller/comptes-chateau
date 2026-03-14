@@ -2,6 +2,7 @@ import { AppDataSource } from "../../../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
 import { AccountBalanceBaseline } from "../entities/AccountBalanceBaseline";
+import { KanbanTask } from "../../kanban/entities/KanbanTask";
 
 export interface MonthlyPosteAggregate {
     year: number;
@@ -26,6 +27,7 @@ export interface DashboardOverview {
     monthlyBudget: number;
     operationsToCheckInAccountCount: number;
     operationsToCheckHorsCompteCount: number;
+    assignedKanbanTasksCount: number;
 }
 
 export default class DashboardService {
@@ -33,16 +35,17 @@ export default class DashboardService {
     constructor(
         private accountingLineRepo = AppDataSource.getRepository(AccountingLine),
         private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
-        private accountBalanceBaselineRepo = AppDataSource.getRepository(AccountBalanceBaseline)
+        private accountBalanceBaselineRepo = AppDataSource.getRepository(AccountBalanceBaseline),
+        private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
     ) { }
-    async getOverview(): Promise<DashboardOverview> {
+    async getOverview(userId: number): Promise<DashboardOverview> {
         const baseline = await this.accountBalanceBaselineRepo.findOne({ where: { id: 1 } });
 
         // Cas fallback si jamais on n'a pas de baseline en base (ex: première utilisation), on part de 0
         const baselineAmount = baseline ? Number(baseline.amount) : 0;
         const baseLineDate = baseline ? baseline.effectiveDate : new Date(1960, 0, 1);
 
-        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts] = await Promise.all([
+        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
             this.getBalanceDeltaSinceDate(true, baseLineDate),
             this.getBalanceDeltaSinceDate(false, baseLineDate),
             this.getMonthExpensesRaw(),
@@ -50,7 +53,8 @@ export default class DashboardService {
                 where: { isActive: true },
                 order: { category: "ASC", sortOrder: "ASC", id: "ASC" }
             }),
-            this.getOperationsToCheckCounts()
+            this.getOperationsToCheckCounts(),
+            this.getAssignedKanbanTasksCount(userId),
         ]);
 
         const monthlyBudget = budgetLines.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
@@ -61,7 +65,8 @@ export default class DashboardService {
             monthExpenses: Number(monthExpensesRaw?.value ?? 0),
             monthlyBudget,
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
-            operationsToCheckHorsCompteCount: toCheckCounts.horsCompte
+            operationsToCheckHorsCompteCount: toCheckCounts.horsCompte,
+            assignedKanbanTasksCount,
         };
     }
 
@@ -170,6 +175,13 @@ export default class DashboardService {
             inAccount: Number(rawCounts?.inAccount ?? 0),
             horsCompte: Number(rawCounts?.horsCompte ?? 0)
         };
+    }
+
+    private async getAssignedKanbanTasksCount(userId: number): Promise<number> {
+        return this.kanbanTaskRepo
+            .createQueryBuilder("task")
+            .innerJoin("task.assignees", "assignee", "assignee.id = :userId", { userId })
+            .getCount();
     }
 
 }

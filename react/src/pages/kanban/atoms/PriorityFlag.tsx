@@ -34,12 +34,21 @@ export function getPriorityLabel(priority: KanbanTaskPriority): string {
     return "Normale";
 }
 
-export default function PriorityFlag({ priority }: { priority: KanbanTaskPriority }) {
+interface PriorityFlagProps {
+    priority: KanbanTaskPriority;
+    showLabel?: boolean;
+}
+
+export default function PriorityFlag({ priority, showLabel = false }: PriorityFlagProps) {
+
     return (
-        <i
-            className="pi pi-flag-fill"
-            style={{ color: getPriorityColor(priority) }}
-            data-pr-tooltip={getPriorityLabel(priority)}
-        />
+        <div className="flex items-center gap-1.5">
+            <i
+                className="pi pi-flag-fill"
+                style={{ color: getPriorityColor(priority) }}
+                data-pr-tooltip={getPriorityLabel(priority)}
+            />
+            {showLabel && <span className="uppercase tracking-wide">{getPriorityLabel(priority)}</span>}
+        </div>
     )
 }

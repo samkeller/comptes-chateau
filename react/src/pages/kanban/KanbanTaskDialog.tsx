@@ -15,16 +15,22 @@ import MarkdownEditor from "../../components/form/markdown/MarkdownEditor";
 import { AutoComplete } from "primereact/autocomplete";
 import { useMemo } from "react";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
+import { MultiSelect } from "primereact/multiselect";
+import { User } from "../../interfaces/User";
+import TailwindTag from "@/components/atoms/TailwindTag";
+import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
+import UserAvatar from "@/components/atoms/UserAvatar";
 
 
 interface KanbanTaskDialogProps {
     columns: KanbanColumn[],
     allTags: string[],
+    allUsers: User[],
     task: KanbanTask,
     closeDialog: (reloadList: boolean) => void
 }
 
-export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }: KanbanTaskDialogProps) {
+export default function KanbanTaskDialog({ columns, allTags, allUsers, task, closeDialog }: KanbanTaskDialogProps) {
     const service = new KanbanService();
 
     /**
@@ -39,7 +45,10 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
     /**
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
      */
-    const [taskData, setTaskData] = useState<KanbanTask>({ ...task });
+    const [taskData, setTaskData] = useState<CreateKanbanTaskDto>({ 
+        ...task,
+        assigneeIds: task.assignees.map(assignee => assignee.id),
+     });
     const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
     const isCreation = task.id === 0;
@@ -60,6 +69,21 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
         return [...uniqueTags].slice(0, 15);
     }
 
+    function normalizeAssigneeIds(assigneeIds: number[] | null | undefined): number[] {
+        if (!assigneeIds || assigneeIds.length === 0) {
+            return [];
+        }
+
+        const uniqueIds = new Set<number>();
+        for (const id of assigneeIds) {
+            if (Number.isInteger(id) && id > 0) {
+                uniqueIds.add(id);
+            }
+        }
+
+        return [...uniqueIds].slice(0, 20);
+    }
+
     const availableTags = useMemo(() => {
         const selectedTags = new Set(taskData.tags);
 
@@ -72,10 +96,10 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
             return;
         }
 
-        setTaskData(previous => ({
-            ...previous,
-            tags: normalizeTags([...previous.tags, normalizedTag]),
-        }));
+        setTaskData({
+            ...taskData,
+            tags: [...(taskData.tags || []), normalizedTag],
+        });
         setTagSuggestions([]);
     }
 
@@ -95,6 +119,7 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
         const normalizedTaskData = {
             ...taskData,
             tags: normalizeTags(taskData.tags),
+            assigneeIds: normalizeAssigneeIds(taskData.assigneeIds),
         };
 
 
@@ -111,7 +136,7 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
                 });
         } else {
             // Sinon, on est en train de modifier une tâche existante, donc on appelle la méthode de modification
-            await service.saveKanbanTask(normalizedTaskData).catch(() => {
+            await service.saveKanbanTask(normalizedTaskData, task.id).catch(() => {
                 // TODO: Gestion des erreurs plus fine
                 showGlobalToast({
                     severity: "error",
@@ -128,7 +153,7 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
     }
 
     async function deleteTask() {
-        service.deleteTask(taskData.id).then(() => {
+        service.deleteTask(task.id).then(() => {
             showGlobalToast({
                 severity: "success",
                 summary: "Tâche supprimée.",
@@ -139,13 +164,18 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
 
     const header = (
         <div className="flex justify-between items-center w-full pr-6">
-            <EditableString
-                value={taskData.title}
-                onValidate={newValue => setTaskData({
-                    ...taskData,
-                    title: newValue
-                })}
-            />
+            <TailwindTag>
+                {task.id === 0 ? "New" : `#${task.id}`}
+            </TailwindTag>
+            <div className="grow">
+                <EditableString
+                    value={taskData.title}
+                    onValidate={newValue => setTaskData({
+                        ...taskData,
+                        title: newValue
+                    })}
+                />
+            </div>
             <Button
                 rounded
                 text
@@ -221,7 +251,7 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
                         <AutoComplete
                             inputId="tags-input"
                             multiple
-                            value={taskData.tags}
+                            value={taskData.tags || []}
                             suggestions={tagSuggestions}
                             completeMethod={event => completeTagSearch(event.query)}
                             onChange={event => setTaskData({ ...taskData, tags: event.value })}
@@ -239,6 +269,23 @@ export default function KanbanTaskDialog({ columns, allTags, task, closeDialog }
                             selectedItemTemplate={option => <KanbanTagDisplay tag={option} />}
                         />
                         <label htmlFor="tags-input">Tags</label>
+                    </FloatLabel>
+                    <FloatLabel>
+                        <MultiSelect
+                            inputId="assignees-input"
+                            value={allUsers.filter(user => taskData.assigneeIds?.includes(user.id))}
+                            options={allUsers}
+                            optionLabel="username"
+                            onChange={v => setTaskData({ ...taskData, assigneeIds: v.value.map((user: User) => user.id) })}
+                            itemTemplate={(option) => option && (
+                                <div className="flex items-center gap-2">
+                                    <UserAvatar user={option} />
+                                    <h2>{option.username}</h2>
+                                </div>
+                            )}
+                            className="w-60"
+                        />
+                        <label htmlFor="assignees-input">Assignés</label>
                     </FloatLabel>
                 </div>
                 <div

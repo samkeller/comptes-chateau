@@ -150,6 +150,7 @@ describe("DashboardService.getOverview", () => {
         deltaResults: QueryResult[];
         budgetItems: Array<{ amount: number | string | null; isActive: boolean }>;
         toCheckCounts: { inAccount: string | number | null; horsCompte: string | number | null };
+        assignedKanbanTasksCount?: number;
     }): DashboardService {
         // Each createQueryBuilder call returns a fresh MockOverviewQueryBuilder
         // Calls order: currentDelta, forecastDelta, monthExpenses, toCheckCounts
@@ -177,10 +178,18 @@ describe("DashboardService.getOverview", () => {
             )
         };
 
+        const kanbanTaskRepo = {
+            createQueryBuilder: vi.fn(() => ({
+                innerJoin: vi.fn().mockReturnThis(),
+                getCount: vi.fn().mockResolvedValue(options.assignedKanbanTasksCount ?? 0),
+            })),
+        };
+
         return new DashboardService(
             accountingLineRepo as never,
             budgetItemRepo as never,
-            accountBalanceBaselineRepo as never
+            accountBalanceBaselineRepo as never,
+            kanbanTaskRepo as never,
         );
     }
 
@@ -197,7 +206,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.currentBalance).toBeCloseTo(1250.50);
     });
@@ -215,7 +224,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.forecastBalance).toBeCloseTo(1400.75);
     });
@@ -233,7 +242,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.forecastBalance).toBeGreaterThanOrEqual(result.currentBalance);
         expect(result.currentBalance).toBeCloseTo(600);
@@ -253,7 +262,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 2, horsCompte: 0 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         // 0 + delta (no baseline amount)
         expect(result.currentBalance).toBeCloseTo(500);
@@ -276,7 +285,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: "5", horsCompte: "2" }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.currentBalance).toBeCloseTo(2350.66);
         expect(result.forecastBalance).toBeCloseTo(2450.89);
@@ -304,7 +313,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.monthlyBudget).toBeCloseTo(425.50);
     });
@@ -322,7 +331,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: null, horsCompte: null }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.currentBalance).toBe(1000);
         expect(result.forecastBalance).toBe(1000);
@@ -344,7 +353,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 10, horsCompte: 3 }
         });
 
-        const result: DashboardOverview = await service.getOverview();
+        const result: DashboardOverview = await service.getOverview(1);
 
         expect(result.currentBalance).toBeCloseTo(3800);
         expect(result.forecastBalance).toBeCloseTo(3200);
@@ -370,7 +379,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview();
+        const result = await service.getOverview(1);
 
         expect(result.monthlyBudget).toBeCloseTo(200);
     });

@@ -1,4 +1,5 @@
 import { KanbanTaskPriority } from "./KanbanTaskPriority";
+import { User } from "../../core/entities/User";
 
 export interface KanbanTaskDto {
     id: number;
@@ -7,4 +8,5 @@ export interface KanbanTaskDto {
     columnId: number;
     priority: KanbanTaskPriority;
     tags?: string[];
+    assignees?: User[];
 }
