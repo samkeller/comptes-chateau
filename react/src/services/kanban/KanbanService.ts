@@ -3,6 +3,7 @@ import BaseService from "../BaseService";
 import { KanbanBoardDataDto } from "./dto/KanbanBoardDataDto";
 import { CreateKanbanTaskDto } from "./dto/CreateKanbanTaskDto";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
+import { KanbanComment } from "../../interfaces/kanban/KanbanComment";
 
 export default class KanbanService extends BaseService {
     
@@ -30,6 +31,18 @@ export default class KanbanService extends BaseService {
 
     markTaskAsDone(taskId: number): Promise<void> {
         return axios.patch(this.kanbanApiUrl + `/task/mark-done/${taskId}`);
+    }
+
+    getTaskComments(taskId: number): Promise<KanbanComment[]> {
+        return axios.get(this.kanbanApiUrl + `/task/${taskId}/comments`).then(res => res.data);
+    }
+
+    createComment(taskId: number, content: string): Promise<KanbanComment> {
+        return axios.post(this.kanbanApiUrl + `/task/${taskId}/comments`, { taskId, content }).then(res => res.data);
+    }
+
+    deleteComment(commentId: number): Promise<void> {
+        return axios.delete(this.kanbanApiUrl + `/comment/${commentId}`);
     }
 }
 

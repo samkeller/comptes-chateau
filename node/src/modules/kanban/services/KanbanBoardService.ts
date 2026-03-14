@@ -1,15 +1,19 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../../core/entities/User";
+import { CreateKanbanCommentDto } from "../dto/CreateKanbanCommentDto";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
 import { KanbanBoardDto } from "../dto/KanbanBoardDto";
+import { KanbanCommentDto } from "../dto/KanbanCommentDto";
 import { KanbanTaskDto } from "../dto/KanbanTaskDto";
 import { KanbanColumn } from "../entities/KanbanColumn";
+import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
 import { In } from "typeorm";
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
     private kanbanColumnRepo = AppDataSource.getRepository(KanbanColumn);
+    private kanbanCommentRepo = AppDataSource.getRepository(KanbanComment);
     private userRepo = AppDataSource.getRepository(User);
 
     async getColumns(): Promise<KanbanColumn[]> {
@@ -119,6 +123,61 @@ export default class KanbanBoardService {
         task.isDone = true;
         task.doneByUserId = userId;
         await this.kanbanTaskRepo.save(task);
+    }
+
+    async getTaskComments(taskId: number): Promise<KanbanCommentDto[]> {
+        const comments = await this.kanbanCommentRepo.find({
+            where: { taskId },
+            relations: { author: true },
+            order: { createdAt: "ASC" },
+        });
+
+        return comments.map(c => this.toCommentDto(c));
+    }
+
+    async createComment(dto: CreateKanbanCommentDto, authorId: number): Promise<KanbanCommentDto> {
+        const task = await this.kanbanTaskRepo.findOneBy({ id: dto.taskId });
+        if (!task) throw new Error("KANBAN_TASK_NOT_FOUND");
+
+        const author = await this.userRepo.findOneBy({ id: authorId });
+        if (!author) throw new Error("KANBAN_USER_NOT_FOUND");
+
+        const comment = this.kanbanCommentRepo.create({
+            content: dto.content.trim(),
+            taskId: dto.taskId,
+            authorId,
+        });
+
+        const saved = await this.kanbanCommentRepo.save(comment);
+
+        const loaded = await this.kanbanCommentRepo.findOne({
+            where: { id: saved.id },
+            relations: { author: true },
+        });
+
+        if (!loaded) throw new Error("KANBAN_COMMENT_NOT_FOUND");
+
+        return this.toCommentDto(loaded);
+    }
+
+    async deleteComment(commentId: number, requestingUserId: number): Promise<void> {
+        const comment = await this.kanbanCommentRepo.findOneBy({ id: commentId });
+        if (!comment) throw new Error("KANBAN_COMMENT_NOT_FOUND");
+        if (comment.authorId !== requestingUserId) throw new Error("KANBAN_COMMENT_FORBIDDEN");
+
+        await this.kanbanCommentRepo.delete({ id: commentId });
+    }
+
+    private toCommentDto(comment: KanbanComment): KanbanCommentDto {
+        return {
+            id: comment.id,
+            taskId: comment.taskId,
+            content: comment.content,
+            authorId: comment.authorId,
+            authorUsername: comment.author.username,
+            authorAvatar: comment.author.avatar,
+            createdAt: comment.createdAt.toISOString(),
+        };
     }
 
     private normalizeTags(tags: string[] | undefined): string[] {

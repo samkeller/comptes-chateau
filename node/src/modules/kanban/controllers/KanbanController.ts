@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import KanbanBoardService from "../services/KanbanBoardService";
 import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
+import { CreateKanbanCommentDto } from "../dto/CreateKanbanCommentDto";
 import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../dto/KanbanTaskPriority";
 
 export default class KanbanController {
@@ -178,4 +179,68 @@ export default class KanbanController {
 
         return assigneeIds.every(id => typeof id === "number" && Number.isInteger(id) && id > 0);
     }
+
+    getTaskComments = async (req: Request, res: Response): Promise<Response> => {
+        const taskId = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+        if (isNaN(taskId) || taskId <= 0) return res.status(400).send("Invalid task ID");
+
+        try {
+            const comments = await this.boardService.getTaskComments(taskId);
+            return res.json(comments);
+        } catch (error) {
+            return res.status(500).send("Error fetching comments");
+        }
+    };
+
+    createComment = async (req: Request, res: Response): Promise<Response> => {
+        const taskId = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+        if (isNaN(taskId) || taskId <= 0) return res.status(400).send("Invalid task ID");
+
+        const connectedUser = req.session.userId;
+        if (!connectedUser) return res.status(401).send("Not authenticated");
+
+        const body = req.body as Partial<CreateKanbanCommentDto>;
+        if (typeof body.content !== "string" || body.content.trim().length === 0) {
+            return res.status(400).send("Invalid comment payload");
+        }
+
+        if (body.content.trim().length > 5000) {
+            return res.status(400).send("Comment content too long");
+        }
+
+        try {
+            const dto: CreateKanbanCommentDto = { taskId, content: body.content };
+            const comment = await this.boardService.createComment(dto, connectedUser);
+            return res.status(201).json(comment);
+        } catch (error) {
+            if (error instanceof Error && error.message === "KANBAN_TASK_NOT_FOUND") {
+                return res.status(404).send("Task not found");
+            }
+            if (error instanceof Error && error.message === "KANBAN_USER_NOT_FOUND") {
+                return res.status(404).send("User not found");
+            }
+            return res.status(500).send("Error creating comment");
+        }
+    };
+
+    deleteComment = async (req: Request, res: Response): Promise<Response> => {
+        const commentId = parseInt(Array.isArray(req.params.commentId) ? req.params.commentId[0] : req.params.commentId, 10);
+        if (isNaN(commentId) || commentId <= 0) return res.status(400).send("Invalid comment ID");
+
+        const connectedUser = req.session.userId;
+        if (!connectedUser) return res.status(401).send("Not authenticated");
+
+        try {
+            await this.boardService.deleteComment(commentId, connectedUser);
+            return res.status(204).send();
+        } catch (error) {
+            if (error instanceof Error && error.message === "KANBAN_COMMENT_NOT_FOUND") {
+                return res.status(404).send("Comment not found");
+            }
+            if (error instanceof Error && error.message === "KANBAN_COMMENT_FORBIDDEN") {
+                return res.status(403).send("You can only delete your own comments");
+            }
+            return res.status(500).send("Error deleting comment");
+        }
+    };
 }

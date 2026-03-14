@@ -20,6 +20,7 @@ import { User } from "../../interfaces/User";
 import TailwindTag from "@/components/atoms/TailwindTag";
 import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
 import UserAvatar from "@/components/atoms/UserAvatar";
+import KanbanCommentSection from "./KanbanCommentSection";
 
 
 interface KanbanTaskDialogProps {
@@ -167,7 +168,7 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
             showGlobalToast({
                 severity: "success",
                 summary: "Tâche terminée !! o/",
-                detail:" Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
+                detail: "Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
             })
             closeDialog(true);
         })
@@ -226,7 +227,7 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
         <Dialog
             visible
             onHide={() => closeDialog(false)}
-            style={{ width: '50vw' }}
+            style={{ width: '80vw' }}
             closeOnEscape
             maximizable
             dismissableMask
@@ -234,96 +235,101 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
             header={header}
             footer={footer}
         >
-            <div className="pt-12 flex flex-col gap-4">
-                <div className="flex flex-row gap-4">
-                    <FloatLabel>
-                        <Dropdown
-                            inputId="category-dropdown"
-                            value={columns.find(c => c.id === taskData.columnId) || null}
-                            options={columns}
-                            onChange={e => e.value && setTaskData({ ...taskData, columnId: e.value.id })}
-                            optionLabel="label"
-                        />
-                        <label htmlFor="category-dropdown">Catégorie</label>
-                    </FloatLabel>
-                    <FloatLabel>
-                        <Dropdown
-                            inputId="priority-dropdown"
-                            value={taskData.priority}
-                            options={priorityOptions}
-                            onChange={e => setTaskData({ ...taskData, priority: e.value as KanbanTaskPriority })}
-                            optionLabel="label"
-                            optionValue="value"
-                            itemTemplate={option => (
-                                <div className="flex items-center gap-2">
-                                    <PriorityFlag priority={option.value} />
-                                    <span>{option.label}</span>
-                                </div>
-                            )}
-                            valueTemplate={option => {
-                                if (!option?.value) {
-                                    return null;
-                                }
-
-                                return (
+            <div className="pt-12 flex flex-row gap-6">
+                {/* Left column: task form */}
+                <div className="flex flex-col gap-4 flex-1 min-w-0">
+                    <div className="flex flex-row gap-4 flex-wrap">
+                        <FloatLabel>
+                            <Dropdown
+                                inputId="category-dropdown"
+                                value={columns.find(c => c.id === taskData.columnId) || null}
+                                options={columns}
+                                onChange={e => e.value && setTaskData({ ...taskData, columnId: e.value.id })}
+                                optionLabel="label"
+                            />
+                            <label htmlFor="category-dropdown">Catégorie</label>
+                        </FloatLabel>
+                        <FloatLabel>
+                            <Dropdown
+                                inputId="priority-dropdown"
+                                value={taskData.priority}
+                                options={priorityOptions}
+                                onChange={e => setTaskData({ ...taskData, priority: e.value as KanbanTaskPriority })}
+                                optionLabel="label"
+                                optionValue="value"
+                                itemTemplate={option => (
                                     <div className="flex items-center gap-2">
                                         <PriorityFlag priority={option.value} />
                                         <span>{option.label}</span>
                                     </div>
-                                );
-                            }}
+                                )}
+                                valueTemplate={option => {
+                                    if (!option?.value) {
+                                        return null;
+                                    }
+
+                                    return (
+                                        <div className="flex items-center gap-2">
+                                            <PriorityFlag priority={option.value} />
+                                            <span>{option.label}</span>
+                                        </div>
+                                    );
+                                }}
+                            />
+                            <label htmlFor="priority-dropdown">Priorité</label>
+                        </FloatLabel>
+                        <FloatLabel>
+                            <AutoComplete
+                                inputId="tags-input"
+                                multiple
+                                value={taskData.tags || []}
+                                suggestions={tagSuggestions}
+                                completeMethod={event => completeTagSearch(event.query)}
+                                onChange={event => setTaskData({ ...taskData, tags: event.value })}
+                                onKeyDown={event => {
+                                    if (
+                                        (event.key === "Enter" || event.key === ",")
+                                    ) {
+                                        event.preventDefault();
+                                        const valueStr: string = (event.target as any).value;
+                                        addTag(valueStr);
+                                        (event.target as any).value = "";
+                                    }
+                                }}
+                                itemTemplate={option => <KanbanTagDisplay tag={option} />}
+                                selectedItemTemplate={option => <KanbanTagDisplay tag={option} />}
+                            />
+                            <label htmlFor="tags-input">Tags</label>
+                        </FloatLabel>
+                        <FloatLabel>
+                            <MultiSelect
+                                inputId="assignees-input"
+                                value={allUsers.filter(user => taskData.assigneeIds?.includes(user.id))}
+                                options={allUsers}
+                                optionLabel="username"
+                                onChange={v => setTaskData({ ...taskData, assigneeIds: v.value.map((user: User) => user.id) })}
+                                itemTemplate={(option) => option && (
+                                    <div className="flex items-center gap-2">
+                                        <UserAvatar user={option} />
+                                        <h2>{option.username}</h2>
+                                    </div>
+                                )}
+                                className="w-60"
+                            />
+                            <label htmlFor="assignees-input">Assignés</label>
+                        </FloatLabel>
+                    </div>
+                    <div className="w-full">
+                        <MarkdownEditor
+                            value={taskData.description || ""}
+                            onChange={e => setTaskData({ ...taskData, description: e })}
                         />
-                        <label htmlFor="priority-dropdown">Priorité</label>
-                    </FloatLabel>
-                    <FloatLabel>
-                        <AutoComplete
-                            inputId="tags-input"
-                            multiple
-                            value={taskData.tags || []}
-                            suggestions={tagSuggestions}
-                            completeMethod={event => completeTagSearch(event.query)}
-                            onChange={event => setTaskData({ ...taskData, tags: event.value })}
-                            onKeyDown={event => {
-                                if (
-                                    (event.key === "Enter" || event.key === ",")
-                                ) {
-                                    event.preventDefault();
-                                    const valueStr: string = (event.target as any).value;
-                                    addTag(valueStr);
-                                    (event.target as any).value = "";
-                                }
-                            }}
-                            itemTemplate={option => <KanbanTagDisplay tag={option} />}
-                            selectedItemTemplate={option => <KanbanTagDisplay tag={option} />}
-                        />
-                        <label htmlFor="tags-input">Tags</label>
-                    </FloatLabel>
-                    <FloatLabel>
-                        <MultiSelect
-                            inputId="assignees-input"
-                            value={allUsers.filter(user => taskData.assigneeIds?.includes(user.id))}
-                            options={allUsers}
-                            optionLabel="username"
-                            onChange={v => setTaskData({ ...taskData, assigneeIds: v.value.map((user: User) => user.id) })}
-                            itemTemplate={(option) => option && (
-                                <div className="flex items-center gap-2">
-                                    <UserAvatar user={option} />
-                                    <h2>{option.username}</h2>
-                                </div>
-                            )}
-                            className="w-60"
-                        />
-                        <label htmlFor="assignees-input">Assignés</label>
-                    </FloatLabel>
+                    </div>
                 </div>
-                <div
-                    className="w-full"
-                >
-                    <MarkdownEditor
-                        value={taskData.description || ""}
-                        onChange={e => setTaskData({ ...taskData, description: e })}
-                    />
-                </div>
+                {/* Right column: comments (only for existing tasks) */}
+                {!isCreation && (
+                    <KanbanCommentSection taskId={task.id} />
+                )}
             </div>
 
         </Dialog>
