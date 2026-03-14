@@ -10,7 +10,6 @@ import FillRemainingHeight from "../../components/layout/FillRemainingHeight";
 import {
     DndContext,
     DragEndEvent,
-    DragOverEvent,
     DragOverlay,
     PointerSensor,
     closestCorners,
@@ -40,7 +39,6 @@ export default function KanbanPage() {
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
     const [activeId, setActiveId] = useState<number | null>(null);
-    const [overColumnId, setOverColumnId] = useState<number | null>(null);
 
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
@@ -67,15 +65,9 @@ export default function KanbanPage() {
         }
     }
 
-    function handleDragOver(event: DragOverEvent) {
-        const { over } = event;
-        setOverColumnId(over ? over.id as number : null);
-    }
-
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         setActiveId(null);
-        setOverColumnId(null);
 
         if (!over) return;
 
@@ -119,8 +111,8 @@ export default function KanbanPage() {
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCorners}
+                autoScroll={false}
                 onDragEnd={handleDragEnd}
-                onDragOver={handleDragOver}
                 onDragStart={(event) => setActiveId(event.active.id as number)}
             >
                 {loading ? (
@@ -161,7 +153,6 @@ export default function KanbanPage() {
                                                 tasks={displayedTasks.filter(t => t.columnId === column.id)}
                                                 setSelectedTask={setSelectedTask}
                                                 activeId={activeId}
-                                                ghostTask={overColumnId === column.id ? activeTask : null}
                                             />
                                         </div>
                                     ))

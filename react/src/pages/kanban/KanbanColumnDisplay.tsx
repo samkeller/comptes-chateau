@@ -15,13 +15,9 @@ interface KanbanColumnProps {
     tasks: KanbanTask[]
     setSelectedTask: (task: KanbanTask) => void
     activeId: number | null
-    /**
-     * Affiche une carte fantôme lors du drag and drop pour indiquer où la tâche sera déposée.
-     */
-    ghostTask: KanbanTask | null
 }
 
-export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId, ghostTask }: KanbanColumnProps) {
+export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId }: KanbanColumnProps) {
     const [newTask, setNewTask] = useState<CreateKanbanTaskDto>({
         title: "",
         columnId: column.id,
@@ -34,7 +30,13 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
     });
 
     const sortedTasks = useMemo(() => {
-        return [...tasks].sort((left, right) => compareTaskPriority(left.priority, right.priority));
+        return [...tasks].sort((left, right) => {
+            if (left.isDone !== right.isDone) {
+                return left.isDone ? 1 : -1;
+            }
+
+            return compareTaskPriority(left.priority, right.priority);
+        });
     }, [tasks]);
 
     function handleAddTask() {
@@ -70,14 +72,6 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                         </div>
                     )
                 ))}
-                {ghostTask && (
-                    <div style={{ opacity: 0.4, pointerEvents: "none" }}>
-                        <KanbanTaskCard
-                            task={ghostTask}
-                            setSelectedTask={setSelectedTask}
-                        />
-                    </div>
-                )}
                 <div className="grow"></div>
 
                 <div className="flex flex-row shrink-0 py-2">

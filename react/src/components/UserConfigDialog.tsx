@@ -45,6 +45,8 @@ export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) 
                     visible={true} onHide={hideDialog}
                     header={`Réglages - ${connectedUser.username}`}
                     className="w-[50vw]"
+                    modal
+                    dismissableMask
                 >
                     <div>
                         <h4>Avatars utilisateur</h4>

@@ -169,15 +169,17 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
                     Terminée
                 </span>
             )}
-            <Button
-                rounded
-                text
-                icon="pi pi-trash"
-                severity="danger"
-                className="py-0 h-8 w-8"
-                tooltip="Supprimer"
-                onClick={deleteTask}
-            />
+            {!isCreation && (
+                <Button
+                    rounded
+                    text
+                    icon="pi pi-trash"
+                    severity="danger"
+                    className="py-0 h-8 w-8"
+                    tooltip="Supprimer"
+                    onClick={deleteTask}
+                />
+            )}
         </div>
     );
     const footer = (
