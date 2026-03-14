@@ -6,6 +6,7 @@ interface ConnectedUserContextValue {
     connectedUser: User | null;
     loading: boolean;
     refreshUser: () => Promise<void>;
+    clearUser: () => void;
 }
 
 const ConnectedUserContext = createContext<ConnectedUserContextValue | null>(null);
@@ -19,12 +20,16 @@ export function ConnectedUserProvider({ children }: { children: ReactNode }) {
         setConnectedUser(me);
     }, []);
 
+    const clearUser = useCallback(() => {
+        setConnectedUser(null);
+    }, []);
+
     useEffect(() => {
         refreshUser().finally(() => setLoading(false));
     }, [refreshUser]);
 
     return (
-        <ConnectedUserContext.Provider value={{ connectedUser, loading, refreshUser }}>
+        <ConnectedUserContext.Provider value={{ connectedUser, loading, refreshUser, clearUser }}>
             {children}
         </ConnectedUserContext.Provider>
     );

@@ -7,6 +7,7 @@ import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
+import { useConnectedUser } from "../context/ConnectedUserContext";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -19,6 +20,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
   const navigate = useNavigate();
   const showGlobalToast = useGlobalToast();
+  const { clearUser } = useConnectedUser();
 
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
@@ -26,6 +28,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
   const logout = async () => {
     await new AuthService().logout();
+    clearUser();
     navigate("/auth", { replace: true });
     showGlobalToast({
       severity: "info",

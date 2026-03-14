@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import ChocoChou from "@assets/images/chocochou.png";
 import { useGlobalToast } from "../context/GlobalToastContext";
 import { SelectButton } from "primereact/selectbutton";
+import { useConnectedUser } from "../context/ConnectedUserContext";
 
 export default function AuthPage() {
     const [username, setUsername] = useState<"Gaelle" | "Sam" | "70ul0u53&b3rl10z">("Gaelle");
@@ -17,6 +18,7 @@ export default function AuthPage() {
     const [authService] = useState(new AuthService());
     let navigate = useNavigate();
     const showGlobalToast = useGlobalToast();
+    const { refreshUser } = useConnectedUser();
 
     useEffect(() => { setError(null) }, [password])
 
@@ -26,6 +28,7 @@ export default function AuthPage() {
 
         try {
             await authService.login(username, password);
+            await refreshUser();
             showGlobalToast({
                 severity: "success",
                 detail: "Connexion réussie ! 😽",
