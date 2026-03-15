@@ -20,6 +20,16 @@ OperationRoutes.get('/lazy', async (req: Request, res: Response) => {
     }
 })
 
+OperationRoutes.get('/export', async (_req: Request, res: Response) => {
+    try {
+        const data = await operationService.getAllForExport();
+        return res.json(data);
+    } catch (error) {
+        console.error('Error in export endpoint:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
 OperationRoutes.post('/', async (req: Request, res: Response) => {
     try {
         const accountLine = await operationService.save(req.body);

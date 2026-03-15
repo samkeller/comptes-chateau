@@ -58,6 +58,12 @@ class AccountingService extends BaseService {
         });
     }
 
+    getAllAccountingLinesForExport(): Promise<AccountLine[]> {
+        return axios.get(`${this.apiUrl}/operation/export`).then((response) => {
+            return response.data.map((value: Partial<AccountLine>) => new AccountLine(value));
+        });
+    }
+
 }
 
 export default AccountingService

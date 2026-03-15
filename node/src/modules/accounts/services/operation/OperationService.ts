@@ -101,6 +101,16 @@ export default class OperationService {
             .getMany();
     }
 
+    async getAllForExport(): Promise<AccountLine[]> {
+        return this.accountLineRepo
+            .createQueryBuilder("al")
+            .leftJoinAndSelect("al.nature", "nature")
+            .leftJoinAndSelect("al.poste", "poste")
+            .orderBy("al.dateOperation", "DESC")
+            .addOrderBy("al.id", "DESC")
+            .getMany();
+    }
+
     private validateAndNormalizeCheckItem(check: OperationBatchCheckInput, index: number): {
         id: number;
         isChecked: boolean;

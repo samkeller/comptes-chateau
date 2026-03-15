@@ -127,6 +127,16 @@ describe("OperationControllers /lazy integration", () => {
         expect(labels).toEqual(["L1", "L2", "L3", "L4"]);
     });
 
+    it("returns all operations for export", async () => {
+        const response = await request(app)
+            .get("/operation/export");
+
+        expect(response.status).toBe(200);
+        const labels = response.body.map((line: { label: string }) => line.label);
+
+        expect(labels).toEqual(["L4", "L3", "L2", "L1"]);
+    });
+
     it("sorts by amount DESC using (credit - debit)", async () => {
         const response = await request(app)
             .get("/operation/lazy")

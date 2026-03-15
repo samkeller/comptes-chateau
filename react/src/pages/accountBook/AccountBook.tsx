@@ -22,6 +22,7 @@ import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCode
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
+import AccountBookExportButtons from "./AccountBookExportButtons"
 
 type RelationFilterOption = {
     id: number | "null";
@@ -70,6 +71,7 @@ export default function AccountBook() {
         { id: "null", label: "- Vide -", isNullOption: true },
         ...postes
     ]
+
     useEffect(() => {
         // Load natures and postes
         const natureService = new AccountLineNatureService()
@@ -139,7 +141,8 @@ export default function AccountBook() {
                 />
             }
             <div className="flex justify-end mb-6">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
+                    <AccountBookExportButtons />
                     <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
             </div>
@@ -301,7 +304,7 @@ export default function AccountBook() {
                                 }
                             />
                         )}
-                    /> 
+                    />
                     <Column
                         field="amount"
                         dataType="numeric"
