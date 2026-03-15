@@ -58,7 +58,7 @@ export default class DashboardService {
         ]);
 
         const monthlyBudget = budgetLines.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
-        
+
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
             forecastBalance: baselineAmount + Number(forecastDeltaRaw?.value ?? 0),
@@ -181,6 +181,7 @@ export default class DashboardService {
         return this.kanbanTaskRepo
             .createQueryBuilder("task")
             .innerJoin("task.assignees", "assignee", "assignee.id = :userId", { userId })
+            .where("task.isDone = :isDone", { isDone: false })
             .getCount();
     }
 
