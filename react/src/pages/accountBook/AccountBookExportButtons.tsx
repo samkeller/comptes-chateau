@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "primereact/button";
 import AccountingService from "../../services/AccountingService";
 import { parseDateToDDMMYYYY } from "../../utils/DatesUtils";
-import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import AccountLine from "../../interfaces/AccountLine";
 import { exportToCsv, ExportRow } from "../../utils/ExportUtils";
