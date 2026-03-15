@@ -1,10 +1,11 @@
+import { parseDateToDDMMYYYY } from "./DatesUtils";
 
 export interface ExportRow {
     [columnName: string]: string | number | boolean | Date | null;
 }
 
 export const exportToCsv = (filename: string, data: ExportRow[]) => {
-    const dateTime = new Date().toISOString().replace(/[:.]/g, "-");
+    const dateTime = parseDateToDDMMYYYY(new Date());
     const fullFilename = `${dateTime}-${filename}.csv`;
     const csvContent = data
         .map((columns) => Object.values(columns).map(escapeCsvValue).join(";"))
