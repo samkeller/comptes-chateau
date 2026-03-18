@@ -170,10 +170,10 @@ describe("DashboardService.getOverview", () => {
             )
         };
 
-        const accountBalanceBaselineRepo = {
+        const accountRepo = {
             findOne: vi.fn().mockResolvedValue(
                 options.baseline
-                    ? { id: 1, amount: options.baseline.amount, effectiveDate: options.baseline.effectiveDate }
+                    ? { id: 1, baseLineAmount: options.baseline.amount, baseLineEffectiveDate: options.baseline.effectiveDate }
                     : null
             )
         };
@@ -189,7 +189,7 @@ describe("DashboardService.getOverview", () => {
         return new DashboardService(
             accountingLineRepo as never,
             budgetItemRepo as never,
-            accountBalanceBaselineRepo as never,
+            accountRepo as never,
             kanbanTaskRepo as never,
         );
     }

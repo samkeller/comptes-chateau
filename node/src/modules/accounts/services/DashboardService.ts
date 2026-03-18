@@ -1,8 +1,8 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
-import { AccountBalanceBaseline } from "../entities/AccountBalanceBaseline";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
+import { Account } from "../entities/Account";
 
 export interface MonthlyPosteAggregate {
     year: number;
@@ -35,15 +35,15 @@ export default class DashboardService {
     constructor(
         private accountingLineRepo = AppDataSource.getRepository(AccountingLine),
         private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
-        private accountBalanceBaselineRepo = AppDataSource.getRepository(AccountBalanceBaseline),
+        private accountRepo = AppDataSource.getRepository(Account),
         private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
     ) { }
     async getOverview(userId: number): Promise<DashboardOverview> {
-        const baseline = await this.accountBalanceBaselineRepo.findOne({ where: { id: 1 } });
+        const baseline = await this.accountRepo.findOne({ where: { id: 1 } });
 
         // Cas fallback si jamais on n'a pas de baseline en base (ex: première utilisation), on part de 0
-        const baselineAmount = baseline ? Number(baseline.amount) : 0;
-        const baseLineDate = baseline ? baseline.effectiveDate : new Date(1960, 0, 1);
+        const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
+        const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
         const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
             this.getBalanceDeltaSinceDate(true, baseLineDate),
