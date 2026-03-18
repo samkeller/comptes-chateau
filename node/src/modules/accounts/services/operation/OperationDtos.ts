@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { AccountLineSource } from "../../entities/AccountLine";
 
 export interface OperationBatchCheckInput {
     id: number;
@@ -20,9 +19,13 @@ export const SaveOperationSchema = z.object({
     debit: z.number().nonnegative().optional(),
     credit: z.number().nonnegative().optional(),
     isChecked: z.boolean().optional(),
+    account: z.object({ id: z.number().int().positive() }),
+    targetAccount: z.object({ id: z.number().int().positive() }).nullable().optional(),
     nature: z.object({ id: z.number().int().positive() }).nullable().optional(),
     poste: z.object({ id: z.number().int().positive() }).nullable().optional(),
 });
+
+export type SaveOperationPayload = z.infer<typeof SaveOperationSchema>;
 
 /** Schéma pour la validation en lot d'opérations. */
 export const OperationBatchCheckSchema = z.object({

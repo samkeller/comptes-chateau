@@ -1,5 +1,6 @@
 import { EntityManager, In } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
+import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { badRequest } from "../../../utils/AppError";

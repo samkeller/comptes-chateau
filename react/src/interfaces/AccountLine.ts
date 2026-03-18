@@ -2,12 +2,16 @@ import { parseDateToDisplay } from "../utils/DatesUtils"
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
 import { parseApiDate, parseApiDateTime } from "../services/ApiDateCodec"
+import Account from "./Account"
 
 class AccountLine {
     id: number = 0
     dateOperation: Date = new Date()
     dateValeur: Date | null = null
     label: string = ""
+    account: Account | null = null
+    targetAccount: Account | null = null
+    transferGroupId: string | null = null
     nature: AccountLineNature | null = null
     poste: AccountLinePoste | null = null
     debit: number = 0

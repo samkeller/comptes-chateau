@@ -40,9 +40,16 @@ export class AccountLine {
     @JoinColumn({ name: "poste_id" })
     poste?: AccountLinePoste;
 
-    @ManyToOne(() => Account)
+    @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })
     account: Account;
+
+    @ManyToOne(() => Account, { nullable: true })
+    @JoinColumn({ name: "target_account_id" })
+    targetAccount?: Account | null;
+
+    @Column({ type: "varchar", length: 36, nullable: true, name: "transfer_group_id" })
+    transferGroupId?: string | null;
 
     /* ========================
        MONTANTS (mouvement)

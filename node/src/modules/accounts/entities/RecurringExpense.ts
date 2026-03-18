@@ -38,7 +38,7 @@ export class RecurringExpense {
     @JoinColumn({ name: 'poste_id' })
     poste?: AccountLinePoste;
 
-    @ManyToOne(() => Account)
+    @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })
     account: Account;
 }

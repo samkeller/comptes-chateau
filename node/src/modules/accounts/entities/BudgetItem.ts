@@ -30,7 +30,7 @@ export class BudgetItem {
     /* ========================
        RELATIONS
     ======================== */
-    @ManyToOne(() => Account)
+    @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })
     account: Account;
 }
