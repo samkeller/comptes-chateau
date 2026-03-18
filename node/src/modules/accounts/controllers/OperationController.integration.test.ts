@@ -2,7 +2,7 @@ import express from "express";
 import request from "supertest";
 import { DataSource, EntityManager } from "typeorm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { AccountingLine, AccountingLineSource } from "../entities/AccountingLine";
+import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { IMemoryDb } from "pg-mem";
@@ -24,10 +24,10 @@ vi.mock("../../../db/dataSource", () => ({
 }));
 
 
-async function seedAccountingLines(dataSource: DataSource): Promise<void> {
+async function seedAccountLines(dataSource: DataSource): Promise<void> {
     const natureRepo = dataSource.getRepository(AccountLineNature);
     const posteRepo = dataSource.getRepository(AccountLinePoste);
-    const lineRepo = dataSource.getRepository(AccountingLine);
+    const lineRepo = dataSource.getRepository(AccountLine);
 
     const natureCharges = await natureRepo.save({ label: "Charges", color: "#112233" });
     const natureRevenus = await natureRepo.save({ label: "Revenus", color: "#334455" });
@@ -46,7 +46,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             label: "L1",
             dateOperation: baseDateOperation,
             dateValeur: null,
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             nature: natureCharges,
             poste: posteMaison,
             debit: 100,
@@ -57,7 +57,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             label: "L2",
             dateOperation: new Date("2026-03-05"),
             dateValeur: new Date("2026-03-02"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             nature: natureCharges,
             poste: undefined,
             debit: 20,
@@ -68,7 +68,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             label: "L3",
             dateOperation: new Date("2026-03-10"),
             dateValeur: null,
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             nature: natureRevenus,
             poste: posteMaison,
             debit: 0,
@@ -79,7 +79,7 @@ async function seedAccountingLines(dataSource: DataSource): Promise<void> {
             label: "L4",
             dateOperation: new Date("2026-03-15"),
             dateValeur: new Date("2026-03-01"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             nature: undefined,
             poste: posteLoisirs,
             debit: 0,
@@ -98,12 +98,12 @@ describe("OperationControllers /lazy integration", () => {
 
         testDataSource = db.adapters.createTypeormDataSource({
             type: "postgres",
-            entities: [AccountingLine, AccountLineNature, AccountLinePoste],
+            entities: [AccountLine, AccountLineNature, AccountLinePoste],
             synchronize: true
         });
 
         await testDataSource.initialize();
-        await seedAccountingLines(testDataSource);
+        await seedAccountLines(testDataSource);
 
         const { default: operationRoutes } = await import("./OperationController");
         app = express();
@@ -419,7 +419,7 @@ describe("OperationControllers /lazy integration", () => {
                 label: "Invalid checked",
                 dateOperation: "2026-03-20",
                 dateValeur: null,
-                source: AccountingLineSource.MANUAL,
+                source: AccountLineSource.MANUAL,
                 debit: 0,
                 credit: 10,
                 isChecked: true

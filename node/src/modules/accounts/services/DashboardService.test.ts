@@ -76,12 +76,12 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         qb = new MockBalanceDeltaQueryBuilder();
         createQueryBuilder = vi.fn(() => qb);
 
-        const accountingLineRepo = {
+        const accountLineRepo = {
             createQueryBuilder
         };
 
         service = new DashboardService(
-            accountingLineRepo as never,
+            accountLineRepo as never,
             {} as never,
             {} as never
         );
@@ -160,7 +160,7 @@ describe("DashboardService.getOverview", () => {
             return new MockOverviewQueryBuilder([result]);
         });
 
-        const accountingLineRepo = { createQueryBuilder };
+        const accountLineRepo = { createQueryBuilder };
 
         const budgetItemRepo = {
             find: vi.fn().mockResolvedValue(
@@ -187,7 +187,7 @@ describe("DashboardService.getOverview", () => {
         };
 
         return new DashboardService(
-            accountingLineRepo as never,
+            accountLineRepo as never,
             budgetItemRepo as never,
             accountRepo as never,
             kanbanTaskRepo as never,

@@ -30,7 +30,7 @@ export default function AccountBookExportButtons({ }: AccountBookExportButtonsPr
     const exportLines = () => {
         setIsLoading(true);
         accountingService
-            .getAllAccountingLinesForExport()
+            .getAllAccountLinesForExport()
             .then((lines) => {
                 const rows = getExportRows(lines);
                 exportToCsv("operations", rows);

@@ -1,7 +1,7 @@
 import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
-import { AccountingLine } from "../entities/AccountingLine";
+import { AccountLine } from "../entities/AccountLine";
 import { PosteDto, SavePostePayload } from "./poste/PosteDtos";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
@@ -22,7 +22,7 @@ export default class PosteService {
 
         const rows = await this.posteRepo
             .createQueryBuilder("poste")
-            .leftJoin(AccountingLine, "line", "line.poste_id = poste.id")
+            .leftJoin(AccountLine, "line", "line.poste_id = poste.id")
             .select("poste.id", "id")
             .addSelect("COUNT(line.id)", "linkedCount")
             .groupBy("poste.id")
@@ -71,7 +71,7 @@ export default class PosteService {
         try {
             const updated = await this.posteRepo.save(existing);
 
-            const linkedAccountLines = await AppDataSource.getRepository(AccountingLine).count({
+            const linkedAccountLines = await AppDataSource.getRepository(AccountLine).count({
                 where: {
                     poste: { id: updated.id }
                 }
@@ -91,7 +91,7 @@ export default class PosteService {
     async delete(id: number): Promise<void> {
         await AppDataSource.transaction(async (manager) => {
             const posteRepo = manager.getRepository(AccountLinePoste);
-            const accountingRepo = manager.getRepository(AccountingLine);
+            const accountingRepo = manager.getRepository(AccountLine);
 
             const existing = await posteRepo.findOneBy({ id });
             if (!existing) {

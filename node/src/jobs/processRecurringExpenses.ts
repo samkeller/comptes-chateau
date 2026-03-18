@@ -1,5 +1,5 @@
-import { AccountingLineSource } from "../modules/accounts/entities/AccountingLine";
-import AccountingLineService from "../modules/accounts/services/AccountingLineService";
+import { AccountLineSource } from "../modules/accounts/entities/AccountLine";
+import AccountLineService from "../modules/accounts/services/AccountLineService";
 import RecurringExpenseService from "../modules/accounts/services/RecurringExpenseService";
 import JobExecutionLogService from "../modules/core/services/JobExecutionLogService";
 import { EntityManager } from "typeorm";
@@ -11,7 +11,7 @@ export async function processRecurringExpenses(
     const jobName = 'recurring-expenses-monthly';
 
     const recurringExpenseService = new RecurringExpenseService(manager);
-    const accountingLineService = new AccountingLineService(manager);
+    const accountLineService = new AccountLineService(manager);
     const logService = new JobExecutionLogService(manager);
 
     // 1 - Récupérer toutes les lignes "recurring_expense" où les dates sont inférieures ou égales à aujourd'hui
@@ -24,26 +24,26 @@ export async function processRecurringExpenses(
             { date: currentDate }
         );
         return {
-            createdAccountingLines: [],
+            createdAccountLines: [],
             updatedRecurringExpenses: [],
             processedCount: 0
         };
     }
 
     // 2 - Pour chacune de ces lignes, créer une ligne "account_line"
-    const accountingLinesToCreate = expensesToProcess.map(expense => ({
+    const accountLinesToCreate = expensesToProcess.map(expense => ({
         id: 0,
         label: expense.label,
         debit: expense.solde < 0 ? Math.abs(expense.solde) : 0,
         credit: expense.solde > 0 ? expense.solde : 0,
         nature: expense.nature,
         poste: expense.poste,
-        source: AccountingLineSource.SYSTEM,
+        source: AccountLineSource.SYSTEM,
         dateOperation: currentDate,
         dateValeur: null
     }));
 
-    const createdLines = await accountingLineService.saveAll(accountingLinesToCreate);
+    const createdLines = await accountLineService.saveAll(accountLinesToCreate);
 
     // 3 - Modifier les recurring_expense pour mettre à jour la prochaine occurrence
     for (const expense of expensesToProcess) {
@@ -60,7 +60,7 @@ export async function processRecurringExpenses(
         {
             date: currentDate,
             processedExpenses: expensesToProcess.map(e => ({ id: e.id, label: e.label })),
-            createdAccountingLineIds: createdLines.map(l => l.id)
+            createdAccountLineIds: createdLines.map(l => l.id)
         }
     );
 }

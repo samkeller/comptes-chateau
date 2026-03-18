@@ -1,5 +1,5 @@
 import { AppDataSource } from "../../../db/dataSource";
-import { AccountingLine } from "../entities/AccountingLine";
+import { AccountLine } from "../entities/AccountLine";
 import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
@@ -33,7 +33,7 @@ export interface DashboardOverview {
 export default class DashboardService {
 
     constructor(
-        private accountingLineRepo = AppDataSource.getRepository(AccountingLine),
+        private accountLineRepo = AppDataSource.getRepository(AccountLine),
         private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
         private accountRepo = AppDataSource.getRepository(Account),
         private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
@@ -80,7 +80,7 @@ export default class DashboardService {
         toMonth: Date,
         posteIds: number[]
     ): Promise<MonthlyPosteAggregate[]> {
-        let qb = this.accountingLineRepo
+        let qb = this.accountLineRepo
             .createQueryBuilder("al")
             .select("EXTRACT(YEAR FROM al.dateOperation)", "year")
             .addSelect("EXTRACT(MONTH FROM al.dateOperation)", "month")
@@ -129,7 +129,7 @@ export default class DashboardService {
         checkedOnly: boolean,
         fromDate: Date
     ): Promise<{ value: string | number } | undefined> {
-        let qb = this.accountingLineRepo
+        let qb = this.accountLineRepo
             .createQueryBuilder("al")
             .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
             .where("al.dateOperation >= :fromDate", { fromDate })
@@ -148,7 +148,7 @@ export default class DashboardService {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        return this.accountingLineRepo
+        return this.accountLineRepo
             .createQueryBuilder("al")
             .select("COALESCE(SUM(al.debit), 0)", "value")
             .where("al.isChecked = :isChecked", { isChecked: true })
@@ -158,7 +158,7 @@ export default class DashboardService {
     }
 
     private async getOperationsToCheckCounts(): Promise<{ inAccount: number; horsCompte: number }> {
-        const rawCounts = await this.accountingLineRepo
+        const rawCounts = await this.accountLineRepo
             .createQueryBuilder("al")
             .leftJoin("al.nature", "nature")
             .select(

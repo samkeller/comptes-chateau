@@ -1,4 +1,4 @@
-import { AccountingLine } from "../../entities/AccountingLine";
+import { AccountLine } from "../../entities/AccountLine";
 import {
     createBooleanSimpleFilterHandler,
     createComputedSortHandler,
@@ -14,9 +14,9 @@ import { parseApiDateString } from "../../../../utils/ApiDateUtils";
 const AMOUNT_SQL = "(al.credit - al.debit)";
 
 /**
- * Configuration de mapping tri/filtre pour l'entite AccountingLine.
+ * Configuration de mapping tri/filtre pour l'entite AccountLine.
  */
-const operationTableQueryConfig: TableQueryMapperConfig<AccountingLine> = {
+const operationTableQueryConfig: TableQueryMapperConfig<AccountLine> = {
     defaultSort: {
         field: "dateOperation",
         direction: "DESC"

@@ -17,7 +17,7 @@ export interface CheckBatchInput {
 
 class AccountingService extends BaseService {
 
-    getAccountingLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
+    getAccountLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
         const requestParams = DataTableQueryCodec.toQueryParams(lazyState).toString();
 
         return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
@@ -28,7 +28,7 @@ class AccountingService extends BaseService {
         });
     }
 
-    saveAccountingLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
+    saveAccountLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
         const dataToSend = {
             ...accountLine,
             dateOperation: accountLine.dateOperation ? formatApiDate(accountLine.dateOperation) : null,
@@ -58,7 +58,7 @@ class AccountingService extends BaseService {
         });
     }
 
-    getAllAccountingLinesForExport(): Promise<AccountLine[]> {
+    getAllAccountLinesForExport(): Promise<AccountLine[]> {
         return axios.get(`${this.apiUrl}/operation/export`).then((response) => {
             return response.data.map((value: Partial<AccountLine>) => new AccountLine(value));
         });

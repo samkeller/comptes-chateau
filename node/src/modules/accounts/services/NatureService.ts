@@ -1,7 +1,7 @@
 import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
-import { AccountingLine } from "../entities/AccountingLine";
+import { AccountLine } from "../entities/AccountLine";
 import { NatureDto, SaveNaturePayload } from "./nature/NatureDtos";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
@@ -22,7 +22,7 @@ export default class NatureService {
 
         const rows = await this.natureRepo
             .createQueryBuilder("nature")
-            .leftJoin(AccountingLine, "line", "line.nature_id = nature.id")
+            .leftJoin(AccountLine, "line", "line.nature_id = nature.id")
             .select("nature.id", "id")
             .addSelect("COUNT(line.id)", "linkedCount")
             .groupBy("nature.id")
@@ -75,7 +75,7 @@ export default class NatureService {
         try {
             const updated = await this.natureRepo.save(existing);
 
-            const linkedAccountLines = await AppDataSource.getRepository(AccountingLine).count({
+            const linkedAccountLines = await AppDataSource.getRepository(AccountLine).count({
                 where: {
                     nature: { id: updated.id }
                 }
@@ -96,7 +96,7 @@ export default class NatureService {
     async delete(id: number): Promise<void> {
         await AppDataSource.transaction(async (manager) => {
             const natureRepo = manager.getRepository(AccountLineNature);
-            const accountingRepo = manager.getRepository(AccountingLine);
+            const accountingRepo = manager.getRepository(AccountLine);
 
             const existing = await natureRepo.findOneBy({ id });
             if (!existing) {

@@ -1,8 +1,8 @@
 import { ParsedQs } from "qs";
 import { In } from "typeorm";
 import { AppDataSource } from "../../../../db/dataSource";
-import { AccountingLine as AccountLine } from "../../entities/AccountingLine";
-import AccountingLineService from "../AccountingLineService";
+import { AccountLine as AccountLine } from "../../entities/AccountLine";
+import AccountLineService from "../AccountLineService";
 import TableQueryMapper from "../queryMappers/TableQueryMapper";
 import operationTableQueryConfig from "../queryMappers/operationTableQueryConfig";
 import TableQueryParser from "../queryMappers/parsers/TableQueryParser";
@@ -50,7 +50,7 @@ export default class OperationService {
     }
 
     async save(line: Partial<AccountLine>): Promise<AccountLine> {
-        return new AccountingLineService().save(line) as Promise<AccountLine>;
+        return new AccountLineService().save(line) as Promise<AccountLine>;
     }
 
     async checkBatch(payload: OperationBatchCheckPayload): Promise<{ updatedCount: number }> {
@@ -62,7 +62,7 @@ export default class OperationService {
         });
 
         const updatedLines = await AppDataSource.transaction(async (manager) => {
-            const service = new AccountingLineService(manager);
+            const service = new AccountLineService(manager);
             const repo = manager.getRepository(AccountLine);
 
             const ids = normalizedChecks.map((check) => check.id);

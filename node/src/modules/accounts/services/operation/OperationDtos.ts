@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AccountingLineSource } from "../../entities/AccountingLine";
+import { AccountLineSource } from "../../entities/AccountLine";
 
 export interface OperationBatchCheckInput {
     id: number;

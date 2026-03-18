@@ -11,7 +11,7 @@ import {
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 
-export enum AccountingLineSource {
+export enum AccountLineSource {
     SYSTEM = "system",
     MANUAL = "manual",
     IMPORT = "import"
@@ -22,7 +22,7 @@ export enum AccountingLineSource {
 @Check(`"credit" >= 0`)
 @Check(`NOT ("debit" > 0 AND "credit" > 0)`)
 @Check(`(("isChecked" = true AND "dateValeur" IS NOT NULL) OR ("isChecked" = false AND "dateValeur" IS NULL))`)
-export class AccountingLine {
+export class AccountLine {
 
     @PrimaryGeneratedColumn()
     id: number
@@ -61,10 +61,10 @@ export class AccountingLine {
 
     @Column({
         type: "enum",
-        enum: AccountingLineSource,
-        default: AccountingLineSource.MANUAL
+        enum: AccountLineSource,
+        default: AccountLineSource.MANUAL
     })
-    source: AccountingLineSource;
+    source: AccountLineSource;
 
     /* ========================
        DATES

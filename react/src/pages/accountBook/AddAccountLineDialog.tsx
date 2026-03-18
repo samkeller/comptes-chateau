@@ -79,7 +79,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         };
 
         new AccountingService()
-            .saveAccountingLine(accountLine)
+            .saveAccountLine(accountLine)
             .then(() => {
                 refresh();
                 showGlobalToast({

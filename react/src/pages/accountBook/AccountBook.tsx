@@ -90,7 +90,7 @@ export default function AccountBook() {
         setLoading(true)
         try {
             const service = new AccountingService()
-            const lines = await service.getAccountingLinesLazy(lazyState)
+            const lines = await service.getAccountLinesLazy(lazyState)
             setAccountLines(lines.data)
             setTotalRecords(lines.totalRecords)
         } finally {

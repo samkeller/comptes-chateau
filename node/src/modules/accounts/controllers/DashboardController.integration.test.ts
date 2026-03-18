@@ -2,7 +2,7 @@ import express from "express";
 import request from "supertest";
 import { DataSource } from "typeorm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { AccountingLine, AccountingLineSource } from "../entities/AccountingLine";
+import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import SetupTestDb from "../../../tests/SetupTests";
@@ -20,7 +20,7 @@ vi.mock("../../../db/dataSource", () => ({
 
 async function seedDashboardLines(dataSource: DataSource): Promise<void> {
     const posteRepo = dataSource.getRepository(AccountLinePoste);
-    const lineRepo = dataSource.getRepository(AccountingLine);
+    const lineRepo = dataSource.getRepository(AccountLine);
 
     const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566" });
     const posteVoyage = await posteRepo.save({ label: "Voyage", color: "#778899" });
@@ -33,7 +33,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             label: "M1",
             dateOperation: new Date("2026-01-04"),
             dateValeur: new Date("2026-01-05"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             poste: posteMaison,
             debit: 100,
             credit: 0,
@@ -43,7 +43,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             label: "M2",
             dateOperation: new Date("2026-01-10"),
             dateValeur: null,
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             poste: posteMaison,
             debit: 0,
             credit: 40,
@@ -53,7 +53,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             label: "M3",
             dateOperation: new Date("2026-02-08"),
             dateValeur: new Date("2026-02-09"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             poste: posteMaison,
             debit: 0,
             credit: 70,
@@ -63,7 +63,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             label: "V1",
             dateOperation: new Date("2026-01-07"),
             dateValeur: new Date("2026-01-08"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             poste: posteVoyage,
             debit: 0,
             credit: 20,
@@ -73,7 +73,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             label: "V2",
             dateOperation: new Date("2026-03-01"),
             dateValeur: new Date("2026-03-02"),
-            source: AccountingLineSource.MANUAL,
+            source: AccountLineSource.MANUAL,
             poste: posteVoyage,
             debit: 10,
             credit: 0,
@@ -90,7 +90,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
 
         testDataSource = db.adapters.createTypeormDataSource({
             type: "postgres",
-            entities: [AccountingLine, AccountLineNature, AccountLinePoste],
+            entities: [AccountLine, AccountLineNature, AccountLinePoste],
             synchronize: true
         });
 
