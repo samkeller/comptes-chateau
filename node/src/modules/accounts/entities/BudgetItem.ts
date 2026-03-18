@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Account } from "./Account";
 
 export enum BudgetItemCategory {
     INCOMPRESSIBLE = "incompressible",
@@ -25,4 +26,11 @@ export class BudgetItem {
 
     @Column({ type: "int", default: 0 })
     sortOrder: number;
+
+    /* ========================
+       RELATIONS
+    ======================== */
+    @ManyToOne(() => Account)
+    @JoinColumn({ name: "account_id" })
+    account: Account;
 }

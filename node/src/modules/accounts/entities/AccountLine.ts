@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
+import { Account } from "./Account";
 
 export enum AccountLineSource {
     SYSTEM = "system",
@@ -38,6 +39,10 @@ export class AccountLine {
     @ManyToOne(() => AccountLinePoste, { nullable: true })
     @JoinColumn({ name: "poste_id" })
     poste?: AccountLinePoste;
+
+    @ManyToOne(() => Account)
+    @JoinColumn({ name: "account_id" })
+    account: Account;
 
     /* ========================
        MONTANTS (mouvement)

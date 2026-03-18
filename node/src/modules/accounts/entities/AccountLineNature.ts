@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Account } from "./Account";
 
 @Entity('account_line_nature')
 export class AccountLineNature {
@@ -13,4 +14,11 @@ export class AccountLineNature {
 
     @Column({ type: 'bool', default: false })
     isHorsCompte: boolean
+
+    /* ========================
+       RELATIONS
+    ======================== */
+    @ManyToOne(() => Account)
+    @JoinColumn({ name: "account_id" })
+    account: Account;
 }
