@@ -31,7 +31,6 @@ export default class RecurringExpenseService {
     }
 
     async saveAll(expensesToProcess: RecurringExpense[]) {
-        // TODO add validation (https://github.com/typestack/class-validator)
         return this.recurringExpenseRepo.save(expensesToProcess.map((expense) => (
             {
                 ...expense,
@@ -40,14 +39,11 @@ export default class RecurringExpenseService {
         )))
     }
 
-    async save(expenseToProcess: Partial<RecurringExpense>) {
-        // TODO add validation (https://github.com/typestack/class-validator)
-        return this.recurringExpenseRepo.save((
-            {
-                ...expenseToProcess,
-                nextOccurrence: normalizeApiDateInput(expenseToProcess.nextOccurrence) ?? undefined,
-            }
-        ))
+    async save(expense: Partial<RecurringExpense>) {
+        return this.recurringExpenseRepo.save({
+            ...expense,
+            nextOccurrence: normalizeApiDateInput(expense.nextOccurrence) ?? undefined,
+        });
     }
 }
 

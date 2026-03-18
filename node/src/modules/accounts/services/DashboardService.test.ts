@@ -181,6 +181,7 @@ describe("DashboardService.getOverview", () => {
         const kanbanTaskRepo = {
             createQueryBuilder: vi.fn(() => ({
                 innerJoin: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
                 getCount: vi.fn().mockResolvedValue(options.assignedKanbanTasksCount ?? 0),
             })),
         };

@@ -17,16 +17,14 @@ export default function BudgetItemsTable() {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true);
-                const data = await new BudgetService().getBudgetItems();
-                setLines(data);
-            } catch (err) {
-                console.error("Erreur de chargement du budget:", err);
-            } finally {
-                setLoading(false);
-            }
+        const load = (): void => {
+            setLoading(true);
+            new BudgetService()
+                .getBudgetItems()
+                .then(setLines)
+                .finally(() => {
+                    setLoading(false);
+                });
         };
 
         load();

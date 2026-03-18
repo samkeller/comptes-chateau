@@ -10,7 +10,7 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { BooleanIcon } from "../../../components/datatableBodys/BooleanIcon";
 import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLineNature } from "../../../interfaces/AccountLineNature";
-import { DEFAULT_SETUP_COLOR, extractApiError, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
+import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
 import AccountLineNatureService, { SaveNaturePayload } from "../../../services/AccountLineNatureService";
 import TooltipInfoIcon from "../../../components/TooltipInfoIcon";
 
@@ -43,16 +43,14 @@ export default function NatureSetupCard() {
         loadNatures();
     }, []);
 
-    const loadNatures = async () => {
+    const loadNatures = (): void => {
         setLoading(true);
-        try {
-            const loadedNatures = await service.getAllNatures();
-            setNatures(loadedNatures);
-        } catch (error) {
-            showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
-        } finally {
-            setLoading(false);
-        }
+        service
+            .getAllNatures()
+            .then(setNatures)
+            .finally(() => {
+                setLoading(false);
+            });
     }
 
 
@@ -110,27 +108,26 @@ export default function NatureSetupCard() {
         return true;
     };
 
-    const createNature = async () => {
+    const createNature = () => {
         const newNature = draftByNatureId[NEW_NATURE_ROW_ID] ?? buildEmptyNatureDraft();
 
         if (!validateNature(newNature)) {
             return;
         }
 
-        try {
-            await service.createNature({
+        service
+            .createNature({
                 ...newNature,
                 label: newNature.label.trim()
-            });
-            setDraftByNatureId((prev) => ({
-                ...prev,
-                [NEW_NATURE_ROW_ID]: buildEmptyNatureDraft()
-            }));
-            showToast({ severity: "success", summary: "Natures", detail: "Nature créée" });
-            loadNatures();
-        } catch (error) {
-            showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
-        }
+            })
+            .then(() => {
+                setDraftByNatureId((prev) => ({
+                    ...prev,
+                    [NEW_NATURE_ROW_ID]: buildEmptyNatureDraft()
+                }));
+                showToast({ severity: "success", summary: "Nature créée" });
+                return loadNatures();
+            })
     };
 
     /**
@@ -148,7 +145,7 @@ export default function NatureSetupCard() {
         }));
     };
 
-    const saveNature = async (rowId: number) => {
+    const saveNature = (rowId: number) => {
         const editingNatureDraft = draftByNatureId[rowId];
         if (!editingNatureDraft) {
             return;
@@ -158,24 +155,24 @@ export default function NatureSetupCard() {
             return;
         }
 
-        try {
-            await service.updateNature(rowId, {
+        service
+            .updateNature(rowId, {
                 ...editingNatureDraft,
                 label: editingNatureDraft.label.trim()
-            });
+            })
+            .then(() => {
+                // reset
+                setDraftByNatureId((prev) => {
+                    const next = { ...prev };
+                    delete next[rowId];
+                    return next;
+                });
 
-            // reset
-            setDraftByNatureId((prev) => {
-                const next = { ...prev };
-                delete next[rowId];
-                return next;
-            });
-
-            await loadNatures();
-            showToast({ severity: "success", summary: "Natures", detail: "Nature mise a jour" });
-        } catch (error) {
-            showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
-        }
+                return loadNatures();
+            })
+            .then(() => {
+                showToast({ severity: "success", summary: "Nature mise à jour" });
+            })
     };
 
     const requestDeleteNature = (nature: AccountLineNature) => {
@@ -185,16 +182,14 @@ export default function NatureSetupCard() {
             message: `La nature \"${nature.label}\" sera supprimee. ${nature.linkedAccountLines ?? 0} operation(s) liee(s) perdront leur nature. Continuer ?`,
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
-            accept: async () => {
-
-                try {
-                    await service.deleteNature(nature.id);
-                    await loadNatures();
-                    showToast({ severity: "success", summary: "Natures", detail: "Nature supprimee" });
-                    dialog.hide();
-                } catch (error) {
-                    showToast({ severity: "error", summary: "Natures", detail: extractApiError(error) });
-                }
+            accept: () => {
+                service
+                    .deleteNature(nature.id)
+                    .then(() => loadNatures())
+                    .then(() => {
+                        showToast({ severity: "success", summary: "Nature supprimée" });
+                        dialog.hide();
+                    })
             }
         });
     };

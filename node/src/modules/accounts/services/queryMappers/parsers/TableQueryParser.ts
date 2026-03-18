@@ -1,4 +1,5 @@
 import { ParsedQs } from "qs";
+import { badRequest } from "../../../../../utils/AppError";
 
 export type TableSortDirection = "ASC" | "DESC";
 
@@ -46,13 +47,6 @@ export interface TableQueryParserOptions {
     maxTake?: number;
 }
 
-export class TableQueryValidationError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "TableQueryValidationError";
-    }
-}
-
 /**
  * Parse et valide un contrat de query tabulaire générique passé en req.query.
  */
@@ -65,11 +59,11 @@ export default class TableQueryParser {
         const take = this.parseInteger(query.take, "take", defaultTake);
 
         if (skip < 0) {
-            throw new TableQueryValidationError("Query parameter 'skip' must be >= 0.");
+            throw badRequest("QUERY_VALIDATION", "Query parameter 'skip' must be >= 0.");
         }
 
         if (take <= 0 || take > maxTake) {
-            throw new TableQueryValidationError(`Query parameter 'take' must be between 1 and ${maxTake}.`);
+            throw badRequest("QUERY_VALIDATION", `Query parameter 'take' must be between 1 and ${maxTake}.`);
         }
 
         const sort = this.parseSort(query, options.allowedSortFields);
@@ -89,7 +83,7 @@ export default class TableQueryParser {
         }
 
         if (!allowedSortFields.has(sortField)) {
-            throw new TableQueryValidationError(`Sort field '${sortField}' is not allowed.`);
+            throw badRequest("QUERY_VALIDATION", `Sort field '${sortField}' is not allowed.`);
         }
 
         const sortOrder = this.getSingleString(query.sortOrder);
@@ -111,11 +105,11 @@ export default class TableQueryParser {
         try {
             parsed = JSON.parse(filtersRaw);
         } catch {
-            throw new TableQueryValidationError("Query parameter 'filters' must be valid JSON.");
+            throw badRequest("QUERY_VALIDATION", "Query parameter 'filters' must be valid JSON.");
         }
 
         if (!Array.isArray(parsed)) {
-            throw new TableQueryValidationError("Query parameter 'filters' must be an array.");
+            throw badRequest("QUERY_VALIDATION", "Query parameter 'filters' must be an array.");
         }
 
         return parsed.map((item, index) => this.parseFilterItem(item, index, allowedFilterFields));
@@ -123,7 +117,7 @@ export default class TableQueryParser {
 
     private static parseFilterItem(item: unknown, index: number, allowedFilterFields: Set<string>): ParsedTableFilter {
         if (!item || typeof item !== "object") {
-            throw new TableQueryValidationError(`Filter at index ${index} is invalid.`);
+            throw badRequest("QUERY_VALIDATION", `Filter at index ${index} is invalid.`);
         }
 
         const record = item as Record<string, unknown>;
@@ -131,17 +125,17 @@ export default class TableQueryParser {
         const field = record.field;
 
         if (typeof type !== "string" || (type !== "simple" && type !== "operator")) {
-            throw new TableQueryValidationError(`Filter at index ${index} has invalid type.`);
+            throw badRequest("QUERY_VALIDATION", `Filter at index ${index} has invalid type.`);
         }
 
         if (typeof field !== "string" || !allowedFilterFields.has(field)) {
-            throw new TableQueryValidationError(`Filter at index ${index} has disallowed field '${String(field)}'.`);
+            throw badRequest("QUERY_VALIDATION", `Filter at index ${index} has disallowed field '${String(field)}'.`);
         }
 
         if (type === "simple") {
             const matchMode = record.matchMode;
             if (typeof matchMode !== "string") {
-                throw new TableQueryValidationError(`Filter at index ${index} has invalid matchMode.`);
+                throw badRequest("QUERY_VALIDATION", `Filter at index ${index} has invalid matchMode.`);
             }
 
             return {
@@ -154,17 +148,17 @@ export default class TableQueryParser {
 
         const operator = record.operator;
         if (operator !== "and" && operator !== "or") {
-            throw new TableQueryValidationError(`Filter at index ${index} has invalid operator.`);
+            throw badRequest("QUERY_VALIDATION", `Filter at index ${index} has invalid operator.`);
         }
 
         const constraints = record.constraints;
         if (!Array.isArray(constraints)) {
-            throw new TableQueryValidationError(`Filter at index ${index} has invalid constraints.`);
+            throw badRequest("QUERY_VALIDATION", `Filter at index ${index} has invalid constraints.`);
         }
 
         const parsedConstraints = constraints.map((constraint, constraintIndex) => {
             if (!constraint || typeof constraint !== "object") {
-                throw new TableQueryValidationError(
+                throw badRequest("QUERY_VALIDATION",
                     `Filter at index ${index}, constraint ${constraintIndex} is invalid.`
                 );
             }
@@ -172,7 +166,7 @@ export default class TableQueryParser {
             const constraintRecord = constraint as Record<string, unknown>;
             const matchMode = constraintRecord.matchMode;
             if (typeof matchMode !== "string") {
-                throw new TableQueryValidationError(
+                throw badRequest("QUERY_VALIDATION",
                     `Filter at index ${index}, constraint ${constraintIndex} has invalid matchMode.`
                 );
             }
@@ -199,7 +193,7 @@ export default class TableQueryParser {
 
         const parsed = Number.parseInt(raw, 10);
         if (Number.isNaN(parsed)) {
-            throw new TableQueryValidationError(`Query parameter '${fieldName}' must be an integer.`);
+            throw badRequest("QUERY_VALIDATION", `Query parameter '${fieldName}' must be an integer.`);
         }
 
         return parsed;

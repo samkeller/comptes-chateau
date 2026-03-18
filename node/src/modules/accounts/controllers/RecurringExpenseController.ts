@@ -1,25 +1,19 @@
 import { Router, Request, Response } from "express";
 import RecurringExpenseService from "../services/RecurringExpenseService";
+import { SaveRecurringExpenseSchema } from "../services/recurringExpense/RecurringExpenseDtos";
+import { validateBody } from "../../../utils/validate";
 
 const RecurringExpenseRoutes = Router();
 const recurringExpenseService = new RecurringExpenseService();
 
-RecurringExpenseRoutes.get('/', (req: Request, res: Response) => {
-    recurringExpenseService.getAllRecurringExpenses().then(expenses => {
-        return res.json(expenses);
-    }).catch(error => {
-        console.error('Error fetching recurring expenses:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    })
-})
+RecurringExpenseRoutes.get('/', async (_req: Request, res: Response) => {
+    const expenses = await recurringExpenseService.getAllRecurringExpenses();
+    res.json(expenses);
+});
 
-RecurringExpenseRoutes.post('/save', (req: Request, res: Response) => {
-    recurringExpenseService.save(req.body).then(expense => {
-        return res.json(expense);
-    }).catch(error => {
-        console.error('Error saving recurring expense:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    })
-})
+RecurringExpenseRoutes.post('/save', validateBody(SaveRecurringExpenseSchema), async (req: Request, res: Response) => {
+    const expense = await recurringExpenseService.save(req.body);
+    res.json(expense);
+});
 
 export default RecurringExpenseRoutes

@@ -1,12 +1,6 @@
 import { ParsedQs } from "qs";
 import { parseApiDateString } from "../../../../../utils/ApiDateUtils";
-
-export class QueryParamsValidationError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "QueryParamsValidationError";
-    }
-}
+import { badRequest } from "../../../../../utils/AppError";
 
 export type QueryFieldParser<T> = (rawValue: string | undefined, fieldName: string) => T;
 export type QuerySchema<T extends object> = {
@@ -41,7 +35,7 @@ export default class QueryParamsParser {
      */
     static requiredString(rawValue: string | undefined, fieldName: string): string {
         if (!rawValue || rawValue.trim() === "") {
-            throw new QueryParamsValidationError(`Query parameter '${fieldName}' is required.`);
+            throw badRequest("QUERY_VALIDATION", `Query parameter '${fieldName}' is required.`);
         }
 
         return rawValue.trim();
@@ -56,7 +50,7 @@ export default class QueryParamsParser {
         try {
             return parseApiDateString(value);
         } catch {
-            throw new QueryParamsValidationError(
+            throw badRequest("QUERY_VALIDATION",
                 `Query parameter '${fieldName}' must be a valid date with format YYYY-MM-DD.`
             );
         }
@@ -70,14 +64,14 @@ export default class QueryParamsParser {
 
         const items = value.split(",").map((entry) => entry.trim());
         if (items.length === 0 || items.every((entry) => entry === "")) {
-            throw new QueryParamsValidationError(
+            throw badRequest("QUERY_VALIDATION",
                 `Query parameter '${fieldName}' must contain at least one integer.`
             );
         }
 
         const parsed = items.map((entry) => Number.parseInt(entry, 10));
         if (parsed.some(Number.isNaN)) {
-            throw new QueryParamsValidationError(
+            throw badRequest("QUERY_VALIDATION",
                 `Query parameter '${fieldName}' must be a comma-separated list of integers.`
             );
         }

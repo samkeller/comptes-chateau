@@ -8,7 +8,7 @@ import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLinePoste } from "../../../interfaces/AccountLinePoste";
-import { DEFAULT_SETUP_COLOR, extractApiError, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
+import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
 import AccountLinePosteService, { SavePostePayload } from "../../../services/AccountLinePosteService";
 
 const NEW_POSTE_ROW_ID = -1;
@@ -35,16 +35,14 @@ export default function PosteSetupCard() {
         loadPostes();
     }, []);
 
-    const loadPostes = async () => {
-        try {
-            setLoading(true);
-            const postesData = await service.getAllPostes();
-            setPostes(postesData);
-        } catch (error) {
-            showToast({ severity: "error", summary: "Postes", detail: extractApiError(error) });
-        } finally {
-            setLoading(false);
-        }
+    const loadPostes = (): void => {
+        setLoading(true);
+        service
+            .getAllPostes()
+            .then(setPostes)
+            .finally(() => {
+                setLoading(false);
+            });
     }
 
     const [draftByPosteId, setDraftByPosteId] = useState<Record<number, SavePostePayload>>({
@@ -104,27 +102,26 @@ export default function PosteSetupCard() {
         return true;
     };
 
-    const createPoste = async () => {
+    const createPoste = () => {
         const newPoste = draftByPosteId[NEW_POSTE_ROW_ID] ?? buildEmptyPosteDraft();
 
         if (!validatePoste(newPoste)) {
             return;
         }
 
-        try {
-            await service.createPoste({
+        service
+            .createPoste({
                 ...newPoste,
                 label: newPoste.label.trim()
-            });
-            setDraftByPosteId((prev) => ({
-                ...prev,
-                [NEW_POSTE_ROW_ID]: buildEmptyPosteDraft()
-            }));
-            showToast({ severity: "success", summary: "Postes", detail: "Poste créé" });
-            loadPostes()
-        } catch (error) {
-            showToast({ severity: "error", summary: "Postes", detail: extractApiError(error) });
-        }
+            })
+            .then(() => {
+                setDraftByPosteId((prev) => ({
+                    ...prev,
+                    [NEW_POSTE_ROW_ID]: buildEmptyPosteDraft()
+                }));
+                showToast({ severity: "success", summary: "Poste créé" });
+                return loadPostes();
+            })
     };
 
     const startEditPoste = (poste: AccountLinePoste) => {
@@ -137,7 +134,7 @@ export default function PosteSetupCard() {
         }));
     };
 
-    const savePoste = async (rowId: number) => {
+    const savePoste = (rowId: number) => {
         const editingPosteDraft = draftByPosteId[rowId];
         if (!editingPosteDraft) {
             return;
@@ -147,23 +144,23 @@ export default function PosteSetupCard() {
             return;
         }
 
-        try {
-            await service.updatePoste(rowId, {
+        service
+            .updatePoste(rowId, {
                 ...editingPosteDraft,
                 label: editingPosteDraft.label.trim()
-            });
+            })
+            .then(() => {
+                setDraftByPosteId((prev) => {
+                    const next = { ...prev };
+                    delete next[rowId];
+                    return next;
+                });
 
-            setDraftByPosteId((prev) => {
-                const next = { ...prev };
-                delete next[rowId];
-                return next;
-            });
-
-            await loadPostes();
-            showToast({ severity: "success", summary: "Postes", detail: "Poste mis a jour" });
-        } catch (error) {
-            showToast({ severity: "error", summary: "Postes", detail: extractApiError(error) });
-        }
+                return loadPostes();
+            })
+            .then(() => {
+                showToast({ severity: "success", summary: "Poste mis à jour" });
+            })
     };
 
     const requestDeletePoste = (poste: AccountLinePoste) => {
@@ -173,16 +170,15 @@ export default function PosteSetupCard() {
             message: `Le poste \"${poste.label}\" sera supprime. ${poste.linkedAccountLines ?? 0} operation(s) liee(s) passeront a null. Continuer ?`,
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
-            accept: async () => {
+            accept: () => {
                 dialog.hide();
 
-                try {
-                    await service.deletePoste(poste.id);
-                    await loadPostes();
-                    showToast({ severity: "success", summary: "Postes", detail: "Poste supprime" });
-                } catch (error) {
-                    showToast({ severity: "error", summary: "Postes", detail: extractApiError(error) });
-                }
+                service
+                    .deletePoste(poste.id)
+                    .then(() => loadPostes())
+                    .then(() => {
+                        showToast({ severity: "success", summary: "Poste supprimé" });
+                    })
             }
         });
     };

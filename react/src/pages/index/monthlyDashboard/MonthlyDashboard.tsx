@@ -33,39 +33,40 @@ export default function MonthlyDashboard() {
     useEffect(() => {
         loadDashboardData();
         // Charger la liste des postes pour le filtre
-        new AccountLinePosteService().getAllPostes().then(postes => {
-            setPostes(postes);
-            setSelectedPostes(postes); // Par défaut, tous les postes sont sélectionnés
-        });
+        new AccountLinePosteService()
+            .getAllPostes()
+            .then(postes => {
+                setPostes(postes);
+                setSelectedPostes(postes); // Par défaut, tous les postes sont sélectionnés
+            })
     }, []);
 
     useEffect(() => {
         loadDashboardData();
     }, [dateRange, selectedPostes]);
 
-    const loadDashboardData = async () => {
+    const loadDashboardData = (): void => {
         if (!dateRange[0] || !dateRange[1]) return;
 
-        try {
-            setLoading(true);
+        setLoading(true);
 
-            if (selectedPostes.length === 0) {
-                setDashboardData([]);
-                return;
-            }
+        if (selectedPostes.length === 0) {
+            setDashboardData([]);
+            setLoading(false);
+            return;
+        }
 
-            const service = new DashboardService();
-            const data = await service.getMonthlyByPoste(
+        const service = new DashboardService();
+        service
+            .getMonthlyByPoste(
                 dateRange[0],
                 dateRange[1],
-                selectedPostes.map((poste) => poste.id)
-            );
-            setDashboardData(data);
-        } catch (err) {
-            console.error("Erreur lors du chargement du dashboard:", err);
-        } finally {
-            setLoading(false);
-        }
+                selectedPostes.map((poste) => poste.id),
+            )
+            .then(setDashboardData)
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     return (

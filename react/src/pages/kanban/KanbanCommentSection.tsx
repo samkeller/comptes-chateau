@@ -5,7 +5,6 @@ import KanbanService from "../../services/kanban/KanbanService";
 import MarkdownEditor from "../../components/form/markdown/MarkdownEditor";
 import UserAvatar from "../../components/atoms/UserAvatar";
 import { KanbanComment } from "../../interfaces/kanban/KanbanComment";
-import { showGlobalToast } from "../../services/GlobalToast";
 import { useConnectedUser } from "../../context/ConnectedUserContext";
 import { User } from "@/interfaces/User";
 
@@ -35,35 +34,32 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
     useEffect(() => {
         service.getTaskComments(taskId)
             .then(setComments)
-            .catch(() => {
-                showGlobalToast({ severity: "error", summary: "Impossible de charger les commentaires." });
-            }).finally(() => {
+            .finally(() => {
                 setLoading(false);
             });
     }, [taskId]);
 
-    async function handleSubmit() {
+    function handleSubmit() {
         if (newContent.trim().length === 0) return;
 
         setSubmitting(true);
-        try {
-            const created = await service.createComment(taskId, newContent);
-            setComments(prev => [...prev, created]);
-            setNewContent("");
-        } catch {
-            showGlobalToast({ severity: "error", summary: "Erreur lors de l'envoi du commentaire." });
-        } finally {
-            setSubmitting(false);
-        }
+        service
+            .createComment(taskId, newContent)
+            .then((created) => {
+                setComments(prev => [...prev, created]);
+                setNewContent("");
+            })
+            .finally(() => {
+                setSubmitting(false);
+            });
     }
 
-    async function handleDelete(commentId: number) {
-        try {
-            await service.deleteComment(commentId);
-            setComments(prev => prev.filter(c => c.id !== commentId));
-        } catch {
-            showGlobalToast({ severity: "error", summary: "Erreur lors de la suppression du commentaire." });
-        }
+    function handleDelete(commentId: number) {
+        service
+            .deleteComment(commentId)
+            .then(() => {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+            })
     }
 
     return (

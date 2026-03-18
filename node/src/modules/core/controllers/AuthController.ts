@@ -1,9 +1,17 @@
 import bcrypt from "bcrypt";
 import { Router } from "express";
+import { z } from "zod";
 import { COOKIE_NAME } from "../../../index";
 import rateLimit from "express-rate-limit";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
+import { unauthorized } from "../../../utils/AppError";
+import { validateBody } from "../../../utils/validate";
+
+const LoginSchema = z.object({
+  username: z.string().min(1).transform(s => s.trim().toLowerCase()),
+  password: z.string().min(1),
+});
 
 const AuthRoutes = Router();
 
@@ -18,40 +26,31 @@ const loginLimiter = rateLimit({
 
 AuthRoutes.use(loginLimiter);
 
-AuthRoutes.post("/login", async (req, res) => {
-  const username = typeof req.body?.username === "string" ? req.body.username.trim().toLowerCase() : "";
-  const password = typeof req.body?.password === "string" ? req.body.password : "";
+AuthRoutes.post("/login", validateBody(LoginSchema), async (req, res) => {
+  const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.sendStatus(400);
+  const userRepo = AppDataSource.getRepository(User);
+  const user = await userRepo
+    .createQueryBuilder("ua")
+    .addSelect("ua.passwordHash")
+    .where("LOWER(ua.username) = :username", { username })
+    .getOne();
+
+  if (!user) {
+    throw unauthorized("AUTH_INVALID_CREDENTIALS", "Identifiants invalides");
   }
 
-  try {
-    const userRepo = AppDataSource.getRepository(User);
-    const user = await userRepo
-      .createQueryBuilder("ua")
-      .addSelect("ua.passwordHash")
-      .where("LOWER(ua.username) = :username", { username })
-      .getOne();
+  const isValid = await bcrypt.compare(password, user.passwordHash);
+  if (!isValid) throw unauthorized("AUTH_INVALID_CREDENTIALS", "Identifiants invalides");
 
-    if (!user) {
-      return res.sendStatus(401);
-    }
+  req.session.userId = user.id;
+  req.session.username = user.username;
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) return res.sendStatus(401);
-
-    req.session.userId = user.id;
-    req.session.username = user.username;
-
-    return res.json({
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar,
-    });
-  } catch {
-    return res.sendStatus(500);
-  }
+  res.json({
+    id: user.id,
+    username: user.username,
+    avatar: user.avatar,
+  });
 });
 
 
@@ -59,7 +58,7 @@ AuthRoutes.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) return res.sendStatus(500);
 
-    res.clearCookie(COOKIE_NAME); // nom du cookie de session
+    res.clearCookie(COOKIE_NAME);
     res.sendStatus(204);
   });
 });

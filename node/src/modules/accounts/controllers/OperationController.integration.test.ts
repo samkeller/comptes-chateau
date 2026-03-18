@@ -7,6 +7,7 @@ import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { IMemoryDb } from "pg-mem";
 import SetupTestDb from "../../../tests/SetupTests";
+import { errorMiddleware } from "../../../utils/errorMiddleware";
 
 let testDataSource: DataSource;
 let natureChargesId: number;
@@ -108,6 +109,7 @@ describe("OperationControllers /lazy integration", () => {
         app = express();
         app.use(express.json());
         app.use("/operation", operationRoutes);
+        app.use(errorMiddleware);
     });
 
     afterAll(async () => {
@@ -216,7 +218,7 @@ describe("OperationControllers /lazy integration", () => {
             .query({ skip: "0", take: "50", sortField: "unknownField", sortOrder: "ASC" });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toContain("Sort field");
+        expect(response.body.message).toContain("Sort field");
     });
 
     it("returns 400 for disallowed filter field", async () => {
@@ -236,7 +238,7 @@ describe("OperationControllers /lazy integration", () => {
             });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toContain("disallowed field");
+        expect(response.body.message).toContain("disallowed field");
     });
 
     it("filters by nature.label equals", async () => {
@@ -424,7 +426,7 @@ describe("OperationControllers /lazy integration", () => {
             });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toContain("checked operation must have a dateValeur");
+        expect(response.body.message).toContain("checked operation must have a dateValeur");
     });
 
     it("checks operations in batch with dateValeur and hides them from unchecked filter", async () => {

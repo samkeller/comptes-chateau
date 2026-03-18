@@ -1,5 +1,6 @@
 import { ParsedQs } from "qs";
-import QueryParamsParser, { QueryParamsValidationError } from "./QueryParamsParser";
+import QueryParamsParser from "./QueryParamsParser";
+import { badRequest } from "../../../../../utils/AppError";
 
 export interface DashboardMonthlyByPosteQuery {
     from: Date;
@@ -24,7 +25,7 @@ export default class DashboardMonthlyByPosteQueryParser {
         });
 
         if (parsed.from > parsed.to) {
-            throw new QueryParamsValidationError("Query parameter 'from' must be <= 'to'.");
+            throw badRequest("QUERY_VALIDATION", "Query parameter 'from' must be <= 'to'.");
         }
 
         return parsed;

@@ -19,7 +19,6 @@ import {
 import KanbanTaskCard from "./KanbanTaskCard";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
-import { showGlobalToast } from "../../services/GlobalToast";
 import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
 
 export default function KanbanPage() {
@@ -43,9 +42,7 @@ export default function KanbanPage() {
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
     useEffect(() => {
-        loadData().catch(() => {
-            setLoading(false);
-        });
+        loadData()
     }, []);
 
     async function loadData() {
@@ -84,7 +81,6 @@ export default function KanbanPage() {
 
         service.saveKanbanTask(updatedTask, draggedTaskId)
             .then(() => loadData())
-            .catch(() => showGlobalToast({ severity: "error", summary: "Erreur lors du déplacement de la tâche." }));
     }
 
     const activeTask = activeId ? tasks.find(t => t.id === activeId) ?? null : null;

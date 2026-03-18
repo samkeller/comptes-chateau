@@ -34,14 +34,7 @@ export default function AccountChecks() {
         setLoading(true);
         new AccountingService().getAllUncheckedLines()
             .then(setAccountLines)
-            .catch((error) => {
-                console.error("Error while loading unchecked operations", error);
-                showGlobalToast({
-                    severity: "error",
-                    summary: "Chargement impossible",
-                    detail: "Les opérations à vérifier n'ont pas pu être chargées."
-                });
-            }).finally(() => {
+            .finally(() => {
                 setLoading(false);
             });
 
@@ -118,39 +111,33 @@ export default function AccountChecks() {
         );
     };
 
-    const submitBatchCheck = async () => {
+    const submitBatchCheck = () => {
         if (selectedLines.length === 0) {
             return;
         }
 
         setSubmitting(true);
-        try {
-            await new AccountingService().checkBatch(
+        new AccountingService()
+            .checkBatch(
                 selectedLines.map((line) => ({
                     id: line.id,
                     isChecked: true,
                     dateValeur: line.dateValeur ?? new Date()
                 }))
-            );
+            )
+            .then(async () => {
+                showGlobalToast({
+                    severity: "success",
+                    summary: "Validation effectuée",
+                    detail: `${selectedLines.length} opération(s) validée(s).`
+                });
 
-            showGlobalToast({
-                severity: "success",
-                summary: "Validation effectuée",
-                detail: `${selectedLines.length} opération(s) validée(s).`
+                await loadUncheckedLines();
+            })
+            .finally(() => {
+                setSubmitting(false);
+                setImportReport(null);
             });
-
-            await loadUncheckedLines();
-        } catch (error) {
-            console.error("Error while checking operations", error);
-            showGlobalToast({
-                severity: "error",
-                summary: "Echec de la validation",
-                detail: "La validation en lot a échoué."
-            });
-        } finally {
-            setSubmitting(false);
-            setImportReport(null);
-        }
     };
 
     return (

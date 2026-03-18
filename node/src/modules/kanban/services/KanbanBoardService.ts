@@ -10,6 +10,7 @@ import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
 import { In } from "typeorm";
+import { forbidden, notFound } from "../../../utils/AppError";
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
@@ -56,9 +57,8 @@ export default class KanbanBoardService {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
         const assignees = await this.resolveAssignees(body.assigneeIds);
 
-        // TODO, custom error class
         if (!column)
-            throw new Error("KANBAN_COLUMN_NOT_FOUND");
+            throw notFound("KANBAN_COLUMN_NOT_FOUND", "Colonne kanban introuvable");
 
         const task = this.kanbanTaskRepo.create({
             title: body.title,
@@ -81,9 +81,8 @@ export default class KanbanBoardService {
             },
         });
 
-        // TODO, custom error class
         if (!existingTask)
-            throw new Error("KANBAN_TASK_NOT_FOUND");
+            throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
 
         existingTask.columnId = task.columnId;
         existingTask.title = task.title;
@@ -107,19 +106,18 @@ export default class KanbanBoardService {
     async deleteTask(queryId: number) {
         const existingTask = await this.kanbanTaskRepo.findOneBy({ id: queryId });
 
-        // TODO, custom error class
         if (!existingTask)
-            throw new Error("KANBAN_TASK_NOT_FOUND");
+            throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
 
         await this.kanbanTaskRepo.delete({ id: queryId });
     }
 
     async markTaskAsDone(taskId: number, userId: number): Promise<void> {
         const task = await this.kanbanTaskRepo.findOne({ where: { id: taskId }, relations: { assignees: true } });
-        if (!task) throw new Error("KANBAN_TASK_NOT_FOUND");
+        if (!task) throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
 
         const user = await this.userRepo.findOneBy({ id: userId });
-        if (!user) throw new Error("KANBAN_USER_NOT_FOUND");
+        if (!user) throw notFound("KANBAN_USER_NOT_FOUND", "Utilisateur introuvable");
 
         task.isDone = true;
         task.doneByUserId = userId;
@@ -138,10 +136,10 @@ export default class KanbanBoardService {
 
     async createComment(dto: CreateKanbanCommentDto, authorId: number): Promise<KanbanCommentDto> {
         const task = await this.kanbanTaskRepo.findOneBy({ id: dto.taskId });
-        if (!task) throw new Error("KANBAN_TASK_NOT_FOUND");
+        if (!task) throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
 
         const author = await this.userRepo.findOneBy({ id: authorId });
-        if (!author) throw new Error("KANBAN_USER_NOT_FOUND");
+        if (!author) throw notFound("KANBAN_USER_NOT_FOUND", "Utilisateur introuvable");
 
         const comment = this.kanbanCommentRepo.create({
             content: dto.content.trim(),
@@ -156,15 +154,15 @@ export default class KanbanBoardService {
             relations: { author: true },
         });
 
-        if (!loaded) throw new Error("KANBAN_COMMENT_NOT_FOUND");
+        if (!loaded) throw notFound("KANBAN_COMMENT_NOT_FOUND", "Commentaire introuvable");
 
         return this.toCommentDto(loaded);
     }
 
     async deleteComment(commentId: number, requestingUserId: number): Promise<void> {
         const comment = await this.kanbanCommentRepo.findOneBy({ id: commentId });
-        if (!comment) throw new Error("KANBAN_COMMENT_NOT_FOUND");
-        if (comment.authorId !== requestingUserId) throw new Error("KANBAN_COMMENT_FORBIDDEN");
+        if (!comment) throw notFound("KANBAN_COMMENT_NOT_FOUND", "Commentaire introuvable");
+        if (comment.authorId !== requestingUserId) throw forbidden("KANBAN_COMMENT_FORBIDDEN", "Vous ne pouvez supprimer que vos propres commentaires");
 
         await this.kanbanCommentRepo.delete({ id: commentId });
     }
@@ -206,7 +204,7 @@ export default class KanbanBoardService {
         const users = await this.userRepo.findBy({ id: In(uniqueIds) });
 
         if (users.length !== uniqueIds.length) {
-            throw new Error("KANBAN_ASSIGNEE_NOT_FOUND");
+            throw notFound("KANBAN_ASSIGNEE_NOT_FOUND", "Un ou plusieurs assignees introuvables");
         }
 
         return users;
@@ -221,7 +219,7 @@ export default class KanbanBoardService {
         });
 
         if (!task) {
-            throw new Error("KANBAN_TASK_NOT_FOUND");
+            throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
         }
 
         return task;

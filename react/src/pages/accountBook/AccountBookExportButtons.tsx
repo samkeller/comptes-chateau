@@ -27,28 +27,23 @@ export default function AccountBookExportButtons({ }: AccountBookExportButtonsPr
         }));
     }
 
-    const exportLines = async () => {
-        try {
-            setIsLoading(true);
-            const lines = await accountingService.getAllAccountingLinesForExport();
-            const rows = getExportRows(lines);
-            exportToCsv("operations", rows);
+    const exportLines = () => {
+        setIsLoading(true);
+        accountingService
+            .getAllAccountingLinesForExport()
+            .then((lines) => {
+                const rows = getExportRows(lines);
+                exportToCsv("operations", rows);
 
-            showGlobalToast({
-                severity: "success",
-                summary: "Export CSV prêt",
-                detail: `${lines.length} opération(s) exportée(s).`
+                showGlobalToast({
+                    severity: "success",
+                    summary: "Export CSV prêt",
+                    detail: `${lines.length} opération(s) exportée(s).`
+                });
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
-        } catch (error) {
-            console.error("Error while exporting operations to csv", error);
-            showGlobalToast({
-                severity: "error",
-                summary: "Export CSV impossible",
-                detail: "Les opérations n'ont pas pu être récupérées pour l'export."
-            });
-        } finally {
-            setIsLoading(false);
-        }
     };
 
     return (

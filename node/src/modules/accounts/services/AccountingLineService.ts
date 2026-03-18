@@ -2,13 +2,7 @@ import { EntityManager, In } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountingLine } from "../entities/AccountingLine";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
-
-export class AccountingLineValidationError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "AccountingLineValidationError";
-    }
-}
+import { badRequest } from "../../../utils/AppError";
 
 export default class AccountingLineService {
 
@@ -49,11 +43,11 @@ export default class AccountingLineService {
         const effectiveDateValeur = hasDateValeur ? normalizedDateValeur : (existingLine?.dateValeur ?? null);
 
         if (effectiveIsChecked && !effectiveDateValeur) {
-            throw new AccountingLineValidationError(`${context}: checked operation must have a dateValeur.`);
+            throw badRequest("OPERATION_VALIDATION", `${context}: checked operation must have a dateValeur.`);
         }
 
         if (!effectiveIsChecked && effectiveDateValeur) {
-            throw new AccountingLineValidationError(`${context}: unchecked operation cannot have a dateValeur.`);
+            throw badRequest("OPERATION_VALIDATION", `${context}: unchecked operation cannot have a dateValeur.`);
         }
 
         if (!hasIsChecked && !hasDateValeur) {

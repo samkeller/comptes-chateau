@@ -3,7 +3,8 @@ import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { AccountingLine } from "../entities/AccountingLine";
 import { PosteDto, SavePostePayload } from "./poste/PosteDtos";
-import { PosteConflictError, PosteValidationError } from "./poste/PosteErrors";
+import { conflict, notFound } from "../../../utils/AppError";
+import { isUniqueViolation } from "../../../utils/dbErrors";
 
 export default class PosteService {
     private readonly posteRepo: Repository<AccountLinePoste>;
@@ -40,8 +41,6 @@ export default class PosteService {
     }
 
     async create(payload: SavePostePayload): Promise<PosteDto> {
-        this.validatePayload(payload);
-
         try {
             const entity = this.posteRepo.create({
                 label: payload.label.trim(),
@@ -61,11 +60,9 @@ export default class PosteService {
     }
 
     async update(id: number, payload: SavePostePayload): Promise<PosteDto> {
-        this.validatePayload(payload);
-
         const existing = await this.posteRepo.findOneBy({ id });
         if (!existing) {
-            throw new PosteValidationError("Poste introuvable");
+            throw notFound("POSTE_NOT_FOUND", "Poste introuvable");
         }
 
         existing.label = payload.label.trim();
@@ -98,7 +95,7 @@ export default class PosteService {
 
             const existing = await posteRepo.findOneBy({ id });
             if (!existing) {
-                throw new PosteValidationError("Poste introuvable");
+                throw notFound("POSTE_NOT_FOUND", "Poste introuvable");
             }
 
             await accountingRepo.query(
@@ -110,34 +107,11 @@ export default class PosteService {
         });
     }
 
-    private validatePayload(payload: SavePostePayload): void {
-        const label = payload.label?.trim();
-        if (!label) {
-            throw new PosteValidationError("Le label est obligatoire");
-        }
-
-        if (!/^#[0-9A-Fa-f]{6}$/.test(payload.color)) {
-            throw new PosteValidationError("La couleur doit être au format #RRGGBB");
-        }
-    }
-
     private handlePersistenceError(error: unknown): never {
-        if (this.isUniqueViolation(error)) {
-            throw new PosteConflictError("Un poste avec ce label existe déjà");
+        if (isUniqueViolation(error)) {
+            throw conflict("POSTE_DUPLICATE", "Un poste avec ce label existe déjà");
         }
 
         throw error;
-    }
-
-    private isUniqueViolation(error: unknown): boolean {
-        if (!error || typeof error !== "object") {
-            return false;
-        }
-
-        if (!("code" in error)) {
-            return false;
-        }
-
-        return (error as { code: string }).code === "23505";
     }
 }

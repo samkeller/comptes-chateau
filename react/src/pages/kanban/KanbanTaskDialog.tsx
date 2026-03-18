@@ -85,57 +85,44 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
         );
     }
 
-    async function handleSubmit() {
-        try {
-            if (isCreation) {
-                await service.createKanbanTask(taskData);
-            } else {
-                await service.saveKanbanTask(taskData, task.id);
-            }
-            showGlobalToast({
-                severity: "success",
-                summary: isCreation ? "Tâche ajoutée." : "Tâche modifiée.",
-            });
-            closeDialog(true);
-        } catch {
-            showGlobalToast({
-                severity: "error",
-                summary: isCreation ? "Erreur lors de la création de la tâche." : "Erreur lors de la modification de la tâche.",
-            });
-        }
+    function handleSubmit() {
+        const persistPromise = isCreation
+            ? service.createKanbanTask(taskData)
+            : service.saveKanbanTask(taskData, task.id);
+
+        persistPromise
+            .then(() => {
+                showGlobalToast({
+                    severity: "success",
+                    summary: isCreation ? "Tâche ajoutée" : "Tâche modifiée",
+                });
+                closeDialog(true);
+            })
     }
 
-    async function deleteTask() {
-        try {
-            await service.deleteTask(task.id);
-            showGlobalToast({
-                severity: "success",
-                summary: "Tâche supprimée.",
-            });
-            closeDialog(true);
-        } catch {
-            showGlobalToast({
-                severity: "error",
-                summary: "Erreur lors de la suppression.",
-            });
-        }
+    function deleteTask() {
+        service
+            .deleteTask(task.id)
+            .then(() => {
+                showGlobalToast({
+                    severity: "success",
+                    summary: "Tâche supprimée",
+                });
+                closeDialog(true);
+            })
     }
 
-    async function markTaskAsDone() {
-        try {
-            await service.markTaskAsDone(task.id);
-            showGlobalToast({
-                severity: "success",
-                summary: "Tâche terminée !! o/",
-                detail: "Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
-            });
-            closeDialog(true);
-        } catch {
-            showGlobalToast({
-                severity: "error",
-                summary: "Erreur lors de la mise à jour.",
-            });
-        }
+    function markTaskAsDone() {
+        service
+            .markTaskAsDone(task.id)
+            .then(() => {
+                showGlobalToast({
+                    severity: "success",
+                    summary: "Tâche terminée !",
+                    detail: "Bravo à toute la chocoteam pour ce chocoexploit ! 🍫😺"
+                });
+                closeDialog(true);
+            })
     }
 
     const header = (

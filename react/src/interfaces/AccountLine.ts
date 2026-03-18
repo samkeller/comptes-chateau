@@ -35,6 +35,10 @@ class AccountLine {
         if (accountLine.updatedAt) {
             this.updatedAt = parseApiDateTime(accountLine.updatedAt) ?? undefined
         }
+
+        // PostgreSQL numeric columns arrive as strings via the pg driver
+        if (accountLine.debit !== undefined) this.debit = Number(accountLine.debit)
+        if (accountLine.credit !== undefined) this.credit = Number(accountLine.credit)
     }
 
     public get total(): number {

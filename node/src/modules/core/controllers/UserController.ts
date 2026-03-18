@@ -1,65 +1,50 @@
 import { Router } from "express";
+import { z } from "zod";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 import { toUserDto } from "../dto/UserDto";
+import { unauthorized } from "../../../utils/AppError";
+import { validateBody } from "../../../utils/validate";
+
+const AvatarSchema = z.object({
+    avatar: z.string().regex(/^\d{3}-[\w-]+\.png$/, "Nom de fichier avatar invalide"),
+});
 
 const UserRoutes = Router();
 const userRepo = AppDataSource.getRepository(User);
 
 UserRoutes.get("/me", async (req, res) => {
     if (typeof req.session.userId !== "number") {
-        return res.sendStatus(401);
+        throw unauthorized("UNAUTHORIZED", "Non authentifié");
     }
 
-    try {
-        const user = await userRepo.findOne({ where: { id: req.session.userId } });
-
-        if (!user) {
-            return res.sendStatus(401);
-        }
-
-        return res.json(toUserDto(user));
-    } catch {
-        return res.sendStatus(500);
+    const user = await userRepo.findOne({ where: { id: req.session.userId } });
+    if (!user) {
+        throw unauthorized("UNAUTHORIZED", "Utilisateur introuvable");
     }
+
+    res.json(toUserDto(user));
 });
 
-UserRoutes.get("/", async (req, res) => {
-    try {
-        const users = await userRepo.find();
-        return res.json(users.map(toUserDto))
-    } catch {
-        return res.sendStatus(500);
-    }
+UserRoutes.get("/", async (_req, res) => {
+    const users = await userRepo.find();
+    res.json(users.map(toUserDto));
 });
 
-UserRoutes.post("/avatar", async (req, res) => {
+UserRoutes.post("/avatar", validateBody(AvatarSchema), async (req, res) => {
     if (typeof req.session.userId !== "number") {
-        return res.sendStatus(401);
+        throw unauthorized("UNAUTHORIZED", "Non authentifié");
     }
 
-    try {
-        const user = await userRepo.findOne({ where: { id: req.session.userId } });
-
-        if (!user) {
-            return res.sendStatus(401);
-        }
-        const avatar = req.body.avatar;
-
-        // Match un pattern de nom de fichier d'avatar valide (ex: "001-john-doe.png", "123-someone.png", etc., avec un numéro à 3 chiffres suivi d'un nom et de l'extension .png)
-        const AVATAR_PATTERN = /^\d{3}-[\w-]+\.png$/;
-
-        if (typeof avatar !== "string" || !AVATAR_PATTERN.test(avatar)) {
-            return res.status(400).send("Invalid avatar filename");
-        }
-
-        user.avatar = avatar;
-        await userRepo.save(user);
-        return res.json(toUserDto(user))
-    } catch {
-        return res.sendStatus(500);
+    const user = await userRepo.findOne({ where: { id: req.session.userId } });
+    if (!user) {
+        throw unauthorized("UNAUTHORIZED", "Utilisateur introuvable");
     }
-})
+
+    user.avatar = req.body.avatar;
+    await userRepo.save(user);
+    res.json(toUserDto(user));
+});
 
 
 export default UserRoutes;

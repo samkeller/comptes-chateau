@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import QueryParamsParser, { QueryParamsValidationError } from "./QueryParamsParser";
+import QueryParamsParser from "./QueryParamsParser";
 import DashboardMonthlyByPosteQueryParser from "./DashboardMonthlyByPosteQueryParser";
+import { AppError } from "../../../../../utils/AppError";
 
 describe("QueryParamsParser", () => {
     it("parses typed schema values", () => {
@@ -33,12 +34,12 @@ describe("QueryParamsParser", () => {
                     to: QueryParamsParser.requiredDate
                 }
             )
-        ).toThrowError(QueryParamsValidationError);
+        ).toThrowError(AppError);
     });
 
     it("throws for invalid csv integer list", () => {
         expect(() => QueryParamsParser.requiredCsvIntegerList("1,a,3", "posteIds")).toThrowError(
-            QueryParamsValidationError
+            AppError
         );
     });
 });
@@ -51,6 +52,6 @@ describe("DashboardMonthlyByPosteQueryParser", () => {
                 to: "2026-02-01",
                 posteIds: "1,2"
             })
-        ).toThrowError(QueryParamsValidationError);
+        ).toThrowError(AppError);
     });
 });

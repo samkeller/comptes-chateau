@@ -61,7 +61,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         return <ColoredLabel data={option.value} />;
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         if (!dateOperation) {
             return;
         }
@@ -78,23 +78,17 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
             credit: amount > 0 ? (amount || 0) : 0
         };
 
-        try {
-            await new AccountingService().saveAccountingLine(accountLine);
-            refresh();
-            showGlobalToast({
-                severity: "success",
-                summary: editingLine ? "Dépense modifiée" : "Dépense ajoutée",
-                detail: editingLine ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
-            });
-            hideDialog();
-        } catch (error) {
-            console.error("Error creating account line", error);
-            showGlobalToast({
-                severity: "error",
-                summary: "Validation impossible",
-                detail: "Vérifie la cohérence entre le statut 'vérifié' et la date de valeur."
-            });
-        }
+        new AccountingService()
+            .saveAccountingLine(accountLine)
+            .then(() => {
+                refresh();
+                showGlobalToast({
+                    severity: "success",
+                    summary: editingLine ? "Dépense modifiée" : "Dépense ajoutée",
+                    detail: editingLine ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
+                });
+                hideDialog();
+            })
     };
 
     const footer = (

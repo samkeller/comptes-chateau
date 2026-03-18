@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
 import getPgSessionStoreInstance from './config/PGSession';
+import { errorMiddleware } from './utils/errorMiddleware';
 
 import AuthRoutes from './modules/core/controllers/AuthController';
 import morgan from 'morgan';
@@ -52,6 +53,10 @@ AppDataSource.initialize().then(() => {
     routes.use("/api", ApiRouter)
 
     app.use(routes)
+
+    // Global error handler — must be registered after all routes
+    // À enregistrer EN DERNIER dans `index.ts`, après toutes les routes :
+    app.use(errorMiddleware);
 
     // Static react (prod)
     const clientPath = path.join(__dirname, "../../react/dist");

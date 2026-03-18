@@ -22,6 +22,12 @@ class RecurringExpense {
                 this.nextOccurrence = parsedDate
             }
         }
+
+
+        // PostgreSQL numeric columns arrive as strings via the pg driver
+        if (recurringExpense.solde !== undefined) {
+            this.solde = Number(recurringExpense.solde)
+        }
     }
 }
 

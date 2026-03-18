@@ -6,6 +6,7 @@ import { AccountingLine, AccountingLineSource } from "../entities/AccountingLine
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import SetupTestDb from "../../../tests/SetupTests";
+import { errorMiddleware } from "../../../utils/errorMiddleware";
 
 let testDataSource: DataSource;
 let posteMaisonId: number;
@@ -100,6 +101,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
         app = express();
         app.use(express.json());
         app.use("/dashboard", dashboardRoutes);
+        app.use(errorMiddleware);
     });
 
     afterAll(async () => {
@@ -156,6 +158,6 @@ describe("DashboardController /monthly-by-poste integration", () => {
             });
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toContain("posteIds");
+        expect(response.body.message).toContain("posteIds");
     });
 });

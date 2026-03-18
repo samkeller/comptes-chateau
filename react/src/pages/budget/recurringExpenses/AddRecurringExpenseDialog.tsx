@@ -42,22 +42,25 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
         Promise.all([
             natureService.getAllNatures(),
             posteService.getAllPostes()
-        ]).then(([naturesData, postesData]) => {
-            setNatures(naturesData);
-            setPostes(postesData);
+        ])
+            .then(([naturesData, postesData]) => {
+                setNatures(naturesData);
+                setPostes(postesData);
 
-            if (!editingExpense) {
-                setNature(naturesData[0] || null);
-                setPoste(postesData[0] || null);
-            }
-            setLoading(false);
-        });
+                if (!editingExpense) {
+                    setNature(naturesData[0] || null);
+                    setPoste(postesData[0] || null);
+                }
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, [editingExpense]);
 
     const natureOptions = natures.map(v => ({ label: v.label, value: v }));
     const posteOptions = postes.map(v => ({ label: v.label, value: v }));
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         if (!label || !nature || !poste) return;
         const expense: Partial<RecurringExpense> = {
             id: editingExpense ? editingExpense.id : 0,
@@ -68,18 +71,17 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             isActive,
             nextOccurrence
         };
-        try {
-            await new RecurringExpenseService().saveRecurringExpense(expense);
-            refresh();
-            showGlobalToast({
-                severity: 'success',
-                summary: editingExpense ? "Dépense récurrente modifiée" : "Dépense récurrente ajoutée",
-                detail: editingExpense ? "La dépense récurrente a été modifiée avec succès." : "La dépense récurrente a été ajoutée avec succès."
-            });
-            hideDialog();
-        } catch (error) {
-            console.error('Error saving recurring expense', error);
-        }
+        new RecurringExpenseService()
+            .saveRecurringExpense(expense)
+            .then(() => {
+                refresh();
+                showGlobalToast({
+                    severity: 'success',
+                    summary: editingExpense ? "Dépense récurrente modifiée" : "Dépense récurrente ajoutée",
+                    detail: editingExpense ? "La dépense récurrente a été modifiée avec succès." : "La dépense récurrente a été ajoutée avec succès."
+                });
+                hideDialog();
+            })
     };
 
     const footer = <div>
@@ -119,8 +121,8 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
                             onChange={(e) => setNature(e.value)}
                             placeholder="Sélectionner une nature"
                             className='w-full'
-                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
-                            valueTemplate={(option) => option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
+                            itemTemplate={(option) => option && <ColoredLabel data={option.value} />}
+                            valueTemplate={(option) => option && option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="nature">Nature</label>
                     </FloatLabel>
@@ -132,8 +134,8 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
                             onChange={(e) => setPoste(e.value)}
                             placeholder="Sélectionner un poste"
                             className='w-full'
-                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
-                            valueTemplate={(option) => option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
+                            itemTemplate={(option) => option && <ColoredLabel data={option.value} />}
+                            valueTemplate={(option) => option && option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import TableQueryParser, { TableQueryValidationError } from "./TableQueryParser";
+import TableQueryParser from "./TableQueryParser";
+import { AppError } from "../../../../../utils/AppError";
 
 describe("TableQueryParser", () => {
     const options = {
@@ -66,7 +67,7 @@ describe("TableQueryParser", () => {
                 },
                 options
             )
-        ).toThrowError(TableQueryValidationError);
+        ).toThrowError(AppError);
     });
 
     it("throws for disallowed filter field", () => {
@@ -86,17 +87,17 @@ describe("TableQueryParser", () => {
                 },
                 options
             )
-        ).toThrowError(TableQueryValidationError);
+        ).toThrowError(AppError);
     });
 
     it("throws for invalid filters JSON", () => {
         expect(() => TableQueryParser.parse({ filters: "{nope" }, options)).toThrowError(
-            TableQueryValidationError
+            AppError
         );
     });
 
     it("throws when pagination is outside allowed range", () => {
-        expect(() => TableQueryParser.parse({ skip: "-1" }, options)).toThrowError(TableQueryValidationError);
-        expect(() => TableQueryParser.parse({ take: "999" }, options)).toThrowError(TableQueryValidationError);
+        expect(() => TableQueryParser.parse({ skip: "-1" }, options)).toThrowError(AppError);
+        expect(() => TableQueryParser.parse({ take: "999" }, options)).toThrowError(AppError);
     });
 });

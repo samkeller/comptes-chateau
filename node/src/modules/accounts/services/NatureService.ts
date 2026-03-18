@@ -3,7 +3,8 @@ import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountingLine } from "../entities/AccountingLine";
 import { NatureDto, SaveNaturePayload } from "./nature/NatureDtos";
-import { NatureConflictError, NatureValidationError } from "./nature/NatureErrors";
+import { conflict, notFound } from "../../../utils/AppError";
+import { isUniqueViolation } from "../../../utils/dbErrors";
 
 export default class NatureService {
     private readonly natureRepo: Repository<AccountLineNature>;
@@ -41,8 +42,6 @@ export default class NatureService {
     }
 
     async create(payload: SaveNaturePayload): Promise<NatureDto> {
-        this.validatePayload(payload);
-
         try {
             const entity = this.natureRepo.create({
                 label: payload.label.trim(),
@@ -64,11 +63,9 @@ export default class NatureService {
     }
 
     async update(id: number, payload: SaveNaturePayload): Promise<NatureDto> {
-        this.validatePayload(payload);
-
         const existing = await this.natureRepo.findOneBy({ id });
         if (!existing) {
-            throw new NatureValidationError("Nature introuvable");
+            throw notFound("NATURE_NOT_FOUND", "Nature introuvable");
         }
 
         existing.label = payload.label.trim();
@@ -103,7 +100,7 @@ export default class NatureService {
 
             const existing = await natureRepo.findOneBy({ id });
             if (!existing) {
-                throw new NatureValidationError("Nature introuvable");
+                throw notFound("NATURE_NOT_FOUND", "Nature introuvable");
             }
 
             await accountingRepo.query(
@@ -115,38 +112,11 @@ export default class NatureService {
         });
     }
 
-    private validatePayload(payload: SaveNaturePayload): void {
-        const label = payload.label?.trim();
-        if (!label) {
-            throw new NatureValidationError("Le label est obligatoire");
-        }
-
-        if (!/^#[0-9A-Fa-f]{6}$/.test(payload.color)) {
-            throw new NatureValidationError("La couleur doit être au format #RRGGBB");
-        }
-
-        if (typeof payload.isHorsCompte !== "boolean") {
-            throw new NatureValidationError("Le champ isHorsCompte est obligatoire");
-        }
-    }
-
     private handlePersistenceError(error: unknown): never {
-        if (this.isUniqueViolation(error)) {
-            throw new NatureConflictError("Une nature avec ce label existe déjà");
+        if (isUniqueViolation(error)) {
+            throw conflict("NATURE_DUPLICATE", "Une nature avec ce label existe déjà");
         }
 
         throw error;
-    }
-
-    private isUniqueViolation(error: unknown): boolean {
-        if (!error || typeof error !== "object") {
-            return false;
-        }
-
-        if (!("code" in error)) {
-            return false;
-        }
-
-        return (error as { code: string }).code === "23505";
     }
 }
