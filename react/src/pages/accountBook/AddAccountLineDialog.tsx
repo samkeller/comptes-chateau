@@ -18,12 +18,13 @@ import AccountLinePosteService from "../../services/AccountLinePosteService";
 import AccountLineNatureService from "../../services/AccountLineNatureService";
 
 interface AddAcountLineDialogProps {
+    accountId: number;
     editingLine: AccountLine | null;
     hideDialog: () => void;
     refresh: () => void;
 }
 
-export default function AddAccountLineDialog({ editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
+export default function AddAccountLineDialog({ accountId, editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
     const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : "");
     const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
@@ -42,13 +43,13 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         const posteService = new AccountLinePosteService();
         Promise.all([
             natureService.getAllNatures(),
-            posteService.getAllPostes()
+            posteService.getAllAccountPostes(accountId)
         ]).then(([naturesData, postesData]) => {
             setNatures(naturesData);
             setPostes(postesData);
             setLoading(false);
         });
-    }, [editingLine]);
+    }, [editingLine, accountId]);
 
     const natureOptions = natures.map((value) => ({ label: value.label, value }));
     const posteOptions = postes.map((value) => ({ label: value.label, value }));
@@ -79,7 +80,7 @@ export default function AddAccountLineDialog({ editingLine, hideDialog, refresh 
         };
 
         new AccountingService()
-            .saveAccountLine(accountLine)
+            .saveAccountLine(accountId, accountLine)
             .then(() => {
                 refresh();
                 showGlobalToast({

@@ -13,7 +13,11 @@ import MonthlyPosteTable from "./MonthlyPosteTable";
 import { TabPanel, TabView } from "primereact/tabview";
 import AccountLinePosteService from "../../../services/AccountLinePosteService";
 
-export default function MonthlyDashboard() {
+interface MonthlyDashboardProps {
+    accountId: number;
+}
+
+export default function MonthlyDashboard({ accountId }: MonthlyDashboardProps) {
     const [dashboardData, setDashboardData] = useState<MonthlyAggregateByPoste[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -32,14 +36,13 @@ export default function MonthlyDashboard() {
 
     useEffect(() => {
         loadDashboardData();
-        // Charger la liste des postes pour le filtre
         new AccountLinePosteService()
-            .getAllPostes()
+            .getAllAccountPostes(accountId)
             .then(postes => {
                 setPostes(postes);
                 setSelectedPostes(postes); // Par défaut, tous les postes sont sélectionnés
             })
-    }, []);
+    }, [accountId]);
 
     useEffect(() => {
         loadDashboardData();
@@ -58,7 +61,8 @@ export default function MonthlyDashboard() {
 
         const service = new DashboardService();
         service
-            .getMonthlyByPoste(
+            .getAccountMonthlyByPoste(
+                accountId,
                 dateRange[0],
                 dateRange[1],
                 selectedPostes.map((poste) => poste.id),

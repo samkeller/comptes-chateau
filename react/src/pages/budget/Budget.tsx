@@ -2,8 +2,11 @@ import { PageTemplate } from "../PageTemplate";
 import RecurringExpenses from "./recurringExpenses/RecurringExpenses";
 import BudgetItemsTable from "./BudgetItemsTable";
 import { Message } from "primereact/message";
+import { useAccountId } from "../../hooks/useAccountId";
 
 export default function Budget() {
+    const accountId = useAccountId();
+    
     return (
         <PageTemplate pageTitle="Budget">
             <div className="flex flex-col gap-6 w-full">
@@ -14,10 +17,10 @@ export default function Budget() {
 
                 <div className="flex gap-2 w-full">
                     <div className="flex-1 min-w-0">
-                        <BudgetItemsTable />
+                        <BudgetItemsTable accountId={accountId} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <RecurringExpenses />
+                        <RecurringExpenses accountId={accountId} />
                     </div>
                 </div>
             </div>

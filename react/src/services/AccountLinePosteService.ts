@@ -9,23 +9,46 @@ export interface SavePostePayload {
 
 class AccountLinePosteService extends BaseService {
 
-    private posteEndpoint = this.apiUrl + "/poste";
-    getAllPostes(): Promise<AccountLinePoste[]> {
-        return axios.get(this.posteEndpoint).then(response => {
+    /**
+     * Get all postes for a specific account.
+     * @param accountId - The account ID
+     */
+    getAllAccountPostes(accountId: number): Promise<AccountLinePoste[]> {
+        const posteEndpoint = `${this.apiUrl}/accounts/${accountId}/postes`;
+        return axios.get(posteEndpoint).then(response => {
             return (response.data as Partial<AccountLinePoste>[]).map((value) => new AccountLinePoste(value));
         });
     }
 
-    createPoste(payload: SavePostePayload): Promise<AccountLinePoste> {
-        return axios.post(this.posteEndpoint, payload).then(response => new AccountLinePoste(response.data));
+    /**
+     * Create a poste for a specific account.
+     * @param accountId - The account ID
+     * @param payload - The poste data
+     */
+    createAccountPoste(accountId: number, payload: SavePostePayload): Promise<AccountLinePoste> {
+        const posteEndpoint = `${this.apiUrl}/accounts/${accountId}/postes`;
+        return axios.post(posteEndpoint, payload).then(response => new AccountLinePoste(response.data));
     }
 
-    updatePoste(id: number, payload: SavePostePayload): Promise<AccountLinePoste> {
-        return axios.put(this.posteEndpoint + `/${id}`, payload).then(response => new AccountLinePoste(response.data));
+    /**
+     * Update a poste for a specific account.
+     * @param accountId - The account ID
+     * @param id - The poste ID
+     * @param payload - The updated poste data
+     */
+    updatAccountePoste(accountId: number, id: number, payload: SavePostePayload): Promise<AccountLinePoste> {
+        const posteEndpoint = `${this.apiUrl}/accounts/${accountId}/postes/${id}`;
+        return axios.put(posteEndpoint, payload).then(response => new AccountLinePoste(response.data));
     }
 
-    deletePoste(id: number): Promise<void> {
-        return axios.delete(this.posteEndpoint + `/${id}`).then(() => undefined);
+    /**
+     * Delete a poste for a specific account.
+     * @param accountId - The account ID
+     * @param id - The poste ID
+     */
+    deleteAccountPoste(accountId: number, id: number): Promise<void> {
+        const posteEndpoint = `${this.apiUrl}/accounts/${accountId}/postes/${id}`;
+        return axios.delete(posteEndpoint).then(() => undefined);
     }
 }
 

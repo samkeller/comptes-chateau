@@ -1,6 +1,6 @@
 import { Menu } from "primereact/menu";
 import { MenuItem } from "primereact/menuitem";
-import { useLocation } from "react-router-dom";
+import { matchPath, useLocation } from "react-router-dom";
 
 interface AppNavigationMenuProps {
     navigateTo: (path: string) => void;
@@ -11,6 +11,13 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
 
     const location = useLocation();
     const currentPath = location.pathname;
+
+    const accountRouteMatch = matchPath("/:accountId/*", currentPath);
+    const accountId = accountRouteMatch?.params.accountId ?? "1";
+    const isOnAccountDashboard = Boolean(matchPath("/:accountId/dashboard", currentPath));
+    const isOnAccountBook = Boolean(matchPath("/:accountId/accountBook", currentPath));
+    const isOnAccountChecks = Boolean(matchPath("/:accountId/accountChecks", currentPath));
+    const isOnAccountBudget = Boolean(matchPath("/:accountId/budget", currentPath));
 
     const startItems: MenuItem[] = [
         {
@@ -23,28 +30,30 @@ export default function AppNavigationMenu({ navigateTo }: AppNavigationMenuProps
             label: "Comptes",
             items: [
                 {
+                    label: "Dashboard",
+                    icon: "pi pi-chart-line",
+                    className: subItemClassName + (isOnAccountDashboard ? " bg-surface-200" : ""),
+                    command: () => navigateTo(`/${accountId}/dashboard`),
+                },
+                {
                     label: "Opérations",
                     icon: "pi pi-book",
-                    className: subItemClassName + (
-                        currentPath === "/comptes" || currentPath === "/comptes/" ?
-                            " bg-surface-200" :
-                            ""
-                    ),
-                    command: () => navigateTo("/comptes"),
+                    className: subItemClassName + (isOnAccountBook ? " bg-surface-200" : ""),
+                    command: () => navigateTo(`/${accountId}/accountBook`),
                 },
                 {
                     label: "Vérifications",
                     icon: "pi pi-check-square",
-                    className: subItemClassName + (currentPath.startsWith("/comptes/verifications") ? " bg-surface-200" : ""),
-                    command: () => navigateTo("/comptes/verifications")
+                    className: subItemClassName + (isOnAccountChecks ? " bg-surface-200" : ""),
+                    command: () => navigateTo(`/${accountId}/accountChecks`)
                 },
             ]
         },
         {
             label: "Budget",
             icon: "pi pi-calculator",
-            className: currentPath.startsWith("/budget") ? "bg-surface-200" : undefined,
-            command: () => navigateTo("/budget")
+            className: isOnAccountBudget ? "bg-surface-200" : undefined,
+            command: () => navigateTo(`/${accountId}/budget`)
         },
         {
             label: "Configuration",

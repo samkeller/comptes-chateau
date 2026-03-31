@@ -14,8 +14,11 @@ import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon";
 import { BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
 import { buildBanquePostalePrefillResult, BanquePostaleImportReport } from "./banquePostaleImportMatching";
 import BanquePostaleImportReportPanel from "./BanquePostaleImportReportPanel";
+import { useAccountId } from "../../hooks/useAccountId";
 
 export default function AccountChecks() {
+    const accountId = useAccountId();
+    
     const [accountLines, setAccountLines] = useState<AccountLine[]>([]);
     const [importReport, setImportReport] = useState<BanquePostaleImportReport | null>(null);
 
@@ -27,12 +30,12 @@ export default function AccountChecks() {
 
     useEffect(() => {
         loadUncheckedLines();
-    }, []);
+    }, [accountId]);
 
 
     const loadUncheckedLines = async () => {
         setLoading(true);
-        new AccountingService().getAllUncheckedLines()
+        new AccountingService().getAllUncheckedLines(accountId)
             .then(setAccountLines)
             .finally(() => {
                 setLoading(false);
@@ -119,6 +122,7 @@ export default function AccountChecks() {
         setSubmitting(true);
         new AccountingService()
             .checkBatch(
+                accountId,
                 selectedLines.map((line) => ({
                     id: line.id,
                     isChecked: true,

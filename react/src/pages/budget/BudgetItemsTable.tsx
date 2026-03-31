@@ -12,7 +12,11 @@ const categoryLabel: Record<BudgetCategory, string> = {
     epargne: "Epargne"
 };
 
-export default function BudgetItemsTable() {
+interface BudgetItemsTableProps {
+    accountId: number;
+}
+
+export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
     const [lines, setLines] = useState<BudgetItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -20,7 +24,7 @@ export default function BudgetItemsTable() {
         const load = (): void => {
             setLoading(true);
             new BudgetService()
-                .getBudgetItems()
+                .getAccountBudgetItems(accountId)
                 .then(setLines)
                 .finally(() => {
                     setLoading(false);
@@ -28,7 +32,7 @@ export default function BudgetItemsTable() {
         };
 
         load();
-    }, []);
+    }, [accountId]);
 
     const totalBudget = useMemo(() => {
         if (!Array.isArray(lines)) {

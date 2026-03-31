@@ -17,10 +17,15 @@ export interface CheckBatchInput {
 
 class AccountingService extends BaseService {
 
-    getAccountLinesLazy(lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
+    /**
+     * Fetch account lines for a specific account with lazy loading.
+     * @param accountId - The account ID
+     * @param lazyState - Pagination, sorting, filtering state
+     */
+    getAccountLinesLazy(accountId: number, lazyState: DataTableLazyState): Promise<LazyLoadResponse> {
         const requestParams = DataTableQueryCodec.toQueryParams(lazyState).toString();
 
-        return axios.get(`${this.apiUrl}/operation/lazy?${requestParams}`).then(response => {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/operations/lazy?${requestParams}`).then(response => {
             return {
                 data: response.data.data.map((v: Partial<AccountLine>) => new AccountLine(v)),
                 totalRecords: response.data.totalRecords
@@ -28,19 +33,35 @@ class AccountingService extends BaseService {
         });
     }
 
-    saveAccountLine(accountLine: Partial<AccountLine>): Promise<AccountLine> {
+    /**
+     * Save (create or update) an account line for a specific account.
+     * @param accountId - The account ID
+     * @param accountLine - The account line data to save
+     */
+    saveAccountLine(accountId: number, accountLine: Partial<AccountLine>): Promise<AccountLine> {
         const dataToSend = {
             ...accountLine,
             dateOperation: accountLine.dateOperation ? formatApiDate(accountLine.dateOperation) : null,
             dateValeur: accountLine.dateValeur ? formatApiDate(accountLine.dateValeur) : null,
         }
 
-        return axios.post(this.apiUrl + "/operation", dataToSend).then(response => {
+        if (accountLine.id) {
+            return axios.put(`${this.apiUrl}/accounts/${accountId}/operations/${accountLine.id}`, dataToSend).then(response => {
+                return new AccountLine(response.data)
+            })
+        }
+
+        return axios.post(`${this.apiUrl}/accounts/${accountId}/operations`, dataToSend).then(response => {
             return new AccountLine(response.data)
         })
     }
 
-    checkBatch(checks: CheckBatchInput[]): Promise<number> {
+    /**
+     * Batch check operations for a specific account.
+     * @param accountId - The account ID
+     * @param checks - Array of checks to perform
+     */
+    checkBatch(accountId: number, checks: CheckBatchInput[]): Promise<number> {
         const payload = {
             checks: checks.map((check) => ({
                 id: check.id,
@@ -49,17 +70,25 @@ class AccountingService extends BaseService {
             }))
         };
 
-        return axios.post(this.apiUrl + "/operation/check-batch", payload).then((response) => response.data.updatedCount);
+        return axios.post(`${this.apiUrl}/accounts/${accountId}/operations/check-batch`, payload).then((response) => response.data.updatedCount);
     }
 
-    getAllUncheckedLines(): Promise<AccountLine[]> {
-        return axios.get(`${this.apiUrl}/operation/unchecked`).then((response) => {
+    /**
+     * Get all unchecked lines for a specific account.
+     * @param accountId - The account ID
+     */
+    getAllUncheckedLines(accountId: number): Promise<AccountLine[]> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/operations/unchecked`).then((response) => {
             return response.data.map((v: Partial<AccountLine>) => new AccountLine(v));
         });
     }
 
-    getAllAccountLinesForExport(): Promise<AccountLine[]> {
-        return axios.get(`${this.apiUrl}/operation/export`).then((response) => {
+    /**
+     * Get all account lines for a specific account (for export).
+     * @param accountId - The account ID
+     */
+    getAllAccountLinesForExport(accountId: number): Promise<AccountLine[]> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/operations/export`).then((response) => {
             return response.data.map((value: Partial<AccountLine>) => new AccountLine(value));
         });
     }

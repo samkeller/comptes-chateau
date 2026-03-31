@@ -23,6 +23,7 @@ import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
 import AccountBookExportButtons from "./AccountBookExportButtons"
+import { useAccountId } from "../../hooks/useAccountId"
 
 type RelationFilterOption = {
     id: number | "null";
@@ -32,6 +33,8 @@ type RelationFilterOption = {
 }
 
 export default function AccountBook() {
+    const accountId = useAccountId()
+    
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [totalRecords, setTotalRecords] = useState<number>(0)
@@ -73,24 +76,27 @@ export default function AccountBook() {
     ]
 
     useEffect(() => {
-        // Load natures and postes
+        // Load natures (global) and postes (per-account)
         const natureService = new AccountLineNatureService()
         const posteService = new AccountLinePosteService()
-        Promise.all([natureService.getAllNatures(), posteService.getAllPostes()]).then(([n, p]) => {
+        Promise.all([
+            natureService.getAllNatures(),
+            posteService.getAllAccountPostes(accountId)
+        ]).then(([n, p]) => {
             setNatures(n)
             setPostes(p)
         })
-    }, [])
+    }, [accountId])
 
     useEffect(() => {
         loadAccountLines();
-    }, [lazyState]);
+    }, [lazyState, accountId]);
 
     const loadAccountLines = async () => {
         setLoading(true)
         try {
             const service = new AccountingService()
-            const lines = await service.getAccountLinesLazy(lazyState)
+            const lines = await service.getAccountLinesLazy(accountId, lazyState)
             setAccountLines(lines.data)
             setTotalRecords(lines.totalRecords)
         } finally {
@@ -132,6 +138,7 @@ export default function AccountBook() {
         <PageTemplate pageTitle="Comptes">
             {
                 showAddDialog && <AddAccountLineDialog
+                    accountId={accountId}
                     editingLine={editingLine}
                     hideDialog={() => {
                         setEditingLine(null)
@@ -142,7 +149,7 @@ export default function AccountBook() {
             }
             <div className="flex justify-end mb-6">
                 <div className="flex flex-wrap justify-end gap-2">
-                    <AccountBookExportButtons />
+                    <AccountBookExportButtons accountId={accountId} />
                     <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
             </div>

@@ -17,12 +17,13 @@ import AccountLineNatureService from '../../../services/AccountLineNatureService
 import AccountLinePosteService from '../../../services/AccountLinePosteService';
 
 interface AddRecurringExpenseDialogProps {
+    accountId: number;
     editingExpense: RecurringExpense | null;
     hideDialog: () => void;
     refresh: () => void;
 }
 
-export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, refresh }: AddRecurringExpenseDialogProps) {
+export default function AddRecurringExpenseDialog({ accountId, editingExpense, hideDialog, refresh }: AddRecurringExpenseDialogProps) {
     const [label, setLabel] = useState<string>(editingExpense?.label || '');
     const [nature, setNature] = useState<AccountLineNature | null>(editingExpense?.nature || null);
     const [poste, setPoste] = useState<AccountLinePoste | null>(editingExpense?.poste || null);
@@ -41,7 +42,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
         const posteService = new AccountLinePosteService();
         Promise.all([
             natureService.getAllNatures(),
-            posteService.getAllPostes()
+            posteService.getAllAccountPostes(accountId)
         ])
             .then(([naturesData, postesData]) => {
                 setNatures(naturesData);
@@ -55,7 +56,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             .finally(() => {
                 setLoading(false);
             });
-    }, [editingExpense]);
+    }, [editingExpense, accountId]);
 
     const natureOptions = natures.map(v => ({ label: v.label, value: v }));
     const posteOptions = postes.map(v => ({ label: v.label, value: v }));
@@ -72,7 +73,7 @@ export default function AddRecurringExpenseDialog({ editingExpense, hideDialog, 
             nextOccurrence
         };
         new RecurringExpenseService()
-            .saveRecurringExpense(expense)
+            .saveAccountRecurringExpense(accountId, expense)
             .then(() => {
                 refresh();
                 showGlobalToast({

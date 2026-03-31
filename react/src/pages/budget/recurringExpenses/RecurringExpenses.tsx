@@ -11,19 +11,22 @@ import { Message } from "primereact/message";
 import { formatDistance } from "date-fns";
 import { Tooltip } from "primereact/tooltip";
 
+interface RecurringExpensesProps {
+    accountId: number;
+}
 
-export default function RecurringExpenses() {
+export default function RecurringExpenses({ accountId }: RecurringExpensesProps) {
     const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
     const [editingExpense, setEditingExpense] = useState<RecurringExpense | null>(null)
 
     useEffect(() => {
         loadRecurringExpenses()
-    }, [])
+    }, [accountId])
 
     const loadRecurringExpenses = async () => {
         const service = new RecurringExpenseService()
-        const expenses = await service.getRecurringExpenses()
+        const expenses = await service.getAccountRecurringExpenses(accountId)
         setRecurringExpenses(expenses)
     }
 
@@ -53,6 +56,7 @@ export default function RecurringExpenses() {
         <>
             {
                 showAddDialog && <AddRecurringExpenseDialog
+                    accountId={accountId}
                     editingExpense={editingExpense}
                     hideDialog={() => {
                         setEditingExpense(null)

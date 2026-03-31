@@ -6,9 +6,11 @@ import { useGlobalToast } from "../../context/GlobalToastContext";
 import AccountLine from "../../interfaces/AccountLine";
 import { exportToCsv, ExportRow } from "../../utils/ExportUtils";
 
-interface AccountBookExportButtonsProps { }
+interface AccountBookExportButtonsProps {
+    accountId: number;
+}
 
-export default function AccountBookExportButtons({ }: AccountBookExportButtonsProps) {
+export default function AccountBookExportButtons({ accountId }: AccountBookExportButtonsProps) {
     const [accountingService] = useState(new AccountingService());
     const [isLoading, setIsLoading] = useState(false);
     const showGlobalToast = useGlobalToast();
@@ -30,7 +32,7 @@ export default function AccountBookExportButtons({ }: AccountBookExportButtonsPr
     const exportLines = () => {
         setIsLoading(true);
         accountingService
-            .getAllAccountLinesForExport()
+            .getAllAccountLinesForExport(accountId)
             .then((lines) => {
                 const rows = getExportRows(lines);
                 exportToCsv("operations", rows);

@@ -9,6 +9,7 @@ import Index from "../pages/index/Index";
 import Setup from "../pages/setup/Setup";
 import AccountChecks from "../pages/accountChecks/AccountChecks";
 import KanbanPage from "../pages/kanban/KanbanPage";
+import AccountDashboard from "../pages/accountDashboard/AccountDashboard";
 
 const router = createBrowserRouter([
   {
@@ -16,16 +17,25 @@ const router = createBrowserRouter([
     element: <Index />,
   },
   {
-    path: "/comptes",
-    element: <AccountBook />,
-  },
-  {
-    path: "/comptes/verifications",
-    element: <AccountChecks />,
-  },
-  {
-    path: "/budget",
-    element: <Budget />,
+    path: "/:accountId",
+    children: [
+      {
+        path: "dashboard",
+        element: <AccountDashboard />,
+      },
+      {
+        path: "accountBook",
+        element: <AccountBook />,
+      },
+      {
+        path: "accountChecks",
+        element: <AccountChecks />,
+      },
+      {
+        path: "budget",
+        element: <Budget />,
+      },
+    ]
   },
   {
     path: "/setup",

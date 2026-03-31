@@ -6,10 +6,13 @@ import { ColorPicker, ColorPickerChangeEvent } from "primereact/colorpicker";
 import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Dropdown } from "primereact/dropdown";
 import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLinePoste } from "../../../interfaces/AccountLinePoste";
 import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
 import AccountLinePosteService, { SavePostePayload } from "../../../services/AccountLinePosteService";
+import AccountService from "../../../services/AccountService";
+import Account from "../../../interfaces/Account";
 
 const NEW_POSTE_ROW_ID = -1;
 const POSTE_CONFIRM_GROUP = "poste-setup-delete";
@@ -20,6 +23,7 @@ const buildEmptyPosteDraft = (): SavePostePayload => ({
 });
 
 const service = new AccountLinePosteService();
+const accountService = new AccountService();
 
 type PosteTableRow = AccountLinePoste & {
     uiEditing: boolean;
@@ -28,17 +32,30 @@ type PosteTableRow = AccountLinePoste & {
 export default function PosteSetupCard() {
     const showToast = useGlobalToast();
 
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        loadPostes();
+        accountService.getAllAccounts().then((data) => {
+            setAccounts(data);
+            if (data.length > 0) {
+                setSelectedAccountId(data[0].id);
+            }
+        });
     }, []);
 
-    const loadPostes = (): void => {
+    useEffect(() => {
+        if (selectedAccountId !== null) {
+            loadPostes(selectedAccountId);
+        }
+    }, [selectedAccountId]);
+
+    const loadPostes = (accountId: number): void => {
         setLoading(true);
         service
-            .getAllPostes()
+            .getAllAccountPostes(accountId)
             .then(setPostes)
             .finally(() => {
                 setLoading(false);
@@ -103,6 +120,7 @@ export default function PosteSetupCard() {
     };
 
     const createPoste = () => {
+        if (selectedAccountId === null) return;
         const newPoste = draftByPosteId[NEW_POSTE_ROW_ID] ?? buildEmptyPosteDraft();
 
         if (!validatePoste(newPoste)) {
@@ -110,7 +128,7 @@ export default function PosteSetupCard() {
         }
 
         service
-            .createPoste({
+            .createAccountPoste(selectedAccountId, {
                 ...newPoste,
                 label: newPoste.label.trim()
             })
@@ -120,7 +138,7 @@ export default function PosteSetupCard() {
                     [NEW_POSTE_ROW_ID]: buildEmptyPosteDraft()
                 }));
                 showToast({ severity: "success", summary: "Poste créé" });
-                return loadPostes();
+                return loadPostes(selectedAccountId);
             })
     };
 
@@ -135,6 +153,7 @@ export default function PosteSetupCard() {
     };
 
     const savePoste = (rowId: number) => {
+        if (selectedAccountId === null) return;
         const editingPosteDraft = draftByPosteId[rowId];
         if (!editingPosteDraft) {
             return;
@@ -145,7 +164,7 @@ export default function PosteSetupCard() {
         }
 
         service
-            .updatePoste(rowId, {
+            .updatAccountePoste(selectedAccountId, rowId, {
                 ...editingPosteDraft,
                 label: editingPosteDraft.label.trim()
             })
@@ -156,7 +175,7 @@ export default function PosteSetupCard() {
                     return next;
                 });
 
-                return loadPostes();
+                return loadPostes(selectedAccountId);
             })
             .then(() => {
                 showToast({ severity: "success", summary: "Poste mis à jour" });
@@ -164,6 +183,7 @@ export default function PosteSetupCard() {
     };
 
     const requestDeletePoste = (poste: AccountLinePoste) => {
+        if (selectedAccountId === null) return;
         const dialog = confirmDialog({
             group: POSTE_CONFIRM_GROUP,
             header: "Supprimer le poste",
@@ -174,8 +194,8 @@ export default function PosteSetupCard() {
                 dialog.hide();
 
                 service
-                    .deletePoste(poste.id)
-                    .then(() => loadPostes())
+                    .deleteAccountPoste(selectedAccountId, poste.id)
+                    .then(() => loadPostes(selectedAccountId))
                     .then(() => {
                         showToast({ severity: "success", summary: "Poste supprimé" });
                     })
@@ -185,9 +205,19 @@ export default function PosteSetupCard() {
 
     return (
         <Card title="Postes de depense" className="h-full">
+            <div className="mb-4">
+                <Dropdown
+                    value={selectedAccountId}
+                    options={accounts.map((a) => ({ label: a.label, value: a.id }))}
+                    onChange={(e) => setSelectedAccountId(e.value)}
+                    placeholder="Sélectionner un compte"
+                    className="w-full"
+                    disabled={accounts.length === 0}
+                />
+            </div>
             <ConfirmDialog group={POSTE_CONFIRM_GROUP} />
             <DataTable
-                value={tableRows}
+                value={selectedAccountId !== null ? tableRows : []}
                 loading={loading}
                 size="small"
                 dataKey="id"
@@ -259,3 +289,4 @@ export default function PosteSetupCard() {
         </Card>
     );
 }
+

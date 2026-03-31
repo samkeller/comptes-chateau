@@ -6,11 +6,14 @@ import DashboardMonthlyByPosteQueryCodec from "./dashboardQuery/DashboardMonthly
 
 class DashboardService extends BaseService {
     /**
-     * Récupère l'agrégation mensuelle par poste
-     * @param fromMonth Format YYYY-MM (optionnel)
-     * @param toMonth Format YYYY-MM (optionnel)
+     * Get monthly aggregation by poste for a specific account.
+     * @param accountId - The account ID
+     * @param fromMonth - Start date (optional)
+     * @param toMonth - End date (optional)
+     * @param posteIds - Array of poste IDs to filter by
      */
-    getMonthlyByPoste(
+    getAccountMonthlyByPoste(
+        accountId: number,
         fromMonth: Date,
         toMonth: Date,
         posteIds: number[]
@@ -22,13 +25,17 @@ class DashboardService extends BaseService {
         });
 
         const query = params.toString();
-        const url = `${this.apiUrl}/dashboard/monthly-by-poste${query ? `?${query}` : ""}`;
+        const url = `${this.apiUrl}/accounts/${accountId}/dashboard/monthly-by-poste${query ? `?${query}` : ""}`;
 
         return axios.get(url).then((response) => response.data);
     }
 
-    getOverview(): Promise<DashboardOverview> {
-        return axios.get(`${this.apiUrl}/dashboard/overview`).then((response) => response.data);
+    /**
+     * Get dashboard overview for a specific account.
+     * @param accountId - The account ID
+     */
+    getAccountOverview(accountId: number): Promise<DashboardOverview> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/dashboard/overview`).then((response) => response.data);
     }
 }
 
