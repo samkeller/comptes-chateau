@@ -32,7 +32,7 @@ Le codec normalise aussi les valeurs:
 - valeurs vides -> ignorees (pas envoyees)
 
 ### 2) Contrat API -> Parse/Validation (back)
-Fichier cle: `node/src/services/queryMappers/parsers/TableQueryParser.ts`
+Fichier cle: `node/src/modules/accounts/services/queryMappers/parsers/TableQueryParser.ts`
 
 `TableQueryParser.parse(req.query, options)` valide:
 - `skip`, `take` (bornes)
@@ -42,7 +42,7 @@ Fichier cle: `node/src/services/queryMappers/parsers/TableQueryParser.ts`
 Le parseur retourne un objet type `ParsedTableQuery` utilisable par le mapper.
 
 ### 3) ParsedQuery -> QueryBuilder SQL (back)
-Fichier cle: `node/src/services/queryMappers/TableQueryMapper.ts`
+Fichier cle: `node/src/modules/accounts/services/queryMappers/TableQueryMapper.ts`
 
 `TableQueryMapper` applique:
 - les filtres via handlers (`applySimple` / `applyOperator`)
@@ -102,7 +102,7 @@ Filtre operator PrimeReact:
 Exemple de `req.query` effectivement envoye:
 
 ```http
-GET /api/operation/lazy?skip=0&take=50&sortField=amount&sortOrder=DESC&filters=[...] 
+GET /api/accounts/1/operations/lazy?skip=0&take=50&sortField=amount&sortOrder=DESC&filters=[...] 
 ```
 
 ## Pourquoi c'est generique (et evolutif)
@@ -120,7 +120,7 @@ Benefices long terme:
 
 ## Variante QueryParamsParser (cas non-DataTable)
 
-Fichier cle: `node/src/services/queryMappers/parsers/QueryParamsParser.ts`
+Fichier cle: `node/src/modules/accounts/services/queryMappers/parsers/QueryParamsParser.ts`
 
 Pour les endpoints qui ne suivent pas exactement le contrat DataTable (ex dashboard),
 `QueryParamsParser` fournit un parsing schema-based simple:
@@ -133,7 +133,7 @@ const parsed = QueryParamsParser.parse(req.query, {
 });
 ```
 
-Utilisation metier: `node/src/services/queryMappers/parsers/DashboardMonthlyByPosteQueryParser.ts`
+Utilisation metier: `node/src/modules/accounts/services/queryMappers/parsers/DashboardMonthlyByPosteQueryParser.ts`
 
 ## Comment en prendre soin (sans tout casser)
 
@@ -157,7 +157,7 @@ Niveaux de tests requis:
 - Front codec: serialisation stable (`DataTableQueryCodec.test.ts`).
 - Back parser: validation stricte (`TableQueryParser.test.ts`, `QueryParamsParser.test.ts`).
 - Back mapper/config: traduction SQL correcte (`TableQueryMapper.test.ts`, `operationTableQueryConfig.test.ts`).
-- Integration API: comportement reel endpoint (`OperationControllers.integration.test.ts`, `DashboardController.integration.test.ts`).
+- Integration API: comportement reel endpoint (`OperationController.integration.test.ts`, `DashboardController.integration.test.ts`).
 
 Tests a verifier a chaque evolution:
 - champ de tri non autorise -> `400`
@@ -170,9 +170,9 @@ Tests a verifier a chaque evolution:
 
 Fichiers qui portent le contrat et doivent rester documentes:
 - `react/src/services/tableQuery/DataTableQueryCodec.ts`
-- `node/src/services/queryMappers/parsers/TableQueryParser.ts`
-- `node/src/services/queryMappers/TableQueryMapper.ts`
-- `node/src/services/queryMappers/parsers/QueryParamsParser.ts`
+- `node/src/modules/accounts/services/queryMappers/parsers/TableQueryParser.ts`
+- `node/src/modules/accounts/services/queryMappers/TableQueryMapper.ts`
+- `node/src/modules/accounts/services/queryMappers/parsers/QueryParamsParser.ts`
 
 Regle: toute methode publique de parsing/serialisation doit conserver un JSDoc qui precise:
 - format d'entree attendu

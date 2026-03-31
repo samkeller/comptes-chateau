@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 import { unauthorized } from "../../../utils/AppError";
-import { validateBody } from "../../../utils/validate";
+import { validateBody } from "../middlewares/validate";
 
 const LoginSchema = z.object({
   username: z.string().min(1).transform(s => s.trim().toLowerCase()),

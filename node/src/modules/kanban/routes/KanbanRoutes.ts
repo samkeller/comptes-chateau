@@ -1,6 +1,6 @@
 import { Router } from "express";
 import KanbanController from "../controllers/KanbanController";
-import { validateBody, validateParams, IdParamSchema, CommentIdParamSchema } from "../../../utils/validate";
+import { validateBody, validateParams, IdParamSchema, CommentIdParamSchema } from "../../core/middlewares/validate";
 import { CreateKanbanTaskSchema } from "../dto/CreateKanbanTaskDto";
 import { CreateKanbanCommentSchema } from "../dto/CreateKanbanCommentDto";
 

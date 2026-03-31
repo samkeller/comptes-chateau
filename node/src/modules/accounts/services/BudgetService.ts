@@ -19,9 +19,9 @@ export default class BudgetService {
             : AppDataSource.getRepository(BudgetItem);
     }
 
-    async getActiveBudgetItems(): Promise<BudgetItemDto[]> {
+    async getActiveBudgetItems(accountId: number): Promise<BudgetItemDto[]> {
         return this.budgetItemRepo.find({
-            where: { isActive: true },
+            where: { isActive: true, account: { id: accountId } },
             order: { category: "ASC", sortOrder: "ASC", id: "ASC" }
         });
     }

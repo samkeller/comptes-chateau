@@ -106,12 +106,11 @@ describe("OperationService.save - transfer groups", () => {
             debit: 125,
             credit: 0,
             isChecked: false,
-            account: { id: 1 },
             targetAccount: { id: 2 },
             dateValeur: null,
             nature: null,
             poste: null
-        });
+        }, 1);
 
         expect(savedLine.account?.id).toBe(1);
         expect(savedLine.targetAccount?.id).toBe(2);
@@ -164,12 +163,11 @@ describe("OperationService.save - transfer groups", () => {
             debit: 80,
             credit: 0,
             isChecked: false,
-            account: { id: 1 },
             targetAccount: { id: 3 },
             dateValeur: null,
             nature: null,
             poste: null
-        });
+        }, 1);
 
         expect(savedLine.id).toBe(10);
         expect(storedLines).toHaveLength(2);
@@ -191,11 +189,10 @@ describe("OperationService.save - transfer groups", () => {
             debit: 10,
             credit: 0,
             isChecked: false,
-            account: { id: 1 },
             targetAccount: { id: 1 },
             dateValeur: null,
             nature: null,
             poste: null
-        })).rejects.toMatchObject({ code: "OPERATION_TRANSFER_SAME_ACCOUNT", statusCode: 400 });
+        }, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_SAME_ACCOUNT", statusCode: 400 });
     });
 });

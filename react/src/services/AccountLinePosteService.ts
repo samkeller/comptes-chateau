@@ -36,7 +36,7 @@ class AccountLinePosteService extends BaseService {
      * @param id - The poste ID
      * @param payload - The updated poste data
      */
-    updatAccountePoste(accountId: number, id: number, payload: SavePostePayload): Promise<AccountLinePoste> {
+    updateAccountPoste(accountId: number, id: number, payload: SavePostePayload): Promise<AccountLinePoste> {
         const posteEndpoint = `${this.apiUrl}/accounts/${accountId}/postes/${id}`;
         return axios.put(posteEndpoint, payload).then(response => new AccountLinePoste(response.data));
     }

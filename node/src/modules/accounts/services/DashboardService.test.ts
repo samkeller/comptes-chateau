@@ -64,7 +64,7 @@ class MockOverviewQueryBuilder {
 }
 
 interface DashboardServicePrivate {
-    getBalanceDeltaSinceDate(checkedOnly: boolean, fromDate: Date): Promise<QueryResult>;
+    getBalanceDeltaSinceDate(checkedOnly: boolean, fromDate: Date, accountId: number): Promise<QueryResult>;
 }
 
 describe("DashboardService.getBalanceDeltaSinceDate", () => {
@@ -91,7 +91,7 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         const fromDate = new Date("2026-01-15T00:00:00.000Z");
         qb.rawResult = { value: "42.5" };
 
-        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(true, fromDate);
+        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(true, fromDate, 3);
 
         expect(createQueryBuilder).toHaveBeenCalledWith("al");
         expect(qb.selectCalls).toEqual([
@@ -102,12 +102,16 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         ]);
         expect(qb.whereCalls).toEqual([
             {
-                sql: "al.dateOperation >= :fromDate",
-                params: { fromDate }
+                sql: "al.account_id = :accountId",
+                params: { accountId: 3 }
             }
         ]);
         expect(qb.leftJoinCalls).toEqual([{ relation: "al.nature", alias: "nature" }]);
         expect(qb.andWhereCalls).toEqual([
+            {
+                sql: "al.dateOperation >= :fromDate",
+                params: { fromDate }
+            },
             {
                 sql: "(nature.id IS NULL OR nature.isHorsCompte = false)",
                 params: undefined
@@ -125,15 +129,19 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         const fromDate = new Date("2026-02-01T00:00:00.000Z");
         qb.rawResult = { value: 0 };
 
-        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(false, fromDate);
+        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(false, fromDate, 7);
 
         expect(qb.whereCalls).toEqual([
             {
-                sql: "al.dateOperation >= :fromDate",
-                params: { fromDate }
+                sql: "al.account_id = :accountId",
+                params: { accountId: 7 }
             }
         ]);
         expect(qb.andWhereCalls).toEqual([
+            {
+                sql: "al.dateOperation >= :fromDate",
+                params: { fromDate }
+            },
             {
                 sql: "(nature.id IS NULL OR nature.isHorsCompte = false)",
                 params: undefined
@@ -207,7 +215,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBeCloseTo(1250.50);
     });
@@ -225,7 +233,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.forecastBalance).toBeCloseTo(1400.75);
     });
@@ -243,7 +251,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.forecastBalance).toBeGreaterThanOrEqual(result.currentBalance);
         expect(result.currentBalance).toBeCloseTo(600);
@@ -263,7 +271,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 2, horsCompte: 0 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         // 0 + delta (no baseline amount)
         expect(result.currentBalance).toBeCloseTo(500);
@@ -286,7 +294,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: "5", horsCompte: "2" }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBeCloseTo(2350.66);
         expect(result.forecastBalance).toBeCloseTo(2450.89);
@@ -314,7 +322,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.monthlyBudget).toBeCloseTo(425.50);
     });
@@ -332,7 +340,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: null, horsCompte: null }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBe(1000);
         expect(result.forecastBalance).toBe(1000);
@@ -354,7 +362,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 10, horsCompte: 3 }
         });
 
-        const result: DashboardOverview = await service.getOverview(1);
+        const result: DashboardOverview = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBeCloseTo(3800);
         expect(result.forecastBalance).toBeCloseTo(3200);
@@ -380,7 +388,7 @@ describe("DashboardService.getOverview", () => {
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
-        const result = await service.getOverview(1);
+        const result = await service.getOverview(1, 1);
 
         expect(result.monthlyBudget).toBeCloseTo(200);
     });

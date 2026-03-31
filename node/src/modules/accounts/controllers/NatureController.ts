@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import NatureService from "../services/NatureService";
 import { SaveNatureSchema } from "../services/nature/NatureDtos";
-import { validateBody, validateParams, IdParamSchema } from "../../../utils/validate";
+import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 
 const NatureRoutes = Router();
 const natureService = new NatureService();

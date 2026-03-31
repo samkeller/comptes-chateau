@@ -38,22 +38,22 @@ export default class DashboardService {
         private accountRepo = AppDataSource.getRepository(Account),
         private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
     ) { }
-    async getOverview(userId: number): Promise<DashboardOverview> {
-        const baseline = await this.accountRepo.findOne({ where: { id: 1 } });
+    async getOverview(userId: number, accountId: number): Promise<DashboardOverview> {
+        const baseline = await this.accountRepo.findOne({ where: { id: accountId } });
 
         // Cas fallback si jamais on n'a pas de baseline en base (ex: première utilisation), on part de 0
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
         const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
-            this.getBalanceDeltaSinceDate(true, baseLineDate),
-            this.getBalanceDeltaSinceDate(false, baseLineDate),
-            this.getMonthExpensesRaw(),
+            this.getBalanceDeltaSinceDate(true, baseLineDate, accountId),
+            this.getBalanceDeltaSinceDate(false, baseLineDate, accountId),
+            this.getMonthExpensesRaw(accountId),
             this.budgetItemRepo.find({
-                where: { isActive: true },
+                where: { isActive: true, account: { id: accountId } },
                 order: { category: "ASC", sortOrder: "ASC", id: "ASC" }
             }),
-            this.getOperationsToCheckCounts(),
+            this.getOperationsToCheckCounts(accountId),
             this.getAssignedKanbanTasksCount(userId),
         ]);
 
@@ -78,7 +78,8 @@ export default class DashboardService {
     async getMonthlyByPoste(
         fromMonth: Date,
         toMonth: Date,
-        posteIds: number[]
+        posteIds: number[],
+        accountId: number
     ): Promise<MonthlyPosteAggregate[]> {
         let qb = this.accountLineRepo
             .createQueryBuilder("al")
@@ -89,6 +90,7 @@ export default class DashboardService {
             .addSelect("poste.color", "posteColor")
             .addSelect("SUM(al.credit - al.debit)", "total")
             .innerJoin("al.poste", "poste")
+            .where("al.account_id = :accountId", { accountId })
             .groupBy("year")
             .addGroupBy("month")
             .addGroupBy("poste.id")
@@ -127,12 +129,14 @@ export default class DashboardService {
      */
     private async getBalanceDeltaSinceDate(
         checkedOnly: boolean,
-        fromDate: Date
+        fromDate: Date,
+        accountId: number
     ): Promise<{ value: string | number } | undefined> {
         let qb = this.accountLineRepo
             .createQueryBuilder("al")
             .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
-            .where("al.dateOperation >= :fromDate", { fromDate })
+            .where("al.account_id = :accountId", { accountId })
+            .andWhere("al.dateOperation >= :fromDate", { fromDate })
             .leftJoin("al.nature", "nature")
             .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
 
@@ -143,7 +147,7 @@ export default class DashboardService {
         return qb.getRawOne<{ value: string | number }>();
     }
 
-    private async getMonthExpensesRaw(): Promise<{ value: string | number } | undefined> {
+    private async getMonthExpensesRaw(accountId: number): Promise<{ value: string | number } | undefined> {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -151,16 +155,18 @@ export default class DashboardService {
         return this.accountLineRepo
             .createQueryBuilder("al")
             .select("COALESCE(SUM(al.debit), 0)", "value")
-            .where("al.isChecked = :isChecked", { isChecked: true })
+            .where("al.account_id = :accountId", { accountId })
+            .andWhere("al.isChecked = :isChecked", { isChecked: true })
             .andWhere("al.dateOperation >= :monthStart", { monthStart })
             .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart })
             .getRawOne<{ value: string | number }>();
     }
 
-    private async getOperationsToCheckCounts(): Promise<{ inAccount: number; horsCompte: number }> {
+    private async getOperationsToCheckCounts(accountId: number): Promise<{ inAccount: number; horsCompte: number }> {
         const rawCounts = await this.accountLineRepo
             .createQueryBuilder("al")
             .leftJoin("al.nature", "nature")
+            .where("al.account_id = :accountId", { accountId })
             .select(
                 "SUM(CASE WHEN al.isChecked = false AND (nature.id IS NULL OR nature.isHorsCompte = false) THEN 1 ELSE 0 END)",
                 "inAccount"

@@ -2,28 +2,49 @@ import express from "express";
 import request from "supertest";
 import { DataSource } from "typeorm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import SetupTestDb from "../../../tests/SetupTests";
-import { errorMiddleware } from "../../../utils/errorMiddleware";
+import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 
 let testDataSource: DataSource;
 let posteMaisonId: number;
 let posteVoyageId: number;
+const accountId = 1;
+const kanbanTaskRepoStub = {
+    createQueryBuilder: vi.fn(() => ({
+        innerJoin: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        getCount: vi.fn().mockResolvedValue(0),
+    }))
+};
 
 vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
-        getRepository: <T>(entity: new () => T) => testDataSource.getRepository(entity)
+        getRepository: <T>(entity: new () => T) => {
+            if ((entity as { name?: string }).name === "KanbanTask") {
+                return kanbanTaskRepoStub;
+            }
+            return testDataSource.getRepository(entity);
+        }
     }
 }));
 
 async function seedDashboardLines(dataSource: DataSource): Promise<void> {
+    const accountRepo = dataSource.getRepository(Account);
     const posteRepo = dataSource.getRepository(AccountLinePoste);
     const lineRepo = dataSource.getRepository(AccountLine);
+    const account = await accountRepo.save({
+        id: accountId,
+        label: "Compte principal",
+        baseLineAmount: 0,
+        baseLineEffectiveDate: new Date("2026-01-01")
+    });
 
-    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566" });
-    const posteVoyage = await posteRepo.save({ label: "Voyage", color: "#778899" });
+    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566", account });
+    const posteVoyage = await posteRepo.save({ label: "Voyage", color: "#778899", account });
 
     posteMaisonId = posteMaison.id;
     posteVoyageId = posteVoyage.id;
@@ -34,6 +55,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-01-04"),
             dateValeur: new Date("2026-01-05"),
             source: AccountLineSource.MANUAL,
+            account,
             poste: posteMaison,
             debit: 100,
             credit: 0,
@@ -44,6 +66,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-01-10"),
             dateValeur: null,
             source: AccountLineSource.MANUAL,
+            account,
             poste: posteMaison,
             debit: 0,
             credit: 40,
@@ -54,6 +77,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-02-08"),
             dateValeur: new Date("2026-02-09"),
             source: AccountLineSource.MANUAL,
+            account,
             poste: posteMaison,
             debit: 0,
             credit: 70,
@@ -64,6 +88,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-01-07"),
             dateValeur: new Date("2026-01-08"),
             source: AccountLineSource.MANUAL,
+            account,
             poste: posteVoyage,
             debit: 0,
             credit: 20,
@@ -74,6 +99,7 @@ async function seedDashboardLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-03-01"),
             dateValeur: new Date("2026-03-02"),
             source: AccountLineSource.MANUAL,
+            account,
             poste: posteVoyage,
             debit: 10,
             credit: 0,
@@ -90,7 +116,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
 
         testDataSource = db.adapters.createTypeormDataSource({
             type: "postgres",
-            entities: [AccountLine, AccountLineNature, AccountLinePoste],
+            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
             synchronize: true
         });
 
@@ -100,7 +126,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
         const { default: dashboardRoutes } = await import("./DashboardController");
         app = express();
         app.use(express.json());
-        app.use("/dashboard", dashboardRoutes);
+        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
         app.use(errorMiddleware);
     });
 
@@ -112,7 +138,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
 
     it("returns monthly aggregate filtered by date range and posteIds", async () => {
         const response = await request(app)
-            .get("/dashboard/monthly-by-poste")
+            .get(`/accounts/${accountId}/dashboard/monthly-by-poste`)
             .query({
                 from: "2026-01-01",
                 to: "2026-02-28",
@@ -150,7 +176,7 @@ describe("DashboardController /monthly-by-poste integration", () => {
 
     it("returns 400 for invalid query params", async () => {
         const response = await request(app)
-            .get("/dashboard/monthly-by-poste")
+            .get(`/accounts/${accountId}/dashboard/monthly-by-poste`)
             .query({
                 from: "2026-03-01",
                 to: "2026-02-01",

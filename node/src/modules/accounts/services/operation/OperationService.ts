@@ -1,6 +1,5 @@
 import { ParsedQs } from "qs";
 import { randomUUID } from "crypto";
-import { In } from "typeorm";
 import { AppDataSource } from "../../../../db/dataSource";
 import { Account } from "../../entities/Account";
 import { AccountLine as AccountLine } from "../../entities/AccountLine";
@@ -51,10 +50,11 @@ export default class OperationService {
         };
     }
 
-    async getLazy(query: ParsedQs): Promise<{ data: AccountLine[]; totalRecords: number }> {
+    async getLazy(query: ParsedQs, accountId: number): Promise<{ data: AccountLine[]; totalRecords: number }> {
         const parsedQuery = TableQueryParser.parse(query, lazyTableQueryParserOptions);
 
         const qb = this.accountLineRepo.createQueryBuilder("al")
+            .where("al.account_id = :accountId", { accountId })
             .leftJoinAndSelect("al.account", "account")
             .leftJoinAndSelect("al.targetAccount", "targetAccount")
             .leftJoinAndSelect("al.nature", "nature")
@@ -82,14 +82,14 @@ export default class OperationService {
         };
     }
 
-    async save(line: SaveOperationPayload): Promise<AccountLine> {
+    async save(line: SaveOperationPayload, accountId: number): Promise<AccountLine> {
         return AppDataSource.transaction(async (manager) => {
             const repo = manager.getRepository(AccountLine);
             const accountLineService = new AccountLineService(manager);
 
             const existingLine = typeof line.id === "number" && line.id > 0
                 ? await repo.findOne({
-                    where: { id: line.id },
+                    where: { id: line.id, account: { id: accountId } },
                     relations: { account: true, targetAccount: true }
                 })
                 : null;
@@ -98,7 +98,6 @@ export default class OperationService {
                 throw notFound("OPERATION_NOT_FOUND", `Operation introuvable: ${line.id}`);
             }
 
-            const accountId = line.account?.id ?? existingLine?.account?.id ?? 1;
             const account = await this.resolveAccountById(accountId, "Operation.save/account", manager);
 
             const targetAccountId = line.targetAccount === null
@@ -169,7 +168,7 @@ export default class OperationService {
         });
     }
 
-    async checkBatch(payload: OperationBatchCheckPayload): Promise<{ updatedCount: number }> {
+    async checkBatch(payload: OperationBatchCheckPayload, accountId: number): Promise<{ updatedCount: number }> {
         const normalizedChecks = payload.checks.map((check) => {
             const normalizedDateValeur = normalizeApiDateInput(check.dateValeur);
             if (!normalizedDateValeur)
@@ -182,7 +181,11 @@ export default class OperationService {
             const repo = manager.getRepository(AccountLine);
 
             const ids = normalizedChecks.map((check) => check.id);
-            const existingLines = await repo.findBy({ id: In(ids) });
+            const existingLines = await repo
+                .createQueryBuilder("al")
+                .where("al.id IN (:...ids)", { ids })
+                .andWhere("al.account_id = :accountId", { accountId })
+                .getMany();
 
             if (existingLines.length !== ids.length)
                 throw notFound("OPERATION_NOT_FOUND", "One or more operations were not found.");
@@ -193,26 +196,28 @@ export default class OperationService {
         return { updatedCount: updatedLines.length };
     }
 
-    async getAllUncheckedLines(): Promise<AccountLine[]> {
+    async getAllUncheckedLines(accountId: number): Promise<AccountLine[]> {
         return this.accountLineRepo
             .createQueryBuilder("al")
             .leftJoinAndSelect("al.account", "account")
             .leftJoinAndSelect("al.targetAccount", "targetAccount")
             .leftJoinAndSelect("al.nature", "nature")
             .leftJoinAndSelect("al.poste", "poste")
-            .where("al.isChecked = :isChecked", { isChecked: false })
+            .where("al.account_id = :accountId", { accountId })
+            .andWhere("al.isChecked = :isChecked", { isChecked: false })
             .orderBy("al.dateOperation", "DESC")
             .addOrderBy("al.id", "DESC")
             .getMany();
     }
 
-    async getAllForExport(): Promise<AccountLine[]> {
+    async getAllForExport(accountId: number): Promise<AccountLine[]> {
         return this.accountLineRepo
             .createQueryBuilder("al")
             .leftJoinAndSelect("al.account", "account")
             .leftJoinAndSelect("al.targetAccount", "targetAccount")
             .leftJoinAndSelect("al.nature", "nature")
             .leftJoinAndSelect("al.poste", "poste")
+            .where("al.account_id = :accountId", { accountId })
             .orderBy("al.dateOperation", "DESC")
             .addOrderBy("al.id", "DESC")
             .getMany();

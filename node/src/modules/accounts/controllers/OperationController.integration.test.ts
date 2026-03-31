@@ -2,18 +2,20 @@ import express from "express";
 import request from "supertest";
 import { DataSource, EntityManager } from "typeorm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { IMemoryDb } from "pg-mem";
 import SetupTestDb from "../../../tests/SetupTests";
-import { errorMiddleware } from "../../../utils/errorMiddleware";
+import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 
 let testDataSource: DataSource;
 let natureChargesId: number;
 let natureRevenusId: number;
 let posteMaisonId: number;
 let posteLoisirsId: number;
+const accountId = 1;
 
 vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
@@ -25,14 +27,21 @@ vi.mock("../../../db/dataSource", () => ({
 
 
 async function seedAccountLines(dataSource: DataSource): Promise<void> {
+    const accountRepo = dataSource.getRepository(Account);
     const natureRepo = dataSource.getRepository(AccountLineNature);
     const posteRepo = dataSource.getRepository(AccountLinePoste);
     const lineRepo = dataSource.getRepository(AccountLine);
+    const account = await accountRepo.save({
+        id: accountId,
+        label: "Compte principal",
+        baseLineAmount: 0,
+        baseLineEffectiveDate: new Date("2026-01-01")
+    });
 
     const natureCharges = await natureRepo.save({ label: "Charges", color: "#112233" });
     const natureRevenus = await natureRepo.save({ label: "Revenus", color: "#334455" });
-    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566" });
-    const posteLoisirs = await posteRepo.save({ label: "Loisirs", color: "#778899" });
+    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566", account });
+    const posteLoisirs = await posteRepo.save({ label: "Loisirs", color: "#778899", account });
 
     natureChargesId = natureCharges.id;
     natureRevenusId = natureRevenus.id;
@@ -47,6 +56,7 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
             dateOperation: baseDateOperation,
             dateValeur: null,
             source: AccountLineSource.MANUAL,
+            account,
             nature: natureCharges,
             poste: posteMaison,
             debit: 100,
@@ -58,6 +68,7 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-03-05"),
             dateValeur: new Date("2026-03-02"),
             source: AccountLineSource.MANUAL,
+            account,
             nature: natureCharges,
             poste: undefined,
             debit: 20,
@@ -69,6 +80,7 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-03-10"),
             dateValeur: null,
             source: AccountLineSource.MANUAL,
+            account,
             nature: natureRevenus,
             poste: posteMaison,
             debit: 0,
@@ -80,6 +92,7 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
             dateOperation: new Date("2026-03-15"),
             dateValeur: new Date("2026-03-01"),
             source: AccountLineSource.MANUAL,
+            account,
             nature: undefined,
             poste: posteLoisirs,
             debit: 0,
@@ -98,17 +111,17 @@ describe("OperationControllers /lazy integration", () => {
 
         testDataSource = db.adapters.createTypeormDataSource({
             type: "postgres",
-            entities: [AccountLine, AccountLineNature, AccountLinePoste],
+            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
             synchronize: true
         });
 
         await testDataSource.initialize();
         await seedAccountLines(testDataSource);
 
-        const { default: operationRoutes } = await import("./OperationController");
+        const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
         app = express();
         app.use(express.json());
-        app.use("/operation", operationRoutes);
+        app.use("/accounts/:accountId", accountScopedRoutes);
         app.use(errorMiddleware);
     });
 
@@ -120,7 +133,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("sorts by amount ASC using (credit - debit)", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({ skip: "0", take: "50", sortField: "amount", sortOrder: "ASC" });
 
         expect(response.status).toBe(200);
@@ -129,9 +142,18 @@ describe("OperationControllers /lazy integration", () => {
         expect(labels).toEqual(["L1", "L2", "L3", "L4"]);
     });
 
+    it("returns 404 when accountId does not exist", async () => {
+        const response = await request(app)
+            .get("/accounts/999/operations/lazy")
+            .query({ skip: "0", take: "50", sortField: "amount", sortOrder: "ASC" });
+
+        expect(response.status).toBe(404);
+        expect(response.body.code).toBe("ACCOUNT_NOT_FOUND");
+    });
+
     it("returns all operations for export", async () => {
         const response = await request(app)
-            .get("/operation/export");
+            .get(`/accounts/${accountId}/operations/export`);
 
         expect(response.status).toBe(200);
         const labels = response.body.map((line: { label: string }) => line.label);
@@ -141,7 +163,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("sorts by amount DESC using (credit - debit)", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({ skip: "0", take: "50", sortField: "amount", sortOrder: "DESC" });
 
         expect(response.status).toBe(200);
@@ -152,7 +174,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("applies amount operator filters (or)", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -179,7 +201,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("applies amount simple filter (equals)", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -203,7 +225,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("sorts by dateValeur ASC", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({ skip: "0", take: "50", sortField: "dateValeur", sortOrder: "ASC" });
 
         expect(response.status).toBe(200);
@@ -214,7 +236,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("returns 400 for disallowed sort field", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({ skip: "0", take: "50", sortField: "unknownField", sortOrder: "ASC" });
 
         expect(response.status).toBe(400);
@@ -223,7 +245,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("returns 400 for disallowed filter field", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -243,7 +265,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters by nature.label equals", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -267,7 +289,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters by poste.label equals", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -291,7 +313,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters by nature.label equals null", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -315,7 +337,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters by poste.label equals null", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -339,7 +361,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters by isChecked equals true", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -363,7 +385,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("filters dateOperation between bounds", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -387,7 +409,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("applies amount in/notIn constraints", async () => {
         const response = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -414,7 +436,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("returns 400 when saving checked operation without dateValeur", async () => {
         const response = await request(app)
-            .post("/operation")
+            .post(`/accounts/${accountId}/operations`)
             .send({
                 label: "Invalid checked",
                 dateOperation: "2026-03-20",
@@ -431,7 +453,7 @@ describe("OperationControllers /lazy integration", () => {
 
     it("checks operations in batch with dateValeur and hides them from unchecked filter", async () => {
         const uncheckedBefore = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",
@@ -451,7 +473,7 @@ describe("OperationControllers /lazy integration", () => {
         expect(idsToCheck.length).toBeGreaterThan(0);
 
         const batchResponse = await request(app)
-            .post("/operation/check-batch")
+            .post(`/accounts/${accountId}/operations/check-batch`)
             .send({
                 checks: idsToCheck.map((id: number) => ({
                     id,
@@ -464,7 +486,7 @@ describe("OperationControllers /lazy integration", () => {
         expect(batchResponse.body.updatedCount).toBe(idsToCheck.length);
 
         const uncheckedAfter = await request(app)
-            .get("/operation/lazy")
+            .get(`/accounts/${accountId}/operations/lazy`)
             .query({
                 skip: "0",
                 take: "50",

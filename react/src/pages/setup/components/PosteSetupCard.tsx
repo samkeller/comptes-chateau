@@ -164,7 +164,7 @@ export default function PosteSetupCard() {
         }
 
         service
-            .updatAccountePoste(selectedAccountId, rowId, {
+            .updateAccountPoste(selectedAccountId, rowId, {
                 ...editingPosteDraft,
                 label: editingPosteDraft.label.trim()
             })

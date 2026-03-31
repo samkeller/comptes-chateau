@@ -19,7 +19,6 @@ export const SaveOperationSchema = z.object({
     debit: z.number().nonnegative().optional(),
     credit: z.number().nonnegative().optional(),
     isChecked: z.boolean().optional(),
-    account: z.object({ id: z.number().int().positive() }),
     targetAccount: z.object({ id: z.number().int().positive() }).nullable().optional(),
     nature: z.object({ id: z.number().int().positive() }).nullable().optional(),
     poste: z.object({ id: z.number().int().positive() }).nullable().optional(),

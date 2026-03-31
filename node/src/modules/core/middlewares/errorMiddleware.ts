@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError } from "./AppError";
+import { AppError } from "../../../utils/AppError";
 
 /**
  * Middleware global de gestion des erreurs Express.

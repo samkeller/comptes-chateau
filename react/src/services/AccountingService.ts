@@ -39,14 +39,15 @@ class AccountingService extends BaseService {
      * @param accountLine - The account line data to save
      */
     saveAccountLine(accountId: number, accountLine: Partial<AccountLine>): Promise<AccountLine> {
+        const { account: _account, ...rest } = accountLine;
         const dataToSend = {
-            ...accountLine,
-            dateOperation: accountLine.dateOperation ? formatApiDate(accountLine.dateOperation) : null,
-            dateValeur: accountLine.dateValeur ? formatApiDate(accountLine.dateValeur) : null,
+            ...rest,
+            dateOperation: rest.dateOperation ? formatApiDate(rest.dateOperation) : null,
+            dateValeur: rest.dateValeur ? formatApiDate(rest.dateValeur) : null,
         }
 
-        if (accountLine.id) {
-            return axios.put(`${this.apiUrl}/accounts/${accountId}/operations/${accountLine.id}`, dataToSend).then(response => {
+        if (rest.id) {
+            return axios.put(`${this.apiUrl}/accounts/${accountId}/operations/${rest.id}`, dataToSend).then(response => {
                 return new AccountLine(response.data)
             })
         }

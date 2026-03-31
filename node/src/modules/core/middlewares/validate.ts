@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { z, ZodType, ZodError } from "zod";
-import { AppError } from "./AppError";
+import { AppError } from "../../../utils/AppError";
 
 // ---------------------------------------------------------------------------
 // Schémas de params réutilisables
@@ -9,6 +9,11 @@ import { AppError } from "./AppError";
 /** Valide un param `:id` (entier positif, coercé depuis string). */
 export const IdParamSchema = z.object({
     id: z.coerce.number().int().positive(),
+});
+
+/** Valide un param `:accountId` (entier positif, coercé depuis string). */
+export const AccountIdParamSchema = z.object({
+    accountId: z.coerce.number().int().positive(),
 });
 
 /** Valide un param `:commentId` (entier positif, coercé depuis string). */

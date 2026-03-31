@@ -1,8 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
-import { AccountLine } from "./AccountLine";
-import { AccountLineNature } from "./AccountLineNature";
-import { RecurringExpense } from "./RecurringExpense";
-import { BudgetItem } from "./BudgetItem";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 
 @Entity("account")
 export class Account {
@@ -21,19 +17,4 @@ export class Account {
 
     @Column({ type: "date" })
     baseLineEffectiveDate: Date;
-
-    /* ========================
-       RELATIONS
-    ======================== */
-    @OneToMany(() => AccountLine, (accountLine) => accountLine.account)
-    accountLines: AccountLine[];
-
-    @OneToMany(() => AccountLineNature, (accountLineNature) => accountLineNature.account)
-    accountLinesNatures: AccountLineNature[];
-
-    @OneToMany(() => RecurringExpense, (recurringExpense) => recurringExpense.account)
-    recurringExpenses: RecurringExpense[];
-
-    @OneToMany(() => BudgetItem, (budgetItem) => budgetItem.account)
-    budgetItems: BudgetItem[];
 }

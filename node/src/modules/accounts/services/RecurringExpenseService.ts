@@ -13,8 +13,9 @@ export default class RecurringExpenseService {
             AppDataSource.getRepository(RecurringExpense);
 
     }
-    async getAllRecurringExpenses() {
+    async getAllRecurringExpenses(accountId: number) {
         return this.recurringExpenseRepo.find({
+            where: { accountId },
             relations: ['nature', 'poste'],
             order: { label: 'ASC' }
         })
@@ -39,9 +40,10 @@ export default class RecurringExpenseService {
         )))
     }
 
-    async save(expense: Partial<RecurringExpense>) {
+    async save(expense: Partial<RecurringExpense>, accountId: number) {
         return this.recurringExpenseRepo.save({
             ...expense,
+            accountId,
             nextOccurrence: normalizeApiDateInput(expense.nextOccurrence) ?? undefined,
         });
     }

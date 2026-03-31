@@ -2,7 +2,7 @@ import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
 import getPgSessionStoreInstance from './config/PGSession';
-import { errorMiddleware } from './utils/errorMiddleware';
+import { errorMiddleware } from './modules/core/middlewares/errorMiddleware';
 
 import AuthRoutes from './modules/core/controllers/AuthController';
 import morgan from 'morgan';

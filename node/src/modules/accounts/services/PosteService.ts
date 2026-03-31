@@ -15,8 +15,9 @@ export default class PosteService {
             : AppDataSource.getRepository(AccountLinePoste);
     }
 
-    async getAll(): Promise<PosteDto[]> {
+    async getAll(accountId: number): Promise<PosteDto[]> {
         const postes = await this.posteRepo.find({
+            where: { accountId },
             order: { label: "ASC" }
         });
 
@@ -25,6 +26,7 @@ export default class PosteService {
             .leftJoin(AccountLine, "line", "line.poste_id = poste.id")
             .select("poste.id", "id")
             .addSelect("COUNT(line.id)", "linkedCount")
+            .where("poste.account_id = :accountId", { accountId })
             .groupBy("poste.id")
             .getRawMany<{ id: string; linkedCount: string }>();
 
@@ -40,11 +42,12 @@ export default class PosteService {
         }));
     }
 
-    async create(payload: SavePostePayload): Promise<PosteDto> {
+    async create(payload: SavePostePayload, accountId: number): Promise<PosteDto> {
         try {
             const entity = this.posteRepo.create({
                 label: payload.label.trim(),
-                color: payload.color
+                color: payload.color,
+                accountId,
             });
 
             const created = await this.posteRepo.save(entity);
@@ -59,8 +62,8 @@ export default class PosteService {
         }
     }
 
-    async update(id: number, payload: SavePostePayload): Promise<PosteDto> {
-        const existing = await this.posteRepo.findOneBy({ id });
+    async update(id: number, payload: SavePostePayload, accountId: number): Promise<PosteDto> {
+        const existing = await this.posteRepo.findOne({ where: { id, accountId } });
         if (!existing) {
             throw notFound("POSTE_NOT_FOUND", "Poste introuvable");
         }
@@ -88,12 +91,12 @@ export default class PosteService {
         }
     }
 
-    async delete(id: number): Promise<void> {
+    async delete(id: number, accountId: number): Promise<void> {
         await AppDataSource.transaction(async (manager) => {
             const posteRepo = manager.getRepository(AccountLinePoste);
             const accountingRepo = manager.getRepository(AccountLine);
 
-            const existing = await posteRepo.findOneBy({ id });
+            const existing = await posteRepo.findOne({ where: { id, accountId } });
             if (!existing) {
                 throw notFound("POSTE_NOT_FOUND", "Poste introuvable");
             }
