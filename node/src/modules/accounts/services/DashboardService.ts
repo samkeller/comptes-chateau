@@ -107,6 +107,7 @@ export default class DashboardService {
         if (toMonth) {
             qb = qb.andWhere("al.dateOperation <= :toMonth", { toMonth });
         }
+        qb = qb.andWhere("poste.account_id = :accountId", { accountId });
         qb = qb.andWhere("poste.id IN (:...posteIds)", { posteIds });
 
         const results = await qb.getRawMany();

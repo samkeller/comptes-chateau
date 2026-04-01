@@ -12,6 +12,8 @@ import UserConfigDialog from "../components/UserConfigDialog";
 import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
 
+const localStorageUtils = new LocalStorageUtils();
+
 interface PageTemplateProps {
   pageTitle: string;
   children: ReactNode;
@@ -21,7 +23,6 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
-  const localStorageUtils = new LocalStorageUtils();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -33,33 +34,17 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   }, [pageTitle])
 
   useEffect(() => {
-    let isMounted = true;
+    new AccountService().getAllAccounts().then((fetchedAccounts) => {
+      const storedId = localStorageUtils.getActiveAccountId();
+      const resolvedId = storedId ?? fetchedAccounts[0]?.id ?? null;
+      if (resolvedId === null) {
+        throw new Error("No accounts available for the user.");
+      }
 
-    new AccountService()
-      .getAllAccounts()
-      .then((fetchedAccounts) => {
-        if (!isMounted) {
-          return;
-        }
-
-        const storedActiveAccountId = localStorageUtils.getActiveAccountId();
-        const resolvedActiveAccountId = storedActiveAccountId ?? fetchedAccounts[0]?.id ?? null;
-
-        if (resolvedActiveAccountId === null) {
-          throw new Error("No accounts available for the user.");
-        }
-
-        localStorageUtils.setActiveAccountId(resolvedActiveAccountId);
-        setAccounts(fetchedAccounts);
-        setActiveAccountId(resolvedActiveAccountId);
-      })
-      .catch(() => {
-        // Global interceptor already displays API errors.
-      });
-
-    return () => {
-      isMounted = false;
-    };
+      localStorageUtils.setActiveAccountId(resolvedId);
+      setAccounts(fetchedAccounts);
+      setActiveAccountId(resolvedId);
+    });
   }, []);
 
   const logout = async () => {

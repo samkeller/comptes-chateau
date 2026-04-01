@@ -1,14 +1,8 @@
-import Account from "@/interfaces/Account";
-import { DashboardOverview } from "@/interfaces/DashboardOverview";
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
-
-export type AccountOverviewModel = {
-    account: Account;
-    overview: DashboardOverview;
-}
+import { AccountOverviewModel } from "../../Index";
 
 interface AccountOverviewProps {
     model: AccountOverviewModel;
@@ -18,6 +12,7 @@ export default function AccountOverview({ model }: AccountOverviewProps) {
     const { account, overview } = model;
 
     const hasForecastDelta = overview.currentBalance !== overview.forecastBalance;
+    const localStorageUtils = new LocalStorageUtils();
     const operationsCount = overview.operationsToCheckInAccountCount;
     const horsCompteCount = overview.operationsToCheckHorsCompteCount;
     const budgetProgress = overview.monthlyBudget <= 0
@@ -26,7 +21,7 @@ export default function AccountOverview({ model }: AccountOverviewProps) {
     const navigate = useNavigate();
 
     const navigateToAccount = (accountId: number, path: "dashboard" | "accountChecks") => {
-        LocalStorageUtils.setActiveAccountId(accountId);
+        localStorageUtils.setActiveAccountId(accountId);
         navigate(`/${accountId}/${path}`);
     };
 

@@ -1,4 +1,4 @@
-import { AccountLineSource } from "../modules/accounts/entities/AccountLine";
+import { AccountLine, AccountLineSource } from "../modules/accounts/entities/AccountLine";
 import AccountLineService from "../modules/accounts/services/AccountLineService";
 import RecurringExpenseService from "../modules/accounts/services/RecurringExpenseService";
 import JobExecutionLogService from "../modules/core/services/JobExecutionLogService";
@@ -31,7 +31,7 @@ export async function processRecurringExpenses(
     }
 
     // 2 - Pour chacune de ces lignes, créer une ligne "account_line"
-    const accountLinesToCreate = expensesToProcess.map(expense => ({
+    const accountLinesToCreate: Partial<AccountLine>[] = expensesToProcess.map(expense => ({
         id: 0,
         label: expense.label,
         debit: expense.solde < 0 ? Math.abs(expense.solde) : 0,
@@ -40,7 +40,8 @@ export async function processRecurringExpenses(
         poste: expense.poste,
         source: AccountLineSource.SYSTEM,
         dateOperation: currentDate,
-        dateValeur: null
+        dateValeur: null,
+        account: expense.account,
     }));
 
     const createdLines = await accountLineService.saveAll(accountLinesToCreate);

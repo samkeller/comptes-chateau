@@ -1,3 +1,4 @@
+import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { Button, ButtonProps } from "primereact/button";
 import { Card } from "primereact/card";
 import { ReactElement } from "react";
@@ -10,7 +11,7 @@ interface HomeGlobalActionsCardProps {
 
 export default function HomeGlobalActionsCard({ assignedKanbanTasksCount, totalOperationsToCheck }: HomeGlobalActionsCardProps) {
     const navigate = useNavigate();
-
+    const localStorageUtils = new LocalStorageUtils();
 
     const actionLine = (
         flavorText: ReactElement,
@@ -56,6 +57,7 @@ export default function HomeGlobalActionsCard({ assignedKanbanTasksCount, totalO
             }
             {
                 totalOperationsToCheck !== 0 &&
+                localStorageUtils.getActiveAccountId() !== null &&
                 actionLine(
                     <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold text-primary-700">{totalOperationsToCheck}</span>
@@ -64,7 +66,7 @@ export default function HomeGlobalActionsCard({ assignedKanbanTasksCount, totalO
                     {
                         label: "Vérifier",
                         icon: "pi pi-arrow-right",
-                        onClick: () => navigate("/operations"),
+                        onClick: () => navigate(`/${localStorageUtils.getActiveAccountId()}/operations`),
                     })
             }
         </Card>
