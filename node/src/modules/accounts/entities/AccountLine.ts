@@ -34,11 +34,11 @@ export class AccountLine {
 
     @ManyToOne(() => AccountLineNature, { nullable: true })
     @JoinColumn({ name: "nature_id" })
-    nature?: AccountLineNature;
+    nature?: AccountLineNature | null;
 
     @ManyToOne(() => AccountLinePoste, { nullable: true })
     @JoinColumn({ name: "poste_id" })
-    poste?: AccountLinePoste;
+    poste?: AccountLinePoste | null;
 
     @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })

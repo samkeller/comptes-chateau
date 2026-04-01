@@ -45,6 +45,7 @@ export default class OperationService {
             account: targetAccount,
             targetAccount: account,
             transferGroupId,
+            poste: null, // Pas de lien entre les postes de comptes différents.
             debit: Number(line.credit ?? 0),
             credit: Number(line.debit ?? 0)
         };
@@ -155,11 +156,18 @@ export default class OperationService {
                 : null;
 
             const mirrorPayload = this.buildMirrorLine(primaryLine, account, targetAccount, savedPrimary.transferGroupId as string);
+            const hasTargetChanged = existingLine?.targetAccount?.id !== targetAccount.id;
 
-            await accountLineService.save({
-                ...mirrorPayload,
-                ...(sibling ? { id: sibling.id } : {})
-            });
+            // Lors d'une edition standard d'un virement existant, on n'ecrase pas la ligne miroir
+            // pour eviter de propager des choix metier (nature/poste/libelle) d'un compte a l'autre.
+            const shouldUpsertMirror = !sibling || !existingLine?.transferGroupId || hasTargetChanged;
+
+            if (shouldUpsertMirror) {
+                await accountLineService.save({
+                    ...mirrorPayload,
+                    ...(sibling ? { id: sibling.id } : {})
+                });
+            }
 
             return repo.findOneOrFail({
                 where: { id: savedPrimary.id },

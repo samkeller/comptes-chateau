@@ -123,9 +123,10 @@ describe("OperationService.save - transfer groups", () => {
         expect(Number(mirror?.debit)).toBe(0);
         expect(Number(mirror?.credit)).toBe(125);
         expect(mirror?.transferGroupId).toBe(savedLine.transferGroupId);
+        expect(mirror?.poste ?? null).toBeNull();
     });
 
-    it("updates the sibling line instead of creating a third line", async () => {
+    it("does not update the sibling line when editing an existing transfer", async () => {
         storedLines = [
             {
                 id: 10,
@@ -163,7 +164,7 @@ describe("OperationService.save - transfer groups", () => {
             debit: 80,
             credit: 0,
             isChecked: false,
-            targetAccount: { id: 3 },
+            targetAccount: { id: 2 },
             dateValeur: null,
             nature: null,
             poste: null
@@ -173,11 +174,66 @@ describe("OperationService.save - transfer groups", () => {
         expect(storedLines).toHaveLength(2);
 
         const sibling = storedLines.find((line) => line.id === 11);
+        expect(sibling?.account?.id).toBe(2);
+        expect(sibling?.targetAccount?.id).toBe(1);
+        expect(Number(sibling?.credit)).toBe(50);
+        expect(Number(sibling?.debit)).toBe(0);
+        expect(sibling?.transferGroupId).toBe("group-1");
+    });
+
+    it("updates the sibling line when the transfer target account changes", async () => {
+        storedLines = [
+            {
+                id: 40,
+                label: "Virement",
+                dateOperation: new Date("2026-03-10"),
+                debit: 50,
+                credit: 0,
+                isChecked: false,
+                account: accounts[0],
+                targetAccount: accounts[1],
+                transferGroupId: "group-4",
+                dateValeur: null
+            },
+            {
+                id: 41,
+                label: "Virement",
+                dateOperation: new Date("2026-03-10"),
+                debit: 0,
+                credit: 50,
+                isChecked: false,
+                account: accounts[1],
+                targetAccount: accounts[0],
+                transferGroupId: "group-4",
+                dateValeur: null
+            }
+        ];
+        nextId = 42;
+
+        const service = new OperationService();
+
+        await service.save({
+            id: 40,
+            label: "Virement vers voyage",
+            dateOperation: "2026-03-20",
+            debit: 80,
+            credit: 0,
+            isChecked: false,
+            targetAccount: { id: 3 },
+            dateValeur: null,
+            nature: null,
+            poste: null
+        }, 1);
+
+        expect(storedLines).toHaveLength(2);
+
+        const sibling = storedLines.find((line) => line.id === 41);
         expect(sibling?.account?.id).toBe(3);
         expect(sibling?.targetAccount?.id).toBe(1);
         expect(Number(sibling?.credit)).toBe(80);
         expect(Number(sibling?.debit)).toBe(0);
-        expect(sibling?.transferGroupId).toBe("group-1");
+        expect(sibling?.transferGroupId).toBe("group-4");
+        expect(sibling?.poste ?? null).toBeNull();
     });
 
     it("rejects a transfer to the same account", async () => {

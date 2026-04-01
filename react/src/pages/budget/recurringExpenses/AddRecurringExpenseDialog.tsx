@@ -25,8 +25,8 @@ interface AddRecurringExpenseDialogProps {
 
 export default function AddRecurringExpenseDialog({ accountId, editingExpense, hideDialog, refresh }: AddRecurringExpenseDialogProps) {
     const [label, setLabel] = useState<string>(editingExpense?.label || '');
-    const [nature, setNature] = useState<AccountLineNature | null>(editingExpense?.nature || null);
-    const [poste, setPoste] = useState<AccountLinePoste | null>(editingExpense?.poste || null);
+    const [natureId, setNatureId] = useState<number | null>(editingExpense?.nature?.id ?? null);
+    const [posteId, setPosteId] = useState<number | null>(editingExpense?.poste?.id ?? null);
     const [solde, setSolde] = useState<number>(editingExpense?.solde || 0);
     const [isActive, setIsActive] = useState<boolean>(editingExpense?.isActive ?? true);
     const [nextOccurrence, setNextOccurrence] = useState<Date>(editingExpense?.nextOccurrence || new Date());
@@ -49,25 +49,32 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
                 setPostes(postesData);
 
                 if (!editingExpense) {
-                    setNature(naturesData[0] || null);
-                    setPoste(postesData[0] || null);
+                    setNatureId(naturesData[0]?.id ?? null);
+                    setPosteId(postesData[0]?.id ?? null);
+                    return;
                 }
+
+                setNatureId(editingExpense.nature?.id ?? null);
+                setPosteId(editingExpense.poste?.id ?? null);
             })
             .finally(() => {
                 setLoading(false);
             });
     }, [editingExpense, accountId]);
 
-    const natureOptions = natures.map(v => ({ label: v.label, value: v }));
-    const posteOptions = postes.map(v => ({ label: v.label, value: v }));
+    const natureOptions = natures.map((nature) => ({ ...nature, value: nature.id }));
+    const posteOptions = postes.map((poste) => ({ ...poste, value: poste.id }));
 
     const handleSubmit = () => {
-        if (!label || !nature || !poste) return;
+        const selectedNature = natures.find((item) => item.id === natureId) ?? null;
+        const selectedPoste = postes.find((item) => item.id === posteId) ?? null;
+        if (!label || !selectedNature || !selectedPoste) return;
+
         const expense: Partial<RecurringExpense> = {
             id: editingExpense ? editingExpense.id : 0,
             label,
-            nature,
-            poste,
+            nature: selectedNature,
+            poste: selectedPoste,
             solde,
             isActive,
             nextOccurrence
@@ -117,26 +124,28 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
                 <div className='flex gap-1'>
                     <FloatLabel className='flex-1'>
                         <Dropdown id="nature"
-                            value={nature}
+                            value={natureId}
                             options={natureOptions}
-                            onChange={(e) => setNature(e.value)}
+                            onChange={(e) => setNatureId(e.value as number | null)}
                             placeholder="Sélectionner une nature"
                             className='w-full'
-                            itemTemplate={(option) => option && <ColoredLabel data={option.value} />}
-                            valueTemplate={(option) => option && option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
+                            optionValue="value"
+                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
+                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="nature">Nature</label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
                         <Dropdown
                             id="poste"
-                            value={poste}
+                            value={posteId}
                             options={posteOptions}
-                            onChange={(e) => setPoste(e.value)}
+                            onChange={(e) => setPosteId(e.value as number | null)}
                             placeholder="Sélectionner un poste"
                             className='w-full'
-                            itemTemplate={(option) => option && <ColoredLabel data={option.value} />}
-                            valueTemplate={(option) => option && option.value ? <ColoredLabel data={option.value} /> : <span>Sélectionner</span>}
+                            optionValue="value"
+                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
+                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>
