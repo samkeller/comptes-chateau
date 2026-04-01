@@ -1,13 +1,16 @@
 import ChocoChou from "@assets/images/chocochou.png";
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Account from "../interfaces/Account";
 import AuthService from "../services/AuthService";
+import AccountService from "../services/AccountService";
 import { useGlobalToast } from "../context/GlobalToastContext";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
 import { useConnectedUser } from "../context/ConnectedUserContext";
+import LocalStorageUtils from "../utils/LocalStorageUtils";
 
 interface PageTemplateProps {
   pageTitle: string;
@@ -18,6 +21,8 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
+  const [accounts, setAccounts] = useState<Account[]>(() => LocalStorageUtils.getAccounts());
+  const [activeAccountId, setActiveAccountId] = useState<number | null>(() => LocalStorageUtils.getActiveAccountId());
   const navigate = useNavigate();
   const showGlobalToast = useGlobalToast();
   const { clearUser } = useConnectedUser();
@@ -25,6 +30,37 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
   }, [pageTitle])
+
+  useEffect(() => {
+    let isMounted = true;
+
+    new AccountService()
+      .getAllAccounts()
+      .then((fetchedAccounts) => {
+        if (!isMounted) {
+          return;
+        }
+
+        LocalStorageUtils.setAccounts(fetchedAccounts);
+
+        const storedActiveAccountId = LocalStorageUtils.getActiveAccountId();
+        const resolvedActiveAccountId = storedActiveAccountId ?? fetchedAccounts[0]?.id ?? null;
+
+        if (resolvedActiveAccountId !== null) {
+          LocalStorageUtils.setActiveAccountId(resolvedActiveAccountId);
+        }
+
+        setAccounts(fetchedAccounts);
+        setActiveAccountId(resolvedActiveAccountId);
+      })
+      .catch(() => {
+        // Global interceptor already displays API errors.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const logout = async () => {
     await new AuthService().logout();
@@ -39,6 +75,11 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const navigateTo = (path: string) => {
     navigate(path);
     setIsMobileMenuVisible(false);
+  }
+
+  const handleActiveAccountChange = (accountId: number) => {
+    LocalStorageUtils.setActiveAccountId(accountId);
+    setActiveAccountId(accountId);
   }
 
   const brand = (
@@ -99,7 +140,12 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
       <div className="flex-1 min-h-0 md:flex overflow-hidden">
         {isDesktopMenuVisible && (
           <aside className="p-6 border-r border-surface hidden md:block md:w-64 h-full overflow-y-auto">
-            <AppNavigationMenu navigateTo={navigateTo} />
+            <AppNavigationMenu
+              navigateTo={navigateTo}
+              accounts={accounts}
+              activeAccountId={activeAccountId}
+              onActiveAccountChange={handleActiveAccountChange}
+            />
           </aside>
         )}
 
@@ -110,7 +156,12 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           className="w-72"
         >
           <div className="flex flex-col h-full">
-            <AppNavigationMenu navigateTo={navigateTo} />
+            <AppNavigationMenu
+              navigateTo={navigateTo}
+              accounts={accounts}
+              activeAccountId={activeAccountId}
+              onActiveAccountChange={handleActiveAccountChange}
+            />
           </div>
         </Sidebar>
 
