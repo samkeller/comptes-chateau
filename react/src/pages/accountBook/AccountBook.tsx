@@ -135,7 +135,7 @@ export default function AccountBook() {
     }
 
     return (
-        <PageTemplate pageTitle="Comptes">
+        <PageTemplate pageTitle="Opérations">
             {
                 showAddDialog && <AddAccountLineDialog
                     accountId={accountId}

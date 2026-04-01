@@ -85,7 +85,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const brand = (
     <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
       <img src={ChocoChou} className="h-12" />
-      <h1 className="text-2xl m-0 font-semibold">Chocosous</h1>
+      <h1 className="text-2xl m-0 font-semibold">Chocosous {activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}</h1>
     </button>
   )
 
@@ -166,7 +166,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         </Sidebar>
 
         <main className="flex-1 min-h-0 overflow-y-auto px-12 py-6">
-            {children}
+          {children}
         </main>
       </div>
     </div>
