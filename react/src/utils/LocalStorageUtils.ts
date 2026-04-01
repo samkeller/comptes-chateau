@@ -1,73 +1,75 @@
 import Account from "../interfaces/Account";
 
-const ACCOUNTS_LIST_KEY = "cc.accounts.list";
-const ACTIVE_ACCOUNT_ID_KEY = "cc.accounts.activeId";
-
-function hasLocalStorage(): boolean {
-    return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const LOCAL_STORAGE_KEYS = {
+    ACCOUNTS_LIST: "cc.accounts.list",
+    ACTIVE_ACCOUNT_ID: "cc.accounts.activeId"
 }
 
-function parseAccounts(input: unknown): Account[] {
-    if (!Array.isArray(input)) {
-        return [];
+interface WithExpiry {
+    value: string;
+    timestamp: number;
+}
+class LocalStorageUtils {
+    private expiresAfterMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+    constructor() {
+        if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+            throw new Error("LocalStorageUtils can only be used in a browser environment with localStorage support.");
+        }
     }
 
-    return input
-        .map((value) => new Account(value as Partial<Account>))
-        .filter((account) => typeof account.id === "number" && Number.isInteger(account.id) && account.id > 0);
-}
 
-const LocalStorageUtils = {
     getAccounts(): Account[] {
-        if (!hasLocalStorage()) {
-            return [];
+        const rawValue = this.getWithExpiry(LOCAL_STORAGE_KEYS.ACCOUNTS_LIST);
+        if (rawValue === null) {
+            return []
         }
-
-        const rawValue = window.localStorage.getItem(ACCOUNTS_LIST_KEY);
-        if (!rawValue) {
-            return [];
-        }
-
-        try {
-            return parseAccounts(JSON.parse(rawValue));
-        } catch {
-            return [];
-        }
-    },
+        return JSON.parse(rawValue)
+            .map((value: Partial<Account>) => new Account(value));
+    }
 
     setAccounts(accounts: Account[]): void {
-        if (!hasLocalStorage()) {
-            return;
-        }
-
-        window.localStorage.setItem(ACCOUNTS_LIST_KEY, JSON.stringify(accounts));
-    },
+        this.setWithExpiry(LOCAL_STORAGE_KEYS.ACCOUNTS_LIST, JSON.stringify(accounts));
+    }
 
     getActiveAccountId(): number | null {
-        if (!hasLocalStorage()) {
-            return null;
-        }
-
-        const rawValue = window.localStorage.getItem(ACTIVE_ACCOUNT_ID_KEY);
+        const rawValue = this.getWithExpiry(LOCAL_STORAGE_KEYS.ACTIVE_ACCOUNT_ID);
         if (!rawValue) {
             return null;
         }
-
         const parsedId = Number(rawValue);
         if (!Number.isInteger(parsedId) || parsedId <= 0) {
             return null;
         }
-
         return parsedId;
-    },
+    }
 
     setActiveAccountId(accountId: number): void {
-        if (!hasLocalStorage()) {
-            return;
-        }
+        this.setWithExpiry(LOCAL_STORAGE_KEYS.ACTIVE_ACCOUNT_ID, String(accountId));
+    }
 
-        window.localStorage.setItem(ACTIVE_ACCOUNT_ID_KEY, String(accountId));
+    private setWithExpiry(key: string, value: string): void {
+        const record: WithExpiry = {
+            value,
+            timestamp: Date.now()
+        };
+        window.localStorage.setItem(key, JSON.stringify(record));
+    }
+
+    private getWithExpiry(key: string): string | null {
+        const rawRecord = window.localStorage.getItem(key);
+        if (!rawRecord) {
+            return null;
+        }
+        const parsed: WithExpiry = JSON.parse(rawRecord);
+
+        if (Date.now() - parsed.timestamp > this.expiresAfterMs) {
+            window.localStorage.removeItem(key);
+            return null;
+        }
+        return parsed.value;
     }
 };
 
 export default LocalStorageUtils;
+export { LOCAL_STORAGE_KEYS };

@@ -21,8 +21,9 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
-  const [accounts, setAccounts] = useState<Account[]>(() => LocalStorageUtils.getAccounts());
-  const [activeAccountId, setActiveAccountId] = useState<number | null>(() => LocalStorageUtils.getActiveAccountId());
+  const localStorageUtils = new LocalStorageUtils();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<number | null>(null);
   const navigate = useNavigate();
   const showGlobalToast = useGlobalToast();
   const { clearUser } = useConnectedUser();
@@ -41,15 +42,14 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           return;
         }
 
-        LocalStorageUtils.setAccounts(fetchedAccounts);
-
-        const storedActiveAccountId = LocalStorageUtils.getActiveAccountId();
+        const storedActiveAccountId = localStorageUtils.getActiveAccountId();
         const resolvedActiveAccountId = storedActiveAccountId ?? fetchedAccounts[0]?.id ?? null;
 
-        if (resolvedActiveAccountId !== null) {
-          LocalStorageUtils.setActiveAccountId(resolvedActiveAccountId);
+        if (resolvedActiveAccountId === null) {
+          throw new Error("No accounts available for the user.");
         }
 
+        localStorageUtils.setActiveAccountId(resolvedActiveAccountId);
         setAccounts(fetchedAccounts);
         setActiveAccountId(resolvedActiveAccountId);
       })
@@ -78,7 +78,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   }
 
   const handleActiveAccountChange = (accountId: number) => {
-    LocalStorageUtils.setActiveAccountId(accountId);
+    localStorageUtils.setActiveAccountId(accountId);
     setActiveAccountId(accountId);
   }
 
