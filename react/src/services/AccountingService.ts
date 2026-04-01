@@ -39,11 +39,14 @@ class AccountingService extends BaseService {
      * @param accountLine - The account line data to save
      */
     saveAccountLine(accountId: number, accountLine: Partial<AccountLine>): Promise<AccountLine> {
-        const { account: _account, ...rest } = accountLine;
+        const { account: _account, targetAccount, ...rest } = accountLine;
         const dataToSend = {
             ...rest,
             dateOperation: rest.dateOperation ? formatApiDate(rest.dateOperation) : null,
             dateValeur: rest.dateValeur ? formatApiDate(rest.dateValeur) : null,
+            targetAccount: targetAccount !== undefined
+                ? (targetAccount ? { id: targetAccount.id } : null)
+                : undefined,
         }
 
         if (rest.id) {

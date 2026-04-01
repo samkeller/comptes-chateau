@@ -256,6 +256,15 @@ export default function AccountBook() {
                                         </>
 
                                     }
+                                    {
+                                        data.transferGroupId && <>
+                                            <Tooltip target=".custom-icon-is-transfer" />
+                                            <i
+                                                className="pi pi-small pi-arrows-h text-xs text-blue-400 mr-1 custom-icon-is-transfer"
+                                                data-pr-tooltip={data.targetAccount ? `Virement vers ${data.targetAccount.label}` : "Virement"}
+                                            />
+                                        </>
+                                    }
                                     {data.label}
                                 </div>
                             )

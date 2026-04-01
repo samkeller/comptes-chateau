@@ -195,4 +195,96 @@ describe("OperationService.save - transfer groups", () => {
             poste: null
         }, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_SAME_ACCOUNT", statusCode: 400 });
     });
+
+    it("removes mirror line when targetAccount is cleared on an existing transfer", async () => {
+        storedLines = [
+            {
+                id: 20,
+                label: "Virement",
+                dateOperation: new Date("2026-03-10"),
+                debit: 60,
+                credit: 0,
+                isChecked: false,
+                account: accounts[0],
+                targetAccount: accounts[1],
+                transferGroupId: "group-2",
+                dateValeur: null
+            },
+            {
+                id: 21,
+                label: "Virement",
+                dateOperation: new Date("2026-03-10"),
+                debit: 0,
+                credit: 60,
+                isChecked: false,
+                account: accounts[1],
+                targetAccount: accounts[0],
+                transferGroupId: "group-2",
+                dateValeur: null
+            }
+        ];
+        nextId = 22;
+
+        const service = new OperationService();
+
+        const savedLine = await service.save({
+            id: 20,
+            label: "Depense simple",
+            dateOperation: "2026-03-10",
+            debit: 60,
+            credit: 0,
+            isChecked: false,
+            targetAccount: null,
+            dateValeur: null,
+            nature: null,
+            poste: null
+        }, 1);
+
+        expect(savedLine.targetAccount).toBeNull();
+        expect(savedLine.transferGroupId).toBeNull();
+        expect(storedLines).toHaveLength(1);
+        expect(storedLines[0].id).toBe(20);
+    });
+
+    it("converts a simple operation to a transfer by adding a targetAccount", async () => {
+        storedLines = [
+            {
+                id: 30,
+                label: "Depense simple existante",
+                dateOperation: new Date("2026-03-12"),
+                debit: 90,
+                credit: 0,
+                isChecked: false,
+                account: accounts[0],
+                targetAccount: null,
+                transferGroupId: null,
+                dateValeur: null
+            }
+        ];
+        nextId = 31;
+
+        const service = new OperationService();
+
+        const savedLine = await service.save({
+            id: 30,
+            label: "Virement depuis simple",
+            dateOperation: "2026-03-12",
+            debit: 90,
+            credit: 0,
+            isChecked: false,
+            targetAccount: { id: 2 },
+            dateValeur: null,
+            nature: null,
+            poste: null
+        }, 1);
+
+        expect(savedLine.targetAccount?.id).toBe(2);
+        expect(savedLine.transferGroupId).toBeTruthy();
+        expect(storedLines).toHaveLength(2);
+
+        const mirror = storedLines.find((line) => line.id !== 30);
+        expect(mirror?.account?.id).toBe(2);
+        expect(Number(mirror?.credit)).toBe(90);
+        expect(mirror?.transferGroupId).toBe(savedLine.transferGroupId);
+    });
 });

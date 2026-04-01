@@ -187,3 +187,115 @@ describe("DashboardController /monthly-by-poste integration", () => {
         expect(response.body.message).toContain("posteIds");
     });
 });
+
+describe("DashboardController monthly-by-poste with incoming transfers", () => {
+    let app: express.Express;
+    const sourceAccountId = 10;
+    const targetAccountId = 11;
+    let posteRevenuId: number;
+
+    beforeAll(async () => {
+        // Reassign module-level testDataSource so the top-level vi.mock can pick it up
+        const transferDb = SetupTestDb();
+        testDataSource = transferDb.adapters.createTypeormDataSource({
+            type: "postgres",
+            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
+            synchronize: true
+        });
+        await testDataSource.initialize();
+
+        const accountRepo = testDataSource.getRepository(Account);
+        const posteRepo = testDataSource.getRepository(AccountLinePoste);
+        const lineRepo = testDataSource.getRepository(AccountLine);
+
+        const sourceAccount = await accountRepo.save({
+            id: sourceAccountId,
+            label: "Source",
+            baseLineAmount: 0,
+            baseLineEffectiveDate: new Date("2026-01-01")
+        });
+        const targetAccount = await accountRepo.save({
+            id: targetAccountId,
+            label: "Cible",
+            baseLineAmount: 0,
+            baseLineEffectiveDate: new Date("2026-01-01")
+        });
+
+        const posteRevenu = await posteRepo.save({ label: "Revenu", color: "#aabbcc", account: targetAccount });
+        posteRevenuId = posteRevenu.id;
+
+        const transferGroupId = "dashboard-transfer-group";
+
+        await lineRepo.save([
+            {
+                label: "Virement sortant",
+                dateOperation: new Date("2026-02-15"),
+                dateValeur: null,
+                source: AccountLineSource.MANUAL,
+                account: sourceAccount,
+                targetAccount: targetAccount,
+                transferGroupId,
+                debit: 300,
+                credit: 0,
+                isChecked: false
+            },
+            {
+                label: "Virement sortant",
+                dateOperation: new Date("2026-02-15"),
+                dateValeur: null,
+                source: AccountLineSource.MANUAL,
+                account: targetAccount,
+                targetAccount: sourceAccount,
+                transferGroupId,
+                poste: posteRevenu,
+                debit: 0,
+                credit: 300,
+                isChecked: false
+            }
+        ]);
+
+        const { default: dashboardRoutes } = await import("./DashboardController");
+        app = express();
+        app.use(express.json());
+        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
+        app.use(errorMiddleware);
+    });
+
+    afterAll(async () => {
+        if (testDataSource?.isInitialized) {
+            await testDataSource.destroy();
+        }
+    });
+
+    it("target account aggregate includes incoming transfer mirror line", async () => {
+        const response = await request(app)
+            .get(`/accounts/${targetAccountId}/dashboard/monthly-by-poste`)
+            .query({
+                from: "2026-02-01",
+                to: "2026-02-28",
+                posteIds: `${posteRevenuId}`
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveLength(1);
+        expect(response.body[0]).toMatchObject({
+            year: 2026,
+            month: 2,
+            posteId: posteRevenuId,
+            total: 300
+        });
+    });
+
+    it("source account has no lines for the target poste", async () => {
+        const response = await request(app)
+            .get(`/accounts/${sourceAccountId}/dashboard/monthly-by-poste`)
+            .query({
+                from: "2026-02-01",
+                to: "2026-02-28",
+                posteIds: `${posteRevenuId}`
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveLength(0);
+    });
+});

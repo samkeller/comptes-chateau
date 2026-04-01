@@ -505,4 +505,83 @@ describe("OperationControllers /lazy integration", () => {
         expect(uncheckedAfter.status).toBe(200);
         expect(uncheckedAfter.body.data).toEqual([]);
     });
+
+    it("POST creates a transfer: source gets debit line, target gets mirror credit line", async () => {
+        const targetAccountId = 2;
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const accountRepo = testDataSource.getRepository(Account);
+
+        await accountRepo.save({
+            id: targetAccountId,
+            label: "Epargne",
+            baseLineAmount: 0,
+            baseLineEffectiveDate: new Date("2026-01-01")
+        });
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations`)
+            .send({
+                label: "Virement test",
+                dateOperation: "2026-03-25",
+                dateValeur: null,
+                debit: 200,
+                credit: 0,
+                isChecked: false,
+                targetAccount: { id: targetAccountId }
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body.transferGroupId).toBeTruthy();
+        expect(response.body.targetAccount.id).toBe(targetAccountId);
+
+        const allLines = await lineRepo.findBy({ transferGroupId: response.body.transferGroupId });
+        expect(allLines).toHaveLength(2);
+
+        const mirror = allLines.find((l) => l.id !== response.body.id);
+        expect(Number(mirror?.debit)).toBe(0);
+        expect(Number(mirror?.credit)).toBe(200);
+        const mirrorWithAccount = await lineRepo.findOne({ where: { id: mirror!.id }, relations: { account: true } });
+        expect(mirrorWithAccount?.account.id).toBe(targetAccountId);
+    });
+
+    it("POST rejects a transfer when source and target account are the same", async () => {
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations`)
+            .send({
+                label: "Virement invalide",
+                dateOperation: "2026-03-25",
+                debit: 50,
+                credit: 0,
+                isChecked: false,
+                targetAccount: { id: accountId }
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.code).toBe("OPERATION_TRANSFER_SAME_ACCOUNT");
+    });
+
+    it("target account sees its mirror line in /lazy after a transfer is created", async () => {
+        const targetAccountId = 2;
+
+        const lazySourceResponse = await request(app)
+            .get(`/accounts/${accountId}/operations/lazy`)
+            .query({ skip: "0", take: "200", sortField: "dateOperation", sortOrder: "DESC" });
+
+        expect(lazySourceResponse.status).toBe(200);
+        const sourceTransfers = lazySourceResponse.body.data.filter(
+            (l: { label: string }) => l.label === "Virement test"
+        );
+        expect(sourceTransfers.length).toBe(1);
+
+        const lazyTargetResponse = await request(app)
+            .get(`/accounts/${targetAccountId}/operations/lazy`)
+            .query({ skip: "0", take: "200", sortField: "dateOperation", sortOrder: "DESC" });
+
+        expect(lazyTargetResponse.status).toBe(200);
+        const targetTransfers = lazyTargetResponse.body.data.filter(
+            (l: { label: string }) => l.label === "Virement test"
+        );
+        expect(targetTransfers.length).toBe(1);
+        expect(Number(targetTransfers[0].credit)).toBe(200);
+    });
 });

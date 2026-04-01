@@ -8,9 +8,11 @@ import { InputNumber } from "primereact/inputnumber";
 import { FloatLabel } from "primereact/floatlabel";
 import { ToggleButton } from "primereact/togglebutton";
 import AccountLine from "../../interfaces/AccountLine";
+import Account from "../../interfaces/Account";
 import { AccountLineNature } from "../../interfaces/AccountLineNature";
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
 import AccountingService from "../../services/AccountingService";
+import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import { useGlobalToast } from "../../context/GlobalToastContext";
@@ -25,34 +27,42 @@ interface AddAcountLineDialogProps {
 }
 
 export default function AddAccountLineDialog({ accountId, editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
-    const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : "");
+    const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : parseDateToDDMMYYYY(new Date()));
     const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
     const [label, setLabel] = useState<string>(editingLine?.label || "");
     const [nature, setNature] = useState<AccountLineNature | null>(editingLine?.nature || null);
     const [poste, setPoste] = useState<AccountLinePoste | null>(editingLine?.poste || null);
     const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
+    const [targetAccount, setTargetAccount] = useState<Account | null>(editingLine?.targetAccount || null);
 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const showGlobalToast = useGlobalToast();
 
     useEffect(() => {
         const natureService = new AccountLineNatureService();
         const posteService = new AccountLinePosteService();
+        const accountService = new AccountService();
         Promise.all([
             natureService.getAllNatures(),
-            posteService.getAllAccountPostes(accountId)
-        ]).then(([naturesData, postesData]) => {
+            posteService.getAllAccountPostes(accountId),
+            accountService.getAllAccounts()
+        ]).then(([naturesData, postesData, accountsData]) => {
             setNatures(naturesData);
             setPostes(postesData);
+            setAccounts(accountsData);
             setLoading(false);
         });
     }, [editingLine, accountId]);
 
     const natureOptions = natures.map((value) => ({ label: value.label, value }));
     const posteOptions = postes.map((value) => ({ label: value.label, value }));
+    const targetAccountOptions = accounts
+        .filter((a) => a.id !== accountId)
+        .map((value) => ({ label: value.label, value }));
 
     const renderSelectedLabel = (option?: { value?: AccountLineNature | AccountLinePoste } | null) => {
         if (!option?.value) {
@@ -76,7 +86,8 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             nature,
             poste,
             debit: amount < 0 ? (Math.abs(amount) || 0) : 0,
-            credit: amount > 0 ? (amount || 0) : 0
+            credit: amount > 0 ? (amount || 0) : 0,
+            targetAccount: targetAccount ?? null,
         };
 
         new AccountingService()
@@ -225,6 +236,19 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                         <small>{amount < 0 ? "Débit" : "Crédit"}</small>
                     </div>
                 </div>
+                <FloatLabel className="flex-1">
+                    <Dropdown
+                        id="targetAccount"
+                        value={targetAccount}
+                        options={targetAccountOptions}
+                        onChange={(e) => setTargetAccount(e.value ?? null)}
+                        placeholder="Aucun"
+                        className="w-full"
+                        dataKey="id"
+                        showClear
+                    />
+                    <label htmlFor="targetAccount">Compte cible <small>(optionnel)</small></label>
+                </FloatLabel>
             </div>
         </Dialog>
     );
