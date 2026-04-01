@@ -66,7 +66,7 @@ export default function HomeGlobalActionsCard({ assignedKanbanTasksCount, totalO
                     {
                         label: "Vérifier",
                         icon: "pi pi-arrow-right",
-                        onClick: () => navigate(`/${localStorageUtils.getActiveAccountId()}/operations`),
+                        onClick: () => navigate(`/${localStorageUtils.getActiveAccountId()}/accountChecks`),
                     })
             }
         </Card>
