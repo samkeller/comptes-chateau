@@ -110,7 +110,7 @@ export default class OperationService {
                 : null;
 
             if (targetAccount && targetAccount.id === account.id) {
-                throw badRequest("OPERATION_TRANSFER_SAME_ACCOUNT", "Le compte cible doit etre different du compte source.");
+                throw badRequest("OPERATION_TRANSFER_SAME_ACCOUNT", "Le compte lié doit etre different du compte source.");
             }
 
             const primaryLine = {

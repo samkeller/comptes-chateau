@@ -247,7 +247,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                         dataKey="id"
                         showClear
                     />
-                    <label htmlFor="targetAccount">Compte lié<small>(optionnel)</small></label>
+                    <label htmlFor="targetAccount">Compte lié <small>(optionnel)</small></label>
                 </FloatLabel>
             </div>
         </Dialog>
