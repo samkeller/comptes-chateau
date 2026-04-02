@@ -46,7 +46,7 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 ## Migration Policy (Mandatory)
 
 - Ne jamais creer une migration manuellement
-- Toujours passer par la CLI TypeORM
+- Toujours passer par la CLI TypeORM (que l'agent peut proposer de lancer lui-meme)
 - Si un changement de schema est necessaire, proposer la commande CLI au lieu d'ecrire un fichier de migration a la main
 
 Commandes backend de reference:

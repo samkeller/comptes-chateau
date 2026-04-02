@@ -1,19 +1,14 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Account } from "./Account";
-
-export enum BudgetItemCategory {
-    INCOMPRESSIBLE = "incompressible",
-    COMPRESSIBLE = "compressible",
-    EPARGNE = "epargne"
-}
+import { AccountLinePoste } from "./AccountLinePoste";
 
 @Entity("budget_item")
 export class BudgetItem {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: "enum", enum: BudgetItemCategory })
-    category: BudgetItemCategory;
+    @Column({ type: "varchar", length: 120 })
+    category: string;
 
     @Column({ type: "varchar", length: 255 })
     label: string;
@@ -33,4 +28,8 @@ export class BudgetItem {
     @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })
     account: Account;
+
+    @ManyToOne(() => AccountLinePoste, { nullable: true })
+    @JoinColumn({ name: "poste_id" })
+    poste?: AccountLinePoste | null;
 }

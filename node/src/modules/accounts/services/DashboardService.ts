@@ -1,6 +1,6 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLine } from "../entities/AccountLine";
-import { BudgetItem, BudgetItemCategory } from "../entities/BudgetItem";
+import { BudgetItem } from "../entities/BudgetItem";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
 
@@ -11,13 +11,6 @@ export interface MonthlyPosteAggregate {
     posteLabel: string;
     posteColor: string;
     total: number;
-}
-
-export interface DashboardBudgetLine {
-    id: number;
-    category: BudgetItemCategory;
-    label: string;
-    amount: number;
 }
 
 export interface DashboardOverview {
