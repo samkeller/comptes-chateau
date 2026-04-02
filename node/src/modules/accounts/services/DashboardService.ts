@@ -44,7 +44,7 @@ export default class DashboardService {
             this.getMonthExpensesRaw(accountId),
             this.budgetItemRepo.find({
                 where: { isActive: true, account: { id: accountId } },
-                order: { category: "ASC", sortOrder: "ASC", id: "ASC" }
+                order: { sortOrder: "ASC", id: "ASC" }
             }),
             this.getOperationsToCheckCounts(accountId),
             this.getAssignedKanbanTasksCount(userId),

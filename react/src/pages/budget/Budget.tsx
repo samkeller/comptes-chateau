@@ -1,28 +1,48 @@
 import { PageTemplate } from "../PageTemplate";
 import RecurringExpenses from "./recurringExpenses/RecurringExpenses";
 import BudgetItemsTable from "./BudgetItemsTable";
-import { Message } from "primereact/message";
+import UnifiedBudgetView from "./UnifiedBudgetView";
 import { useAccountId } from "../../hooks/useAccountId";
+import { TabPanel, TabView } from "primereact/tabview";
 
 export default function Budget() {
     const accountId = useAccountId();
-    
+
+
+    const panel = ({
+        title,
+        children
+    }: { title: string; children: React.ReactNode }) => {
+        return (
+            <TabPanel header={title}>
+                <div className="p-2">
+                    {children}
+                </div>
+            </TabPanel>
+        )
+    }
+
     return (
         <PageTemplate pageTitle="Budget">
             <div className="flex flex-col gap-6 w-full">
-                <Message
-                    severity="info"
-                    text="Note: le budget mensuel et les dépenses récurrentes sont affichés côte à côte mais restent indépendants pour l'instant."
-                />
-
-                <div className="flex gap-2 w-full">
-                    <div className="flex-1 min-w-0">
-                        <BudgetItemsTable accountId={accountId} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <RecurringExpenses accountId={accountId} />
-                    </div>
-                </div>
+                <TabView>
+                    {panel({
+                        title: "Budget global",
+                        children: <UnifiedBudgetView accountId={accountId} />
+                    })}
+                    {
+                        panel({
+                            title: "Dépenses récurrentes",
+                            children: <RecurringExpenses accountId={accountId} />
+                        })
+                    }
+                    {
+                        panel({
+                            title: "Lignes de budget",
+                            children: <BudgetItemsTable accountId={accountId} />
+                        })
+                    }
+                </TabView>
             </div>
         </PageTemplate>
     );

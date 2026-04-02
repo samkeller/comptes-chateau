@@ -1,6 +1,6 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { BudgetItem, SaveBudgetItemPayload } from "../interfaces/BudgetItem";
+import { BudgetItem, SaveBudgetItemPayload, UnifiedBudgetLine } from "../interfaces/BudgetItem";
 import { showGlobalToast } from "./GlobalToast";
 
 class BudgetService extends BaseService {
@@ -27,7 +27,15 @@ class BudgetService extends BaseService {
                 summary: "Succès",
                 detail: "Ligne de budget supprimée avec succès.",
             });
-        }); 
+        });
+    }
+
+    /**
+     * Get unified budget view (budget items + recurring expenses combined).
+     * @param accountId - The account ID
+     */
+    getUnifiedBudget(accountId: number): Promise<UnifiedBudgetLine[]> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/budget/unified`).then((response) => response.data);
     }
 }
 

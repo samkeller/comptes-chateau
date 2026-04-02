@@ -7,9 +7,6 @@ export class BudgetItem {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: "varchar", length: 120 })
-    category: string;
-
     @Column({ type: "varchar", length: 255 })
     label: string;
 

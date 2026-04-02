@@ -1,4 +1,3 @@
-import { Card } from "primereact/card";
 import { useEffect, useState } from "react";
 import RecurringExpense from "../../../interfaces/RecurringExpense";
 import RecurringExpenseService from "../../../services/RecurringExpenseService";
@@ -65,7 +64,7 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
                     refresh={loadRecurringExpenses}
                 />
             }
-            <Card title="Dépenses récurrentes" className="flex-1">
+            <div className="flex-1">
                 <Message text="Les dépenses récurrentes sont automatiquement ajoutées comme opérations à une fréquence donnée." className="mb-2" />
                 <div className="flex justify-end mb-6">
                     <Button label="Ajouter" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
@@ -122,7 +121,7 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
                         style={{ width: '5rem' }}
                     />
                 </DataTable>
-            </Card>
+            </div>
         </>
     );
 }

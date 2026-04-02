@@ -68,7 +68,6 @@ describe("BudgetController integration", () => {
         const createResponse = await request(app)
             .post(`/accounts/${accountId}/budget`)
             .send({
-                category: "incompressible",
                 label: "Loyer",
                 amount: 800,
                 sortOrder: 1,
@@ -77,9 +76,9 @@ describe("BudgetController integration", () => {
 
         expect(createResponse.status).toBe(201);
         expect(createResponse.body).toMatchObject({
-            category: "incompressible",
             label: "Loyer",
             amount: 800,
+            isActive: true,
             sortOrder: 1,
             poste: {
                 id: posteId,
@@ -93,7 +92,6 @@ describe("BudgetController integration", () => {
         const updateResponse = await request(app)
             .put(`/accounts/${accountId}/budget/${id}`)
             .send({
-                category: "incompressible",
                 label: "Loyer principal",
                 amount: 820,
                 sortOrder: 2,
@@ -105,6 +103,7 @@ describe("BudgetController integration", () => {
             id,
             label: "Loyer principal",
             amount: 820,
+            isActive: true,
             sortOrder: 2,
             poste: null,
         });
@@ -116,15 +115,48 @@ describe("BudgetController integration", () => {
             id,
             label: "Loyer principal",
             amount: 820,
+            isActive: true,
             poste: null,
         });
     });
 
-    it("soft deletes an item and excludes it from active list", async () => {
+    it("updates activation state and keeps the line visible in budget editing list", async () => {
         const createResponse = await request(app)
             .post(`/accounts/${accountId}/budget`)
             .send({
-                category: "compressible",
+                label: "Abonnement salle",
+                amount: 45,
+                sortOrder: 3,
+                posteId: null,
+            });
+
+        const id = Number(createResponse.body.id);
+
+        const updateResponse = await request(app)
+            .put(`/accounts/${accountId}/budget/${id}`)
+            .send({
+                label: "Abonnement salle",
+                amount: 45,
+                isActive: false,
+                sortOrder: 3,
+                posteId: null,
+            });
+
+        expect(updateResponse.status).toBe(200);
+        expect(updateResponse.body).toMatchObject({
+            id,
+            isActive: false,
+        });
+
+        const listResponse = await request(app).get(`/accounts/${accountId}/budget`);
+        expect(listResponse.status).toBe(200);
+        expect(listResponse.body.some((item: { id: number; isActive: boolean }) => item.id === id && item.isActive === false)).toBe(true);
+    });
+
+    it("hard deletes an item from the budget list", async () => {
+        const createResponse = await request(app)
+            .post(`/accounts/${accountId}/budget`)
+            .send({
                 label: "Loisirs",
                 amount: 150,
                 sortOrder: 3,
@@ -142,7 +174,7 @@ describe("BudgetController integration", () => {
 
         const repo = testDataSource.getRepository(BudgetItem);
         const deletedItem = await repo.findOneBy({ id });
-        expect(deletedItem?.isActive).toBe(false);
+        expect(deletedItem).toBeNull();
     });
 
     it("returns 400 when poste does not belong to account", async () => {
@@ -165,7 +197,6 @@ describe("BudgetController integration", () => {
         const response = await request(app)
             .post(`/accounts/${accountId}/budget`)
             .send({
-                category: "epargne",
                 label: "Objectif",
                 amount: 100,
                 sortOrder: 0,

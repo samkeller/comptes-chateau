@@ -9,7 +9,13 @@ const budgetService = new BudgetService();
 
 BudgetRoutes.get("/", async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
-    const lines = await budgetService.getActiveBudgetItems(accountId);
+    const lines = await budgetService.getBudgetItems(accountId);
+    res.json(lines);
+});
+
+BudgetRoutes.get("/unified", async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const lines = await budgetService.getUnifiedBudgetByPoste(accountId);
     res.json(lines);
 });
 

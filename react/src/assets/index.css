@@ -6,6 +6,7 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "./styles/MarkdownStyles.css" layer(components);
 @import "./styles/PrimereactOverrides.css" layer(components);
+@import "./styles/ThemeOverrides.css" ;
 
 @theme {
   --color-surface-0: var(--surface-0);
