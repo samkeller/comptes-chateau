@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardService, { DashboardOverview } from "./DashboardService";
-import { BudgetItemCategory } from "../entities/BudgetItem";
 
 type QueryResult = { value: string | number } | undefined;
 
@@ -82,6 +81,7 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
 
         service = new DashboardService(
             accountLineRepo as never,
+            {} as never,
             {} as never,
             {} as never
         );
@@ -197,6 +197,7 @@ describe("DashboardService.getOverview", () => {
         return new DashboardService(
             accountLineRepo as never,
             budgetItemRepo as never,
+            {} as never,
             accountRepo as never,
             kanbanTaskRepo as never,
         );

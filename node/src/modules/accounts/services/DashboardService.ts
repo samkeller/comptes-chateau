@@ -1,6 +1,7 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLine } from "../entities/AccountLine";
 import { BudgetItem } from "../entities/BudgetItem";
+import { RecurringExpense } from "../entities/RecurringExpense";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
 
@@ -11,6 +12,7 @@ export interface MonthlyPosteAggregate {
     posteLabel: string;
     posteColor: string;
     total: number;
+    budgetAmount: number;
 }
 
 export interface DashboardOverview {
@@ -28,6 +30,7 @@ export default class DashboardService {
     constructor(
         private accountLineRepo = AppDataSource.getRepository(AccountLine),
         private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
+        private recurringExpenseRepo = AppDataSource.getRepository(RecurringExpense),
         private accountRepo = AppDataSource.getRepository(Account),
         private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
     ) { }
@@ -74,6 +77,28 @@ export default class DashboardService {
         posteIds: number[],
         accountId: number
     ): Promise<MonthlyPosteAggregate[]> {
+        const [rawResults, budgetByPoste] = await Promise.all([
+            this.getMonthlyByPosteRaw(fromMonth, toMonth, posteIds, accountId),
+            this.computeBudgetByPoste(accountId, posteIds),
+        ]);
+
+        return rawResults.map((r) => ({
+            year: parseInt(r.year),
+            month: parseInt(r.month),
+            posteId: r.posteId,
+            posteLabel: r.posteLabel,
+            posteColor: r.posteColor,
+            total: parseFloat(r.total),
+            budgetAmount: budgetByPoste.get(r.posteId) ?? 0,
+        }));
+    }
+
+    private async getMonthlyByPosteRaw(
+        fromMonth: Date,
+        toMonth: Date,
+        posteIds: number[],
+        accountId: number
+    ): Promise<Array<{ year: string; month: string; posteId: number; posteLabel: string; posteColor: string; total: string }>> {
         let qb = this.accountLineRepo
             .createQueryBuilder("al")
             .select("EXTRACT(YEAR FROM al.dateOperation)", "year")
@@ -103,16 +128,40 @@ export default class DashboardService {
         qb = qb.andWhere("poste.account_id = :accountId", { accountId });
         qb = qb.andWhere("poste.id IN (:...posteIds)", { posteIds });
 
-        const results = await qb.getRawMany();
+        return qb.getRawMany();
+    }
 
-        return results.map((r) => ({
-            year: parseInt(r.year),
-            month: parseInt(r.month),
-            posteId: r.posteId,
-            posteLabel: r.posteLabel,
-            posteColor: r.posteColor,
-            total: parseFloat(r.total),
-        }));
+    /**
+     * Computes total budget per poste (BudgetItems + RecurringExpenses).
+     * Optionally filtered to a subset of posteIds.
+     */
+    private async computeBudgetByPoste(accountId: number, posteIds?: number[]): Promise<Map<number, number>> {
+        const [budgetItems, recurringExpenses] = await Promise.all([
+            this.budgetItemRepo.find({
+                where: { isActive: true, account: { id: accountId } },
+                relations: { poste: true },
+            }),
+            this.recurringExpenseRepo.find({
+                where: { isActive: true, account: { id: accountId } },
+                relations: { poste: true },
+            }),
+        ]);
+
+        const byPoste = new Map<number, number>();
+
+        for (const item of budgetItems) {
+            if (!item.poste) continue;
+            if (posteIds && !posteIds.includes(item.poste.id)) continue;
+            byPoste.set(item.poste.id, (byPoste.get(item.poste.id) ?? 0) + Number(item.amount));
+        }
+
+        for (const expense of recurringExpenses) {
+            if (!expense.poste) continue;
+            if (posteIds && !posteIds.includes(expense.poste.id)) continue;
+            byPoste.set(expense.poste.id, (byPoste.get(expense.poste.id) ?? 0) + Math.abs(Number(expense.solde)));
+        }
+
+        return byPoste;
     }
 
     /**

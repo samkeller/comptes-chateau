@@ -36,6 +36,12 @@ export default function AccountDashboard() {
         return Math.min(100, (overview.monthExpenses / overview.monthlyBudget) * 100);
     }, [overview]);
 
+    const budgetProgressColor = useMemo(() => {
+        if (budgetProgress > 100) return "bg-red-500";
+        if (budgetProgress > 75) return "bg-orange-400";
+        return "bg-green-500";
+    }, [budgetProgress]);
+
     const getBalanceClass = (value: number): string => {
         if (value < 0) return "text-red-500";
         if (value <= 100) return "text-orange-500";
@@ -86,7 +92,7 @@ export default function AccountDashboard() {
                             </div>
                             <div className="mt-6">
                                 <div className="w-full bg-surface-200 rounded-border overflow-hidden" style={{ height: "0.7rem" }}>
-                                    <div className="bg-primary text-primary-contrast" style={{ width: `${budgetProgress}%`, height: "100%" }} />
+                                    <div className={`${budgetProgressColor}`} style={{ width: `${Math.min(budgetProgress, 100)}%`, height: "100%" }} />
                                 </div>
                             </div>
                             <div className="text-surface-500 mt-2">

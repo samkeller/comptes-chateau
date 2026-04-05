@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import DashboardService from "../services/DashboardService";
 import DashboardMonthlyByPosteQueryParser from "../services/queryMappers/parsers/DashboardMonthlyByPosteQueryParser";
-import { unauthorized } from "../../../utils/AppError";
+import { badRequest, unauthorized } from "../../../utils/AppError";
 import { getAccountIdFromParams } from "../utils/accountParams";
 
 const DashboardRoutes = Router({ mergeParams: true });
