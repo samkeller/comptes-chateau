@@ -1,5 +1,5 @@
-import { Card } from "primereact/card";
 import { useEffect, useState } from "react";
+import { Card } from "primereact/card";
 import RecurringExpense from "../../../interfaces/RecurringExpense";
 import RecurringExpenseService from "../../../services/RecurringExpenseService";
 import { Button } from "primereact/button";
@@ -10,6 +10,9 @@ import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { Message } from "primereact/message";
 import { formatDistance } from "date-fns";
 import { Tooltip } from "primereact/tooltip";
+import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
+import { useGlobalToast } from "@/context/GlobalToastContext";
+import JobService from "@/services/JobService";
 
 interface RecurringExpensesProps {
     accountId: number;
@@ -19,6 +22,8 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
     const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
     const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
     const [editingExpense, setEditingExpense] = useState<RecurringExpense | null>(null)
+    const showGlobalToast = useGlobalToast();
+    const jobService = new JobService()
 
     useEffect(() => {
         loadRecurringExpenses()
@@ -67,8 +72,31 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
             }
             <Card title="Dépenses récurrentes" className="flex-1">
                 <Message text="Les dépenses récurrentes sont automatiquement ajoutées comme opérations à une fréquence donnée." className="mb-2" />
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-end mb-6 gap-4">
                     <Button label="Ajouter" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                    <Button
+                        severity="danger" text icon="pi pi-server"
+                        tooltip="⚠️ Déclencher manuellement les crons"
+                        tooltipOptions={{ position: "left" }}
+                        onClick={(event) => {
+                            confirmPopup({
+                                target: event.currentTarget,
+                                message: 'Êtes-vous sûr de déclencher manuellement le script cron ?',
+                                icon: 'pi pi-info-circle',
+                                defaultFocus: 'reject',
+                                acceptClassName: 'p-button-danger',
+                                accept: () => {
+                                    jobService.runRecurringExpenses().then(() => {
+                                        loadRecurringExpenses();
+                                        showGlobalToast({
+                                            severity: 'success',
+                                            summary: 'Confirmé'
+                                        })
+                                    })
+                                }
+                            })
+                        }} />
+                        <ConfirmPopup />
                 </div>
                 <DataTable<Array<RecurringExpense>>
                     value={recurringExpenses}

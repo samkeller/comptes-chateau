@@ -5,6 +5,7 @@ import AccountScopedRoutes from './modules/accounts/controllers/AccountScopedRou
 import NatureRoutes from './modules/accounts/controllers/NatureController'
 import KanbanRoutes from './modules/kanban/routes/KanbanRoutes'
 import UserRoutes from "./modules/core/controllers/UserController";
+import JobRoutes from "./modules/core/controllers/JobController";
 
 const ApiRouter = Router()
 
@@ -17,5 +18,6 @@ ApiRouter.use('/accounts/:accountId', AccountScopedRoutes)
 ApiRouter.use('/nature', NatureRoutes)
 ApiRouter.use('/kanban', KanbanRoutes)
 ApiRouter.use('/users', UserRoutes)
+ApiRouter.use('/jobs', JobRoutes)
 
 export default ApiRouter

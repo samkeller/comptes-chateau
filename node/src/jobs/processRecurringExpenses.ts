@@ -64,5 +64,11 @@ export async function processRecurringExpenses(
             createdAccountLineIds: createdLines.map(l => l.id)
         }
     );
+
+    return {
+        createdAccountLines: createdLines,
+        updatedRecurringExpenses: expensesToProcess,
+        processedCount: createdLines.length
+    };
 }
 
