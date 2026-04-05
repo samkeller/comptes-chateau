@@ -27,7 +27,7 @@ export default class RecurringExpenseService {
                 nextOccurrence: LessThanOrEqual(date),
                 isActive: true
             },
-            relations: ['nature', 'poste']
+            relations: ['nature', 'poste', 'account']
         })
     }
 
