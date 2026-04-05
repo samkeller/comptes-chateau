@@ -86,11 +86,12 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
                                 defaultFocus: 'reject',
                                 acceptClassName: 'p-button-danger',
                                 accept: () => {
-                                    jobService.runRecurringExpenses().then(() => {
+                                    jobService.runRecurringExpenses().then((jobResponse) => {
                                         loadRecurringExpenses();
                                         showGlobalToast({
                                             severity: 'success',
-                                            summary: 'Confirmé'
+                                            summary: `Script cron exécuté avec succès`,
+                                            detail: `Lignes comptables créées : ${jobResponse.processedCount}`
                                         })
                                     })
                                 }
