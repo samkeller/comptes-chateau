@@ -77,14 +77,14 @@ Backend:
 
 ```bash
 cd node
-npm test
+npm tests
 ```
 
 Frontend:
 
 ```bash
 cd react
-npm test
+npm tests
 ```
 
 ## Migrations base de donnees (TypeORM)

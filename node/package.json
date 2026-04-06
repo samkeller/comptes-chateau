@@ -7,7 +7,7 @@
     "typeorm": "typeorm-ts-node-commonjs -d ./src/db/dataSource.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest run"
+    "tests": "vitest run"
   },
   "keywords": [],
   "author": "",

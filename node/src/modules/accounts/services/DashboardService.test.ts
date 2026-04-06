@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import DashboardService, { DashboardOverview } from "./DashboardService";
+import DashboardService, { BudgetVsActualByPoste, DashboardOverview } from "./DashboardService";
 
 type QueryResult = { value: string | number } | undefined;
 
@@ -156,12 +156,11 @@ describe("DashboardService.getOverview", () => {
     function buildService(options: {
         baseline: { amount: number | string; effectiveDate: Date } | null;
         deltaResults: QueryResult[];
-        budgetItems: Array<{ amount: number | string | null; isActive: boolean }>;
+        budgetVsActual?: BudgetVsActualByPoste[];
         toCheckCounts: { inAccount: string | number | null; horsCompte: string | number | null };
         assignedKanbanTasksCount?: number;
     }): DashboardService {
-        // Each createQueryBuilder call returns a fresh MockOverviewQueryBuilder
-        // Calls order: currentDelta, forecastDelta, monthExpenses, toCheckCounts
+        // Calls order: currentDelta, forecastDelta, toCheckCounts
         let qbCallIndex = 0;
         const createQueryBuilder = vi.fn(() => {
             const result = options.deltaResults[qbCallIndex++];
@@ -169,14 +168,6 @@ describe("DashboardService.getOverview", () => {
         });
 
         const accountLineRepo = { createQueryBuilder };
-
-        const budgetItemRepo = {
-            find: vi.fn().mockResolvedValue(
-                options.budgetItems
-                    .filter(b => b.isActive)
-                    .map((b, i) => ({ id: i + 1, amount: b.amount }))
-            )
-        };
 
         const accountRepo = {
             findOne: vi.fn().mockResolvedValue(
@@ -194,13 +185,17 @@ describe("DashboardService.getOverview", () => {
             })),
         };
 
-        return new DashboardService(
+        const service = new DashboardService(
             accountLineRepo as never,
-            budgetItemRepo as never,
+            {} as never,
             {} as never,
             accountRepo as never,
             kanbanTaskRepo as never,
         );
+
+        vi.spyOn(service, 'getBudgetVsActual').mockResolvedValue(options.budgetVsActual ?? []);
+
+        return service;
     }
 
     it("computes currentBalance = baseline + checked delta", async () => {
@@ -209,10 +204,9 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "250.50" },   // currentDelta (checked)
                 { value: "400.75" },   // forecastDelta (all)
-                { value: "120" },      // monthExpenses
                 { inAccount: 3, horsCompte: 1 } as never // toCheckCounts
             ],
-            budgetItems: [{ amount: 500, isActive: true }],
+            budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
@@ -227,10 +221,9 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "250.50" },
                 { value: "400.75" },
-                { value: "120" },
                 { inAccount: 3, horsCompte: 1 } as never
             ],
-            budgetItems: [{ amount: 500, isActive: true }],
+            budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
         });
 
@@ -245,10 +238,8 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "100" },    // checked only
                 { value: "300" },    // all (includes unchecked)
-                { value: "0" },
                 { inAccount: 0, horsCompte: 0 } as never
             ],
-            budgetItems: [],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
@@ -265,10 +256,9 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "500" },
                 { value: "750" },
-                { value: "80" },
                 { inAccount: 2, horsCompte: 0 } as never
             ],
-            budgetItems: [{ amount: 200, isActive: true }],
+            budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 200, actualAmount: 80 }],
             toCheckCounts: { inAccount: 2, horsCompte: 0 }
         });
 
@@ -285,12 +275,11 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "-150.33" },
                 { value: "-50.10" },
-                { value: "200.50" },
                 { inAccount: "5", horsCompte: "2" } as never
             ],
-            budgetItems: [
-                { amount: "300.50" as unknown as number, isActive: true },
-                { amount: "150.25" as unknown as number, isActive: true }
+            budgetVsActual: [
+                { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 300.50, actualAmount: 120.25 },
+                { posteId: 2, posteLabel: "B", posteColor: "#111", budgetAmount: 150.25, actualAmount: 80.25 },
             ],
             toCheckCounts: { inAccount: "5", horsCompte: "2" }
         });
@@ -305,20 +294,18 @@ describe("DashboardService.getOverview", () => {
         expect(result.operationsToCheckHorsCompteCount).toBe(2);
     });
 
-    it("sums monthlyBudget from all active budget items", async () => {
+    it("derives monthlyBudget and monthExpenses from budget-vs-actual data", async () => {
         const service = buildService({
             baseline: { amount: 0, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "0" },
                 { value: "0" },
-                { value: "0" },
                 { inAccount: 0, horsCompte: 0 } as never
             ],
-            budgetItems: [
-                { amount: 100, isActive: true },
-                { amount: 250, isActive: true },
-                { amount: 999, isActive: false }, // inactive: should not count
-                { amount: 75.50, isActive: true }
+            budgetVsActual: [
+                { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 100, actualAmount: 30 },
+                { posteId: 2, posteLabel: "B", posteColor: "#111", budgetAmount: 250, actualAmount: 50 },
+                { posteId: 3, posteLabel: "C", posteColor: "#222", budgetAmount: 75.50, actualAmount: 10 },
             ],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
@@ -326,6 +313,7 @@ describe("DashboardService.getOverview", () => {
         const result = await service.getOverview(1, 1);
 
         expect(result.monthlyBudget).toBeCloseTo(425.50);
+        expect(result.monthExpenses).toBeCloseTo(90);
     });
 
     it("handles null/undefined delta values gracefully", async () => {
@@ -334,10 +322,8 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 undefined,     // currentDelta returns undefined
                 { value: 0 },  // forecastDelta
-                undefined,     // monthExpenses returns undefined
                 { inAccount: null, horsCompte: null } as never
             ],
-            budgetItems: [],
             toCheckCounts: { inAccount: null, horsCompte: null }
         });
 
@@ -356,10 +342,11 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "-1200.00" },
                 { value: "-1800.00" },
-                { value: "1200" },
                 { inAccount: 10, horsCompte: 3 } as never
             ],
-            budgetItems: [{ amount: 800, isActive: true }],
+            budgetVsActual: [
+                { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 800, actualAmount: 1200 },
+            ],
             toCheckCounts: { inAccount: 10, horsCompte: 3 }
         });
 
@@ -373,24 +360,21 @@ describe("DashboardService.getOverview", () => {
         expect(result.operationsToCheckHorsCompteCount).toBe(3);
     });
 
-    it("handles budget items with null amounts", async () => {
+    it("returns zero budget when no postes have budget or expenses", async () => {
         const service = buildService({
             baseline: { amount: 0, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "0" },
                 { value: "0" },
-                { value: "0" },
                 { inAccount: 0, horsCompte: 0 } as never
             ],
-            budgetItems: [
-                { amount: null, isActive: true },
-                { amount: 200, isActive: true }
-            ],
+            budgetVsActual: [],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
         const result = await service.getOverview(1, 1);
 
-        expect(result.monthlyBudget).toBeCloseTo(200);
+        expect(result.monthlyBudget).toBe(0);
+        expect(result.monthExpenses).toBe(0);
     });
 });

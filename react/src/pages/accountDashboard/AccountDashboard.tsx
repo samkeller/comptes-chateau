@@ -5,22 +5,32 @@ import DashboardService from "../../services/DashboardService";
 import { DashboardOverview } from "../../interfaces/DashboardOverview";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
-import MonthlyDashboard from "../index/monthlyDashboard/MonthlyDashboard";
+import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
 import TooltipInfoIcon from "../../components/TooltipInfoIcon";
 import { Divider } from "primereact/divider";
 import { useAccountId } from "../../hooks/useAccountId";
+import BudgetDetailsByPosteCard from "./BudgetDetailsByPosteCard";
+import { ProgressBar } from "primereact/progressbar";
+import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
 
 export default function AccountDashboard() {
     const accountId = useAccountId();
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
+    const [budgetData, setBudget] = useState<BudgetByPoste[]>([]);
+
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const loadOverview = async () => {
             try {
                 setLoading(true);
-                const data = await new DashboardService().getAccountOverview(accountId);
-                setOverview(data);
+                const dashboardService = new DashboardService();
+                const [overviewData, budgetData] = await Promise.all([
+                    dashboardService.getAccountOverview(accountId),
+                    dashboardService.getBudgetByPoste(accountId)
+                ]);
+                setOverview(overviewData);
+                setBudget(budgetData);
             } finally {
                 setLoading(false);
             }
@@ -29,18 +39,6 @@ export default function AccountDashboard() {
         loadOverview();
     }, [accountId]);
 
-    const budgetProgress = useMemo(() => {
-        if (!overview || overview.monthlyBudget <= 0) {
-            return 0;
-        }
-        return Math.min(100, (overview.monthExpenses / overview.monthlyBudget) * 100);
-    }, [overview]);
-
-    const budgetProgressColor = useMemo(() => {
-        if (budgetProgress > 100) return "bg-red-500";
-        if (budgetProgress > 75) return "bg-orange-400";
-        return "bg-green-500";
-    }, [budgetProgress]);
 
     const getBalanceClass = (value: number): string => {
         if (value < 0) return "text-red-500";
@@ -48,11 +46,19 @@ export default function AccountDashboard() {
         return "text-green-500";
     };
 
+    const totalBudget = useMemo(() => budgetData.reduce((s, d) => s + d.budgetAmount, 0), [budgetData]);
+    const totalActual = useMemo(() => budgetData.reduce((s, d) => s + d.actualAmount, 0), [budgetData]);
+    const remaining = totalBudget - totalActual;
+
     const daysRemainingInMonth = useMemo(() => {
         const today = new Date();
         const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         return lastDay.getDate() - today.getDate();
     }, []);
+
+    const totalPct = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+    const isGloballyOver = remaining < 0;
+
 
     return (
         <PageTemplate pageTitle="Dashboard">
@@ -63,44 +69,53 @@ export default function AccountDashboard() {
             )}
 
             {!loading && overview && (
-                <div className="flex flex-col gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card title="Solde" className="h-full">
-                            <div className="flex h-full">
-                                <div className="flex-1 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-lg">Actuel</span>
-                                        <TooltipInfoIcon tooltipText="Prend en compte uniquement les opérations 'validées' dont les natures de dépenses sont liées au compte en banque. Représente l'état actuel du compte." />
-                                    </div>
-                                    <div className={`text-3xl font-bold ${getBalanceClass(overview.currentBalance)}`}>{toMonetaryAmount(overview.currentBalance)}</div>
-                                    <div className="text-surface-500 text-sm">Opérations validées uniquement</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card title="Solde" className="h-full">
+                        <div className="flex h-full">
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-lg">Actuel</span>
+                                    <TooltipInfoIcon tooltipText="Prend en compte uniquement les opérations 'validées' dont les natures de dépenses sont liées au compte en banque. Représente l'état actuel du compte." />
                                 </div>
-                                <Divider layout="vertical" className="shrink" />
-                                <div className="flex-1 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-lg">Prévisionnel</span>
-                                        <TooltipInfoIcon tooltipText="Prend en compte toutes les opérations (validées ou non) dont les natures de dépenses sont liées au compte en banque." />
-                                    </div>
-                                    <div className={`text-3xl font-bold ${getBalanceClass(overview.forecastBalance)}`}>{toMonetaryAmount(overview.forecastBalance)}</div>
-                                    <div className="text-surface-500 text-sm">Toutes les opérations (validées + à venir)</div>
+                                <div className={`text-3xl font-bold ${getBalanceClass(overview.currentBalance)}`}>{toMonetaryAmount(overview.currentBalance)}</div>
+                                <div className="text-surface-500 text-sm">Opérations validées uniquement</div>
+                            </div>
+                            <Divider layout="vertical" className="shrink" />
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-lg">Prévisionnel</span>
+                                    <TooltipInfoIcon tooltipText="Prend en compte toutes les opérations (validées ou non) dont les natures de dépenses sont liées au compte en banque." />
                                 </div>
+                                <div className={`text-3xl font-bold ${getBalanceClass(overview.forecastBalance)}`}>{toMonetaryAmount(overview.forecastBalance)}</div>
+                                <div className="text-surface-500 text-sm">Toutes les opérations (validées + à venir)</div>
                             </div>
-                        </Card>
-                        <Card title="Dépenses du mois" className="h-full flex flex-col justify-between">
-                            <div className="text-3xl font-bold text-surface-900">
-                                {toMonetaryAmount(overview.monthExpenses)} / {toMonetaryAmount(overview.monthlyBudget)}
-                            </div>
-                            <div className="mt-6">
-                                <div className="w-full bg-surface-200 rounded-border overflow-hidden" style={{ height: "0.7rem" }}>
-                                    <div className={`${budgetProgressColor}`} style={{ width: `${Math.min(budgetProgress, 100)}%`, height: "100%" }} />
-                                </div>
-                            </div>
-                            <div className="text-surface-500 mt-2">
-                                {budgetProgress.toFixed(1)}% consommé • {daysRemainingInMonth} jour(s) restant(s)
-                            </div>
-                        </Card>
-                    </div>
+                        </div>
+                    </Card>
+                    <Card title="Dépenses" className="h-full flex flex-col justify-between">
+                        <div className="flex justify-between items-center mb-1 text-lg font-semibold">
+                            Budget global
+                            <span className={isGloballyOver ? "text-red-400" : ""}>
+                                {toMonetaryAmount(totalActual)}
+                                {" / "}
+                                {toMonetaryAmount(totalBudget)}
+                                {
+                                    isGloballyOver && <i
+                                        className="pi pi-exclamation-triangle ml-1"
+                                        title="Dépassement du budget"
+                                    />
+                                }
+                            </span>
+                        </div>
+                        <ProgressBar
+                            value={Math.min(100, totalPct)}
+                            displayValueTemplate={() => <span>{totalPct.toFixed(2)}%</span>}
+                        />
+                        <div className="flex justify-end text-surface-500 text-sm mt-4">
+                            {daysRemainingInMonth} jour(s) restant(s)
+                        </div>
+                    </Card>
                     <MonthlyDashboard accountId={accountId} />
+                    <BudgetDetailsByPosteCard budgetData={budgetData} />
                 </div>
             )}
         </PageTemplate>

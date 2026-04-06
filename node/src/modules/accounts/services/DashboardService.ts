@@ -25,6 +25,20 @@ export interface DashboardOverview {
     assignedKanbanTasksCount: number;
 }
 
+export interface BudgetVsActualByPoste {
+    posteId: number;
+    posteLabel: string;
+    posteColor: string;
+    budgetAmount: number;
+    actualAmount: number;
+}
+
+interface PosteBudget {
+    label: string;
+    color: string;
+    amount: number;
+}
+
 export default class DashboardService {
 
     constructor(
@@ -41,24 +55,21 @@ export default class DashboardService {
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
-        const [currentDeltaRaw, forecastDeltaRaw, monthExpensesRaw, budgetLines, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
+        const [currentDeltaRaw, forecastDeltaRaw, budgetVsActual, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
             this.getBalanceDeltaSinceDate(true, baseLineDate, accountId),
             this.getBalanceDeltaSinceDate(false, baseLineDate, accountId),
-            this.getMonthExpensesRaw(accountId),
-            this.budgetItemRepo.find({
-                where: { isActive: true, account: { id: accountId } },
-                order: { sortOrder: "ASC", id: "ASC" }
-            }),
+            this.getBudgetVsActual(accountId),
             this.getOperationsToCheckCounts(accountId),
             this.getAssignedKanbanTasksCount(userId),
         ]);
 
-        const monthlyBudget = budgetLines.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
+        const monthlyBudget = budgetVsActual.reduce((acc, item) => acc + item.budgetAmount, 0);
+        const monthExpenses = budgetVsActual.reduce((acc, item) => acc + item.actualAmount, 0);
 
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
             forecastBalance: baselineAmount + Number(forecastDeltaRaw?.value ?? 0),
-            monthExpenses: Number(monthExpensesRaw?.value ?? 0),
+            monthExpenses,
             monthlyBudget,
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
             operationsToCheckHorsCompteCount: toCheckCounts.horsCompte,
@@ -89,8 +100,62 @@ export default class DashboardService {
             posteLabel: r.posteLabel,
             posteColor: r.posteColor,
             total: parseFloat(r.total),
-            budgetAmount: budgetByPoste.get(r.posteId) ?? 0,
+            budgetAmount: budgetByPoste.get(r.posteId)?.amount ?? 0,
         }));
+    }
+
+    async getBudgetVsActual(accountId: number): Promise<BudgetVsActualByPoste[]> {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+        const [actualResults, budgetByPoste] = await Promise.all([
+            this.accountLineRepo
+                .createQueryBuilder("al")
+                .innerJoin("al.poste", "poste")
+                .select("poste.id", "posteId")
+                .addSelect("poste.label", "posteLabel")
+                .addSelect("poste.color", "posteColor")
+                .addSelect("COALESCE(SUM(al.debit), 0)", "actualAmount")
+                .where("al.account_id = :accountId", { accountId })
+                .andWhere("al.dateOperation >= :monthStart", { monthStart })
+                .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart })
+                .groupBy("poste.id")
+                .addGroupBy("poste.label")
+                .addGroupBy("poste.color")
+                .getRawMany<{ posteId: number; posteLabel: string; posteColor: string; actualAmount: string }>(),
+            this.computeBudgetByPoste(accountId),
+        ]);
+
+        const posteMap = new Map<number, { label: string; color: string; budget: number; actual: number }>();
+
+        for (const [posteId, budget] of budgetByPoste) {
+            posteMap.set(posteId, { label: budget.label, color: budget.color, budget: budget.amount, actual: 0 });
+        }
+
+        for (const row of actualResults) {
+            const existing = posteMap.get(row.posteId);
+            if (existing) {
+                existing.actual = parseFloat(row.actualAmount);
+            } else {
+                posteMap.set(row.posteId, {
+                    label: row.posteLabel,
+                    color: row.posteColor,
+                    budget: 0,
+                    actual: parseFloat(row.actualAmount),
+                });
+            }
+        }
+
+        return Array.from(posteMap.entries())
+            .map(([posteId, data]) => ({
+                posteId,
+                posteLabel: data.label,
+                posteColor: data.color,
+                budgetAmount: data.budget,
+                actualAmount: data.actual,
+            }))
+            .sort((a, b) => b.budgetAmount - a.budgetAmount);
     }
 
     private async getMonthlyByPosteRaw(
@@ -106,7 +171,7 @@ export default class DashboardService {
             .addSelect("poste.id", "posteId")
             .addSelect("poste.label", "posteLabel")
             .addSelect("poste.color", "posteColor")
-            .addSelect("SUM(al.credit - al.debit)", "total")
+            .addSelect("COALESCE(SUM(al.credit - al.debit), 0)", "total")
             .innerJoin("al.poste", "poste")
             .where("al.account_id = :accountId", { accountId })
             .groupBy("year")
@@ -118,12 +183,15 @@ export default class DashboardService {
             .addOrderBy("month", "ASC")
             .addOrderBy("poste.label", "ASC");
 
-        // Filtres de dates
+        // Normalise les bornes aux mois complets (le Calendar front est en vue "month")
+        const fromStart = new Date(fromMonth.getFullYear(), fromMonth.getMonth(), 1);
+        const toNextMonth = new Date(toMonth.getFullYear(), toMonth.getMonth() + 1, 1);
+
         if (fromMonth) {
-            qb = qb.andWhere("al.dateOperation >= :fromMonth", { fromMonth });
+            qb = qb.andWhere("al.dateOperation >= :fromStart", { fromStart });
         }
         if (toMonth) {
-            qb = qb.andWhere("al.dateOperation <= :toMonth", { toMonth });
+            qb = qb.andWhere("al.dateOperation < :toNextMonth", { toNextMonth });
         }
         qb = qb.andWhere("poste.account_id = :accountId", { accountId });
         qb = qb.andWhere("poste.id IN (:...posteIds)", { posteIds });
@@ -135,7 +203,7 @@ export default class DashboardService {
      * Computes total budget per poste (BudgetItems + RecurringExpenses).
      * Optionally filtered to a subset of posteIds.
      */
-    private async computeBudgetByPoste(accountId: number, posteIds?: number[]): Promise<Map<number, number>> {
+    private async computeBudgetByPoste(accountId: number, posteIds?: number[]): Promise<Map<number, PosteBudget>> {
         const [budgetItems, recurringExpenses] = await Promise.all([
             this.budgetItemRepo.find({
                 where: { isActive: true, account: { id: accountId } },
@@ -147,18 +215,28 @@ export default class DashboardService {
             }),
         ]);
 
-        const byPoste = new Map<number, number>();
+        const byPoste = new Map<number, PosteBudget>();
 
         for (const item of budgetItems) {
             if (!item.poste) continue;
             if (posteIds && !posteIds.includes(item.poste.id)) continue;
-            byPoste.set(item.poste.id, (byPoste.get(item.poste.id) ?? 0) + Number(item.amount));
+            const existing = byPoste.get(item.poste.id);
+            if (existing) {
+                existing.amount += Number(item.amount);
+            } else {
+                byPoste.set(item.poste.id, { label: item.poste.label, color: item.poste.color, amount: Number(item.amount) });
+            }
         }
 
         for (const expense of recurringExpenses) {
             if (!expense.poste) continue;
             if (posteIds && !posteIds.includes(expense.poste.id)) continue;
-            byPoste.set(expense.poste.id, (byPoste.get(expense.poste.id) ?? 0) + Math.abs(Number(expense.solde)));
+            const existing = byPoste.get(expense.poste.id);
+            if (existing) {
+                existing.amount += Math.abs(Number(expense.solde));
+            } else {
+                byPoste.set(expense.poste.id, { label: expense.poste.label, color: expense.poste.color, amount: Math.abs(Number(expense.solde)) });
+            }
         }
 
         return byPoste;
@@ -188,21 +266,6 @@ export default class DashboardService {
         }
 
         return qb.getRawOne<{ value: string | number }>();
-    }
-
-    private async getMonthExpensesRaw(accountId: number): Promise<{ value: string | number } | undefined> {
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-        return this.accountLineRepo
-            .createQueryBuilder("al")
-            .select("COALESCE(SUM(al.debit), 0)", "value")
-            .where("al.account_id = :accountId", { accountId })
-            .andWhere("al.isChecked = :isChecked", { isChecked: true })
-            .andWhere("al.dateOperation >= :monthStart", { monthStart })
-            .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart })
-            .getRawOne<{ value: string | number }>();
     }
 
     private async getOperationsToCheckCounts(accountId: number): Promise<{ inAccount: number; horsCompte: number }> {

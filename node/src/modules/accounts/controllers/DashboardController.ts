@@ -29,4 +29,11 @@ DashboardRoutes.get("/monthly-by-poste", async (req: Request, res: Response) => 
     res.json(data);
 });
 
+DashboardRoutes.get("/budget-vs-actual", async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const dashboardService = new DashboardService();
+    const data = await dashboardService.getBudgetVsActual(accountId);
+    res.json(data);
+});
+
 export default DashboardRoutes;
