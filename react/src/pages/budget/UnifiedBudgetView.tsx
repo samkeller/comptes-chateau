@@ -5,6 +5,8 @@ import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { Tag } from "primereact/tag";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
 
 interface UnifiedBudgetViewProps {
     accountId: number;
@@ -104,37 +106,44 @@ export default function UnifiedBudgetView({ accountId }: UnifiedBudgetViewProps)
                                         <span className="font-semibold text-surface-700">{posteGroup.posteLabel}</span>
                                     )}
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-lg font-bold text-surface-900">{toMonetaryAmount(posteGroup.subtotal)}</div>
-                                    <div className="text-sm text-surface-500">{posteGroup.percentage.toFixed(2)} % du budget</div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="text-lg font-bold text-surface-900">{toMonetaryAmount(posteGroup.subtotal)}</span>
+                                    <span className="text-sm text-surface-500">{posteGroup.percentage.toFixed(2)} % du budget</span>
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
-                                    <thead>
-                                        <tr className="bg-surface-50">
-                                            <th className="text-left p-2 border-b border-surface">Libellé</th>
-                                            <th className="text-left p-2 border-b border-surface">Type</th>
-                                            <th className="text-right p-2 border-b border-surface">Montant</th>
-                                            <th className="text-right p-2 border-b border-surface">Poids</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {posteGroup.lines.map((line) => (
-                                            <tr key={line.id}>
-                                                <td className="p-2 border-b border-surface">{line.label}</td>
-                                                <td className="p-2 border-b border-surface">{renderSourceBadge(line.source)}</td>
-                                                <td className="text-right p-2 border-b border-surface">{toMonetaryAmount(line.amount)}</td>
-                                                <td className="text-right p-2 border-b border-surface">
-                                                    {totalBudget > 0 ? `${((line.amount / totalBudget) * 100).toFixed(2)} %` : "0.00 %"}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable value={posteGroup.lines} size="small" stripedRows>
+                                <Column
+                                    style={{ width: "10%" }}
+                                    field="source"
+                                    header="Type"
+                                    body={(rowData) => (
+                                        rowData.source === 'budget' ?
+                                            <Tag className="w-24" value="Budget" severity="info" /> :
+                                            <Tag className="w-24" value="Récurrent" severity="success" />
+                                    )} />
+                                <Column
+                                    style={{ width: "60%" }}
+                                    field="label"
+                                    header="Libellé"
+                                />
+                                <Column
+                                    style={{ width: "15%" }}
+                                    field="amount"
+                                    header="Montant"
+                                    align="right"
+                                    body={(rowData) => toMonetaryAmount(rowData.amount)}
+                                />
+                                <Column
+                                    style={{ width: "15%" }}
+                                    field="amount"
+                                    header="Poids"
+                                    align="right"
+                                    body={(rowData) => totalBudget > 0 ? `${((rowData.amount / totalBudget) * 100).toFixed(2)} %` : "0.00 %"}
+                                />
+                            </DataTable>
                         </section>
+
                     ))}
                 </div>
             )}
