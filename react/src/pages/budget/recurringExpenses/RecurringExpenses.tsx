@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Card } from "primereact/card";
 import RecurringExpense from "../../../interfaces/RecurringExpense";
 import RecurringExpenseService from "../../../services/RecurringExpenseService";
 import { Button } from "primereact/button";

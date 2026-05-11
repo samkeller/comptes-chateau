@@ -4,7 +4,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
 import { BudgetItem, SaveBudgetItemPayload } from "../../interfaces/BudgetItem";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
@@ -105,22 +105,6 @@ export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
 
             await refreshBudgetLines();
             cancelEdit();
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const toggleLineActivation = async (line: BudgetItem): Promise<void> => {
-        setSaving(true);
-        try {
-            await new BudgetService().updateAccountBudgetItem(accountId, line.id, {
-                label: line.label,
-                amount: Number(line.amount ?? 0),
-                isActive: !line.isActive,
-                sortOrder: line.sortOrder,
-                posteId: line.poste?.id ?? null,
-            });
-            await refreshBudgetLines();
         } finally {
             setSaving(false);
         }
