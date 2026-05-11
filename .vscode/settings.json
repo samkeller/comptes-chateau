@@ -28,7 +28,7 @@
     "**/dist": true
   },
   "chat.tools.terminal.autoApprove": {
-    "npm test": true,
+    "npm tests": true,
     "npx vitest": true
   }
 }

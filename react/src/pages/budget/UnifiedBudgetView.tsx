@@ -1,0 +1,156 @@
+import { ProgressSpinner } from "primereact/progressspinner";
+import { useEffect, useMemo, useState } from "react";
+import { UnifiedBudgetLine } from "../../interfaces/BudgetItem";
+import BudgetService from "../../services/BudgetService";
+import { toMonetaryAmount } from "../../utils/NumberUtils";
+import { Tag } from "primereact/tag";
+import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+
+interface UnifiedBudgetViewProps {
+    accountId: number;
+}
+
+interface GroupedData {
+    posteLabel: string;
+    posteColor: string | null;
+    posteId: number | null;
+    lines: UnifiedBudgetLine[];
+    subtotal: number;
+    percentage: number;
+}
+
+export default function UnifiedBudgetView({ accountId }: UnifiedBudgetViewProps) {
+    const [lines, setLines] = useState<UnifiedBudgetLine[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        setLoading(true);
+        new BudgetService()
+            .getUnifiedBudget(accountId)
+            .then(setLines)
+            .finally(() => setLoading(false));
+    }, [accountId]);
+
+    const totalBudget = useMemo(() => {
+        return lines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+    }, [lines]);
+
+    const groupedData = useMemo((): GroupedData[] => {
+        const posteMap = new Map<string, UnifiedBudgetLine[]>();
+
+        for (const line of lines) {
+            const posteKey = `${line.posteId ?? 'null'}:${line.posteLabel ?? 'Sans poste'}`;
+            const current = posteMap.get(posteKey) ?? [];
+            current.push(line);
+            posteMap.set(posteKey, current);
+        }
+
+        return Array.from(posteMap.values())
+            .map((posteLines) => {
+                const firstLine = posteLines[0]!;
+                const subtotal = posteLines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+                const percentage = totalBudget > 0 ? (subtotal / totalBudget) * 100 : 0;
+
+                return {
+                    posteLabel: firstLine.posteLabel || "Sans poste",
+                    posteColor: firstLine.posteColor,
+                    posteId: firstLine.posteId,
+                    lines: posteLines,
+                    subtotal,
+                    percentage,
+                };
+            })
+            .sort((a, b) => a.posteLabel.localeCompare(b.posteLabel));
+    }, [lines, totalBudget]);
+
+    const renderSourceBadge = (source: 'budget' | 'recurring') => {
+        if (source === 'budget') {
+            return <Tag value="Budget" severity="info" />;
+        } else {
+            return <Tag value="Récurrent" severity="success" />;
+        }
+    };
+
+    return (
+        <>
+            {loading && (
+                <div className="flex justify-center p-12">
+                    <ProgressSpinner />
+                </div>
+            )}
+
+            {!loading && groupedData.length > 0 && (
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between rounded-border border border-surface bg-surface-50 px-4 py-3">
+                        <span className="font-semibold text-surface-700">Budget global</span>
+                        <span className="text-xl font-bold text-surface-900">{toMonetaryAmount(totalBudget)}</span>
+                    </div>
+
+                    {groupedData.map((posteGroup) => (
+                        <section
+                            key={`poste-${posteGroup.posteId ?? "none"}-${posteGroup.posteLabel}`}
+                            className="overflow-hidden rounded-border border border-surface"
+                        >
+                            <div className="flex items-center justify-between gap-4 bg-surface-100 px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                    {posteGroup.posteColor ? (
+                                        <ColoredLabel
+                                            data={{
+                                                label: posteGroup.posteLabel,
+                                                color: posteGroup.posteColor,
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="font-semibold text-surface-700">{posteGroup.posteLabel}</span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="text-lg font-bold text-surface-900">{toMonetaryAmount(posteGroup.subtotal)}</span>
+                                    <span className="text-sm text-surface-500">{posteGroup.percentage.toFixed(2)} % du budget</span>
+                                </div>
+                            </div>
+
+                            <DataTable value={posteGroup.lines} size="small" stripedRows>
+                                <Column
+                                    style={{ width: "10%" }}
+                                    field="source"
+                                    header="Type"
+                                    body={(rowData) => (
+                                        rowData.source === 'budget' ?
+                                            <Tag className="w-24" value="Budget" severity="info" /> :
+                                            <Tag className="w-24" value="Récurrent" severity="success" />
+                                    )} />
+                                <Column
+                                    style={{ width: "60%" }}
+                                    field="label"
+                                    header="Libellé"
+                                />
+                                <Column
+                                    style={{ width: "15%" }}
+                                    field="amount"
+                                    header="Montant"
+                                    align="right"
+                                    body={(rowData) => toMonetaryAmount(rowData.amount)}
+                                />
+                                <Column
+                                    style={{ width: "15%" }}
+                                    field="amount"
+                                    header="Poids"
+                                    align="right"
+                                    body={(rowData) => totalBudget > 0 ? `${((rowData.amount / totalBudget) * 100).toFixed(2)} %` : "0.00 %"}
+                                />
+                            </DataTable>
+                        </section>
+
+                    ))}
+                </div>
+            )}
+
+            {!loading && groupedData.length === 0 && (
+                <div className="text-surface-500">Aucune ligne de budget ou dépense récurrente.</div>
+            )}
+        </>
+    );
+}

@@ -36,9 +36,8 @@ export default function MonthlyDashboard({ accountId }: MonthlyDashboardProps) {
 
     useEffect(() => {
         loadDashboardData();
-        new AccountLinePosteService()
-            .getAllAccountPostes(accountId)
-            .then(postes => {
+        new AccountLinePosteService().getAllAccountPostes(accountId)
+            .then((postes) => {
                 setPostes(postes);
                 setSelectedPostes(postes); // Par défaut, tous les postes sont sélectionnés
             })
@@ -113,7 +112,6 @@ export default function MonthlyDashboard({ accountId }: MonthlyDashboardProps) {
                         </TabPanel>
                         <TabPanel header="Tableau">
                             <MonthlyPosteTable data={dashboardData} />
-
                         </TabPanel>
                     </TabView>
                 </div>
