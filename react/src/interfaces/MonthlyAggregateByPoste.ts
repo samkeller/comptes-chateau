@@ -8,4 +8,5 @@ export interface MonthlyAggregateByPoste {
     posteLabel: string;
     posteColor: string;
     total: number;
+    budgetAmount: number;
 }

@@ -21,12 +21,14 @@ const kanbanTaskRepoStub = {
     }))
 };
 
+const emptyFindStub = { find: vi.fn().mockResolvedValue([]) };
+
 vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
         getRepository: <T>(entity: new () => T) => {
-            if ((entity as { name?: string }).name === "KanbanTask") {
-                return kanbanTaskRepoStub;
-            }
+            const name = (entity as { name?: string }).name;
+            if (name === "KanbanTask") return kanbanTaskRepoStub;
+            if (name === "BudgetItem" || name === "RecurringExpense") return emptyFindStub;
             return testDataSource.getRepository(entity);
         }
     }
@@ -153,7 +155,8 @@ describe("DashboardController /monthly-by-poste integration", () => {
                 posteId: posteMaisonId,
                 posteLabel: "Maison",
                 posteColor: "#445566",
-                total: -60
+                total: -60,
+                budgetAmount: 0
             },
             {
                 year: 2026,
@@ -161,7 +164,8 @@ describe("DashboardController /monthly-by-poste integration", () => {
                 posteId: posteVoyageId,
                 posteLabel: "Voyage",
                 posteColor: "#778899",
-                total: 20
+                total: 20,
+                budgetAmount: 0
             },
             {
                 year: 2026,
@@ -169,7 +173,8 @@ describe("DashboardController /monthly-by-poste integration", () => {
                 posteId: posteMaisonId,
                 posteLabel: "Maison",
                 posteColor: "#445566",
-                total: 70
+                total: 70,
+                budgetAmount: 0
             }
         ]);
     });
@@ -282,7 +287,8 @@ describe("DashboardController monthly-by-poste with incoming transfers", () => {
             year: 2026,
             month: 2,
             posteId: posteRevenuId,
-            total: 300
+            total: 300,
+            budgetAmount: 0
         });
     });
 

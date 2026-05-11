@@ -1,6 +1,7 @@
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Button } from "primereact/button";
+import { ProgressBar } from "primereact/progressbar";
 import { useNavigate } from "react-router-dom";
 import { AccountOverviewModel } from "../../Index";
 
@@ -80,11 +81,15 @@ export default function AccountOverview({ model }: AccountOverviewProps) {
 
             </div>
             <div className="mt-3 flex items-center gap-3">
-                <div className="w-full bg-surface-200 rounded-border overflow-hidden" style={{ height: "0.55rem" }}>
-                    <div className="bg-primary" style={{ width: `${budgetProgress}%`, height: "100%" }} />
-                </div>
-                <span className="shrink-0 text-sm text-surface-600 whitespace-nowrap">
+                <ProgressBar
+                    value={Math.min(100, budgetProgress)}
+                    displayValueTemplate={() => null}
+                    className="h-2 flex-1"
+                    pt={budgetProgress >= 100 ? { value: { style: { backgroundColor: "var(--red-400)" } } } : undefined}
+                />
+                <span className={`shrink-0 text-sm whitespace-nowrap ${budgetProgress >= 100 ? "text-red-400 font-semibold" : "text-surface-600"}`}>
                     {toMonetaryAmount(overview.monthExpenses)} / {toMonetaryAmount(overview.monthlyBudget)}
+                    {budgetProgress >= 100 && <i className="pi pi-exclamation-triangle ml-1" />}
                 </span>
             </div>
         </div>

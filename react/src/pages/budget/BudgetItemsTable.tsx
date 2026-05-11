@@ -1,128 +1,298 @@
-import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
+import { InputNumber } from "primereact/inputnumber";
+import { InputText } from "primereact/inputtext";
+import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { Fragment } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { BudgetCategory, BudgetItem } from "../../interfaces/BudgetItem";
+import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
+import { BudgetItem, SaveBudgetItemPayload } from "../../interfaces/BudgetItem";
+import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
+import AccountLinePosteService from "../../services/AccountLinePosteService";
 import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
-
-const categoryLabel: Record<BudgetCategory, string> = {
-    incompressible: "Incompressible",
-    compressible: "Compressible",
-    epargne: "Epargne"
-};
+import { BooleanIcon } from "@/components/datatableBodys/BooleanIcon";
 
 interface BudgetItemsTableProps {
     accountId: number;
 }
 
+interface BudgetDraft {
+    label: string;
+    amount: number;
+    isActive: boolean;
+    sortOrder: number;
+    posteId: number | null;
+}
+
+const emptyDraft: BudgetDraft = {
+    label: "",
+    amount: 0,
+    isActive: true,
+    sortOrder: 0,
+    posteId: null,
+};
+
 export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
     const [lines, setLines] = useState<BudgetItem[]>([]);
+    const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [saving, setSaving] = useState<boolean>(false);
+    const [editingId, setEditingId] = useState<number | "new" | null>(null);
+    const [draft, setDraft] = useState<BudgetDraft>(emptyDraft);
 
     useEffect(() => {
-        const load = (): void => {
-            setLoading(true);
-            new BudgetService()
-                .getAccountBudgetItems(accountId)
-                .then(setLines)
-                .finally(() => {
-                    setLoading(false);
-                });
-        };
-
-        load();
+        setLoading(true);
+        Promise.all([
+            new BudgetService().getAccountBudgetItems(accountId),
+            new AccountLinePosteService().getAllAccountPostes(accountId),
+        ])
+            .then(([budgetLines, accountPostes]) => {
+                setLines(budgetLines);
+                setPostes(accountPostes);
+            })
+            .finally(() => setLoading(false));
     }, [accountId]);
 
-    const totalBudget = useMemo(() => {
-        if (!Array.isArray(lines)) {
-            return 0;
+
+    const refreshBudgetLines = (): Promise<void> => {
+        return new BudgetService().getAccountBudgetItems(accountId).then(setLines);
+    };
+
+    const startCreate = (): void => {
+        const nextSortOrder = lines.reduce((max, line) => Math.max(max, line.sortOrder), 0) + 1;
+        setEditingId("new");
+        setDraft({ ...emptyDraft, sortOrder: nextSortOrder });
+    };
+
+    const startEdit = (line: BudgetItem): void => {
+        setEditingId(line.id);
+        setDraft({
+            label: line.label,
+            amount: Number(line.amount ?? 0),
+            isActive: line.isActive,
+            sortOrder: line.sortOrder,
+            posteId: line.poste?.id ?? null,
+        });
+    };
+
+    const cancelEdit = (): void => {
+        setEditingId(null);
+        setDraft(emptyDraft);
+    };
+
+    const saveDraft = async (): Promise<void> => {
+        if (draft.label.trim().length === 0) {
+            return;
         }
-        return lines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    }, [lines]);
 
-    const groupedRows = useMemo(() => {
-        const categories: BudgetCategory[] = ["incompressible", "compressible", "epargne"];
+        const payload: SaveBudgetItemPayload = {
+            label: draft.label.trim(),
+            amount: Number(draft.amount ?? 0),
+            isActive: draft.isActive,
+            sortOrder: Number(draft.sortOrder ?? 0),
+            posteId: draft.posteId,
+        };
 
-        return categories
-            .map((category) => {
-                const categoryLines = lines
-                    .filter((line) => line.category === category)
-                    .map((line) => ({ ...line, amount: Number(line.amount ?? 0) }))
-                    .sort((a, b) => a.sortOrder - b.sortOrder);
+        setSaving(true);
+        try {
+            const service = new BudgetService();
+            if (editingId === "new") {
+                await service.createAccountBudgetItem(accountId, payload);
+            } else if (typeof editingId === "number") {
+                await service.updateAccountBudgetItem(accountId, editingId, payload);
+            }
 
-                const subtotal = categoryLines.reduce((sum, line) => sum + line.amount, 0);
-                const percentage = totalBudget > 0 ? (subtotal / totalBudget) * 100 : 0;
+            await refreshBudgetLines();
+            cancelEdit();
+        } finally {
+            setSaving(false);
+        }
+    };
 
-                return {
-                    category,
-                    label: categoryLabel[category],
-                    lines: categoryLines,
-                    subtotal,
-                    percentage
-                };
-            })
-            .filter((group) => group.lines.length > 0);
-    }, [lines, totalBudget]);
+    const toggleLineActivation = async (line: BudgetItem): Promise<void> => {
+        setSaving(true);
+        try {
+            await new BudgetService().updateAccountBudgetItem(accountId, line.id, {
+                label: line.label,
+                amount: Number(line.amount ?? 0),
+                isActive: !line.isActive,
+                sortOrder: line.sortOrder,
+                posteId: line.poste?.id ?? null,
+            });
+            await refreshBudgetLines();
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const deleteLine = async (line: BudgetItem): Promise<void> => {
+        setSaving(true);
+        try {
+            await new BudgetService().deleteAccountBudgetItem(accountId, line.id);
+            await refreshBudgetLines();
+            if (editingId === line.id) {
+                cancelEdit();
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const posteOptions = postes.map((poste) => ({ value: poste.id, label: poste.label, color: poste.color }));
 
     return (
-        <Card title="Budget mensuel">
+        <>
+            <div className="flex justify-end mb-3">
+                <Button
+                    label="Ajouter"
+                    icon="pi pi-plus"
+                    onClick={startCreate}
+                    disabled={saving || loading || editingId !== null}
+                />
+            </div>
+
             {loading && (
                 <div className="flex justify-center p-12">
                     <ProgressSpinner />
                 </div>
             )}
 
-            {!loading && groupedRows.length > 0 && (
-                <>
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse" style={{borderSpacing: 0}}>
-                            <thead>
-                                <tr className="bg-surface-100">
-                                    <th className="text-left p-2 border border-surface">Catégorie</th>
-                                    <th className="text-left p-2 border border-surface">Libellé</th>
-                                    <th className="text-right p-2 border border-surface">Montant</th>
-                                    <th className="text-right p-2 border border-surface">Poids</th>
+            {!loading && (lines.length > 0 || editingId === "new") && (
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
+                        <thead>
+                            <tr className="bg-surface-100">
+                                <th className="text-left p-2 border border-surface">Poste</th>
+                                <th className="text-left p-2 border border-surface">Libellé</th>
+                                <th className="text-right p-2 border border-surface">Montant</th>
+                                <th className="text-center p-2 border border-surface">Actif</th>
+                                <th className="text-right p-2 border border-surface">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {editingId === "new" && (
+                                <tr>
+                                    <td className="p-2 border border-surface">
+                                        <Dropdown
+                                            value={draft.posteId}
+                                            options={posteOptions}
+                                            onChange={(e) => setDraft((previous) => ({ ...previous, posteId: (e.value as number | null) ?? null }))}
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
+                                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Aucun</span>}
+                                            placeholder="Aucun"
+                                            showClear
+                                            className="w-full"
+                                        />
+                                    </td>
+                                    <td className="p-2 border border-surface">
+                                        <InputText
+                                            value={draft.label}
+                                            onChange={(e) => setDraft((previous) => ({ ...previous, label: e.target.value }))}
+                                            className="w-full"
+                                        />
+                                    </td>
+                                    <td className="p-2 border border-surface text-right">
+                                        <InputNumber
+                                            value={draft.amount}
+                                            onValueChange={(e) => setDraft((previous) => ({ ...previous, amount: e.value ?? 0 }))}
+                                            mode="currency"
+                                            currency="EUR"
+                                            locale="fr-FR"
+                                            className="w-full"
+                                        />
+                                    </td>
+                                    <td className="text-center p-2 border border-surface">
+                                        <InputSwitch
+                                            checked={draft.isActive}
+                                            onChange={(e) => setDraft((previous) => ({ ...previous, isActive: e.value }))}
+                                        />
+                                    </td>
+                                    <td className="text-right p-2 border border-surface">
+                                        <div className="flex justify-end gap-2">
+                                            <Button icon="pi pi-check" rounded text onClick={() => void saveDraft()} disabled={saving} />
+                                            <Button icon="pi pi-times" rounded text severity="secondary" onClick={cancelEdit} disabled={saving} />
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {groupedRows.map((group) => (
-                                    <Fragment key={`group-${group.category}`}>
-                                        {group.lines.map((line, index) => (
-                                            <tr key={line.id}>
-                                                {index === 0 && (
-                                                    <td rowSpan={group.lines.length + 1} className="border p-2 border-surface font-semibold align-top">
-                                                        {group.label}
-                                                    </td>
-                                                )}
-                                                <td className="p-2 border border-surface">{line.label}</td>
-                                                <td className="text-right p-2 border border-surface">{toMonetaryAmount(line.amount)}</td>
-                                                <td className="text-right p-2 border border-surface">
-                                                    {totalBudget > 0
-                                                        ? `${((line.amount / totalBudget) * 100).toFixed(2)} %`
-                                                        : "0.00 %"}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        <tr key={`subtotal-${group.category}`} className="bg-surface-50 p-0">
-                                            <td className="p-2 border border-surface font-semibold">Sous-total</td>
-                                            <td className="text-right p-2 border border-surface font-semibold">{toMonetaryAmount(group.subtotal)}</td>
-                                            <td className="text-right p-2 border border-surface font-semibold">{group.percentage.toFixed(2)} %</td>
-                                        </tr>
-                                    </Fragment>
-                                ))}
-                            </tbody>
-                            <tfoot>
-                                <tr className="bg-surface-200 p-0">
-                                    <td className="p-2 border border-surface font-bold" colSpan={2}>TOTAL</td>
-                                    <td className="text-right p-2 border border-surface font-bold">{toMonetaryAmount(totalBudget)}</td>
-                                    <td className="text-right p-2 border border-surface font-bold">100.00 %</td>
+                            )}
+
+                            {lines.map((line) => (
+                                <tr key={line.id} className={!line.isActive ? "opacity-60" : undefined}>
+                                    <td className="p-2 border border-surface">
+                                        {editingId === line.id ? (
+                                            <Dropdown
+                                                value={draft.posteId}
+                                                options={posteOptions}
+                                                onChange={(e) => setDraft((previous) => ({ ...previous, posteId: (e.value as number | null) ?? null }))}
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                itemTemplate={(option) => option && <ColoredLabel data={option} />}
+                                                valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Aucun</span>}
+                                                placeholder="Aucun"
+                                                showClear
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            line.poste ? <ColoredLabel data={line.poste} /> : <span className="text-surface-500">Sans poste</span>
+                                        )}
+                                    </td>
+                                    <td className="p-2 border border-surface">
+                                        {editingId === line.id ? (
+                                            <InputText
+                                                value={draft.label}
+                                                onChange={(e) => setDraft((previous) => ({ ...previous, label: e.target.value }))}
+                                                className="w-full"
+                                            />
+                                        ) : line.label}
+                                    </td>
+                                    <td className="text-right p-2 border border-surface">
+                                        {editingId === line.id ? (
+                                            <InputNumber
+                                                value={draft.amount}
+                                                onValueChange={(e) => setDraft((previous) => ({ ...previous, amount: e.value ?? 0 }))}
+                                                mode="currency"
+                                                currency="EUR"
+                                                locale="fr-FR"
+                                                className="w-full"
+                                            />
+                                        ) : toMonetaryAmount(line.amount)}
+                                    </td>
+                                    <td className="text-center p-2 border border-surface">
+                                        {editingId === line.id ? (
+                                            <InputSwitch
+                                                checked={draft.isActive}
+                                                onChange={(e) => setDraft((previous) => ({ ...previous, isActive: e.value }))}
+                                            />
+                                        ) :
+                                            <BooleanIcon value={line.isActive} />
+                                        }
+                                    </td>
+                                    <td className="text-right p-2 border border-surface">
+                                        {editingId === line.id ? (
+                                            <div className="flex justify-end gap-2">
+                                                <Button icon="pi pi-check" rounded text onClick={() => void saveDraft()} disabled={saving} />
+                                                <Button icon="pi pi-times" rounded text severity="secondary" onClick={cancelEdit} disabled={saving} />
+                                            </div>
+                                        ) : (
+                                            <div className="flex justify-end gap-2">
+                                                <Button icon="pi pi-pencil" rounded text onClick={() => startEdit(line)} disabled={saving || editingId !== null} />
+                                                <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => void deleteLine(line)} disabled={saving || editingId !== null} />
+                                            </div>
+                                        )}
+                                    </td>
                                 </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
-        </Card>
+
+            {!loading && lines.length === 0 && editingId !== "new" && (
+                <div className="text-surface-500">Aucune ligne de budget.</div>
+            )}
+        </>
     );
 }
