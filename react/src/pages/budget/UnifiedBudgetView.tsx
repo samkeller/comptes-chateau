@@ -65,14 +65,6 @@ export default function UnifiedBudgetView({ accountId }: UnifiedBudgetViewProps)
             .sort((a, b) => a.posteLabel.localeCompare(b.posteLabel));
     }, [lines, totalBudget]);
 
-    const renderSourceBadge = (source: 'budget' | 'recurring') => {
-        if (source === 'budget') {
-            return <Tag value="Budget" severity="info" />;
-        } else {
-            return <Tag value="Récurrent" severity="success" />;
-        }
-    };
-
     return (
         <>
             {loading && (
