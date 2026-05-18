@@ -97,6 +97,26 @@ class AccountingService extends BaseService {
         });
     }
 
+    /**
+     * Delete an account line for a specific account.
+     * @param accountId 
+     * @param lineId 
+     * @returns 
+     */
+    deleteAccountingLine(accountId: number, lineId: number): Promise<void> {
+        return axios.delete(`${this.apiUrl}/accounts/${accountId}/operations/${lineId}`)
+    }
+
+    /**
+     * Duplicate an account line for a specific account.
+     * @param accountId 
+     * @param id 
+     */
+    duplicateLine(accountId: number, lineId: number): Promise<AccountLine> {
+        return axios.post(`${this.apiUrl}/accounts/${accountId}/operations/${lineId}/duplicate`).then((response) => {
+            return new AccountLine(response.data);
+        });
+    }
 }
 
 export default AccountingService

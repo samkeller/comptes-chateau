@@ -10,6 +10,8 @@ import TableQueryParser from "../queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../../utils/ApiDateUtils";
 import { OperationBatchCheckPayload, SaveOperationPayload } from "./OperationDtos";
 import { badRequest, notFound } from "../../../../utils/AppError";
+import { DeleteResult } from "typeorm/query-builder/result/DeleteResult";
+import { Like } from "typeorm/find-options/operator/Like";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -19,6 +21,7 @@ const lazyTableQueryParserOptions = {
 };
 
 export default class OperationService {
+
     private accountLineRepo = AppDataSource.getRepository(AccountLine);
 
     private validateTransferAmounts(line: SaveOperationPayload): void {
@@ -229,5 +232,62 @@ export default class OperationService {
             .orderBy("al.dateOperation", "DESC")
             .addOrderBy("al.id", "DESC")
             .getMany();
+    }
+
+    async delete(accountingLineId: number, accountId: number): Promise<DeleteResult> {
+        const account = await this.resolveAccountById(accountId, "Operation.save/account", this.accountLineRepo.manager);
+
+        return this.accountLineRepo.delete({
+            id: accountingLineId,
+            account: { id: account.id }
+        })
+    }
+
+    async duplicateLine(accountId: number, lineId: number) {
+        const account = await this.resolveAccountById(accountId, "Operation.save/account", this.accountLineRepo.manager);
+
+        const existingLine = await this.accountLineRepo.findOne({
+            where: { id: lineId, account: { id: account.id } },
+            relations: { account: true, targetAccount: true, nature: true, poste: true }
+        });
+
+        if (!existingLine) {
+            throw notFound("OPERATION_NOT_FOUND", "Operation not found.");
+        }
+
+        // Regex pour détecter un éventuel (numéro) à la fin du label
+        const labelRegex = /^(.*?)(?:\s\((\d+)\))?$/;
+        const match = existingLine.label.match(labelRegex);
+        const baseLabel = match ? match[1] : existingLine.label;
+
+        // Récupérer toutes les lignes qui commencent par ce baseLabel
+        const similarLines = await this.accountLineRepo.find({
+            where: {
+                label: Like(`${baseLabel}%`),
+                account: { id: account.id }
+            }
+        });
+
+        // Trouver le plus grand numéro existant
+        let maxIndex = 0;
+        const numberRegex = /\((\d+)\)$/;
+        for (const line of similarLines) {
+            const numMatch = line.label.match(numberRegex);
+            if (numMatch) {
+                const num = parseInt(numMatch[1], 10);
+                if (num > maxIndex) maxIndex = num;
+            }
+        }
+
+        const newIndex = maxIndex + 1;
+        const newLabel = `${baseLabel} (${newIndex})`;
+
+        const newLine: AccountLine = {
+            ...existingLine,
+            label: newLabel,
+            id: 0, // id will be auto-generated
+        };
+
+        return await this.accountLineRepo.save(newLine);
     }
 }
