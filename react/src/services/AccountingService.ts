@@ -97,6 +97,16 @@ class AccountingService extends BaseService {
         });
     }
 
+    /**
+     * Delete an account line for a specific account.
+     * @param accountId 
+     * @param lineId 
+     * @returns 
+     */
+    deleteAccountingLine(accountId: number, lineId: number): Promise<void> {
+        return axios.delete(`${this.apiUrl}/accounts/${accountId}/operations/${lineId}`)
+    }
+
 }
 
 export default AccountingService

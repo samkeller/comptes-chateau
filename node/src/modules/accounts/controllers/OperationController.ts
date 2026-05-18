@@ -46,4 +46,10 @@ OperationRoutes.get('/unchecked', async (req: Request, res: Response) => {
     res.json(data);
 });
 
+OperationRoutes.delete('/:id', validateParams(IdParamSchema), async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    await operationService.delete(Number(req.params.id), accountId);
+    res.status(204).send();
+});
+
 export default OperationRoutes

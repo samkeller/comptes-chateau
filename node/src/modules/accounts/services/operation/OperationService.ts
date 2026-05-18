@@ -10,6 +10,7 @@ import TableQueryParser from "../queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../../utils/ApiDateUtils";
 import { OperationBatchCheckPayload, SaveOperationPayload } from "./OperationDtos";
 import { badRequest, notFound } from "../../../../utils/AppError";
+import { DeleteResult } from "typeorm/query-builder/result/DeleteResult";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -229,5 +230,14 @@ export default class OperationService {
             .orderBy("al.dateOperation", "DESC")
             .addOrderBy("al.id", "DESC")
             .getMany();
+    }
+
+    async delete(accountingLineId: number, accountId: number): Promise<DeleteResult> {
+        const account = await this.resolveAccountById(accountId, "Operation.save/account", this.accountLineRepo.manager);
+
+        return this.accountLineRepo.delete({
+            id: accountingLineId,
+            account: { id: account.id }
+        })
     }
 }

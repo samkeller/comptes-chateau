@@ -24,6 +24,7 @@ import AccountLinePosteService from "../../services/AccountLinePosteService"
 import AccountLineNatureService from "../../services/AccountLineNatureService"
 import AccountBookExportButtons from "./AccountBookExportButtons"
 import { useAccountId } from "../../hooks/useAccountId"
+import AccountBookActionsBody from "./molecules/AccountBookActionsBody"
 
 type RelationFilterOption = {
     id: number | "null";
@@ -34,7 +35,7 @@ type RelationFilterOption = {
 
 export default function AccountBook() {
     const accountId = useAccountId()
-    
+
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [totalRecords, setTotalRecords] = useState<number>(0)
@@ -111,28 +112,6 @@ export default function AccountBook() {
         }
         return <TriStateCheckbox value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} />;
     };
-
-    const actionsBody = (data: AccountLine) => {
-        if (!data) return null
-        return (
-            <div className="flex">
-
-                <Button
-                    rounded text icon="pi pi-pencil" className="p-1"
-                    tooltip="Modifier"
-                    onClick={() => {
-                        setEditingLine(data)
-                        setShowAddDialog(true)
-                    }}
-                ></Button>
-                <Button
-                    rounded text icon="pi pi-trash" severity="danger" className="p-1"
-                    disabled
-                // TODO DELETION
-                ></Button>
-            </div>
-        )
-    }
 
     return (
         <PageTemplate pageTitle="Opérations">
@@ -348,7 +327,14 @@ export default function AccountBook() {
                     />
                     <Column
                         header="Actions"
-                        body={actionsBody}
+                        body={(data: AccountLine) => {
+                            return <AccountBookActionsBody
+                                data={data}
+                                setEditingLine={setEditingLine}
+                                setShowAddDialog={setShowAddDialog}
+                                refresh={loadAccountLines}
+                            />
+                        }}
                     />
                 </DataTable>
             </Card>
