@@ -68,9 +68,9 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   }
 
   const brand = (
-    <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
+    <button className="flex flex-wrap items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
       <img src={ChocoChou} className="h-12" />
-      <h1 className="text-2xl m-0 font-semibold">Chocosous {activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}</h1>
+      <h1 className="text-xl md:text-2xl m-0 font-semibold break-words">Chocosous {activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}</h1>
     </button>
   )
 
@@ -80,7 +80,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         showConfigDialog &&
         <UserConfigDialog hideDialog={() => setShowConfigDialog(false)} />
       }
-      <header className="flex items-center justify-between px-12 py-6 border-b border-surface">
+      <header className="flex items-center justify-between px-4 md:px-12 py-4 md:py-6 border-b border-surface">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
             <Button
@@ -122,7 +122,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 md:flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
         {isDesktopMenuVisible && (
           <aside className="p-6 border-r border-surface hidden md:block md:w-64 h-full overflow-y-auto">
             <AppNavigationMenu
@@ -138,7 +138,8 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           visible={isMobileMenuVisible}
           onHide={() => setIsMobileMenuVisible(false)}
           position="left"
-          className="w-72"
+          className="w-full max-w-xs"
+          style={{ width: "100%", maxWidth: "20rem" }}
         >
           <div className="flex flex-col h-full">
             <AppNavigationMenu
@@ -150,7 +151,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
         </Sidebar>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-12 py-6">
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 md:px-12 py-6">
           {children}
         </main>
       </div>
