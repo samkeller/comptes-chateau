@@ -7,7 +7,6 @@
     "dev": "concurrently -n FRONT,BACK -c \"blue,magenta\" --kill-others \"npm:dev:react\" \"npm:dev:node\"",
     "dev:react": "npm --prefix react start",
     "dev:node": "npm --prefix node run dev",
-
     "build": "npm run build:react && npm run build:node",
     "build:react": "npm --prefix react run build",
     "build:node": "npm --prefix node run build"

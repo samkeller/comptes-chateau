@@ -29,6 +29,8 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const showGlobalToast = useGlobalToast();
   const { clearUser } = useConnectedUser();
 
+  const isXS = window.innerWidth < 640; // Tailwind's xs breakpoint
+
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
   }, [pageTitle])
@@ -68,9 +70,15 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   }
 
   const brand = (
-    <button className="flex flex-wrap items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
+    <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
       <img src={ChocoChou} className="h-12" />
-      <h1 className="text-xl md:text-2xl m-0 font-semibold break-words">Chocosous {activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}</h1>
+      <h1 className="text-xl md:text-2xl m-0 font-semibold1 md:break-all whitespace-nowrap overflow-hidden">
+        {
+          isXS ?
+            `${activeAccountId && accounts.find(account => account.id === activeAccountId)?.label}` :
+            `Chocosous ${activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}`
+        }
+      </h1>
     </button>
   )
 
@@ -102,7 +110,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
           {brand}
         </div>
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-1">
           <Button
             icon="pi pi-cog"
             text
@@ -110,6 +118,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
             size="small"
             tooltip="Réglages"
             onClick={() => setShowConfigDialog(true)}
+            {...isXS && { className: "p-1 w-6 h-6" }}
           />
           <Button
             icon="pi pi-power-off"
@@ -118,6 +127,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
             rounded
             tooltip="Déconnexion"
             onClick={logout}
+            {...isXS && { className: "p-1 w-6 h-6" }}
           />
         </div>
       </header>

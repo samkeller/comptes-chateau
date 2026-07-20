@@ -12,11 +12,13 @@ import { useAccountId } from "../../hooks/useAccountId";
 import BudgetDetailsByPosteCard from "./BudgetDetailsByPosteCard";
 import { ProgressBar } from "primereact/progressbar";
 import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
+import { useScreen } from "@/utils/hooks/useScreen";
 
 export default function AccountDashboard() {
     const accountId = useAccountId();
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
     const [budgetData, setBudget] = useState<BudgetByPoste[]>([]);
+    const { isMobile } = useScreen();
 
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -67,11 +69,10 @@ export default function AccountDashboard() {
                     <ProgressSpinner />
                 </div>
             )}
-
             {!loading && overview && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card title="Solde" className="h-full">
-                        <div className="flex h-full">
+                        <div className="flex h-full flex-col md:flex-row">
                             <div className="flex-1 flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-lg">Actuel</span>
@@ -80,7 +81,10 @@ export default function AccountDashboard() {
                                 <div className={`text-3xl font-bold ${getBalanceClass(overview.currentBalance)}`}>{toMonetaryAmount(overview.currentBalance)}</div>
                                 <div className="text-surface-500 text-sm">Opérations validées uniquement</div>
                             </div>
-                            <Divider layout="vertical" className="shrink" />
+                            <Divider
+                                layout={isMobile ? "horizontal" : "vertical"}
+                                className="shrink"
+                            />
                             <div className="flex-1 flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-lg">Prévisionnel</span>
