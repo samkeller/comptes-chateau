@@ -124,7 +124,7 @@ export default function KanbanPage() {
                                 filters={filters}
                                 changeFilters={setFilters}
                             />
-                            <div className="flex flex-row w-full h-full gap-6">
+                            <div className="flex flex-col xl:flex-row w-full h-full gap-4 xl:gap-6">
                                 {
                                     selectedTask && (
                                         <KanbanTaskDialog
@@ -143,7 +143,7 @@ export default function KanbanPage() {
                                 }
                                 {
                                     columns.map(column => (
-                                        <div className="flex-1" key={column.id}>
+                                        <div className="flex-1 min-w-0" key={column.id}>
                                             <KanbanColumnDisplay
                                                 column={column}
                                                 tasks={displayedTasks.filter(t => t.columnId === column.id)}

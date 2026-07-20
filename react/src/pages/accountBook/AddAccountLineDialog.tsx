@@ -18,6 +18,7 @@ import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import AccountLinePosteService from "../../services/AccountLinePosteService";
 import AccountLineNatureService from "../../services/AccountLineNatureService";
+import { useScreen } from "@/utils/hooks/useScreen";
 
 interface AddAcountLineDialogProps {
     accountId: number;
@@ -41,6 +42,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const showGlobalToast = useGlobalToast();
+    const { isMobile, isTablet } = useScreen();
 
     useEffect(() => {
         const natureService = new AccountLineNatureService();
@@ -123,7 +125,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             visible
             header={editingLine?.id ? "Modifier une dépense" : "Ajouter une dépense"}
             footer={footer}
-            style={{ width: "60vw" }}
+            style={{ width: isMobile || isTablet ? "90vw" : "60vw" }}
             onHide={hideDialog}
         >
             <div className="flex flex-col gap-12 pt-12">

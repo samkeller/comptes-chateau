@@ -55,7 +55,7 @@ export default function AuthPage() {
                     </div>
                 }
                 title="Passer la choco-sécurité"
-                className="w-full sm:w-[30rem]"
+                className="min-w-30 max-w-500"
             >
                 <div className="p-fluid flex flex-col gap-6">
                     <div>
@@ -64,7 +64,6 @@ export default function AuthPage() {
                             onChange={(e) => setUsername(e.value)}
                             options={["Gaelle", "Sam", "70ul0u53&b3rl10z"]}
                             optionDisabled={v => v === "70ul0u53&b3rl10z"}
-
                         />
                     </div>
                     <Password
