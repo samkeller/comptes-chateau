@@ -17,6 +17,19 @@ const primeReactOptions: Partial<APIOptions> = {
   locale: 'fr',
 }
 
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(() => {
+        console.log('Service Worker registered successfully');
+      })
+      .catch((error) => {
+        console.warn('Service Worker registration failed:', error);
+      });
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
 
   <StrictMode>
