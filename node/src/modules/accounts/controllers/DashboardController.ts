@@ -31,8 +31,12 @@ DashboardRoutes.get("/monthly-by-poste", async (req: Request, res: Response) => 
 
 DashboardRoutes.get("/budget-vs-actual", async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
+
+    const month = req.query.month ? parseInt(req.query.month as string, 10) : new Date().getMonth() + 1; // Default to current month
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear(); // Default to current year
+
     const dashboardService = new DashboardService();
-    const data = await dashboardService.getBudgetVsActual(accountId);
+    const data = await dashboardService.getBudgetVsActual(accountId, month, year);
     res.json(data);
 });
 

@@ -58,7 +58,7 @@ export default class DashboardService {
         const [currentDeltaRaw, forecastDeltaRaw, budgetVsActual, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
             this.getBalanceDeltaSinceDate(true, baseLineDate, accountId),
             this.getBalanceDeltaSinceDate(false, baseLineDate, accountId),
-            this.getBudgetVsActual(accountId),
+            this.getBudgetVsActual(accountId, new Date().getMonth() + 1, new Date().getFullYear()),
             this.getOperationsToCheckCounts(accountId),
             this.getAssignedKanbanTasksCount(userId),
         ]);
@@ -104,10 +104,7 @@ export default class DashboardService {
         }));
     }
 
-    async getBudgetVsActual(accountId: number): Promise<BudgetVsActualByPoste[]> {
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    async getBudgetVsActual(accountId: number, month: number, year: number): Promise<BudgetVsActualByPoste[]> {
 
         const [actualResults, budgetByPoste] = await Promise.all([
             this.accountLineRepo
@@ -118,12 +115,13 @@ export default class DashboardService {
                 .addSelect("poste.color", "posteColor")
                 .addSelect("COALESCE(SUM(al.debit), 0)", "actualAmount")
                 .where("al.account_id = :accountId", { accountId })
-                .andWhere("al.dateOperation >= :monthStart", { monthStart })
-                .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart })
+                .andWhere("al.dateOperation >= :monthStart", { monthStart: new Date(year, month - 1, 1) })
+                .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart: new Date(year, month, 1) })
                 .groupBy("poste.id")
                 .addGroupBy("poste.label")
                 .addGroupBy("poste.color")
                 .getRawMany<{ posteId: number; posteLabel: string; posteColor: string; actualAmount: string }>(),
+                // BudgetItems + RecurringExpenses
             this.computeBudgetByPoste(accountId),
         ]);
 

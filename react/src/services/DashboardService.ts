@@ -4,8 +4,10 @@ import { MonthlyAggregateByPoste } from "../interfaces/MonthlyAggregateByPoste";
 import { DashboardOverview } from "../interfaces/DashboardOverview";
 import DashboardMonthlyByPosteQueryCodec from "./dashboardQuery/DashboardMonthlyByPosteQueryCodec";
 import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
+import QueryStringBuilder from "./QueryStringBuilder";
 
 class DashboardService extends BaseService {
+
     /**
      * Get monthly aggregation by poste for a specific account.
      * @param accountId - The account ID
@@ -43,8 +45,16 @@ class DashboardService extends BaseService {
      * Get budget versus actual amounts grouped by poste for a specific account.
      * @param accountId - The account ID
      */
-    getBudgetByPoste(accountId: number): Promise<BudgetByPoste[]> {
-        return axios.get(`${this.apiUrl}/accounts/${accountId}/dashboard/budget-vs-actual`).then((response) => response.data);
+    getBudgetByPoste(
+        accountId: number,
+        month?: number,
+        year?: number
+    ): Promise<BudgetByPoste[]> {
+        const builder = new QueryStringBuilder(`${this.apiUrl}/accounts/${accountId}/dashboard/budget-vs-actual`);
+        if (month) builder.addQueryString("month", month.toString());
+        if (year) builder.addQueryString("year", year.toString());
+
+        return axios.get(builder.build()).then((response) => response.data);
     }
 }
 
