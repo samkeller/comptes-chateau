@@ -79,8 +79,14 @@ export default function Index() {
         [accountOverviews]
     );
 
-    const totalForecastBalance = useMemo(
-        () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalance, 0),
+    const totalForecastBalanceMonthEnd = useMemo(
+        () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalanceMonthEnd, 0),
+        [accountOverviews]
+    );
+
+
+    const totalForecastBalanceFinal = useMemo(
+        () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalanceFinal, 0),
         [accountOverviews]
     );
 
@@ -102,14 +108,18 @@ export default function Index() {
 
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <Card title="Synthese" className="lg:col-span-2">
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                     <div>
-                                        <div className="text-sm text-surface-500">Solde actuel (total)</div>
+                                        <div className="text-sm text-surface-500">Solde actuel</div>
                                         <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalCurrentBalance)}</div>
                                     </div>
                                     <div>
+                                        <div className="text-sm text-surface-500">Solde prévisionnel (ce mois)</div>
+                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceMonthEnd)}</div>
+                                    </div>
+                                    <div>
                                         <div className="text-sm text-surface-500">Solde prévisionnel (total)</div>
-                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalance)}</div>
+                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceFinal)}</div>
                                     </div>
                                 </div>
                             </Card>
