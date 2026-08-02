@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
-import Markdown from "react-markdown";
+import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import KanbanService from "../../services/kanban/KanbanService";
 import MarkdownEditor from "../../components/form/markdown/MarkdownEditor";
 import UserAvatar from "../../components/atoms/UserAvatar";
@@ -112,7 +112,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
                                     )}
                                 </div>
                                 <div className="tiptap rounded-lg bg-slate-900/40 px-3 py-2 text-sm text-slate-200/90 [&_p]:m-0">
-                                    <Markdown>{comment.content}</Markdown>
+                                    <MarkdownRenderer>{comment.content}</MarkdownRenderer>
                                 </div>
                             </div>
                         </div>

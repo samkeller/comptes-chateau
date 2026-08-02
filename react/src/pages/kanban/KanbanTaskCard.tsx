@@ -2,7 +2,7 @@ import { Card } from "primereact/card";
 import KanbanTask from "../../interfaces/kanban/KanbanTask"
 import PriorityFlag from "./atoms/PriorityFlag";
 import { useDraggable } from "@dnd-kit/core";
-import Markdown from "react-markdown";
+import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 import UserAvatar from "../../components/atoms/UserAvatar";
 import { AvatarGroup } from "primereact/avatargroup";
@@ -90,9 +90,9 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
             >
                 {hasDescription ? (
                     <div className="line-clamp-3 rounded-lg bg-slate-900/40 px-3 py-2 text-sm text-slate-200/90 tiptap [&_p]:m-0">
-                        <Markdown>
+                        <MarkdownRenderer>
                             {task.description}
-                        </Markdown>
+                        </MarkdownRenderer>
                     </div>
                 ) : (
                     <div className="rounded-lg border border-dashed border-slate-500/60 px-3 py-2 text-sm italic text-slate-400">

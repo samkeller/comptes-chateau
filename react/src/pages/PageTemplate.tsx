@@ -11,6 +11,7 @@ import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
 import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
+import ChangelogDialog from "@/components/ChangelogDialog";
 
 const localStorageUtils = new LocalStorageUtils();
 
@@ -21,6 +22,7 @@ interface PageTemplateProps {
 
 export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [showChangelogDialog, setShowChangelogDialog] = useState(false);
   const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false)
   const [isDesktopMenuVisible, setIsDesktopMenuVisible] = useState(true)
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -88,6 +90,10 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         showConfigDialog &&
         <UserConfigDialog hideDialog={() => setShowConfigDialog(false)} />
       }
+      {
+        showChangelogDialog &&
+        <ChangelogDialog hideDialog={() => setShowChangelogDialog(false)} />
+      }
       <header className="flex items-center justify-between px-4 md:px-12 py-4 md:py-6 border-b border-surface">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
@@ -120,6 +126,15 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
             onClick={() => setShowConfigDialog(true)}
             {...isXS && { className: "p-1 w-6 h-6" }}
           />
+            <Button
+              icon="pi pi-history"
+              text
+              rounded
+              size="small"
+              tooltip="Changelog"
+              onClick={() => setShowChangelogDialog(true)}
+              {...isXS && { className: "p-1 w-6 h-6" }}
+            />
           <Button
             icon="pi pi-power-off"
             severity="danger"
