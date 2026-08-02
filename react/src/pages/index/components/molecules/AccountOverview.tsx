@@ -12,7 +12,7 @@ interface AccountOverviewProps {
 export default function AccountOverview({ model }: AccountOverviewProps) {
     const { account, overview } = model;
 
-    const hasForecastDelta = overview.currentBalance !== overview.forecastBalance;
+    const hasForecastDelta = overview.currentBalance !== overview.forecastBalanceFinal;
     const localStorageUtils = new LocalStorageUtils();
     const operationsCount = overview.operationsToCheckInAccountCount;
     const horsCompteCount = overview.operationsToCheckHorsCompteCount;
@@ -58,7 +58,7 @@ export default function AccountOverview({ model }: AccountOverviewProps) {
                                         {horsCompteCount > 0 && <small>{horsCompteCount} hors compte</small>}
                                         {hasForecastDelta && (
                                             <small className=" block">
-                                                (Solde prévisionnel: <span className="font-semibold">{toMonetaryAmount(overview.forecastBalance)}</span>)
+                                                (Solde prévisionnel: <span className="font-semibold">{toMonetaryAmount(overview.forecastBalanceFinal)}</span>)
                                             </small>
                                         )}
                                     </div>
