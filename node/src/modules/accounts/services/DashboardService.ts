@@ -17,7 +17,11 @@ export interface MonthlyPosteAggregate {
 
 export interface DashboardOverview {
     currentBalance: number;
-    forecastBalance: number;
+
+    forecastBalanceMonthEnd: number;
+    forecastBalanceThreeMonths: number;
+    forecastBalanceFinal: number;
+
     monthExpenses: number;
     monthlyBudget: number;
     operationsToCheckInAccountCount: number;
@@ -55,10 +59,25 @@ export default class DashboardService {
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
-        const [currentDeltaRaw, forecastDeltaRaw, budgetVsActual, toCheckCounts, assignedKanbanTasksCount] = await Promise.all([
-            this.getBalanceDeltaSinceDate(true, baseLineDate, accountId),
-            this.getBalanceDeltaSinceDate(false, baseLineDate, accountId),
-            this.getBudgetVsActual(accountId, new Date().getMonth() + 1, new Date().getFullYear()),
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const threeMonthsEnd = new Date(now.getFullYear(), now.getMonth() + 3, 1);
+
+        const [
+            currentDeltaRaw,
+            forecastDeltaMonthEndRaw,
+            forecastDeltaThreeMonthsRaw,
+            forecastDeltaFinalRaw,
+            budgetVsActual,
+            toCheckCounts,
+            assignedKanbanTasksCount,
+        ] = await Promise.all([
+            this.getBalanceDeltaSinceDate(true, baseLineDate, undefined, accountId),
+            this.getBalanceDeltaSinceDate(false, baseLineDate, nextMonthStart, accountId),
+            this.getBalanceDeltaSinceDate(false, baseLineDate, threeMonthsEnd, accountId),
+            this.getBalanceDeltaSinceDate(false, baseLineDate, undefined, accountId),
+            this.getBudgetVsActual(accountId, monthStart.getMonth() + 1, monthStart.getFullYear()),
             this.getOperationsToCheckCounts(accountId),
             this.getAssignedKanbanTasksCount(userId),
         ]);
@@ -68,7 +87,9 @@ export default class DashboardService {
 
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
-            forecastBalance: baselineAmount + Number(forecastDeltaRaw?.value ?? 0),
+            forecastBalanceMonthEnd: baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0),
+            forecastBalanceThreeMonths: baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0),
+            forecastBalanceFinal: baselineAmount + Number(forecastDeltaFinalRaw?.value ?? 0),
             monthExpenses,
             monthlyBudget,
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
@@ -121,7 +142,7 @@ export default class DashboardService {
                 .addGroupBy("poste.label")
                 .addGroupBy("poste.color")
                 .getRawMany<{ posteId: number; posteLabel: string; posteColor: string; actualAmount: string }>(),
-                // BudgetItems + RecurringExpenses
+            // BudgetItems + RecurringExpenses
             this.computeBudgetByPoste(accountId),
         ]);
 
@@ -249,6 +270,7 @@ export default class DashboardService {
     private async getBalanceDeltaSinceDate(
         checkedOnly: boolean,
         fromDate: Date,
+        toDate: Date | undefined,
         accountId: number
     ): Promise<{ value: string | number } | undefined> {
         let qb = this.accountLineRepo
@@ -256,8 +278,13 @@ export default class DashboardService {
             .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
             .where("al.account_id = :accountId", { accountId })
             .andWhere("al.dateOperation >= :fromDate", { fromDate })
+
             .leftJoin("al.nature", "nature")
             .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
+        
+        if (toDate) {
+            qb = qb.andWhere("al.dateOperation < :toDate", { toDate });
+        }
 
         if (checkedOnly) {
             qb = qb.andWhere("al.isChecked = :isChecked", { isChecked: true });

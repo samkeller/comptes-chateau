@@ -63,7 +63,7 @@ class MockOverviewQueryBuilder {
 }
 
 interface DashboardServicePrivate {
-    getBalanceDeltaSinceDate(checkedOnly: boolean, fromDate: Date, accountId: number): Promise<QueryResult>;
+    getBalanceDeltaSinceDate(checkedOnly: boolean, fromDate: Date, toDate: Date | undefined, accountId: number): Promise<QueryResult>;
 }
 
 describe("DashboardService.getBalanceDeltaSinceDate", () => {
@@ -91,7 +91,7 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         const fromDate = new Date("2026-01-15T00:00:00.000Z");
         qb.rawResult = { value: "42.5" };
 
-        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(true, fromDate, 3);
+        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(true, fromDate, undefined, 3);
 
         expect(createQueryBuilder).toHaveBeenCalledWith("al");
         expect(qb.selectCalls).toEqual([
@@ -129,7 +129,7 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         const fromDate = new Date("2026-02-01T00:00:00.000Z");
         qb.rawResult = { value: 0 };
 
-        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(false, fromDate, 7);
+        const result = await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(false, fromDate, undefined, 7);
 
         expect(qb.whereCalls).toEqual([
             {
@@ -150,6 +150,19 @@ describe("DashboardService.getBalanceDeltaSinceDate", () => {
         expect(qb.getRawOneCalls).toBe(1);
         expect(result).toEqual({ value: 0 });
     });
+
+    it("adds toDate filter when toDate is provided", async () => {
+        const fromDate = new Date("2026-02-01T00:00:00.000Z");
+        const toDate = new Date("2026-03-01T00:00:00.000Z");
+        qb.rawResult = { value: 123 };
+
+        await (service as unknown as DashboardServicePrivate).getBalanceDeltaSinceDate(false, fromDate, toDate, 5);
+
+        expect(qb.andWhereCalls).toContainEqual({
+            sql: "al.dateOperation < :toDate",
+            params: { toDate }
+        });
+    });
 });
 
 describe("DashboardService.getOverview", () => {
@@ -160,14 +173,40 @@ describe("DashboardService.getOverview", () => {
         toCheckCounts: { inAccount: string | number | null; horsCompte: string | number | null };
         assignedKanbanTasksCount?: number;
     }): DashboardService {
-        // Calls order: currentDelta, forecastDelta, toCheckCounts
-        let qbCallIndex = 0;
-        const createQueryBuilder = vi.fn(() => {
-            const result = options.deltaResults[qbCallIndex++];
-            return new MockOverviewQueryBuilder([result]);
-        });
-
-        const accountLineRepo = { createQueryBuilder };
+        let deltaCallIndex = 0;
+        const accountLineRepo = {
+            createQueryBuilder: vi.fn().mockImplementation((alias: string) => {
+                if (alias === 'al') { // Target getBalanceDeltaSinceDate and getOperationsToCheckCounts
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        addSelect: vi.fn().mockReturnThis(),
+                        where: vi.fn().mockReturnThis(),
+                        andWhere: vi.fn().mockReturnThis(),
+                        leftJoin: vi.fn().mockReturnThis(),
+                        groupBy: vi.fn().mockReturnThis(),
+                        addGroupBy: vi.fn().mockReturnThis(),
+                        getRawOne: vi.fn().mockImplementation(() => {
+                            if (deltaCallIndex < options.deltaResults.length) {
+                                return Promise.resolve(options.deltaResults[deltaCallIndex++]);
+                            }
+                            return Promise.resolve(options.toCheckCounts);
+                        }),
+                    };
+                }
+                return {
+                    // Default mock for other createQueryBuilder calls if any
+                    select: vi.fn().mockReturnThis(),
+                    addSelect: vi.fn().mockReturnThis(),
+                    where: vi.fn().mockReturnThis(),
+                    andWhere: vi.fn().mockReturnThis(),
+                    leftJoin: vi.fn().mockReturnThis(),
+                    groupBy: vi.fn().mockReturnThis(),
+                    addGroupBy: vi.fn().mockReturnThis(),
+                    getRawOne: vi.fn().mockResolvedValue({}),
+                    getRawMany: vi.fn().mockResolvedValue([]),
+                };
+            })
+        };
 
         const accountRepo = {
             findOne: vi.fn().mockResolvedValue(
@@ -194,6 +233,7 @@ describe("DashboardService.getOverview", () => {
         );
 
         vi.spyOn(service, 'getBudgetVsActual').mockResolvedValue(options.budgetVsActual ?? []);
+        vi.spyOn(service, 'getOperationsToCheckCounts').mockResolvedValue({ inAccount: Number(options.toCheckCounts.inAccount ?? 0), horsCompte: Number(options.toCheckCounts.horsCompte ?? 0) });
 
         return service;
     }
@@ -203,8 +243,9 @@ describe("DashboardService.getOverview", () => {
             baseline: { amount: 1000, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "250.50" },   // currentDelta (checked)
-                { value: "400.75" },   // forecastDelta (all)
-                { inAccount: 3, horsCompte: 1 } as never // toCheckCounts
+                { value: "300.00" },   // forecast month end
+                { value: "400.75" },   // forecast 3 months
+                { value: "500.00" },   // forecast final
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
@@ -215,13 +256,14 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBeCloseTo(1250.50);
     });
 
-    it("computes forecastBalance = baseline + all operations delta", async () => {
+    it("computes forecast balances = baseline + all operations delta up to different dates", async () => {
         const service = buildService({
             baseline: { amount: 1000, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "250.50" },
+                { value: "300.00" },
                 { value: "400.75" },
-                { inAccount: 3, horsCompte: 1 } as never
+                { value: "500.00" },
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
@@ -229,25 +271,32 @@ describe("DashboardService.getOverview", () => {
 
         const result = await service.getOverview(1, 1);
 
-        expect(result.forecastBalance).toBeCloseTo(1400.75);
+        expect(result.forecastBalanceMonthEnd).toBeCloseTo(1300.00);
+        expect(result.forecastBalanceThreeMonths).toBeCloseTo(1400.75);
+        expect(result.forecastBalanceFinal).toBeCloseTo(1500.00);
     });
 
-    it("forecastBalance >= currentBalance when unchecked ops have positive net", async () => {
+    it("forecastBalances >= currentBalance when unchecked ops have positive net", async () => {
         const service = buildService({
             baseline: { amount: 500, effectiveDate: new Date("2025-06-01") },
             deltaResults: [
                 { value: "100" },    // checked only
-                { value: "300" },    // all (includes unchecked)
-                { inAccount: 0, horsCompte: 0 } as never
+                { value: "200" },    // month end
+                { value: "300" },    // 3 months
+                { value: "400" },    // final
             ],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
 
         const result = await service.getOverview(1, 1);
 
-        expect(result.forecastBalance).toBeGreaterThanOrEqual(result.currentBalance);
         expect(result.currentBalance).toBeCloseTo(600);
-        expect(result.forecastBalance).toBeCloseTo(800);
+        expect(result.forecastBalanceMonthEnd).toBeCloseTo(700);
+        expect(result.forecastBalanceThreeMonths).toBeCloseTo(800);
+        expect(result.forecastBalanceFinal).toBeCloseTo(900);
+        expect(result.forecastBalanceMonthEnd).toBeGreaterThanOrEqual(result.currentBalance);
+        expect(result.forecastBalanceThreeMonths).toBeGreaterThanOrEqual(result.forecastBalanceMonthEnd);
+        expect(result.forecastBalanceFinal).toBeGreaterThanOrEqual(result.forecastBalanceThreeMonths);
     });
 
     it("uses fallback baseline (amount=0, date=1960) when no baseline exists", async () => {
@@ -255,8 +304,9 @@ describe("DashboardService.getOverview", () => {
             baseline: null,
             deltaResults: [
                 { value: "500" },
+                { value: "650" },
                 { value: "750" },
-                { inAccount: 2, horsCompte: 0 } as never
+                { value: "850" },
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 200, actualAmount: 80 }],
             toCheckCounts: { inAccount: 2, horsCompte: 0 }
@@ -266,7 +316,9 @@ describe("DashboardService.getOverview", () => {
 
         // 0 + delta (no baseline amount)
         expect(result.currentBalance).toBeCloseTo(500);
-        expect(result.forecastBalance).toBeCloseTo(750);
+        expect(result.forecastBalanceMonthEnd).toBeCloseTo(650);
+        expect(result.forecastBalanceThreeMonths).toBeCloseTo(750);
+        expect(result.forecastBalanceFinal).toBeCloseTo(850);
     });
 
     it("handles string amounts from PostgreSQL decimals", async () => {
@@ -274,8 +326,9 @@ describe("DashboardService.getOverview", () => {
             baseline: { amount: "2500.99" as unknown as number, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "-150.33" },
+                { value: "-100.00" },
                 { value: "-50.10" },
-                { inAccount: "5", horsCompte: "2" } as never
+                { value: "0.00" },
             ],
             budgetVsActual: [
                 { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 300.50, actualAmount: 120.25 },
@@ -287,7 +340,9 @@ describe("DashboardService.getOverview", () => {
         const result = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBeCloseTo(2350.66);
-        expect(result.forecastBalance).toBeCloseTo(2450.89);
+        expect(result.forecastBalanceMonthEnd).toBeCloseTo(2400.99);
+        expect(result.forecastBalanceThreeMonths).toBeCloseTo(2450.89);
+        expect(result.forecastBalanceFinal).toBeCloseTo(2500.99);
         expect(result.monthExpenses).toBeCloseTo(200.50);
         expect(result.monthlyBudget).toBeCloseTo(450.75);
         expect(result.operationsToCheckInAccountCount).toBe(5);
@@ -300,7 +355,8 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "0" },
                 { value: "0" },
-                { inAccount: 0, horsCompte: 0 } as never
+                { value: "0" },
+                { value: "0" },
             ],
             budgetVsActual: [
                 { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 100, actualAmount: 30 },
@@ -321,8 +377,9 @@ describe("DashboardService.getOverview", () => {
             baseline: { amount: 1000, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 undefined,     // currentDelta returns undefined
-                { value: 0 },  // forecastDelta
-                { inAccount: null, horsCompte: null } as never
+                { value: 0 },  // forecastDelta month end
+                undefined, // forecast 3 months
+                { value: 50 }
             ],
             toCheckCounts: { inAccount: null, horsCompte: null }
         });
@@ -330,7 +387,9 @@ describe("DashboardService.getOverview", () => {
         const result = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBe(1000);
-        expect(result.forecastBalance).toBe(1000);
+        expect(result.forecastBalanceMonthEnd).toBe(1000);
+        expect(result.forecastBalanceThreeMonths).toBe(1000);
+        expect(result.forecastBalanceFinal).toBe(1050);
         expect(result.monthExpenses).toBe(0);
         expect(result.operationsToCheckInAccountCount).toBe(0);
         expect(result.operationsToCheckHorsCompteCount).toBe(0);
@@ -341,8 +400,9 @@ describe("DashboardService.getOverview", () => {
             baseline: { amount: 5000, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
                 { value: "-1200.00" },
+                { value: "-1500.00" },
                 { value: "-1800.00" },
-                { inAccount: 10, horsCompte: 3 } as never
+                { value: "-2000.00" },
             ],
             budgetVsActual: [
                 { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 800, actualAmount: 1200 },
@@ -353,7 +413,9 @@ describe("DashboardService.getOverview", () => {
         const result: DashboardOverview = await service.getOverview(1, 1);
 
         expect(result.currentBalance).toBeCloseTo(3800);
-        expect(result.forecastBalance).toBeCloseTo(3200);
+        expect(result.forecastBalanceMonthEnd).toBeCloseTo(3500);
+        expect(result.forecastBalanceThreeMonths).toBeCloseTo(3200);
+        expect(result.forecastBalanceFinal).toBeCloseTo(3000);
         expect(result.monthExpenses).toBeCloseTo(1200);
         expect(result.monthlyBudget).toBeCloseTo(800);
         expect(result.operationsToCheckInAccountCount).toBe(10);
@@ -366,7 +428,8 @@ describe("DashboardService.getOverview", () => {
             deltaResults: [
                 { value: "0" },
                 { value: "0" },
-                { inAccount: 0, horsCompte: 0 } as never
+                { value: "0" },
+                { value: "0" },
             ],
             budgetVsActual: [],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
