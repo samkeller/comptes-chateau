@@ -7,7 +7,7 @@ import { Column } from "primereact/column";
 import AddRecurringExpenseDialog from "./AddRecurringExpenseDialog";
 import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { Message } from "primereact/message";
-import { formatDistance } from "date-fns";
+import { formatDistanceToNow } from "@/utils/DatesUtils";
 import { Tooltip } from "primereact/tooltip";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { useGlobalToast } from "@/context/GlobalToastContext";
@@ -50,6 +50,21 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
         )
     }
 
+    const getFrequencyLabel = (frequency: RecurringExpense['frequency']) => {
+        switch (frequency) {
+            case 'weekly':
+                return 'Hebdomadaire'
+            case 'monthly':
+                return 'Mensuelle'
+            case 'quarterly':
+                return 'Trimestrielle'
+            case 'yearly':
+                return 'Annuelle'
+            default:
+                return frequency
+        }
+    }
+
     const isActiveBody = (isActive: boolean) => {
         return isActive ?
             <i className="pi pi-check text-green-500"></i> :
@@ -60,6 +75,7 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
         <>
             {
                 showAddDialog && <AddRecurringExpenseDialog
+                    key={editingExpense?.id ?? 'new'}
                     accountId={accountId}
                     editingExpense={editingExpense}
                     hideDialog={() => {
@@ -128,17 +144,23 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
                         body={(v: RecurringExpense) => isActiveBody(v.isActive)}
                     />
                     <Column
+                        field="frequency"
+                        header="Fréquence"
+                        body={(v: RecurringExpense) => getFrequencyLabel(v.frequency)}
+                    />
+                    <Column
                         field="nextOccurrence"
                         header="Prochaine activation"
                         body={(v: RecurringExpense) => {
+                            const frequencyLabel = getFrequencyLabel(v.frequency);
                             return (
                                 v.nextOccurrence && <>
                                     <Tooltip target=".custom-label-next-occurence" />
                                     <span
                                         className="custom-label-next-occurence"
-                                        data-pr-tooltip={`${v.nextOccurrence.toLocaleDateString('fr-FR')} (mensuel)`}
+                                        data-pr-tooltip={`${v.nextOccurrence.toLocaleDateString('fr-FR')} (${frequencyLabel.toLowerCase()})`}
                                     >
-                                        {v.nextOccurrence && formatDistance(v.nextOccurrence, new Date(), { addSuffix: true })}
+                                        {v.nextOccurrence && formatDistanceToNow(v.nextOccurrence)}
                                     </span>
                                 </>
                             )

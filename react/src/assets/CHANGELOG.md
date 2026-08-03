@@ -12,3 +12,12 @@
 
 ### Fixes
 - Custom markdown renderer (wrapper) pour que ce soit plus zoli & adapté à lara-dark-teal
+
+## [1.0.1 - 03/08/2026]
+
+### Added
+- Ajout des fréquences hebdomadaires, annuelles & trimestrielles pour les dépenses récurrentes
+- Affichage de la fréquence dans le tableau /budget
+
+### Fixes
+- Correction de la distance de date de la prochaine activation dans /budget

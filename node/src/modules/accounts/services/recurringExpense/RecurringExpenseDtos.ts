@@ -8,7 +8,7 @@ export const SaveRecurringExpenseSchema = z.object({
     solde: z.number(),
     isActive: z.boolean(),
     nextOccurrence: z.string().optional(),
-    frequency: z.enum(RecurringExpenseFrequency).optional(),
+    frequency: z.enum(RecurringExpenseFrequency),
     nature: z.object({ id: z.number().int().positive() }).nullable().optional(),
     poste: z.object({ id: z.number().int().positive() }).nullable().optional(),
 });

@@ -2,6 +2,8 @@ import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
 import { parseApiDate } from "../services/ApiDateCodec"
 
+export type RecurringExpenseFrequency = "weekly" | "monthly" | "quarterly" | "yearly"
+
 class RecurringExpense {
     id: number = 0
     label: string = ""
@@ -10,7 +12,7 @@ class RecurringExpense {
     nature: AccountLineNature | null = null
     poste: AccountLinePoste | null = null
     nextOccurrence: Date = new Date()
-    frequency: "monthly" = "monthly"
+    frequency: RecurringExpenseFrequency = "monthly"
 
     constructor(recurringExpense: Partial<RecurringExpense>) {
         Object.assign(this, recurringExpense)

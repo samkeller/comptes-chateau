@@ -4,7 +4,10 @@ import { AccountLinePoste } from "./AccountLinePoste";
 import { Account } from "./Account";
 
 export enum RecurringExpenseFrequency {
-    MONTHLY = 'monthly'
+    WEEKLY = 'weekly',
+    YEARLY = 'yearly',
+    MONTHLY = 'monthly',
+    QUARTERLY = 'quarterly',
 }
 
 @Entity('recurring_expense')

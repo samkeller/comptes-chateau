@@ -5,7 +5,7 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
-import RecurringExpense from '../../../interfaces/RecurringExpense';
+import RecurringExpense, { RecurringExpenseFrequency } from '../../../interfaces/RecurringExpense';
 import { AccountLineNature } from '../../../interfaces/AccountLineNature';
 import { AccountLinePoste } from '../../../interfaces/AccountLinePoste';
 import RecurringExpenseService from '../../../services/RecurringExpenseService';
@@ -30,7 +30,7 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
     const [solde, setSolde] = useState<number>(editingExpense?.solde || 0);
     const [isActive, setIsActive] = useState<boolean>(editingExpense?.isActive ?? true);
     const [nextOccurrence, setNextOccurrence] = useState<Date>(editingExpense?.nextOccurrence || new Date());
-    const [frequency] = useState("monthly");
+    const [frequency, setFrequency] = useState<RecurringExpenseFrequency>(editingExpense?.frequency ?? "monthly");
 
     const [natures, setNatures] = useState<AccountLineNature[]>([]);
     const [postes, setPostes] = useState<AccountLinePoste[]>([]);
@@ -40,7 +40,8 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
     useEffect(() => {
         const natureService = new AccountLineNatureService();
         const posteService = new AccountLinePosteService();
-        Promise.all([
+
+        void Promise.all([
             natureService.getAllNatures(),
             posteService.getAllAccountPostes(accountId)
         ])
@@ -77,7 +78,8 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
             poste: selectedPoste,
             solde,
             isActive,
-            nextOccurrence
+            nextOccurrence,
+            frequency
         };
         new RecurringExpenseService()
             .saveAccountRecurringExpense(accountId, expense)
@@ -169,14 +171,19 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
                             onChange={(e) => e.value && setNextOccurrence(e.value)}
                             className='w-full'
                         />
-                        <label htmlFor="nextOccurrence">Prochaine activation</label>
+                        <label htmlFor="nextOccurrence">Première activation</label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
                         <Dropdown id="frequency"
                             value={frequency}
-                            options={[{ label: "Mensuelle", value: "monthly" }]}
-                            disabled
+                            options={[
+                                { label: "Hebdomadaire", value: "weekly" },
+                                { label: "Mensuelle", value: "monthly" },
+                                { label: "Trimestrielle", value: "quarterly" },
+                                { label: "Annuelle", value: "yearly" }
+                            ]}
                             className='w-full'
+                            onChange={(e) => setFrequency(e.value as RecurringExpenseFrequency)}
                         />
                         <label htmlFor="frequency">Fréquence</label>
                     </FloatLabel>

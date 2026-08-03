@@ -1,4 +1,5 @@
-import { format, parse } from "date-fns"
+import { format, formatDistance, parse } from "date-fns"
+import { fr } from "date-fns/locale"
 
 /**
  * Transforme une string en date
@@ -17,4 +18,8 @@ function parseDateToDisplay(date: Date): string {
     return format(date, 'dd MM yyyy')
 }
 
-export { parseDDMMYYYYToDate, parseDateToDDMMYYYY, parseDateToDisplay }
+function formatDistanceToNow(date: Date): string {
+    return formatDistance(date, new Date(), { addSuffix: true, locale: fr })
+}
+
+export { parseDDMMYYYYToDate, parseDateToDDMMYYYY, parseDateToDisplay, formatDistanceToNow }

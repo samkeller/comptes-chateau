@@ -48,11 +48,31 @@ export async function processRecurringExpenses(
 
     // 3 - Modifier les recurring_expense pour mettre à jour la prochaine occurrence
     for (const expense of expensesToProcess) {
-        const d = new Date(expense.nextOccurrence);
-        expense.nextOccurrence = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
+        const [day, month, year] = [
+            expense.nextOccurrence.getDate(),
+            expense.nextOccurrence.getMonth(),
+            expense.nextOccurrence.getFullYear()
+        ];
+
+        switch (expense.frequency) {
+            case 'weekly':
+                expense.nextOccurrence = new Date(year, month, day + 7);
+                break;
+            case 'monthly':
+                expense.nextOccurrence = new Date(year, month + 1, day);
+                break;
+            case 'quarterly':
+                expense.nextOccurrence = new Date(year, month + 3, day);
+                break;
+            case 'yearly':
+                expense.nextOccurrence = new Date(year + 1, month, day);
+                break;
+            default:
+                throw new Error (`Unknown frequency: ${expense.frequency}`);
+        }
     }
 
-    await recurringExpenseService.saveAll(expensesToProcess);
+    const updatedRecurringExpenses = await recurringExpenseService.saveAll(expensesToProcess);
 
     // 4 - Créer un log de succès
     await logService.logSuccess(
@@ -64,10 +84,9 @@ export async function processRecurringExpenses(
             createdAccountLineIds: createdLines.map(l => l.id)
         }
     );
-
     return {
         createdAccountLines: createdLines,
-        updatedRecurringExpenses: expensesToProcess,
+        updatedRecurringExpenses,
         processedCount: createdLines.length
     };
 }
