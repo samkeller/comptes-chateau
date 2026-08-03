@@ -53,11 +53,31 @@ export default class BudgetService {
 
         // Add recurring expenses
         for (const expense of recurringExpenses) {
+
+            /**
+             * Calcules l'équivalent mensuel de l'amount du recurring expense en fonction de sa fréquence.
+             */
+            let amountByFrequency: number;
+            switch (expense.frequency) {
+                case 'weekly':
+                    amountByFrequency = Number(expense.solde) * 4.34524; // Average weeks in a month
+                    break;
+                case 'quarterly':
+                    amountByFrequency = Number(expense.solde) / 3;
+                    break;
+                case 'yearly':
+                    amountByFrequency = Number(expense.solde) / 12;
+                    break;
+                case 'monthly':
+                default:
+                    amountByFrequency = Number(expense.solde);
+            }
+
             lines.push({
                 id: `recurring_${expense.id}`,
                 source: 'recurring',
                 label: expense.label,
-                amount: Math.abs(Number(expense.solde)),
+                amount: Math.abs(amountByFrequency),
                 posteId: expense.poste?.id ?? null,
                 posteLabel: expense.poste?.label ?? null,
                 posteColor: expense.poste?.color ?? null,
