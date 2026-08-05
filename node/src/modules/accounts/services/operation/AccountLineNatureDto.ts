@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export interface NatureDto {
+export interface AccountLineNatureDto {
     id: number;
     label: string;
     color: string;

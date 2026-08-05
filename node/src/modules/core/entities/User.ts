@@ -13,6 +13,9 @@ export class User {
   @Column({ type: "varchar", length: 255, default: "001-tiger.png" })
   avatar: string;
 
+  @Column({ type: "int", default: 0 })
+  totalXp: number;
+
   @Column({ type: "varchar", length: 255, select: false })
   passwordHash: string;
 

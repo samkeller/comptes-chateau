@@ -4,6 +4,7 @@ export interface UserDto {
     id: number;
     username: string;
     avatar: string;
+    totalXp: number;
 }
 
 export function toUserDto(user: User): UserDto {
@@ -11,5 +12,6 @@ export function toUserDto(user: User): UserDto {
         id: user.id,
         username: user.username,
         avatar: user.avatar,
+        totalXp: user.totalXp,
     };
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export interface PosteDto {
+export interface AccountLinePosteDto {
     id: number;
     label: string;
     color: string;

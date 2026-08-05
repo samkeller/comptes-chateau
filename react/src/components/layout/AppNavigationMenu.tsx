@@ -139,6 +139,12 @@ export default function AppNavigationMenu({
                                     className: isOnAccountBudget ? "bg-surface-200" : undefined,
                                     command: () => navigateTo(accountPath("budget"))
                                 },
+                                {
+                                    label: "Automatisations",
+                                    icon: "pi pi-android",
+                                    className: isOnAccountBudget ? "bg-surface-200" : undefined,
+                                    command: () => navigateTo(accountPath("automatisations"))
+                                },
                             ]}
 
                         />
