@@ -43,17 +43,18 @@ const router = createBrowserRouter([
         element: <Budget />,
         handle: { navKey: "account-budget" },
       },
-      {
-        path: "automatisations",
-        element: <AccountLineCategorization />,
-        handle: { navKey: "automatisations" },
-      },
+
     ]
   },
   {
     path: "/setup",
     element: <Setup />,
     handle: { navKey: "setup" },
+  },
+  {
+    path: "automatisations",
+    element: <AccountLineCategorization />,
+    handle: { navKey: "automatisations" },
   },
   {
     path: "/kanban",

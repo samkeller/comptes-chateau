@@ -5,7 +5,6 @@ import { Message } from "primereact/message"
 import { Tag } from "primereact/tag"
 import ChocoKarate from "@assets/images/chocokarate_flip.png"
 import ChocoKarateVsRobot from "@assets/images/chocokaratevsrobot.png"
-import ChocoKarateWinning from "@assets/images/chocokaratevsrobot_winning.png"
 import { UnmappedAccountLineRuleItem } from "@/services/AccountLineCategorizationService"
 import { getUserFullProgress } from "@/utils/levelProgress"
 import DojoXpLeaderboard from "./DojoXpLeaderboard"
@@ -33,8 +32,8 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
     const [isWinning, setIsWinning] = useState(false)
     const [selectedPoste, setSelectedPoste] = useState(false)
     const [selectedNature, setSelectedNature] = useState(false)
-    // TODO: ref KO & hot-reload KO
-    const leaderboardRef = useRef<any>(null)
+    // leaderboard refresh key used to trigger child reloads after XP changes
+    const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
     const { connectedUser, refreshUser } = useConnectedUser()
     const previousLevelRef = useRef(getUserFullProgress(connectedUser?.totalXp ?? 0).level)
 
@@ -74,7 +73,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
     const hasSuggestedNature = Boolean(currentItem?.suggestedNature?.id)
     const canSubmit = (selectedPoste && hasSuggestedPoste) || (selectedNature && hasSuggestedNature)
 
-    const imageSource = !isStarted ? ChocoKarate : isWinning ? ChocoKarateWinning : ChocoKarateVsRobot
+    const imageSource = !isStarted ? ChocoKarate : ChocoKarateVsRobot
 
     const statusMessage = useMemo(() => {
         if (!isStarted) {
@@ -116,7 +115,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
             await userService.addXP(XP_PER_RULE)
             // refresh connected user and leaderboard
             await refreshUser().catch(() => null)
-            await leaderboardRef.current?.refresh?.()
+            setLeaderboardRefreshKey((k) => k + 1)
             moveNext()
         } finally {
             setIsSubmitting(false)
@@ -250,7 +249,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                         )}
                     </div>
                 </div>
-                <DojoXpLeaderboard ref={leaderboardRef} />
+                <DojoXpLeaderboard refreshKey={leaderboardRefreshKey} />
             </Card>
 
         </>

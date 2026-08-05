@@ -51,6 +51,26 @@ export default function AccountLineCategorization() {
     }
   }
 
+  const handleDelete = async (id: number) => {
+    try {
+      await accountLineCategorizationService.delete(id);
+      showGlobalToast({ severity: "success", detail: "Règle supprimée." });
+      await loadData();
+    } catch (error) {
+      showGlobalToast({ severity: "error", detail: "Impossible de supprimer la règle." });
+    }
+  };
+
+  const handleUpdate = async (id: number, payload: { pattern?: string; posteId?: number | null; natureId?: number | null }) => {
+    try {
+      await accountLineCategorizationService.update(id, payload);
+      showGlobalToast({ severity: "success", detail: "Règle mise à jour." });
+      await loadData();
+    } catch (error) {
+      showGlobalToast({ severity: "error", detail: "Impossible de mettre à jour la règle." });
+    }
+  };
+
   return (
     <PageTemplate
       pageTitle="Catégorisation"
@@ -60,7 +80,7 @@ export default function AccountLineCategorization() {
           unmapped={unmapped}
           onConfirm={handleConfirm}
         />
-        <AccountLineCategorizationDatatable accountLineRules={rules} />
+        <AccountLineCategorizationDatatable accountLineRules={rules} onDelete={handleDelete} onUpdate={handleUpdate} />
       </div>
 
     </PageTemplate>
