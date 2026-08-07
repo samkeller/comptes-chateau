@@ -80,7 +80,11 @@ export default function AccountLineCategorization() {
           unmapped={unmapped}
           onConfirm={handleConfirm}
         />
-        <AccountLineCategorizationDatatable accountLineRules={rules} onDelete={handleDelete} onUpdate={handleUpdate} />
+        <AccountLineCategorizationDatatable
+          accountLineRules={rules}
+          onDelete={handleDelete}
+          onUpdate={handleUpdate}
+        />
       </div>
 
     </PageTemplate>

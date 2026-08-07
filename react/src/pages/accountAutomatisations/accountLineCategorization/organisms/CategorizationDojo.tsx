@@ -32,8 +32,8 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
     const [isWinning, setIsWinning] = useState(false)
     const [selectedPoste, setSelectedPoste] = useState(false)
     const [selectedNature, setSelectedNature] = useState(false)
-    // leaderboard refresh key used to trigger child reloads after XP changes
-    const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
+    // TODO: ref KO & hot-reload KO
+    const leaderboardRef = useRef<any>(null)
     const { connectedUser, refreshUser } = useConnectedUser()
     const previousLevelRef = useRef(getUserFullProgress(connectedUser?.totalXp ?? 0).level)
 
@@ -115,7 +115,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
             await userService.addXP(XP_PER_RULE)
             // refresh connected user and leaderboard
             await refreshUser().catch(() => null)
-            setLeaderboardRefreshKey((k) => k + 1)
+            await leaderboardRef.current?.refresh?.()
             moveNext()
         } finally {
             setIsSubmitting(false)
@@ -249,7 +249,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                         )}
                     </div>
                 </div>
-                <DojoXpLeaderboard refreshKey={leaderboardRefreshKey} />
+                <DojoXpLeaderboard ref={leaderboardRef} />
             </Card>
 
         </>

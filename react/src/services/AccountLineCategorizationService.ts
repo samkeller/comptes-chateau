@@ -46,7 +46,19 @@ export default class AccountLineCategorizationService extends BaseService {
    * Update an existing categorization rule.
    * Payload may include any of pattern, posteId or natureId.
    */
-  update(id: number, payload: { pattern?: string; posteId?: number | null; natureId?: number | null }) {
+  update(
+    id: number,
+    pattern: string,
+    accountId: number,
+    posteId?: number | null,
+    natureId?: number | null
+  ) {
+    const payload = {
+      pattern,
+      accountId,
+      posteId,
+      natureId
+    }
     return axios.put(`${this.apiUrl}/categorization/${id}`, payload).then(r => r.data);
   }
 
