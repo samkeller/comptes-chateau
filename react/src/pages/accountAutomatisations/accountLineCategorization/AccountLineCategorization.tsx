@@ -61,16 +61,6 @@ export default function AccountLineCategorization() {
     }
   };
 
-  const handleUpdate = async (id: number, payload: { pattern?: string; posteId?: number | null; natureId?: number | null }) => {
-    try {
-      await accountLineCategorizationService.update(id, payload);
-      showGlobalToast({ severity: "success", detail: "Règle mise à jour." });
-      await loadData();
-    } catch (error) {
-      showGlobalToast({ severity: "error", detail: "Impossible de mettre à jour la règle." });
-    }
-  };
-
   return (
     <PageTemplate
       pageTitle="Catégorisation"
@@ -83,7 +73,6 @@ export default function AccountLineCategorization() {
         <AccountLineCategorizationDatatable
           accountLineRules={rules}
           onDelete={handleDelete}
-          onUpdate={handleUpdate}
         />
       </div>
 

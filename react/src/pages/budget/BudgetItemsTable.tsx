@@ -1,14 +1,12 @@
 import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
+import AccountLinePosteDropdown from "@/components/atoms/accountLine/AccountLinePosteDropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useEffect, useState } from "react";
-import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
 import { BudgetItem, SaveBudgetItemPayload } from "../../interfaces/BudgetItem";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
-import AccountLinePosteService from "../../services/AccountLinePosteService";
 import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { BooleanIcon } from "@/components/datatableBodys/BooleanIcon";
@@ -35,7 +33,6 @@ const emptyDraft: BudgetDraft = {
 
 export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
     const [lines, setLines] = useState<BudgetItem[]>([]);
-    const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
     const [editingId, setEditingId] = useState<number | "new" | null>(null);
@@ -43,14 +40,8 @@ export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
 
     useEffect(() => {
         setLoading(true);
-        Promise.all([
-            new BudgetService().getAccountBudgetItems(accountId),
-            new AccountLinePosteService().getAllAccountPostes(accountId),
-        ])
-            .then(([budgetLines, accountPostes]) => {
-                setLines(budgetLines);
-                setPostes(accountPostes);
-            })
+        new BudgetService().getAccountBudgetItems(accountId)
+            .then(setLines)
             .finally(() => setLoading(false));
     }, [accountId]);
 
@@ -123,8 +114,6 @@ export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
         }
     };
 
-    const posteOptions = postes.map((poste) => ({ value: poste.id, label: poste.label, color: poste.color }));
-
     return (
         <>
             <div className="flex justify-end mb-3">
@@ -158,15 +147,10 @@ export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
                             {editingId === "new" && (
                                 <tr>
                                     <td className="p-2 border border-surface">
-                                        <Dropdown
+                                        <AccountLinePosteDropdown
+                                            accountId={accountId}
                                             value={draft.posteId}
-                                            options={posteOptions}
                                             onChange={(e) => setDraft((previous) => ({ ...previous, posteId: (e.value as number | null) ?? null }))}
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
-                                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Aucun</span>}
-                                            placeholder="Aucun"
                                             showClear
                                             className="w-full"
                                         />
@@ -207,15 +191,10 @@ export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
                                 <tr key={line.id} className={!line.isActive ? "opacity-60" : undefined}>
                                     <td className="p-2 border border-surface">
                                         {editingId === line.id ? (
-                                            <Dropdown
+                                            <AccountLinePosteDropdown
+                                                accountId={accountId}
                                                 value={draft.posteId}
-                                                options={posteOptions}
                                                 onChange={(e) => setDraft((previous) => ({ ...previous, posteId: (e.value as number | null) ?? null }))}
-                                                optionLabel="label"
-                                                optionValue="value"
-                                                itemTemplate={(option) => option && <ColoredLabel data={option} />}
-                                                valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Aucun</span>}
-                                                placeholder="Aucun"
                                                 showClear
                                                 className="w-full"
                                             />

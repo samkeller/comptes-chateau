@@ -1,76 +1,31 @@
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel";
 import AccountLineRule from "@/interfaces/AccountLineRule";
+import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { useState } from "react";
+import { DataTable } from "primereact/datatable";
 
 interface AccountLineCategorizationDatatableProps {
     accountLineRules: AccountLineRule[];
-    /** Optional handler called when a rule should be deleted. If omitted, delete is disabled. */
     onDelete: (id: number) => Promise<void>;
-    /** Optional handler called when a rule should be updated. If omitted, inline edit is disabled. */
-    onUpdate: (id: number, payload: { pattern?: string; posteId?: number | null; natureId?: number | null }) => Promise<void>;
 }
 
-export default function AccountLineCategorizationDatatable({ accountLineRules, onDelete, onUpdate }: AccountLineCategorizationDatatableProps) {
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [draftById, setDraftById] = useState<Record<number, { pattern: string }>>({});
-    const [busyIds, setBusyIds] = useState<Record<number, boolean>>({});
+export default function AccountLineCategorizationDatatable({
+    accountLineRules,
+    onDelete,
+}: AccountLineCategorizationDatatableProps) {
 
-    const startEdit = (r: AccountLineRule) => {
-        setDraftById((p) => ({ ...p, [r.id]: { pattern: r.pattern } }));
-        setEditingId(r.id);
-    };
 
-    const cancelEdit = (id: number) => {
-        setEditingId((cur) => (cur === id ? null : cur));
-        setDraftById((p) => {
-            const next = { ...p };
-            delete next[id];
-            return next;
-        });
-    };
-
-    const saveEdit = async (id: number) => {
-        if (!onUpdate) return;
-        const draft = draftById[id];
-        if (!draft) return;
-
-        setBusyIds((p) => ({ ...p, [id]: true }));
-        try {
-            await onUpdate(id, { pattern: draft.pattern.trim() });
-            cancelEdit(id);
-        } finally {
-            setBusyIds((p) => {
-                const next = { ...p };
-                delete next[id];
-                return next;
-            });
-        }
-    };
-
-    const requestDelete = (r: AccountLineRule) => {
-        if (!onDelete) return;
+    const requestDelete = (rule: AccountLineRule) => {
         confirmDialog({
             header: "Supprimer la règle",
-            message: `La règle "${r.pattern}" sera supprimée. Continuer ?`,
+            message: `La règle "${rule.pattern}" sera supprimée. Continuer ?`,
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
             accept: async () => {
-                setBusyIds((p) => ({ ...p, [r.id]: true }));
-                try {
-                    await onDelete!(r.id);
-                } finally {
-                    setBusyIds((p) => {
-                        const next = { ...p };
-                        delete next[r.id];
-                        return next;
-                    });
-                }
-            }
+                await onDelete(rule.id);
+            },
         });
     };
 
@@ -80,46 +35,39 @@ export default function AccountLineCategorizationDatatable({ accountLineRules, o
             <DataTable
                 value={accountLineRules}
             >
-                <Column field="pattern" header="Pattern"></Column>
+                <Column
+                    field="pattern"
+                    header="Pattern"
+                />
                 <Column
                     field="poste"
                     header="Poste"
-                    body={(rowData: AccountLineRule) => rowData.poste && (
-                        editingId && editingId === rowData.id ?
-                            <div>TODO: factorisation accountLinePosteDropdown</div> :
-                            <ColoredLabel data={{ label: rowData.poste.label, color: rowData.poste.color }} />
-                    )}
+                    body={(rowData: AccountLineRule) => rowData.poste && <ColoredLabel data={{ label: rowData.poste.label, color: rowData.poste.color }} />}
                 ></Column>
                 <Column
                     field="nature"
                     header="Nature"
-                    body={(rowData: AccountLineRule) => rowData.nature && (
-                        editingId && editingId === rowData.id ?
-                            <div>TODO: factorisation accountLineNatureDropdown</div> :
-                            <ColoredLabel data={{ label: rowData.nature.label, color: rowData.nature.color }} />
-                    )}
+                    body={(rowData: AccountLineRule) => rowData.nature && <ColoredLabel data={{ label: rowData.nature.label, color: rowData.nature.color }} />}
                 ></Column>
                 <Column field="occurrencesCount" header="Occurences"></Column>
                 <Column
                     header="Actions"
-                    body={(rowData: AccountLineRule) => (
-                        <div className="flex gap-1 items-center">
-                            {editingId === rowData.id ? (
-                                <>
-                                    <Button icon="pi pi-check" text className="p-button-sm" loading={!!busyIds[rowData.id]} onClick={() => void saveEdit(rowData.id)} />
-                                    <Button icon="pi pi-times" text className="p-button-sm" onClick={() => cancelEdit(rowData.id)} />
-                                </>
-                            ) : (
-                                <>
-                                    <Button icon="pi pi-pencil" text className="p-button-sm" onClick={() => startEdit(rowData)} />
-                                    <Button icon="pi pi-trash" text className="p-button-danger p-button-sm" onClick={() => requestDelete(rowData)} loading={!!busyIds[rowData.id]} />
-                                </>
-                            )}
+                    body={(row: AccountLineRule) =>
+                        <div className="flex gap-1 justify-end">
+                            <Button
+                                icon="pi pi-trash"
+                                text
+                                rounded
+                                severity="danger"
+                                className="p-button-sm"
+                                onClick={() => requestDelete(row)}
+                                tooltip="Supprimer"
+                                tooltipOptions={{ position: "left" }}
+                            />
                         </div>
-                    )}
+                    }
                 />
             </DataTable>
-        </Card >
-
-    )
+        </Card>
+    );
 }

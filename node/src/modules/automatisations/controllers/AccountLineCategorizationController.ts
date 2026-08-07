@@ -34,6 +34,13 @@ AccountLineCategorizationRoutes.post('/', validateBody(SaveRuleSchema), async (r
     res.status(201).json(created);
 });
 
+AccountLineCategorizationRoutes.put('/:id', validateBody(SaveRuleSchema), async (req: Request, res: Response) => {
+
+    const id = Number(req.params.id)
+
+    res.status(201).json(await accountLineCategorizationService.updateById(id, req.body));
+});
+
 AccountLineCategorizationRoutes.delete('/:id', validateParams(IdParamSchema), async (req: Request, res: Response) => {
     await accountLineCategorizationService.delete(Number(req.params.id));
     res.status(204).send();

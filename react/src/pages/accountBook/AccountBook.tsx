@@ -6,32 +6,20 @@ import { Card } from "primereact/card"
 import { Button } from "primereact/button"
 import { InputText } from "primereact/inputtext"
 import { Calendar } from "primereact/calendar"
-import { Dropdown } from "primereact/dropdown"
+import AccountLineNatureDropdown from "../../components/atoms/accountLine/AccountLineNatureDropdown";
+import AccountLinePosteDropdown from "../../components/atoms/accountLine/AccountLinePosteDropdown";
 import AddAccountLineDialog from "./AddAccountLineDialog"
 import { PageTemplate } from "../PageTemplate"
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel"
 import AccountingService from "../../services/AccountingService"
 import { FilterMatchMode, SortOrder } from "primereact/api"
-import { AccountLineNature } from "../../interfaces/AccountLineNature"
-import { AccountLinePoste } from "../../interfaces/AccountLinePoste"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Tooltip } from "primereact/tooltip"
-import { toMonetaryAmount } from "../../utils/NumberUtils"
-import { InputNumber } from "primereact/inputnumber"
 import { DataTableLazyState } from "../../services/tableQuery/DataTableQueryCodec"
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
-import AccountLinePosteService from "../../services/AccountLinePosteService"
-import AccountLineNatureService from "../../services/AccountLineNatureService"
 import AccountBookExportButtons from "./AccountBookExportButtons"
 import { useAccountId } from "../../hooks/useAccountId"
 import AccountBookActionsBody from "./molecules/AccountBookActionsBody"
-
-type RelationFilterOption = {
-    id: number | "null";
-    label: string;
-    color?: string;
-    isNullOption?: boolean;
-}
 
 export default function AccountBook() {
     const accountId = useAccountId()
@@ -52,8 +40,8 @@ export default function AccountBook() {
             dateValeur: { value: null, matchMode: FilterMatchMode.DATE_IS },
             dateOperation: { value: null, matchMode: FilterMatchMode.DATE_IS },
             label: { value: "", matchMode: FilterMatchMode.CONTAINS },
-            'nature.label': { value: null, matchMode: FilterMatchMode.EQUALS },
-            'poste.label': { value: null, matchMode: FilterMatchMode.EQUALS },
+            'nature.id': { value: null, matchMode: FilterMatchMode.EQUALS },
+            'poste.id': { value: null, matchMode: FilterMatchMode.EQUALS },
             amount: { value: "", matchMode: FilterMatchMode.EQUALS },
             isChecked: { value: null, matchMode: FilterMatchMode.EQUALS }
         }
@@ -62,32 +50,7 @@ export default function AccountBook() {
     // Ligne actuellement modifiée (dialog).
     const [editingLine, setEditingLine] = useState<AccountLine | null>(null)
 
-    // Données annexes
-    const [natures, setNatures] = useState<AccountLineNature[]>([])
-    const [postes, setPostes] = useState<AccountLinePoste[]>([])
 
-    const natureFilterOptions: RelationFilterOption[] = [
-        { id: "null", label: "- Vide -", isNullOption: true },
-        ...natures
-    ]
-
-    const posteFilterOptions: RelationFilterOption[] = [
-        { id: "null", label: "- Vide -", isNullOption: true },
-        ...postes
-    ]
-
-    useEffect(() => {
-        // Load natures (global) and postes (per-account)
-        const natureService = new AccountLineNatureService()
-        const posteService = new AccountLinePosteService()
-        Promise.all([
-            natureService.getAllNatures(),
-            posteService.getAllAccountPostes(accountId)
-        ]).then(([n, p]) => {
-            setNatures(n)
-            setPostes(p)
-        })
-    }, [accountId])
 
     useEffect(() => {
         loadAccountLines();
@@ -132,9 +95,8 @@ export default function AccountBook() {
                     <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
                 </div>
             </div>
-
             <Card>
-                <DataTable<Array<AccountLine>>
+                <DataTable
                     value={accountLines}
                     lazy
                     loading={loading}
@@ -214,7 +176,7 @@ export default function AccountBook() {
                         header="Opération"
                         sortable
                         filter
-                        filterElement={(options) => (
+                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
                             <InputText
                                 value={options.value || ''}
                                 onChange={(e) => options.filterApplyCallback(e.target.value)}
@@ -250,71 +212,38 @@ export default function AccountBook() {
                         }}
                     ></Column>
                     <Column
-                        field="nature.label"
+                        field="nature.id"
                         header="Nature"
                         body={(data: AccountLine) => data && data.nature ? <ColoredLabel data={data.nature} /> : null}
                         sortable
                         filter
                         showFilterMenu={false}
-                        filterElement={(options) => (
-                            <Dropdown
+                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                            <AccountLineNatureDropdown
                                 value={options.value}
-                                options={natureFilterOptions}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
-                                optionLabel="label"
-                                optionValue="id"
                                 showClear
-                                itemTemplate={(option: RelationFilterOption) =>
-                                    option ?
-                                        option.isNullOption ?
-                                            <span>{option.label}</span> :
-                                            <ColoredLabel data={option as AccountLineNature} />
-                                        : null
-                                }
+                                showNullOption
                             />
                         )}
                     ></Column>
                     <Column
-                        field="poste.label"
+                        field="poste.id"
                         header="Poste"
                         body={(data: AccountLine) => data && data.poste ? <ColoredLabel data={data.poste} /> : null}
                         sortable
                         filter
                         // TODO: Opérateurs customs less than, greater than, between
                         showFilterMenu={false}
-                        filterElement={(options) => (
-                            <Dropdown
+                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                            <AccountLinePosteDropdown
+                                accountId={accountId}
                                 value={options.value}
-                                options={posteFilterOptions}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
-                                optionLabel="label"
-                                optionValue="id"
                                 showClear
-                                itemTemplate={(option: RelationFilterOption) =>
-                                    option ?
-                                        option.isNullOption ?
-                                            <span>{option.label}</span> :
-                                            <ColoredLabel data={option as AccountLinePoste} />
-                                        : null
-                                }
+                                showNullOption
                             />
                         )}
-                    />
-                    <Column
-                        field="amount"
-                        dataType="numeric"
-                        header="Montant"
-                        sortable
-                        body={(data: AccountLine) => toMonetaryAmount(data.total)}
-                        filter
-                        filterElement={(options) => (
-                            <InputNumber
-                                value={options.value || null}
-                                onChange={(e) => options.filterApplyCallback(e.value)}
-                                className="w-full"
-                            />
-                        )}
-                        style={{ maxWidth: "200px" }}
                     />
                     <Column
                         field="isChecked"

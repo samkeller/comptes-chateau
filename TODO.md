@@ -7,11 +7,9 @@ Project Description
 ### Todo
 
 - [ ] Auto-backup  
-- [ ] Factoriser accountLineNatureDropdown & accountLinePosteDropdown -> Régler les contrats API id vs objet complet -> Repasser tous les dropdowns "nature" (DropdownProps) & "postes" (DropdownProps & accountId)
 
 ### In Progress
-
-
 ### Done ✓
+- [x] Factoriser accountLineNatureDropdown & accountLinePosteDropdown -> Régler les contrats API id vs objet complet -> Repasser tous les dropdowns "nature" (DropdownProps) & "postes" (DropdownProps & accountId)
 
 

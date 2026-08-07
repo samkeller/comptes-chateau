@@ -3,14 +3,13 @@ import { useEffect, useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import AccountLineNatureDropdown from "../../../components/atoms/accountLine/AccountLineNatureDropdown";
+import AccountLinePosteDropdown from "../../../components/atoms/accountLine/AccountLinePosteDropdown";
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
 import RecurringExpense, { RecurringExpenseFrequency } from '../../../interfaces/RecurringExpense';
-import { AccountLineNature } from '../../../interfaces/AccountLineNature';
-import { AccountLinePoste } from '../../../interfaces/AccountLinePoste';
 import RecurringExpenseService from '../../../services/RecurringExpenseService';
 import { FloatLabel } from 'primereact/floatlabel';
-import { ColoredLabel } from '../../../components/datatableBodys/ColoredLabel';
 import { Calendar } from 'primereact/calendar';
 import { useGlobalToast } from '../../../context/GlobalToastContext';
 import AccountLineNatureService from '../../../services/AccountLineNatureService';
@@ -32,8 +31,7 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
     const [nextOccurrence, setNextOccurrence] = useState<Date>(editingExpense?.nextOccurrence || new Date());
     const [frequency, setFrequency] = useState<RecurringExpenseFrequency>(editingExpense?.frequency ?? "monthly");
 
-    const [natures, setNatures] = useState<AccountLineNature[]>([]);
-    const [postes, setPostes] = useState<AccountLinePoste[]>([]);
+
     const [loading, setLoading] = useState(true);
     const showGlobalToast = useGlobalToast();
 
@@ -46,9 +44,6 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
             posteService.getAllAccountPostes(accountId)
         ])
             .then(([naturesData, postesData]) => {
-                setNatures(naturesData);
-                setPostes(postesData);
-
                 if (!editingExpense) {
                     setNatureId(naturesData[0]?.id ?? null);
                     setPosteId(postesData[0]?.id ?? null);
@@ -63,24 +58,22 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
             });
     }, [editingExpense, accountId]);
 
-    const natureOptions = natures.map((nature) => ({ ...nature, value: nature.id }));
-    const posteOptions = postes.map((poste) => ({ ...poste, value: poste.id }));
+
 
     const handleSubmit = () => {
-        const selectedNature = natures.find((item) => item.id === natureId) ?? null;
-        const selectedPoste = postes.find((item) => item.id === posteId) ?? null;
-        if (!label || !selectedNature || !selectedPoste) return;
+        if (!label || !natureId || !posteId) return;
 
         const expense: Partial<RecurringExpense> = {
             id: editingExpense ? editingExpense.id : 0,
             label,
-            nature: selectedNature,
-            poste: selectedPoste,
+            natureId,
+            posteId,
             solde,
             isActive,
             nextOccurrence,
             frequency
         };
+
         new RecurringExpenseService()
             .saveAccountRecurringExpense(accountId, expense)
             .then(() => {
@@ -125,29 +118,21 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
                 </FloatLabel>
                 <div className='flex gap-1'>
                     <FloatLabel className='flex-1'>
-                        <Dropdown id="nature"
+                        <AccountLineNatureDropdown
+                            id="nature"
                             value={natureId}
-                            options={natureOptions}
                             onChange={(e) => setNatureId(e.value as number | null)}
-                            placeholder="Sélectionner une nature"
                             className='w-full'
-                            optionValue="value"
-                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
-                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="nature">Nature</label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
-                        <Dropdown
+                        <AccountLinePosteDropdown
                             id="poste"
+                            accountId={accountId}
                             value={posteId}
-                            options={posteOptions}
                             onChange={(e) => setPosteId(e.value as number | null)}
-                            placeholder="Sélectionner un poste"
                             className='w-full'
-                            optionValue="value"
-                            itemTemplate={(option) => option && <ColoredLabel data={option} />}
-                            valueTemplate={(option) => option ? <ColoredLabel data={option} /> : <span>Sélectionner</span>}
                         />
                         <label htmlFor="poste">Poste</label>
                     </FloatLabel>

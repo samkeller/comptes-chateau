@@ -65,7 +65,8 @@ export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) 
                                             user={{
                                                 id: 0,
                                                 avatar: fileName,
-                                                username: displayName
+                                                username: displayName,
+                                                totalXp: 0,
                                             }}
                                         />
 

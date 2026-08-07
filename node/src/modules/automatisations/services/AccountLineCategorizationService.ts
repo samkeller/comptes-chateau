@@ -6,7 +6,7 @@ import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { normalizeLabel } from "../../../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
 
-export interface CreateRuleDto {
+export interface SaveRuleDto {
     pattern: string;
     accountId: number;
     posteId?: number | null;
@@ -62,7 +62,7 @@ export default class AccountLineCategorizationService {
      * @param payload 
      * @returns 
      */
-    async create(payload: CreateRuleDto): Promise<AccountLineRule> {
+    async create(payload: SaveRuleDto): Promise<AccountLineRule> {
         const cleanPattern = normalizeLabel(payload.pattern);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
@@ -173,6 +173,21 @@ export default class AccountLineCategorizationService {
             });
 
         return result;
+    }
+
+    async updateById(id: number, body: SaveRuleDto): Promise<AccountLineRule> {
+        const existing = await this.ruleRepo.findOne({ where: { id } })
+
+        if (!existing) {
+            throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`)
+        }
+
+        existing.accountId = body.accountId;
+        existing.pattern = body.pattern;
+        existing.natureId = body.natureId || null;
+        existing.posteId = body.posteId || null;
+
+        return await this.ruleRepo.save(existing);
     }
 
     private countOccurrences(pattern: string): Promise<number> {

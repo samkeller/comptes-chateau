@@ -5,6 +5,7 @@ export class AccountLineRule {
     id: number = 0;
     pattern: string = "";
     occurrencesCount: number = 0;
+    accountId: number = 0;
     posteId?: number = 0;
     natureId?: number = 0;
     poste?: AccountLinePoste;
