@@ -331,4 +331,64 @@ describe("operationTableQueryConfig", () => {
             }
         ]);
     });
+
+    it("maps nature.id and poste.id filters to relation ids", () => {
+        const qb = new MockQueryBuilder();
+
+        operationTableQueryConfig.filterHandlers["nature.id"].applySimple?.(qb as never, {
+            type: "simple",
+            field: "nature.id",
+            matchMode: "equals",
+            value: 21
+        });
+        operationTableQueryConfig.filterHandlers["poste.id"].applySimple?.(qb as never, {
+            type: "simple",
+            field: "poste.id",
+            matchMode: "equals",
+            value: 42
+        });
+
+        expect(qb.whereCalls).toEqual([
+            {
+                kind: "and",
+                sql: "nature.id = :natureIdSimple",
+                params: { natureIdSimple: 21 }
+            },
+            {
+                kind: "and",
+                sql: "poste.id = :posteIdSimple",
+                params: { posteIdSimple: 42 }
+            }
+        ]);
+    });
+
+    it("sorts nature.id and poste.id using relation labels for deterministic UX", () => {
+        const qb = new MockQueryBuilder();
+
+        operationTableQueryConfig.sortHandlers["nature.id"].apply(qb as never, "ASC");
+        operationTableQueryConfig.sortHandlers["poste.id"].apply(qb as never, "DESC");
+
+        expect(qb.orderByCalls).toEqual([
+            {
+                method: "orderBy",
+                sql: "nature.label",
+                direction: "ASC"
+            },
+            {
+                method: "addOrderBy",
+                sql: "al.id",
+                direction: "ASC"
+            },
+            {
+                method: "orderBy",
+                sql: "poste.label",
+                direction: "DESC"
+            },
+            {
+                method: "addOrderBy",
+                sql: "al.id",
+                direction: "DESC"
+            }
+        ]);
+    });
 });

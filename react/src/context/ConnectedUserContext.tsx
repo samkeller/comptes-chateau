@@ -5,7 +5,7 @@ import { User } from "../interfaces/User";
 interface ConnectedUserContextValue {
     connectedUser: User | null;
     loading: boolean;
-    refreshUser: () => Promise<void>;
+    refreshUser: () => Promise<User>;
     clearUser: () => void;
 }
 
@@ -18,6 +18,7 @@ export function ConnectedUserProvider({ children }: { children: ReactNode }) {
     const refreshUser = useCallback(async () => {
         const me = await new UserService().me();
         setConnectedUser(me);
+        return me;
     }, []);
 
     const clearUser = useCallback(() => {

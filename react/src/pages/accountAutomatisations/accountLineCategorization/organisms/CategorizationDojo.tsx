@@ -11,7 +11,7 @@ import DojoXpLeaderboard from "./DojoXpLeaderboard"
 import { useConnectedUser } from "@/context/ConnectedUserContext"
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { Skeleton } from "primereact/skeleton"
-import XpService from "@/services/XpService"
+import { useXpStore } from "@/stores/useXpStore"
 
 interface CategorizationDojoProps {
     unmapped: UnmappedAccountLineRuleItem[]
@@ -20,10 +20,8 @@ interface CategorizationDojoProps {
         accountId: number,
         posteId?: number | null,
         natureId?: number | null
-    ) => Promise<void>
+    ) => Promise<boolean>
 }
-
-const xpService = new XpService()
 
 export default function CategorizationDojo({ unmapped, onConfirm }: CategorizationDojoProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -44,14 +42,8 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
     const currentProgress = useMemo(() => getUserFullProgress(connectedUser?.totalXp ?? 0), [connectedUser?.totalXp])
 
     useEffect(() => {
-        if (!currentItem) {
-            setSelectedPoste(false)
-            setSelectedNature(false)
-            return
-        }
-
-        setSelectedPoste(Boolean(currentItem.suggestedPoste?.id))
-        setSelectedNature(Boolean(currentItem.suggestedNature?.id))
+        setSelectedPoste(false)
+        setSelectedNature(false)
     }, [currentItem])
 
     useEffect(() => {
@@ -100,18 +92,21 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
         setIsSubmitting(true)
 
         try {
-            await onConfirm(
+            const didSave = await onConfirm(
                 currentItem.pattern,
                 currentItem.account.id,
                 selectedPoste ? currentItem.suggestedPoste?.id ?? null : null,
                 selectedNature ? currentItem.suggestedNature?.id ?? null : null,
             )
 
-            const XP_PER_RULE = 100
+            if (!didSave) {
+                return
+            }
 
-            await xpService.addXP(XP_PER_RULE)
-            // refresh connected user and leaderboard
-            await refreshUser().catch(() => null)
+            const refreshedUser = await refreshUser().catch(() => null)
+            if (refreshedUser) {
+                useXpStore.getState().updateUserXp(refreshedUser)
+            }
             moveNext()
         } finally {
             setIsSubmitting(false)

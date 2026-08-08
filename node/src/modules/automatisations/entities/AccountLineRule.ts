@@ -4,7 +4,7 @@ import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { Account } from "../../accounts/entities/Account";
 
 @Entity('account_line_rule')
-@Unique('UQ_account_line_rule_pattern', ['pattern'])
+@Unique('UQ_account_line_rule_account_pattern', ['accountId', 'pattern'])
 export class AccountLineRule {
     @PrimaryGeneratedColumn()
     id: number;

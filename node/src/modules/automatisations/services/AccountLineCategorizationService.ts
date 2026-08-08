@@ -3,6 +3,7 @@ import { AccountLineRule } from "../entities/AccountLineRule";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
+import { User } from "../../core/entities/User";
 import { normalizeLabel } from "../../../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
 
@@ -62,7 +63,7 @@ export default class AccountLineCategorizationService {
      * @param payload 
      * @returns 
      */
-    async create(payload: SaveRuleDto): Promise<AccountLineRule> {
+    async create(payload: SaveRuleDto, creatorId: number): Promise<AccountLineRule> {
         const cleanPattern = normalizeLabel(payload.pattern);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
@@ -78,7 +79,17 @@ export default class AccountLineCategorizationService {
         rule.natureId = payload.natureId || null;
         rule.occurrencesCount = await this.countOccurrences(cleanPattern);
 
-        return this.ruleRepo.save(rule);
+        const createdRule = await this.ruleRepo.save(rule);
+
+        const userRepo = AppDataSource.getRepository(User);
+        const user = await userRepo.findOne({ where: { id: creatorId } });
+        if (user) {
+            const XP_REWARD = 10;
+            user.totalXp += XP_REWARD;
+            await userRepo.save(user);
+        }
+
+        return createdRule;
     }
 
     async delete(id: number): Promise<void> {
@@ -107,7 +118,7 @@ export default class AccountLineCategorizationService {
 
         for (const line of lines) {
             const cleanPattern = normalizeLabel(line.label);
-            if (!cleanPattern || cleanPattern.length < this.FREQUENCY_THRESHOLD) continue;
+            if (!cleanPattern) continue;
 
             // Ignorer si une règle existe déjà
             if (existingPatterns.has(cleanPattern)) continue;
@@ -140,7 +151,6 @@ export default class AccountLineCategorizationService {
 
         // 4. Formater et trier les candidats pour l'IHM
         const result: UnmappedPatternDto[] = Array.from(aggregations.values())
-            .sort((a, b) => b.count - a.count)
             .map((agg) => {
                 // Trouver le poste le plus fréquent
                 const topPosteEntry = Array.from(agg.posteFrequencies.values()).sort(
@@ -153,24 +163,34 @@ export default class AccountLineCategorizationService {
                 )[0];
 
                 return {
-                    pattern: agg.pattern,
-                    count: agg.count,
-                    account: {
-                        id: agg.accountId,
-                        label: agg.accountLabel
-                    },
-                    suggestedPoste: topPosteEntry ? {
-                        id: topPosteEntry.poste.id,
-                        label: topPosteEntry.poste.label,
-                        color: topPosteEntry.poste.color
-                    } : null,
-                    suggestedNature: topNatureEntry ? {
-                        id: topNatureEntry.nature.id,
-                        label: topNatureEntry.nature.label,
-                        color: topNatureEntry.nature.color
-                    } : null,
+                    agg,
+                    topPosteEntry,
+                    topNatureEntry,
                 };
-            });
+            })
+            .filter(({ agg, topPosteEntry, topNatureEntry }) => {
+                const hasSuggestion = Boolean(topPosteEntry || topNatureEntry);
+                return agg.count >= this.FREQUENCY_THRESHOLD && hasSuggestion;
+            })
+            .sort((a, b) => b.agg.count - a.agg.count)
+            .map(({ agg, topPosteEntry, topNatureEntry }) => ({
+                pattern: agg.pattern,
+                count: agg.count,
+                account: {
+                    id: agg.accountId,
+                    label: agg.accountLabel
+                },
+                suggestedPoste: topPosteEntry ? {
+                    id: topPosteEntry.poste.id,
+                    label: topPosteEntry.poste.label,
+                    color: topPosteEntry.poste.color
+                } : null,
+                suggestedNature: topNatureEntry ? {
+                    id: topNatureEntry.nature.id,
+                    label: topNatureEntry.nature.label,
+                    color: topNatureEntry.nature.color
+                } : null,
+            }));
 
         return result;
     }
@@ -182,19 +202,32 @@ export default class AccountLineCategorizationService {
             throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`)
         }
 
+        const cleanPattern = normalizeLabel(body.pattern);
+        if (!cleanPattern) {
+            throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
+        }
+
         existing.accountId = body.accountId;
-        existing.pattern = body.pattern;
+        existing.pattern = cleanPattern;
         existing.natureId = body.natureId || null;
         existing.posteId = body.posteId || null;
+        existing.occurrencesCount = await this.countOccurrences(cleanPattern);
 
         return await this.ruleRepo.save(existing);
     }
 
-    private countOccurrences(pattern: string): Promise<number> {
-        return this.lineRepo.count({
-            where: {
-                label: pattern,
-            },
+    private async countOccurrences(pattern: string): Promise<number> {
+        const normalizedPattern = normalizeLabel(pattern);
+        if (!normalizedPattern) {
+            return 0;
+        }
+
+        const lines = await this.lineRepo.find({
+            select: ["label"],
         });
+
+        return lines.reduce((count, line) => {
+            return normalizeLabel(line.label) === normalizedPattern ? count + 1 : count;
+        }, 0);
     }
 }

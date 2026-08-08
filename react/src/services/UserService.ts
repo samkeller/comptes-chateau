@@ -15,10 +15,6 @@ class UserService extends BaseService {
     changeAvatar(avatarFileName: string): Promise<User> {
         return axios.post(this.apiUrl + "/users/avatar", { avatar: avatarFileName }).then((r) => r.data as User)
     }
-
-    protected addXP(xp: number) {
-        return axios.post(this.apiUrl + "/users/experience", { amount: xp }).then((r) => r.data as User)
-    }
 }
 
 export default UserService

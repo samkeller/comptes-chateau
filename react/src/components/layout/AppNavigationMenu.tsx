@@ -19,6 +19,7 @@ type NavKey =
     | "account-book"
     | "account-checks"
     | "account-budget"
+    | "automatisations"
     | "setup"
     | "kanban";
 
@@ -54,6 +55,7 @@ export default function AppNavigationMenu({
     const isOnAccountBook = activeNavKey === "account-book";
     const isOnAccountChecks = activeNavKey === "account-checks";
     const isOnAccountBudget = activeNavKey === "account-budget";
+    const isOnAutomatisations = activeNavKey === "automatisations";
 
     /**
      * Popup menu items for switching between accounts.
@@ -156,7 +158,7 @@ export default function AppNavigationMenu({
         {
             label: "Automatisations",
             icon: "pi pi-android",
-            className: isOnAccountBudget ? "bg-surface-200" : undefined,
+            className: isOnAutomatisations ? "bg-surface-200" : undefined,
             command: () => navigateTo("/automatisations")
         }
     ];

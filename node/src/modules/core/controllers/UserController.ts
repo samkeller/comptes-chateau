@@ -10,10 +10,6 @@ const AvatarSchema = z.object({
     avatar: z.string().regex(/^\d{3}-[\w-]+\.png$/, "Nom de fichier avatar invalide"),
 });
 
-const AddXpSchema = z.object({
-    amount: z.number().int().nonoptional()
-});
-
 const UserRoutes = Router();
 const userRepo = AppDataSource.getRepository(User);
 
@@ -46,21 +42,6 @@ UserRoutes.post("/avatar", validateBody(AvatarSchema), async (req, res) => {
     }
 
     user.avatar = req.body.avatar;
-    await userRepo.save(user);
-    res.json(toUserDto(user));
-});
-
-UserRoutes.post("/experience", validateBody(AddXpSchema), async (req, res) => {
-    if (typeof req.session.userId !== "number") {
-        throw unauthorized("UNAUTHORIZED", "Non authentifié");
-    }
-
-    const user = await userRepo.findOne({ where: { id: req.session.userId } });
-    if (!user) {
-        throw unauthorized("UNAUTHORIZED", "Utilisateur introuvable");
-    }
-
-    user.totalXp += req.body.amount;
     await userRepo.save(user);
     res.json(toUserDto(user));
 });

@@ -1,12 +1,6 @@
 import { Request, Response } from "express";
 import KanbanBoardService from "../services/KanbanBoardService";
-import { unauthorized } from "../../../utils/AppError";
-
-function requireUserId(req: Request): number {
-    const userId = req.session.userId;
-    if (!userId) throw unauthorized("UNAUTHORIZED", "Non authentifié");
-    return userId;
-}
+import requireUserId from "../../accounts/utils/requireUserId";
 
 export default class KanbanController {
     private readonly boardService = new KanbanBoardService();

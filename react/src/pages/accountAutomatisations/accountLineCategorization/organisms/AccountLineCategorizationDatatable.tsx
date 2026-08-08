@@ -34,6 +34,10 @@ export default function AccountLineCategorizationDatatable({
             <ConfirmDialog />
             <DataTable
                 value={accountLineRules}
+                paginator
+                rows={20}
+                rowsPerPageOptions={[10, 20, 50]}
+                size="small"
             >
                 <Column
                     field="pattern"
