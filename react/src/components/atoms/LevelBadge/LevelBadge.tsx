@@ -1,5 +1,5 @@
 import { getUserFullProgress } from "@/utils/levelProgress";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface LevelBadgeProps {
     totalXp: number;
