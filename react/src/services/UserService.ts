@@ -16,7 +16,7 @@ class UserService extends BaseService {
         return axios.post(this.apiUrl + "/users/avatar", { avatar: avatarFileName }).then((r) => r.data as User)
     }
 
-    addXP(xp: number) {
+    protected addXP(xp: number) {
         return axios.post(this.apiUrl + "/users/experience", { amount: xp }).then((r) => r.data as User)
     }
 }

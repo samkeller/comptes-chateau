@@ -11,7 +11,7 @@ import DojoXpLeaderboard from "./DojoXpLeaderboard"
 import { useConnectedUser } from "@/context/ConnectedUserContext"
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { Skeleton } from "primereact/skeleton"
-import UserService from "@/services/UserService"
+import XpService from "@/services/XpService"
 
 interface CategorizationDojoProps {
     unmapped: UnmappedAccountLineRuleItem[]
@@ -23,7 +23,7 @@ interface CategorizationDojoProps {
     ) => Promise<void>
 }
 
-const userService = new UserService()
+const xpService = new XpService()
 
 export default function CategorizationDojo({ unmapped, onConfirm }: CategorizationDojoProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -32,8 +32,6 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
     const [isWinning, setIsWinning] = useState(false)
     const [selectedPoste, setSelectedPoste] = useState(false)
     const [selectedNature, setSelectedNature] = useState(false)
-    // TODO: ref KO & hot-reload KO
-    const leaderboardRef = useRef<any>(null)
     const { connectedUser, refreshUser } = useConnectedUser()
     const previousLevelRef = useRef(getUserFullProgress(connectedUser?.totalXp ?? 0).level)
 
@@ -99,7 +97,6 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
         if (!currentItem || !canSubmit) {
             return
         }
-
         setIsSubmitting(true)
 
         try {
@@ -112,10 +109,9 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
 
             const XP_PER_RULE = 100
 
-            await userService.addXP(XP_PER_RULE)
+            await xpService.addXP(XP_PER_RULE)
             // refresh connected user and leaderboard
             await refreshUser().catch(() => null)
-            await leaderboardRef.current?.refresh?.()
             moveNext()
         } finally {
             setIsSubmitting(false)
@@ -249,7 +245,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                         )}
                     </div>
                 </div>
-                <DojoXpLeaderboard ref={leaderboardRef} />
+                <DojoXpLeaderboard />
             </Card>
 
         </>

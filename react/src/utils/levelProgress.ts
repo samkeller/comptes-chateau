@@ -13,7 +13,7 @@ export interface UserLevelProgress {
      */
     level: number;
 
-    
+
     currentLevelXp: number;
     /**
      * Experience nécessaire pour le prochain niveau.
@@ -53,4 +53,13 @@ export function getUserFullProgress(totalXp: number): UserLevelProgress {
         xpToNextLevel,
         progressPercent,
     };
+}
+
+export function didLevelUp(
+    previousXp: number,
+    currentXp: number
+): boolean {
+    return (getUserFullProgress(previousXp).level < getUserFullProgress(currentXp).level
+    );
+
 }

@@ -10,6 +10,7 @@ import router from './routes/Router';
 import './services/Interceptors';
 import { GlobalToastProvider } from './context/GlobalToastContext';
 import { ConnectedUserProvider } from './context/ConnectedUserContext';
+import AppInitializer from './AppInitializer';
 
 addLocale('fr', frLocale);
 
@@ -36,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
     <PrimeReactProvider value={primeReactOptions}>
       <GlobalToastProvider>
         <ConnectedUserProvider>
+          <AppInitializer />
           <RouterProvider router={router} />
         </ConnectedUserProvider>
       </GlobalToastProvider>
