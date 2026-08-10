@@ -20,6 +20,8 @@ import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon"
 import AccountBookExportButtons from "./AccountBookExportButtons"
 import { useAccountId } from "../../hooks/useAccountId"
 import AccountBookActionsBody from "./molecules/AccountBookActionsBody"
+import { InputNumber } from "primereact/inputnumber"
+import { toMonetaryAmount } from "@/utils/NumberUtils"
 
 export default function AccountBook() {
     const accountId = useAccountId()
@@ -244,6 +246,22 @@ export default function AccountBook() {
                                 showNullOption
                             />
                         )}
+                    />
+                    <Column
+                        field="amount"
+                        dataType="numeric"
+                        header="Montant"
+                        sortable
+                        body={(data: AccountLine) => toMonetaryAmount(data.total)}
+                        filter
+                        filterElement={(options) => (
+                            <InputNumber
+                                value={options.value || null}
+                                onChange={(e) => options.filterApplyCallback(e.value)}
+                                className="w-full"
+                            />
+                        )}
+                        style={{ maxWidth: "200px" }}
                     />
                     <Column
                         field="isChecked"

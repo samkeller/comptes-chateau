@@ -2,7 +2,7 @@ import { ProgressBar } from "primereact/progressbar";
 import { getUserFullProgress } from "@/utils/levelProgress";
 import { useConnectedUser } from "@/context/ConnectedUserContext";
 import { Tooltip } from "primereact/tooltip";
-import LevelBadge from "@/components/atoms/LevelBadge/LevelBadge";
+import LevelBadge from "@/components/LevelBadge";
 import { useEffect, useMemo, useState } from "react";
 import UserService from "@/services/UserService";
 import { User } from "@/interfaces/User";

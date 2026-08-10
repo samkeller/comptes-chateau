@@ -19,11 +19,10 @@ export default class UserXpService {
         const previousTotalXp = user.totalXp;
         const gainedXp = UserXpActionsPoints[action] * multiplicator;
 
-        user.totalXp += gainedXp;
-
+        await this.userRepo.increment({ id: userId }, "totalXp", gainedXp);
         customLog("INFO", `Added ${gainedXp} XP to user with id ${userId}`, "service");
 
-        await this.userRepo.save(user);
+        const updatedUser = await this.userRepo.findOne({ where: { id: userId } });
 
         const gainedEvent: XpUpdatedEvent = {
             eventId: randomUUID(),
@@ -32,12 +31,12 @@ export default class UserXpService {
             occurredAt: new Date().toISOString(),
             gainedXp,
             previousTotalXp,
-            newTotalXp: user.totalXp,
+            newTotalXp: updatedUser!.totalXp,
         };
 
         xpEventBus.emit(gainedEvent);
 
-        return user;
+        return updatedUser!;
     }
 }
 

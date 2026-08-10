@@ -211,7 +211,7 @@ export default function AccountLineCategorizationDatatable({
                         );
                     }}
                 ></Column>
-                <Column field="occurrencesCount" header="Occurences"></Column>
+                <Column field="occurrencesCount" header="Occurrences"></Column>
                 <Column
                     header="Actions"
                     body={(row: AccountLineRule) =>

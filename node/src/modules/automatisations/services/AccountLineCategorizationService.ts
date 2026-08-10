@@ -99,7 +99,7 @@ export default class AccountLineCategorizationService {
     /**
      * Extrait les libellés fréquents non encore associés à une règle,
      * avec les suggestions de poste et nature les plus fréquents.
-     * La fréquence est définie par le seuil FREQUENCY_THRESHOLD (3 occurences minimum).
+     * La fréquence est définie par le seuil FREQUENCY_THRESHOLD (3 occurrences minimum).
      * 
      */
     async getUnmapped(): Promise<UnmappedPatternDto[]> {
