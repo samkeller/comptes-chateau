@@ -180,7 +180,7 @@ export default function AccountLineCategorizationDatatable({
                                 value={rowData.uiPosteId}
                                 onChange={(event) => setDraft((previous) => previous ? {
                                     ...previous,
-                                    posteId: (event.value as number | null) ?? null,
+                                    posteId: event.value === "null" ? null : ((event.value as number | null) ?? null),
                                 } : previous)}
                                 showClear
                                 showNullOption

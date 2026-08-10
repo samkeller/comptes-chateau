@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { AppDataSource } from "../dataSource";
 import { AccountLine } from "../../modules/accounts/entities/AccountLine";
 import { AccountLineRule } from "../../modules/automatisations/entities/AccountLineRule";
-import { normalizeLabel } from "../../utils/AccountLineRulesUtils";
+import { normalizeLabel } from "../../modules/automatisations/utils/AccountLineRulesUtils";
 
 interface PatternStats {
   totalCount: number;

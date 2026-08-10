@@ -27,9 +27,10 @@ const mockUserRepo = {
 
         return seededUser;
     }),
-    save: vi.fn(async (user: User) => {
-        seededUser = user;
-        return user;
+    increment: vi.fn(async ({ id }: { id: number }, field: string, value: number) => {
+        if (seededUser && id === seededUser.id && field === "totalXp") {
+            seededUser.totalXp += value;
+        }
     }),
 };
 
