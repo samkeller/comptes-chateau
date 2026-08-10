@@ -94,6 +94,48 @@ export default function AccountLineCategorization() {
     }
   };
 
+  const handleUpdate = async (
+    id: number,
+    pattern: string,
+    accountId: number,
+    posteId?: number | null,
+    natureId?: number | null,
+  ): Promise<boolean> => {
+    const existingRule = rules.find((rule) => rule.id === id);
+    if (!existingRule) {
+      return false;
+    }
+
+    try {
+      const updatedRule = await accountLineCategorizationService.update(
+        id,
+        pattern,
+        accountId,
+        posteId,
+        natureId
+      );
+
+      setRules((previous) => {
+        const next = previous.map((rule) => rule.id === id ? updatedRule : rule);
+        next.sort((left, right) => left.pattern.localeCompare(right.pattern, 'fr'));
+        return next;
+      });
+
+      showGlobalToast({
+        severity: "success",
+        detail: "Règle mise à jour.",
+      });
+      return true;
+    } catch (error) {
+      setRules((previous) => previous.map((rule) => rule.id === id ? existingRule : rule));
+      showGlobalToast({
+        severity: "error",
+        detail: "Impossible de mettre à jour la règle.",
+      });
+      return false;
+    }
+  };
+
   return (
     <PageTemplate
       pageTitle="Catégorisation"
@@ -106,6 +148,7 @@ export default function AccountLineCategorization() {
         <AccountLineCategorizationDatatable
           accountLineRules={rules}
           onDelete={handleDelete}
+          onUpdate={handleUpdate}
         />
       </div>
 

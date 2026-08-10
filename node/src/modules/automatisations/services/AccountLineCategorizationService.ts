@@ -89,7 +89,7 @@ export default class AccountLineCategorizationService {
             await userRepo.save(user);
         }
 
-        return createdRule;
+        return this.getRuleWithRelations(createdRule.id);
     }
 
     async delete(id: number): Promise<void> {
@@ -213,7 +213,9 @@ export default class AccountLineCategorizationService {
         existing.posteId = body.posteId || null;
         existing.occurrencesCount = await this.countOccurrences(cleanPattern);
 
-        return await this.ruleRepo.save(existing);
+        const updatedRule = await this.ruleRepo.save(existing);
+
+        return this.getRuleWithRelations(updatedRule.id);
     }
 
     private async countOccurrences(pattern: string): Promise<number> {
@@ -229,5 +231,19 @@ export default class AccountLineCategorizationService {
         return lines.reduce((count, line) => {
             return normalizeLabel(line.label) === normalizedPattern ? count + 1 : count;
         }, 0);
+    }
+
+
+    private async getRuleWithRelations(id: number): Promise<AccountLineRule> {
+        const hydratedRule = await this.ruleRepo.findOne({
+            where: { id },
+            relations: ["poste", "nature"],
+        });
+
+        if (!hydratedRule) {
+            throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`);
+        }
+
+        return hydratedRule;
     }
 }

@@ -17,6 +17,7 @@ let db: IMemoryDb;
 let app: express.Express;
 let seededUser: User;
 let seededNature: AccountLineNature;
+let seededNatureAlt: AccountLineNature;
 
 const mockUserRepo = {
     findOne: vi.fn(async ({ where }: { where: { id: number } }) => {
@@ -58,6 +59,12 @@ async function seedBaseData(dataSource: DataSource): Promise<void> {
     seededNature = await natureRepo.save({
         label: "Charges",
         color: "#112233",
+        isHorsCompte: false,
+    });
+
+    seededNatureAlt = await natureRepo.save({
+        label: "Loisirs",
+        color: "#445566",
         isHorsCompte: false,
     });
 
@@ -121,5 +128,33 @@ describe("AccountLineCategorizationController integration", () => {
         expect(mockUserRepo.findOne).toHaveBeenCalledWith({ where: { id: seededUser.id } });
         expect(mockUserRepo.save).toHaveBeenCalledTimes(1);
         expect(seededUser.totalXp).toBe(110);
+    });
+
+    it("returns hydrated relations after updating a rule", async () => {
+        const createdResponse = await request(app)
+            .post("/categorization")
+            .send({
+                pattern: "Abonnement sport",
+                accountId: 1,
+                natureId: seededNature.id,
+            });
+
+        expect(createdResponse.status).toBe(201);
+
+        const updateResponse = await request(app)
+            .put(`/categorization/${createdResponse.body.id}`)
+            .send({
+                pattern: "Abonnement sport",
+                accountId: 1,
+                natureId: seededNatureAlt.id,
+            });
+
+        expect(updateResponse.status).toBe(201);
+        expect(updateResponse.body.natureId).toBe(seededNatureAlt.id);
+        expect(updateResponse.body.nature).toMatchObject({
+            id: seededNatureAlt.id,
+            label: "Loisirs",
+            color: "#445566",
+        });
     });
 });
