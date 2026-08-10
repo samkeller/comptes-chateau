@@ -2,7 +2,7 @@ import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLine } from "../entities/AccountLine";
-import { NatureDto, SaveNaturePayload } from "./nature/NatureDtos";
+import { AccountLineNatureDto, SaveNaturePayload } from "./operation/AccountLineNatureDto";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
 
@@ -15,7 +15,7 @@ export default class NatureService {
             : AppDataSource.getRepository(AccountLineNature);
     }
 
-    async getAll(): Promise<NatureDto[]> {
+    async getAll(): Promise<AccountLineNatureDto[]> {
         const natures = await this.natureRepo.find({
             order: { label: "ASC" }
         });
@@ -41,7 +41,7 @@ export default class NatureService {
         }));
     }
 
-    async create(payload: SaveNaturePayload): Promise<NatureDto> {
+    async create(payload: SaveNaturePayload): Promise<AccountLineNatureDto> {
         try {
             const entity = this.natureRepo.create({
                 label: payload.label.trim(),
@@ -62,7 +62,7 @@ export default class NatureService {
         }
     }
 
-    async update(id: number, payload: SaveNaturePayload): Promise<NatureDto> {
+    async update(id: number, payload: SaveNaturePayload): Promise<AccountLineNatureDto> {
         const existing = await this.natureRepo.findOneBy({ id });
         if (!existing) {
             throw notFound("NATURE_NOT_FOUND", "Nature introuvable");

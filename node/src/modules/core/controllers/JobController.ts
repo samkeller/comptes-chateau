@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../db/dataSource";
 import { processRecurringExpenses } from "../../../jobs/processRecurringExpenses";
-import jobLog from "../../../jobs/jobLog";
+import customLog from "../../../jobs/customLog";
 
 const JobRoutes = Router();
 
 JobRoutes.post("/run-recurring-expenses", async (req, res) => {
     const currentDate = new Date();
 
-    jobLog("WARN", `Manual trigger of recurring-expenses job by userId=${req.session.userId}`);
+    customLog("WARN", `Manual trigger of recurring-expenses job by userId=${req.session.userId}`);
 
     let processedCount = 0;
 

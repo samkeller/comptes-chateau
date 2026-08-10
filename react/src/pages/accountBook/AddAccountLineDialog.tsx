@@ -9,15 +9,12 @@ import { FloatLabel } from "primereact/floatlabel";
 import { ToggleButton } from "primereact/togglebutton";
 import AccountLine from "../../interfaces/AccountLine";
 import Account from "../../interfaces/Account";
-import { AccountLineNature } from "../../interfaces/AccountLineNature";
-import { AccountLinePoste } from "../../interfaces/AccountLinePoste";
+import AccountLineNatureDropdown from "../../components/atoms/accountLine/AccountLineNatureDropdown";
+import AccountLinePosteDropdown from "@/components/atoms/accountLine/AccountLinePosteDropdown";
 import AccountingService from "../../services/AccountingService";
 import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
-import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import { useGlobalToast } from "../../context/GlobalToastContext";
-import AccountLinePosteService from "../../services/AccountLinePosteService";
-import AccountLineNatureService from "../../services/AccountLineNatureService";
 import { useScreen } from "@/utils/hooks/useScreen";
 
 interface AddAcountLineDialogProps {
@@ -32,47 +29,31 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
     const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
     const [label, setLabel] = useState<string>(editingLine?.label || "");
-    const [nature, setNature] = useState<AccountLineNature | null>(editingLine?.nature || null);
-    const [poste, setPoste] = useState<AccountLinePoste | null>(editingLine?.poste || null);
+    const [natureId, setNatureId] = useState<number | null>(editingLine?.nature?.id || null);
+    const [posteId, setPosteId] = useState<number | null>(editingLine?.poste?.id || null);
     const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
     const [targetAccount, setTargetAccount] = useState<Account | null>(editingLine?.targetAccount || null);
 
-    const [natures, setNatures] = useState<AccountLineNature[]>([]);
-    const [postes, setPostes] = useState<AccountLinePoste[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const showGlobalToast = useGlobalToast();
     const { isMobile, isTablet } = useScreen();
 
     useEffect(() => {
-        const natureService = new AccountLineNatureService();
-        const posteService = new AccountLinePosteService();
         const accountService = new AccountService();
         Promise.all([
-            natureService.getAllNatures(),
-            posteService.getAllAccountPostes(accountId),
             accountService.getAllAccounts()
-        ]).then(([naturesData, postesData, accountsData]) => {
-            setNatures(naturesData);
-            setPostes(postesData);
+        ]).then(([accountsData]) => {
             setAccounts(accountsData);
             setLoading(false);
         });
     }, [editingLine, accountId]);
 
-    const natureOptions = natures.map((value) => ({ label: value.label, value }));
-    const posteOptions = postes.map((value) => ({ label: value.label, value }));
     const targetAccountOptions = accounts
         .filter((a) => a.id !== accountId)
         .map((value) => ({ label: value.label, value }));
 
-    const renderSelectedLabel = (option?: { value?: AccountLineNature | AccountLinePoste } | null) => {
-        if (!option?.value) {
-            return <span className="text-muted-color">Sélectionner</span>;
-        }
 
-        return <ColoredLabel data={option.value} />;
-    };
 
     const handleSubmit = () => {
         if (!dateOperation) {
@@ -85,8 +66,8 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             isChecked,
             dateValeur: isChecked ? (dateValeur ? parseDDMMYYYYToDate(dateValeur) : new Date()) : null,
             label,
-            nature,
-            poste,
+            natureId,
+            posteId,
             debit: amount < 0 ? (Math.abs(amount) || 0) : 0,
             credit: amount > 0 ? (amount || 0) : 0,
             targetAccount: targetAccount ?? null,
@@ -187,33 +168,24 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
 
                 <div className="flex gap-1">
                     <FloatLabel className="flex-1">
-                        <Dropdown
+                        <AccountLineNatureDropdown
                             id="nature"
-                            value={nature}
-                            options={natureOptions}
-                            onChange={(e) => setNature(e.value ?? null)}
-                            placeholder="Sélectionner une nature"
+                            value={natureId}
+                            onChange={(e) => setNatureId(e.value ?? null)}
                             className="w-full"
-                            dataKey="id"
                             showClear
-                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
-                            valueTemplate={renderSelectedLabel}
                         />
                         <label htmlFor="nature">Nature <small>(optionnel)</small></label>
                     </FloatLabel>
 
                     <FloatLabel className="flex-1">
-                        <Dropdown
+                        <AccountLinePosteDropdown
                             id="poste"
-                            value={poste}
-                            options={posteOptions}
-                            onChange={(e) => setPoste(e.value ?? null)}
-                            placeholder="Sélectionner un poste"
+                            accountId={accountId}
+                            value={posteId}
+                            onChange={(e) => setPosteId(e.value ?? null)}
                             className="w-full"
-                            dataKey="id"
                             showClear
-                            itemTemplate={(option) => <ColoredLabel data={option.value} />}
-                            valueTemplate={renderSelectedLabel}
                         />
                         <label htmlFor="poste">Poste <small>(optionnel)</small></label>
                     </FloatLabel>

@@ -13,7 +13,9 @@ class AccountLine {
     targetAccount: Account | null = null
     transferGroupId: string | null = null
     nature: AccountLineNature | null = null
+    natureId: number | null = null;
     poste: AccountLinePoste | null = null
+    posteId: number | null = null;
     debit: number = 0
     credit: number = 0
     isChecked: boolean = false

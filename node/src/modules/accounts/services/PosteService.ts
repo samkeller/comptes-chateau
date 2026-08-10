@@ -2,7 +2,7 @@ import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { AccountLine } from "../entities/AccountLine";
-import { PosteDto, SavePostePayload } from "./poste/PosteDtos";
+import { AccountLinePosteDto, SavePostePayload } from "./operation/AccountLinePosteDtos";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
 
@@ -15,7 +15,7 @@ export default class PosteService {
             : AppDataSource.getRepository(AccountLinePoste);
     }
 
-    async getAll(accountId: number): Promise<PosteDto[]> {
+    async getAll(accountId: number): Promise<AccountLinePosteDto[]> {
         const postes = await this.posteRepo.find({
             where: { accountId },
             order: { label: "ASC" }
@@ -42,7 +42,7 @@ export default class PosteService {
         }));
     }
 
-    async create(payload: SavePostePayload, accountId: number): Promise<PosteDto> {
+    async create(payload: SavePostePayload, accountId: number): Promise<AccountLinePosteDto> {
         try {
             const entity = this.posteRepo.create({
                 label: payload.label.trim(),
@@ -62,7 +62,7 @@ export default class PosteService {
         }
     }
 
-    async update(id: number, payload: SavePostePayload, accountId: number): Promise<PosteDto> {
+    async update(id: number, payload: SavePostePayload, accountId: number): Promise<AccountLinePosteDto> {
         const existing = await this.posteRepo.findOne({ where: { id, accountId } });
         if (!existing) {
             throw notFound("POSTE_NOT_FOUND", "Poste introuvable");

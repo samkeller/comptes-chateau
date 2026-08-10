@@ -13,6 +13,7 @@
 ### Fixes
 - Custom markdown renderer (wrapper) pour que ce soit plus zoli & adapté à lara-dark-teal
 
+
 ## [1.0.1 - 03/08/2026]
 
 ### Added
@@ -21,3 +22,11 @@
 
 ### Fixes
 - Correction de la distance de date de la prochaine activation dans /budget
+
+
+## [1.1.1 - 03/08/2026]
+
+### Added
+- Système d'xp quand on fait des actions de création.
+- Page "Automatisations" posant les premières briques de pattern matching dans l'application
+- Ajout d'un dojo & de petites images rigolotes (j'adore l'humour)

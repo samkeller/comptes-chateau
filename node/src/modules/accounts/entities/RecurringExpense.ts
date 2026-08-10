@@ -37,9 +37,15 @@ export class RecurringExpense {
     @JoinColumn({ name: 'nature_id' })
     nature?: AccountLineNature;
 
+    @Column({ type: "int", name: "nature_id", nullable: true })
+    natureId?: number | null;
+
     @ManyToOne(() => AccountLinePoste, { nullable: true })
     @JoinColumn({ name: 'poste_id' })
     poste?: AccountLinePoste;
+
+    @Column({ type: "int", name: "poste_id", nullable: true })
+    posteId?: number | null;
 
     @Column({ type: "int", name: "account_id" })
     accountId: number;

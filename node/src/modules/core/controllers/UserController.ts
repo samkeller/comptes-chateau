@@ -46,5 +46,4 @@ UserRoutes.post("/avatar", validateBody(AvatarSchema), async (req, res) => {
     res.json(toUserDto(user));
 });
 
-
 export default UserRoutes;

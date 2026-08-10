@@ -10,7 +10,9 @@ class RecurringExpense {
     solde: number = 0
     isActive: boolean = true
     nature: AccountLineNature | null = null
+    natureId: number | null = null;
     poste: AccountLinePoste | null = null
+    posteId: number | null = null;
     nextOccurrence: Date = new Date()
     frequency: RecurringExpenseFrequency = "monthly"
 

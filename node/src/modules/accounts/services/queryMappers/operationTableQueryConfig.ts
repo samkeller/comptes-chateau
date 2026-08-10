@@ -25,7 +25,9 @@ const operationTableQueryConfig: TableQueryMapperConfig<AccountLine> = {
         dateOperation: createOrderBySortHandler("al.dateOperation", "al.id"),
         dateValeur: createOrderBySortHandler("al.dateValeur", "al.id"),
         label: createOrderBySortHandler("al.label", "al.id"),
+        "nature.id": createOrderBySortHandler("nature.label", "al.id"),
         "nature.label": createOrderBySortHandler("nature.label", "al.id"),
+        "poste.id": createOrderBySortHandler("poste.label", "al.id"),
         "poste.label": createOrderBySortHandler("poste.label", "al.id"),
         isChecked: createOrderBySortHandler("al.isChecked", "al.id"),
         amount: createComputedSortHandler(AMOUNT_SQL, "amount_sort", "al.id")
@@ -34,7 +36,9 @@ const operationTableQueryConfig: TableQueryMapperConfig<AccountLine> = {
         dateOperation: createDateSimpleFilterHandler("al.dateOperation", parseApiDateString, "dateOperation"),
         dateValeur: createDateSimpleFilterHandler("al.dateValeur", parseApiDateString, "dateValeur"),
         label: createTextSimpleFilterHandler("al.label", "label"),
+        "nature.id": createNumericEqualsSimpleFilterHandler("nature.id", "natureId"),
         "nature.label": createNumericEqualsSimpleFilterHandler("nature.id", "natureId"),
+        "poste.id": createNumericEqualsSimpleFilterHandler("poste.id", "posteId"),
         "poste.label": createNumericEqualsSimpleFilterHandler("poste.id", "posteId"),
         isChecked: createBooleanSimpleFilterHandler("al.isChecked", "isChecked"),
         amount: createNumericComparisonFilterHandler(AMOUNT_SQL, "amount")

@@ -20,8 +20,8 @@ export const SaveOperationSchema = z.object({
     credit: z.number().nonnegative().optional(),
     isChecked: z.boolean().optional(),
     targetAccount: z.object({ id: z.number().int().positive() }).nullable().optional(),
-    nature: z.object({ id: z.number().int().positive() }).nullable().optional(),
-    poste: z.object({ id: z.number().int().positive() }).nullable().optional(),
+    natureId: z.number().int().positive().nullable().optional(),
+    posteId: z.number().int().positive().nullable().optional(),
 });
 
 export type SaveOperationPayload = z.infer<typeof SaveOperationSchema>;

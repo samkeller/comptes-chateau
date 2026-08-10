@@ -12,7 +12,11 @@ const colors = {
  * @param level Le niveau de log (INFO, ERROR, WARN, DEBUG)
  * @param message Le message à afficher
  */
-function jobLog(level: "INFO" | "ERROR" | "WARN" | "DEBUG", message: string) {
+function customLog(
+    level: "INFO" | "ERROR" | "WARN" | "DEBUG", 
+    message: string,
+    source: "job" | "service" | "controller" = "job"
+) {
     const colorMap = {
         INFO: colors.green,
         WARN: colors.yellow,
@@ -21,8 +25,8 @@ function jobLog(level: "INFO" | "ERROR" | "WARN" | "DEBUG", message: string) {
     };
 
     console.log(
-        `${colors.gray}${colors.reset}${colorMap[level]}[${level}]${colors.reset} ${message}`
+        `${colors.gray}${colors.reset}${colorMap[level]}[${level}][${source}]${colors.reset} ${message}`
     );
 }
 
-export default jobLog;
+export default customLog;

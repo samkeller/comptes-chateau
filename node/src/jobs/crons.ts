@@ -1,5 +1,5 @@
 import { AppDataSource } from '../db/dataSource';
-import jobLog from './jobLog';
+import customLog from './customLog';
 import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
 
@@ -19,15 +19,15 @@ async function runJob() {
     const currentDate = new Date();
 
     try {
-        jobLog("INFO", "Starting cron job");
+        customLog("INFO", "Starting cron job");
         await ensureDataSource();
 
         await AppDataSource.transaction(async (manager) => {
             await processRecurringExpenses(manager, currentDate);
         });
 
-        jobLog("INFO", "Finished cron job");
+        customLog("INFO", "Finished cron job");
     } catch (error) {
-        jobLog("ERROR", `Error executing cron job: ${error}`);
+        customLog("ERROR", `Error executing cron job: ${error}`);
     }
 }

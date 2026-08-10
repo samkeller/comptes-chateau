@@ -1,8 +1,9 @@
-import { Avatar } from "primereact/avatar";
+import { Avatar, AvatarProps as PRAvatarProps } from "primereact/avatar";
 import { User } from "../../interfaces/User";
+
 const avatarUrlsByFileName = Object.fromEntries(
     Object.entries(
-        import.meta.glob("@assets/images/avatars/*", {
+        import.meta.glob("../../assets/images/avatars/*", {
             eager: true,
             import: "default",
         }) as Record<string, string>
@@ -10,17 +11,18 @@ const avatarUrlsByFileName = Object.fromEntries(
 );
 
 interface AvatarProps {
-    user: User
+    user: User;
+    size?: PRAvatarProps["size"];
 }
 
-export default function UserAvatar({ user }: AvatarProps) {
+export default function UserAvatar({ user, size = "large" }: AvatarProps) {
     const avatarImage = avatarUrlsByFileName[user.avatar]
 
     return <Avatar
         image={avatarImage}
         label={user.username}
         shape="circle"
-        size="large"
+        size={size}
     />;
 }
 

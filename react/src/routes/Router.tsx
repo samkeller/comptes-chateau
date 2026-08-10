@@ -11,6 +11,7 @@ import AccountChecks from "../pages/accountChecks/AccountChecks";
 import KanbanPage from "../pages/kanban/KanbanPage";
 import AccountDashboard from "../pages/accountDashboard/AccountDashboard";
 import AccountScopedOutlet from "./AccountScopedOutlet";
+import AccountLineCategorization from "@/pages/accountAutomatisations/accountLineCategorization/AccountLineCategorization";
 
 const router = createBrowserRouter([
   {
@@ -42,12 +43,18 @@ const router = createBrowserRouter([
         element: <Budget />,
         handle: { navKey: "account-budget" },
       },
+
     ]
   },
   {
     path: "/setup",
     element: <Setup />,
     handle: { navKey: "setup" },
+  },
+  {
+    path: "automatisations",
+    element: <AccountLineCategorization />,
+    handle: { navKey: "automatisations" },
   },
   {
     path: "/kanban",

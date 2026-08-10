@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import PosteService from "../services/PosteService";
-import { SavePosteSchema } from "../services/poste/PosteDtos";
+import { SavePosteSchema } from "../services/operation/AccountLinePosteDtos";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
 

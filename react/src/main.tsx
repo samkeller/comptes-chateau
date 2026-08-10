@@ -10,6 +10,8 @@ import router from './routes/Router';
 import './services/Interceptors';
 import { GlobalToastProvider } from './context/GlobalToastContext';
 import { ConnectedUserProvider } from './context/ConnectedUserContext';
+import { XpFeedbackProvider } from './context/XpFeedbackContext';
+import { registerSW } from 'virtual:pwa-register';
 
 addLocale('fr', frLocale);
 
@@ -17,18 +19,14 @@ const primeReactOptions: Partial<APIOptions> = {
   locale: 'fr',
 }
 
-// Register PWA service worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(() => {
-        console.log('Service Worker registered successfully');
-      })
-      .catch((error) => {
-        console.warn('Service Worker registration failed:', error);
-      });
-  });
-}
+registerSW({
+  onNeedRefresh() {
+    console.log('Nouvelle version disponible');
+  },
+  onOfflineReady() {
+    console.log('Application disponible hors ligne');
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
 
@@ -36,7 +34,9 @@ createRoot(document.getElementById('root')!).render(
     <PrimeReactProvider value={primeReactOptions}>
       <GlobalToastProvider>
         <ConnectedUserProvider>
-          <RouterProvider router={router} />
+          <XpFeedbackProvider>
+            <RouterProvider router={router} />
+          </XpFeedbackProvider>
         </ConnectedUserProvider>
       </GlobalToastProvider>
     </PrimeReactProvider>

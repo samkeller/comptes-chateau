@@ -1,7 +1,7 @@
 import { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { JobExecutionLog, JobExecutionStatus } from "../entities/JobExecutionLog";
-import jobLog from "../../../jobs/jobLog";
+import customLog from "../../../jobs/customLog";
 
 export default class JobExecutionLogService {
     private jobExecutionLogRepo;
@@ -14,7 +14,7 @@ export default class JobExecutionLogService {
     }
 
     async logSuccess(jobName: string, message: string, details?: Record<string, any>) {
-        jobLog("INFO", `Job "${jobName}" succeeded: ${message}`);
+        customLog("INFO", `Job "${jobName}" succeeded: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,
             status: JobExecutionStatus.SUCCESS,
@@ -24,7 +24,7 @@ export default class JobExecutionLogService {
     }
 
     async logError(jobName: string, message: string, error?: Error | unknown) {
-        jobLog("ERROR", `Job "${jobName}" failed: ${message}`);
+        customLog("ERROR", `Job "${jobName}" failed: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,
             status: JobExecutionStatus.ERROR,
@@ -37,7 +37,7 @@ export default class JobExecutionLogService {
     }
 
     async logWarning(jobName: string, message: string, details?: Record<string, any>) {
-        jobLog("WARN", `Job "${jobName}" warning: ${message}`);
+        customLog("WARN", `Job "${jobName}" warning: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,
             status: JobExecutionStatus.WARNING,

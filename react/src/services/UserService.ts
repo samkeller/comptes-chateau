@@ -4,7 +4,6 @@ import { User } from "../interfaces/User";
 
 class UserService extends BaseService {
 
-
     me(): Promise<User> {
         return axios.get(this.apiUrl + "/users/me").then((r) => r.data as User)
     }

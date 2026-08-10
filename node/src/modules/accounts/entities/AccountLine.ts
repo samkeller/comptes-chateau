@@ -36,13 +36,22 @@ export class AccountLine {
     @JoinColumn({ name: "nature_id" })
     nature?: AccountLineNature | null;
 
+    @Column({ type: "int", name: "nature_id", nullable: true })
+    natureId?: number | null;
+
     @ManyToOne(() => AccountLinePoste, { nullable: true })
     @JoinColumn({ name: "poste_id" })
     poste?: AccountLinePoste | null;
 
+    @Column({ type: "int", name: "poste_id", nullable: true })
+    posteId?: number | null;
+
     @ManyToOne(() => Account, { nullable: false })
     @JoinColumn({ name: "account_id" })
     account: Account;
+
+     @Column({ type: "int", name: "account_id", nullable: false })
+    accountId: number;
 
     @ManyToOne(() => Account, { nullable: true })
     @JoinColumn({ name: "target_account_id" })
