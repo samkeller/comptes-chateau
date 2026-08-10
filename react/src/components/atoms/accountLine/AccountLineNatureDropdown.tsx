@@ -18,8 +18,8 @@ export default function AccountLineNatureDropdown(props: AccountLineNatureDropdo
         natureService.getAllNatures().then(setNatures)
     }, []);
 
-    const allNatures = showNullOption
-        ? [{ id: null, label: "- Vide -", color: "" }, ...natures]
+const allNatures = showNullOption
+        ? [{ id: "null", label: "- Vide -", color: "" }, ...natures]
         : natures;
 
 

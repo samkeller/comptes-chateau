@@ -171,7 +171,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <Tag value={`${currentItem.account.label}`} severity="info" />
-                                                    <Tag value={`${currentItem.count} occurences`} severity="contrast" />
+<Tag value={`${currentItem.count} occurrences`} severity="contrast" />
                                                 </div>
                                             </div>
                                             <div className="grid gap-3 lg:grid-cols-2">

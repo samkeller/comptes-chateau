@@ -19,8 +19,8 @@ export default function AccountLinePosteDropdown(props: AccountLinePosteDropdown
         posteService.getAllAccountPostes(accountId).then(setPostes)
     }, [accountId]);
 
-    const allPostes = showNullOption
-        ? [{ id: null, label: "- Vide -", color: "" }, ...postes]
+const allPostes = showNullOption
+        ? [{ id: "null", label: "- Vide -", color: "" }, ...postes]
         : postes;
 
 
