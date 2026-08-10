@@ -3,10 +3,8 @@ import { AccountLineRule } from "../entities/AccountLineRule";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
-import { User } from "../../core/entities/User";
 import { normalizeLabel } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
-import { UserXpActionsPoints } from "../../core/utils/UserXPUtils";
 import UserXpService from "../../core/services/UserXpService";
 
 export interface SaveRuleDto {
@@ -47,6 +45,7 @@ interface PatternAggregation {
 export default class AccountLineCategorizationService {
     private ruleRepo = AppDataSource.getRepository(AccountLineRule);
     private lineRepo = AppDataSource.getRepository(AccountLine);
+    private posteRepo = AppDataSource.getRepository(AccountLinePoste);
 
     private userXpService = new UserXpService()
 
@@ -82,7 +81,7 @@ export default class AccountLineCategorizationService {
         rule.accountId = payload.accountId;
         rule.posteId = payload.posteId || null;
         rule.natureId = payload.natureId || null;
-        rule.occurrencesCount = await this.countOccurrences(cleanPattern);
+        rule.occurrencesCount = await this.countOccurrences(cleanPattern, payload.accountId);
 
         const createdRule = await this.ruleRepo.save(rule);
 
@@ -104,13 +103,15 @@ export default class AccountLineCategorizationService {
      */
     async getUnmapped(): Promise<UnmappedPatternDto[]> {
         // 1. Charger les règles existantes pour exclure leurs patterns
-        const existingRules = await this.ruleRepo.find({ select: ["pattern"] });
-        const existingPatterns = new Set(existingRules.map((r) => r.pattern));
+        const existingRules = await this.ruleRepo.find({ select: ["pattern", "accountId"] });
+        const existingPatterns = new Set(
+            existingRules.map((r) => this.getPatternKey(r.accountId, r.pattern))
+        );
 
         // 2. Charger l'historique avec les relations associées (1 seule requête SQL !)
         const lines = await this.lineRepo.find({
             relations: ["poste", "nature", "account"],
-            select: ["id", "label"],
+            select: ["id", "label", "accountId"],
         });
 
         // 3. Agrégation en mémoire
@@ -119,11 +120,12 @@ export default class AccountLineCategorizationService {
         for (const line of lines) {
             const cleanPattern = normalizeLabel(line.label);
             if (!cleanPattern) continue;
+            const patternKey = this.getPatternKey(line.accountId, cleanPattern);
 
             // Ignorer si une règle existe déjà
-            if (existingPatterns.has(cleanPattern)) continue;
+            if (existingPatterns.has(patternKey)) continue;
 
-            let agg = aggregations.get(cleanPattern);
+            let agg = aggregations.get(patternKey);
             if (!agg) {
                 agg = {
                     pattern: cleanPattern,
@@ -133,7 +135,7 @@ export default class AccountLineCategorizationService {
                     posteFrequencies: new Map(),
                     natureFrequencies: new Map(),
                 };
-                aggregations.set(cleanPattern, agg);
+                aggregations.set(patternKey, agg);
             }
 
             agg.count += 1;
@@ -206,25 +208,40 @@ export default class AccountLineCategorizationService {
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
+        if (body.posteId) {
+            const poste = await this.posteRepo.findOne({
+                where: {
+                    id: body.posteId,
+                    accountId: body.accountId,
+                }
+            });
+
+            if (!poste) {
+                throw new AccountLineRuleValidationError(
+                    `Le poste d'id ${body.posteId} n'existe pas pour le compte ${body.accountId}.`
+                );
+            }
+        }
 
         existing.accountId = body.accountId;
         existing.pattern = cleanPattern;
         existing.natureId = body.natureId || null;
         existing.posteId = body.posteId || null;
-        existing.occurrencesCount = await this.countOccurrences(cleanPattern);
+        existing.occurrencesCount = await this.countOccurrences(cleanPattern, body.accountId);
 
         const updatedRule = await this.ruleRepo.save(existing);
 
         return this.getRuleWithRelations(updatedRule.id);
     }
 
-    private async countOccurrences(pattern: string): Promise<number> {
+    private async countOccurrences(pattern: string, accountId: number): Promise<number> {
         const normalizedPattern = normalizeLabel(pattern);
         if (!normalizedPattern) {
             return 0;
         }
 
         const lines = await this.lineRepo.find({
+            where: { accountId },
             select: ["label"],
         });
 
@@ -245,5 +262,9 @@ export default class AccountLineCategorizationService {
         }
 
         return hydratedRule;
+    }
+
+    private getPatternKey(accountId: number | null, pattern: string): string {
+        return `${accountId ?? "none"}:${pattern}`;
     }
 }
