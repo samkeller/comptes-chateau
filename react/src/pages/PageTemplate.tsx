@@ -1,5 +1,5 @@
 import ChocoChou from "@assets/images/chocochou.png";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Account from "../interfaces/Account";
 import AuthService from "../services/AuthService";
@@ -7,11 +7,14 @@ import AccountService from "../services/AccountService";
 import { useGlobalToast } from "../context/GlobalToastContext";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
+import { Menu } from "primereact/menu";
 import AppNavigationMenu from "../components/layout/AppNavigationMenu";
 import UserConfigDialog from "../components/UserConfigDialog";
 import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
+import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
+import { useScreen } from "@/utils/hooks/useScreen";
 
 const localStorageUtils = new LocalStorageUtils();
 
@@ -30,8 +33,9 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const navigate = useNavigate();
   const showGlobalToast = useGlobalToast();
   const { clearUser } = useConnectedUser();
+  const quickActionsMenuRef = useRef<Menu>(null);
 
-  const isXS = window.innerWidth < 640; // Tailwind's xs breakpoint
+  const { isMobile } = useScreen();
 
   useEffect(() => {
     document.title = pageTitle + " - Chocosous";
@@ -76,7 +80,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
       <img src={ChocoChou} className="h-12" />
       <h1 className="text-xl md:text-2xl m-0 font-semibold1 md:break-all whitespace-nowrap overflow-hidden">
         {
-          isXS ?
+          isMobile ?
             `${activeAccountId && accounts.find(account => account.id === activeAccountId)?.label}` :
             `Chocosous ${activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}`
         }
@@ -116,33 +120,42 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
           {brand}
         </div>
-        <div className="flex flex-row gap-1">
+        <div className="flex items-center gap-2">
+          <ConnectedUserCard />
+
+          <Menu
+            ref={quickActionsMenuRef}
+            popup
+            model={[
+              {
+                label: "Reglages",
+                icon: "pi pi-cog",
+                command: () => setShowConfigDialog(true),
+              },
+              {
+                label: "Changelog",
+                icon: "pi pi-history",
+                command: () => setShowChangelogDialog(true),
+              },
+            ]}
+          />
           <Button
-            icon="pi pi-cog"
+            icon="pi pi-ellipsis-v"
             text
             rounded
-            size="small"
-            tooltip="Réglages"
-            onClick={() => setShowConfigDialog(true)}
-            {...isXS && { className: "p-1 w-6 h-6" }}
+            tooltip="Actions"
+            tooltipOptions={{ position: "left" }}
+            className="p-1 w-6 h-6"
+            onClick={(event) => quickActionsMenuRef.current?.toggle(event)}
           />
-            <Button
-              icon="pi pi-history"
-              text
-              rounded
-              size="small"
-              tooltip="Changelog"
-              onClick={() => setShowChangelogDialog(true)}
-              {...isXS && { className: "p-1 w-6 h-6" }}
-            />
           <Button
             icon="pi pi-power-off"
             severity="danger"
             text
             rounded
-            tooltip="Déconnexion"
+            tooltip="Deconnexion"
             onClick={logout}
-            {...isXS && { className: "p-1 w-6 h-6" }}
+            {...isMobile && { className: "p-1 w-6 h-6" }}
           />
         </div>
       </header>

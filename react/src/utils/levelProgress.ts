@@ -13,20 +13,16 @@ export interface UserLevelProgress {
      */
     level: number;
 
-
+    /**
+     * Experience nécessaire pour atteindre le niveau actuel.
+     */
     currentLevelXp: number;
+
     /**
      * Experience nécessaire pour le prochain niveau.
      */
     nextLevelXp: number;
-    /**
-     * Expérience du niveau en cours.
-     */
-    xpThisLevel: number;
-    /**
-     * Experience manquante pour le prochain niveau.
-     */
-    xpToNextLevel: number;
+
     /**
      * Pourcentage de progression jusqu'au prochain niveau.
      */
@@ -40,17 +36,14 @@ export function getUserFullProgress(totalXp: number): UserLevelProgress {
     const currentLevelXp = LEVEL_XP_FACTOR * level * level;
     const nextLevelXp = LEVEL_XP_FACTOR * (level + 1) * (level + 1);
     const xpThisLevel = totalXp - currentLevelXp;
-    const xpToNextLevel = nextLevelXp - totalXp;
     const range = nextLevelXp - currentLevelXp;
     const progressPercent = range > 0 ? Math.min(100, (xpThisLevel / range) * 100) : 100;
 
     return {
-        totalXp: totalXp,
+        totalXp,
         level,
         currentLevelXp,
         nextLevelXp,
-        xpThisLevel,
-        xpToNextLevel,
         progressPercent,
     };
 }

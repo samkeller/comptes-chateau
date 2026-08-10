@@ -13,7 +13,7 @@ interface UserConfigDialogProps {
 /**
  * Charge les paths complets ("/src/assets/images/avatars/003-boy.png")
  */
-const availableAvatarsUrls = import.meta.glob("@assets/images/avatars/*", {
+const availableAvatarsUrls = import.meta.glob("../assets/images/avatars/*", {
     eager: true,
     import: "default",
 }) as Record<string, string>;
@@ -57,7 +57,7 @@ export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) 
                                     <Button
                                         key={"avatar-config-dialog-" + fileName}
                                         outlined={fileName !== connectedUser.avatar}
-                                        className="w-[48px] h-[48px] p-0 flex justify-center items-center"
+                                        className="w-12 h-12 p-0 flex justify-center items-center"
                                         onClick={() => changeUserAvatar(fileName)}
                                     >
                                         <UserAvatar

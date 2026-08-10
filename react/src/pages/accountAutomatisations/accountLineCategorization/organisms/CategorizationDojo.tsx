@@ -11,7 +11,6 @@ import DojoXpLeaderboard from "./DojoXpLeaderboard"
 import { useConnectedUser } from "@/context/ConnectedUserContext"
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { Skeleton } from "primereact/skeleton"
-import { useXpStore } from "@/stores/useXpStore"
 
 interface CategorizationDojoProps {
     unmapped: UnmappedAccountLineRuleItem[]
@@ -103,10 +102,8 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                 return
             }
 
-            const refreshedUser = await refreshUser().catch(() => null)
-            if (refreshedUser) {
-                useXpStore.getState().updateUserXp(refreshedUser)
-            }
+            // Keep explicit refresh for resilience when stream reconnects.
+            await refreshUser().catch(() => null)
             moveNext()
         } finally {
             setIsSubmitting(false)

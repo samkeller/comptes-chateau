@@ -7,6 +7,7 @@ import KanbanRoutes from './modules/kanban/routes/KanbanRoutes'
 import UserRoutes from "./modules/core/controllers/UserController";
 import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
+import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
 
 const ApiRouter = Router()
 
@@ -21,5 +22,6 @@ ApiRouter.use('/kanban', KanbanRoutes)
 ApiRouter.use('/users', UserRoutes)
 ApiRouter.use('/jobs', JobRoutes)
 ApiRouter.use('/categorization', AccountLineCategorizationRoutes)
+ApiRouter.use('/events', EventStreamRoutes)
 
 export default ApiRouter

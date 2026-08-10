@@ -176,7 +176,7 @@ export default class OperationService {
             }
 
             // Ajout xp utilisateur.
-            await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_RULE_CREATED");
+            await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_CREATED");
 
             return repo.findOneOrFail({
                 where: { id: savedPrimary.id },
@@ -216,7 +216,7 @@ export default class OperationService {
         });
 
         // Ajout xp utilisateur.
-        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_RULE_CREATED");
+        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_OPERATION_VALIDATED", updatedLines.length);
 
         return { updatedCount: updatedLines.length };
     }

@@ -10,7 +10,7 @@ import router from './routes/Router';
 import './services/Interceptors';
 import { GlobalToastProvider } from './context/GlobalToastContext';
 import { ConnectedUserProvider } from './context/ConnectedUserContext';
-import AppInitializer from './AppInitializer';
+import { XpFeedbackProvider } from './context/XpFeedbackContext';
 import { registerSW } from 'virtual:pwa-register';
 
 addLocale('fr', frLocale);
@@ -34,8 +34,9 @@ createRoot(document.getElementById('root')!).render(
     <PrimeReactProvider value={primeReactOptions}>
       <GlobalToastProvider>
         <ConnectedUserProvider>
-          <AppInitializer />
-          <RouterProvider router={router} />
+          <XpFeedbackProvider>
+            <RouterProvider router={router} />
+          </XpFeedbackProvider>
         </ConnectedUserProvider>
       </GlobalToastProvider>
     </PrimeReactProvider>
