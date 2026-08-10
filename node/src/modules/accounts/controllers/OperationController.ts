@@ -27,6 +27,21 @@ OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request
     res.json(accountLine);
 });
 
+
+OperationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const userId = requireUserId(req)
+    const accountLine = await operationService.save(
+        {
+            ...req.body,
+            id: Number(req.params.id)
+        },
+        accountId,
+        userId
+    );
+    res.json(accountLine);
+});
+
 /**
  * Valides une liste d'opérations en batch.
  * OperationBatchCheckSchema: List d'objets avec id, isChecked et dateValeur.
@@ -35,7 +50,7 @@ OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request
 OperationRoutes.post('/check-batch', validateBody(OperationBatchCheckSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const userId = requireUserId(req);
- 
+
     const result = await operationService.checkBatch(req.body, accountId, userId);
     res.json(result);
 });
