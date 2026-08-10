@@ -4,8 +4,10 @@ import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { User } from "../../core/entities/User";
-import { normalizeLabel } from "../../../utils/AccountLineRulesUtils";
+import { normalizeLabel } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
+import { UserXpActionsPoints } from "../../core/utils/UserXPUtils";
+import UserXpService from "../../core/services/UserXpService";
 
 export interface SaveRuleDto {
     pattern: string;
@@ -45,6 +47,9 @@ interface PatternAggregation {
 export default class AccountLineCategorizationService {
     private ruleRepo = AppDataSource.getRepository(AccountLineRule);
     private lineRepo = AppDataSource.getRepository(AccountLine);
+
+    private userXpService = new UserXpService()
+
     private FREQUENCY_THRESHOLD = 3; // Seuil de fréquence pour suggérer un poste ou une nature
 
     /**
@@ -81,14 +86,9 @@ export default class AccountLineCategorizationService {
 
         const createdRule = await this.ruleRepo.save(rule);
 
-        const userRepo = AppDataSource.getRepository(User);
-        const user = await userRepo.findOne({ where: { id: creatorId } });
-        if (user) {
-            const XP_REWARD = 10;
-            user.totalXp += XP_REWARD;
-            await userRepo.save(user);
-        }
-
+        // Ajout xp utilisateur.
+        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_RULE_CREATED");
+        
         return this.getRuleWithRelations(createdRule.id);
     }
 

@@ -3,6 +3,7 @@ import OperationService from "../services/operation/OperationService";
 import { SaveOperationSchema, OperationBatchCheckSchema } from "../services/operation/OperationDtos";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
+import requireUserId from "../utils/requireUserId";
 
 const OperationRoutes = Router({ mergeParams: true });
 const operationService = new OperationService();
@@ -21,22 +22,21 @@ OperationRoutes.get('/export', async (req: Request, res: Response) => {
 
 OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
-    const accountLine = await operationService.save(req.body, accountId);
+    const userId = requireUserId(req)
+    const accountLine = await operationService.save(req.body, accountId, userId);
     res.json(accountLine);
 });
 
-OperationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
-    const accountId = getAccountIdFromParams(req.params);
-    const accountLine = await operationService.save({
-        ...req.body,
-        id: Number(req.params.id)
-    }, accountId);
-    res.json(accountLine);
-});
-
+/**
+ * Valides une liste d'opérations en batch.
+ * OperationBatchCheckSchema: List d'objets avec id, isChecked et dateValeur.
+ * Retourne le nombre d'opérations mises à jour.
+ */
 OperationRoutes.post('/check-batch', validateBody(OperationBatchCheckSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
-    const result = await operationService.checkBatch(req.body, accountId);
+    const userId = requireUserId(req);
+ 
+    const result = await operationService.checkBatch(req.body, accountId, userId);
     res.json(result);
 });
 

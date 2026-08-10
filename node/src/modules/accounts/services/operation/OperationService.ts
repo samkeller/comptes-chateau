@@ -12,6 +12,7 @@ import { OperationBatchCheckPayload, SaveOperationPayload } from "./OperationDto
 import { badRequest, notFound } from "../../../../utils/AppError";
 import { DeleteResult } from "typeorm/query-builder/result/DeleteResult";
 import { Like } from "typeorm/find-options/operator/Like";
+import UserXpService from "../../../core/services/UserXpService";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -23,6 +24,8 @@ const lazyTableQueryParserOptions = {
 export default class OperationService {
 
     private accountLineRepo = AppDataSource.getRepository(AccountLine);
+
+    private userXpService = new UserXpService()
 
     private validateTransferAmounts(line: SaveOperationPayload): void {
         const debit = Number(line.debit ?? 0);
@@ -86,7 +89,7 @@ export default class OperationService {
         };
     }
 
-    async save(line: SaveOperationPayload, accountId: number): Promise<AccountLine> {
+    async save(line: SaveOperationPayload, accountId: number, userId: number): Promise<AccountLine> {
         return AppDataSource.transaction(async (manager) => {
             const repo = manager.getRepository(AccountLine);
             const accountLineService = new AccountLineService(manager);
@@ -172,6 +175,9 @@ export default class OperationService {
                 });
             }
 
+            // Ajout xp utilisateur.
+            await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_RULE_CREATED");
+
             return repo.findOneOrFail({
                 where: { id: savedPrimary.id },
                 relations: { account: true, targetAccount: true, nature: true, poste: true }
@@ -179,7 +185,12 @@ export default class OperationService {
         });
     }
 
-    async checkBatch(payload: OperationBatchCheckPayload, accountId: number): Promise<{ updatedCount: number }> {
+    /**
+    * Valides une liste d'opérations en batch.
+    * OperationBatchCheckSchema: List d'objets avec id, isChecked et dateValeur.
+    * Retourne le nombre d'opérations mises à jour.
+    */
+    async checkBatch(payload: OperationBatchCheckPayload, accountId: number, creatorId: number): Promise<{ updatedCount: number }> {
         const normalizedChecks = payload.checks.map((check) => {
             const normalizedDateValeur = normalizeApiDateInput(check.dateValeur);
             if (!normalizedDateValeur)
@@ -203,6 +214,9 @@ export default class OperationService {
 
             return service.saveAll(normalizedChecks);
         });
+
+        // Ajout xp utilisateur.
+        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_RULE_CREATED");
 
         return { updatedCount: updatedLines.length };
     }
