@@ -25,7 +25,7 @@ AccountLineCategorizationRoutes.post('/', validateBody(SaveRuleSchema), async (r
     res.status(201).json(created);
 });
 
-AccountLineCategorizationRoutes.put('/:id', validateBody(SaveRuleSchema), async (req: Request, res: Response) => {
+AccountLineCategorizationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveRuleSchema), async (req: Request, res: Response) => {
 
     const id = Number(req.params.id)
 
