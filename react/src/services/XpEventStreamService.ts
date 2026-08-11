@@ -1,8 +1,9 @@
 import { isXpRealtimeEvent, XpRealtimeEvent } from "@/interfaces/XpEvents";
+import BaseService from "./BaseService";
 
 type XpRealtimeListener = (event: XpRealtimeEvent) => void;
 
-class XpEventStreamService {
+class XpEventStreamService extends BaseService {
     private eventSource: EventSource | null = null;
     private listeners = new Set<XpRealtimeListener>();
     private shouldRun = false;
@@ -41,7 +42,7 @@ class XpEventStreamService {
 
     private openConnection(): void {
         // Dedicated SSE stream for XP updates, independent from regular HTTP responses.
-        const streamUrl = `${import.meta.env.VITE_API_URL}/api/events/stream`;
+        const streamUrl = this.eventsApi + `/stream`;
 
         this.eventSource = new EventSource(streamUrl, { withCredentials: true });
 
