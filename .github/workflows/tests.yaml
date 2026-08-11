@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            react/package-lock.json
+            node/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install React dependencies
+        run: npm ci --prefix react
+
+      - name: Install Node dependencies
+        run: npm ci --prefix node
+
+      - name: Run React tests
+        run: npm --prefix react run tests
+
+      - name: Run Node tests
+        run: npm --prefix node run tests
