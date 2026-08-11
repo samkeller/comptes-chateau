@@ -15,6 +15,7 @@ import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
 import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
 import { useScreen } from "@/utils/hooks/useScreen";
+import Sprite from "@/components/atoms/Sprite/Sprite";
 
 const localStorageUtils = new LocalStorageUtils();
 
@@ -61,7 +62,13 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
     navigate("/auth", { replace: true });
     showGlobalToast({
       severity: "info",
-      detail: "Déconnexion réussie ! 👋",
+      detail: <div className="flex flex-col gap-1 ">
+        Déconnexion réussie ! 👋
+        <Sprite
+          actionVariant="sleep1RightBack"
+          catVariant="berlioz"
+        />
+      </div>
     })
   };
 
