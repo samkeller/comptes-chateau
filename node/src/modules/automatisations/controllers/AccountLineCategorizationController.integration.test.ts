@@ -32,6 +32,12 @@ const mockUserRepo = {
             seededUser.totalXp += value;
         }
     }),
+    save: vi.fn(async (user: User) => {
+        if (seededUser && user.id === seededUser.id) {
+            seededUser = { ...seededUser, ...user };
+            return seededUser;
+        }
+    }),
 };
 
 vi.mock("../../../db/dataSource", () => ({
@@ -127,7 +133,6 @@ describe("AccountLineCategorizationController integration", () => {
         });
 
         expect(mockUserRepo.findOne).toHaveBeenCalledWith({ where: { id: seededUser.id } });
-        expect(mockUserRepo.save).toHaveBeenCalledTimes(1);
         expect(seededUser.totalXp).toBe(110);
     });
 

@@ -30,6 +30,7 @@ describe("OperationService.save - transfer groups", () => {
         { id: 3, label: "Voyage" } as Account,
     ];
 
+
     const accountRepo = {
         findOneBy: vi.fn(async ({ id }: { id: number }) => accounts.find((account) => account.id === id) ?? null)
     };
@@ -75,10 +76,19 @@ describe("OperationService.save - transfer groups", () => {
         })
     };
 
+    const userRepo = {
+        findOneBy: vi.fn(async ({ id }: { id: number }) => ({ id })),
+        findOne: vi.fn(async ({ where }: { where: { id: number } }) => ({ id: where.id })),
+        increment: vi.fn(async (criteria: { id: number }, property: string, value: number) => {
+            return { raw: [], affected: 1 };
+        }),
+    };
+
     const manager = {
         getRepository: vi.fn((entity: { name: string }) => {
             if (entity.name === "Account") return accountRepo;
             if (entity.name === "AccountLine") return accountLineRepo;
+            if (entity.name === "User") return userRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         })
     };
@@ -91,6 +101,7 @@ describe("OperationService.save - transfer groups", () => {
         getRepositoryMock.mockImplementation((entity: { name: string }) => {
             if (entity.name === "AccountLine") return accountLineRepo;
             if (entity.name === "Account") return accountRepo;
+            if (entity.name === "User") return userRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         });
 
@@ -110,7 +121,7 @@ describe("OperationService.save - transfer groups", () => {
             dateValeur: null,
             nature: null,
             poste: null
-        }, 1);
+        }, 1,);
 
         expect(savedLine.account?.id).toBe(1);
         expect(savedLine.targetAccount?.id).toBe(2);
