@@ -2,10 +2,14 @@ import { EntityManager, LessThanOrEqual } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { RecurringExpense } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
+import UserXpService from "../../core/services/UserXpService";
+import { SaveRecurringExpensePayload } from "../dto/RecurringExpenseDtos";
 
 export default class RecurringExpenseService {
 
     private recurringExpenseRepo;
+
+    private userXpService = new UserXpService();
 
     constructor(manager?: EntityManager) {
         this.recurringExpenseRepo = manager ?
@@ -40,12 +44,20 @@ export default class RecurringExpenseService {
         )))
     }
 
-    async save(expense: Partial<RecurringExpense>, accountId: number) {
-        return this.recurringExpenseRepo.save({
+    async save(expense: SaveRecurringExpensePayload, accountId: number, creatorId?: number) {
+        const isCreation = !(typeof expense.id === "number" && expense.id > 0);
+
+        const savedExpense = await this.recurringExpenseRepo.save({
             ...expense,
             accountId,
             nextOccurrence: normalizeApiDateInput(expense.nextOccurrence) ?? undefined,
         });
+
+        if (isCreation && typeof creatorId === "number") {
+            await this.userXpService.addXPForUser(creatorId, "ACCOUNT_RECURRING_EXPENSE_CREATED");
+        }
+
+        return savedExpense;
     }
 }
 

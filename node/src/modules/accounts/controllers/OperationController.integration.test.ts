@@ -603,7 +603,6 @@ describe("OperationControllers /lazy integration", () => {
             .query({ skip: "0", take: "200", sortField: "dateOperation", sortOrder: "DESC" });
 
         expect(lazySourceResponse.status).toBe(200);
-        console.log(lazySourceResponse.body);
         const sourceTransfers = lazySourceResponse.body.data.filter(
             (l: { label: string }) => l.label === "Virement test"
         );
