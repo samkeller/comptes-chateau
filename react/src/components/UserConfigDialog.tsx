@@ -44,7 +44,7 @@ export default function UserConfigDialog({ hideDialog }: UserConfigDialogProps) 
                 <Dialog
                     visible={true} onHide={hideDialog}
                     header={`Réglages - ${connectedUser.username}`}
-                    className="w-[50vw]"
+                    className="w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[50vw]"
                     modal
                     dismissableMask
                 >

@@ -15,6 +15,7 @@ import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
 import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
 import { useScreen } from "@/utils/hooks/useScreen";
+import Sprite from "@/components/atoms/Sprite/Sprite";
 
 const localStorageUtils = new LocalStorageUtils();
 
@@ -61,7 +62,13 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
     navigate("/auth", { replace: true });
     showGlobalToast({
       severity: "info",
-      detail: "Déconnexion réussie ! 👋",
+      detail: <div className="flex flex-col gap-1 ">
+        Déconnexion réussie ! 👋
+        <Sprite
+          actionVariant="sleep1RightBack"
+          catVariant="berlioz"
+        />
+      </div>
     })
   };
 
@@ -77,8 +84,10 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
   const brand = (
     <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
-      <img src={ChocoChou} className="h-12" />
-      <h1 className="text-xl md:text-2xl m-0 font-semibold1 md:break-all whitespace-nowrap overflow-hidden">
+      {
+        !isMobile && <img src={ChocoChou} className="h-12" alt="Chocosous" />
+      }
+      <h1 className={"text-xl md:text-2xl m-0 font-semibold1 md:break-all" + (isMobile ? " text-center" : " whitespace-nowrap overflow-hidden text-ellipsis")}>
         {
           isMobile ?
             `${activeAccountId && accounts.find(account => account.id === activeAccountId)?.label}` :

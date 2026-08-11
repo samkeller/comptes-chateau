@@ -21,6 +21,10 @@ if (!APP_SECRET) {
     throw new Error("No SESSION_SECRET provided in environment variables");
 }
 
+if (!process.env.PORT) {
+    throw new Error("No PORT provided in environment variables");
+}
+
 AppDataSource.initialize().then(() => {
     const app = express();
     app.set("trust proxy", 1);
@@ -49,7 +53,7 @@ AppDataSource.initialize().then(() => {
 
     const routes = Router()
 
-    routes.use("/auth", AuthRoutes) // Avant -> Non protégé
+    routes.use("/api/auth", AuthRoutes) // Avant -> Non protégé
     routes.use("/api", ApiRouter)
 
     app.use(routes)
@@ -67,9 +71,9 @@ AppDataSource.initialize().then(() => {
         res.sendFile(path.join(clientPath, "index.html"));
     });
 
-    console.info("Running on port " + process.env.PORT)
-
-    return app.listen(process.env.PORT);
+    return app.listen(Number(process.env.PORT), "0.0.0.0", () => {
+        console.info(`Server started on port ${process.env.PORT}`);
+    })
 })
 
 process.on('SIGINT', function () {
