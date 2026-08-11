@@ -21,6 +21,10 @@ if (!APP_SECRET) {
     throw new Error("No SESSION_SECRET provided in environment variables");
 }
 
+if (!process.env.PORT) {
+    throw new Error("No PORT provided in environment variables");
+}
+
 AppDataSource.initialize().then(() => {
     const app = express();
     app.set("trust proxy", 1);

@@ -4,7 +4,7 @@ import Sprite from "./Sprite";
 export default function CatsChase() {
   const [positionX, setPositionX] = useState<number | null>(null);
   const [direction, setDirection] = useState<"left" | "right">("left");
-  
+
   // Gère qui est devant (true = Berlioz en tête, false = Toulouse en tête)
   const [isBerliozFirst, setIsBerliozFirst] = useState(true);
 
@@ -12,49 +12,61 @@ export default function CatsChase() {
   const catWidth = 128; // 64px * 2
   const speed = 3;
 
-  // Initialisation de la position de départ (hors écran à droite)
-  useEffect(() => {
-    const parentWidth = containerRef.current?.parentElement?.clientWidth || window.innerWidth;
-    setPositionX(parentWidth);
-  }, []);
+  const positionRef = useRef<number | null>(null);
+  const directionRef = useRef<"left" | "right">("left");
+  const isBerliozFirstRef = useRef(true);
+
 
   useEffect(() => {
-    if (positionX === null) return;
+    const parentWidth =
+      containerRef.current?.parentElement?.clientWidth || window.innerWidth;
+
+    positionRef.current = parentWidth;
+    setPositionX(parentWidth);
 
     let animationFrameId: number;
 
     const updatePosition = () => {
-      const containerWidth = containerRef.current?.parentElement?.clientWidth || window.innerWidth;
-      
-      // Limites étendues pour que les chats sortent à 100% du conteneur
+      const containerWidth =
+        containerRef.current?.parentElement?.clientWidth || window.innerWidth;
+
       const minX = -catWidth;
       const maxX = containerWidth;
 
-      setPositionX((prevX) => {
-        if (prevX === null) return null;
+      const currentX = positionRef.current;
 
-        if (direction === "left") {
-          const nextX = prevX - speed;
+      if (currentX !== null) {
+        let nextX = currentX;
+
+        if (directionRef.current === "left") {
+          nextX = currentX - speed;
+
           if (nextX <= minX) {
-            // Hors écran à gauche -> Demi-tour vers la droite
+            nextX = minX;
+            directionRef.current = "right";
             setDirection("right");
-            // 50% de chance d'inverser qui court devant
-            setIsBerliozFirst(Math.random() < 0.5);
-            return minX;
+
+            const berliozFirst = Math.random() < 0.5;
+            isBerliozFirstRef.current = berliozFirst;
+            setIsBerliozFirst(berliozFirst);
           }
-          return nextX;
         } else {
-          const nextX = prevX + speed;
+          nextX = currentX + speed;
+
           if (nextX >= maxX) {
-            // Hors écran à droite -> Demi-tour vers la gauche
+            nextX = maxX;
+            directionRef.current = "left";
             setDirection("left");
-            // 50% de chance d'inverser qui court devant
-            setIsBerliozFirst(Math.random() < 0.5);
-            return maxX;
+
+            const berliozFirst = Math.random() < 0.5;
+            isBerliozFirstRef.current = berliozFirst;
+            setIsBerliozFirst(berliozFirst);
           }
-          return nextX;
         }
-      });
+
+        positionRef.current = nextX;
+        setPositionX(nextX);
+      }
 
       animationFrameId = requestAnimationFrame(updatePosition);
     };
@@ -62,7 +74,7 @@ export default function CatsChase() {
     animationFrameId = requestAnimationFrame(updatePosition);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [direction, positionX]);
+  }, []);
 
   if (positionX === null) return null;
 

@@ -3,7 +3,7 @@
 
 import berliozSprite from "@assets/images/cats_sprites/berlioz.png";
 import toulouseSprite from "@assets/images/cats_sprites/toulouse.png";
-import { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { catsStepsVariations, SpriteActionVariants } from "./CatSpritesStepsVariations";
 
 interface SpriteProps {
@@ -38,7 +38,7 @@ export default function Sprite({ catVariant: variant, actionVariant }: SpritePro
         (rowNumber - 1) * size // Décalage vertical basé sur le rowNumber (rowNumber commence à 1 car on est des humains qui comptons)
     ];
 
-    const styles: React.CSSProperties = {
+    const styles: CSSProperties = {
         display: "inline-block",
         width: `${size}px`,
         height: `${size}px`,
