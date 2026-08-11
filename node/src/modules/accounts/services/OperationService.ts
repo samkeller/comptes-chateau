@@ -145,10 +145,19 @@ export default class OperationService {
                     }
                 }
 
-                return repo.findOneOrFail({
+                const savedPrimaryLine = await repo.findOneOrFail({
                     where: { id: normalizedPrimary.id },
                     relations: { account: true, targetAccount: true, nature: true, poste: true }
                 });
+
+                const isCreation = !existingLine;
+                if (isCreation) {
+                    await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_CREATED");
+                } else if (!existingLine.dateValeur && savedPrimaryLine.dateValeur) {
+                    await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_VALIDATED");
+                }
+
+                return savedPrimaryLine;
             }
 
             this.validateTransferAmounts(line);
@@ -175,13 +184,19 @@ export default class OperationService {
                 });
             }
 
-            // Ajout xp utilisateur.
-            await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_CREATED");
-
-            return repo.findOneOrFail({
+            const savedPrimaryLine = await repo.findOneOrFail({
                 where: { id: savedPrimary.id },
                 relations: { account: true, targetAccount: true, nature: true, poste: true }
             });
+
+            const isCreation = !existingLine;
+            if (isCreation) {
+                await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_CREATED");
+            } else if (!existingLine.dateValeur && savedPrimaryLine.dateValeur) {
+                await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_VALIDATED");
+            }
+
+            return savedPrimaryLine;
         });
     }
 

@@ -37,3 +37,7 @@
 
 ### Fixes
 - Affichages mobiles (dialogues, titres, etc)
+
+## [1.1.3 - 11/08/2026]
+### Added
+- Système XP backend pour les opérations validées, les créations d'opérations, les règles de catégorisation et les dépenses récurrentes

@@ -354,4 +354,58 @@ describe("OperationService.save - transfer groups", () => {
         expect(Number(mirror?.credit)).toBe(90);
         expect(mirror?.transferGroupId).toBe(savedLine.transferGroupId);
     });
+
+    it("awards creation XP when creating a new operation", async () => {
+        const service = new OperationService();
+
+        await service.save({
+            label: "Nouvelle operation",
+            dateOperation: "2026-03-25",
+            debit: 42,
+            credit: 0,
+            isChecked: false,
+            targetAccount: null,
+            dateValeur: null,
+            nature: null,
+            poste: null
+        }, 1, 15);
+
+        expect(userRepo.increment).toHaveBeenCalledWith({ id: 15 }, "totalXp", 5);
+    });
+
+    it("awards validation XP when adding dateValeur on update", async () => {
+        storedLines = [
+            {
+                id: 100,
+                label: "Operation a valider",
+                dateOperation: new Date("2026-03-10"),
+                debit: 50,
+                credit: 0,
+                isChecked: false,
+                account: accounts[0],
+                targetAccount: null,
+                transferGroupId: null,
+                dateValeur: null
+            }
+        ];
+        nextId = 101;
+
+        const service = new OperationService();
+
+        await service.save({
+            id: 100,
+            label: "Operation validee",
+            dateOperation: "2026-03-10",
+            debit: 50,
+            credit: 0,
+            isChecked: true,
+            targetAccount: null,
+            dateValeur: "2026-03-21",
+            nature: null,
+            poste: null
+        }, 1, 20);
+
+        expect(userRepo.increment).toHaveBeenCalledTimes(1);
+        expect(userRepo.increment).toHaveBeenCalledWith({ id: 20 }, "totalXp", 20);
+    });
 });

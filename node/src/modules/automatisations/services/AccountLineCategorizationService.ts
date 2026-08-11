@@ -85,9 +85,10 @@ export default class AccountLineCategorizationService {
 
         const createdRule = await this.ruleRepo.save(rule);
 
+        const count = [rule.posteId, rule.natureId].filter(Boolean).length;
         // Ajout xp utilisateur.
-        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_RULE_CREATED");
-        
+        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_RULE_CREATED", count);
+
         return this.getRuleWithRelations(createdRule.id);
     }
 
