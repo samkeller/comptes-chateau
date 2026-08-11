@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BudgetItem } from "../../entities/BudgetItem";
+import { BudgetItem } from "../entities/BudgetItem";
 
 export interface BudgetPosteDto {
     id: number;

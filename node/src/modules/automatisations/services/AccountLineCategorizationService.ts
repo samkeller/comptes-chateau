@@ -4,7 +4,7 @@ import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { normalizeLabel } from "../utils/AccountLineRulesUtils";
-import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
+import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
 
 export interface SaveRuleDto {

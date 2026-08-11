@@ -2,7 +2,7 @@ import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { AccountLine } from "../entities/AccountLine";
-import { AccountLinePosteDto, SavePostePayload } from "./operation/AccountLinePosteDtos";
+import { AccountLinePosteDto, SavePostePayload } from "../dto/AccountLinePosteDtos";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
 

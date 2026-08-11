@@ -2,7 +2,7 @@ import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLine } from "../entities/AccountLine";
-import { AccountLineNatureDto, SaveNaturePayload } from "./operation/AccountLineNatureDto";
+import { AccountLineNatureDto, SaveNaturePayload } from "../dto/AccountLineNatureDtos";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
 

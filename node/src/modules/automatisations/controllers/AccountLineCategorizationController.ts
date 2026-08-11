@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import AccountLineCategorizationService from "../services/AccountLineCategorizationService";
-import { SaveRuleSchema } from "../services/rules/AccountLineRulesDto";
+import { SaveRuleSchema } from "../dto/AccountLineRulesDto";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import requireUserId from "../../accounts/utils/requireUserId";
 

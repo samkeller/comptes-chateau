@@ -8,7 +8,7 @@ const { getRepositoryMock, transactionMock } = vi.hoisted(() => ({
     transactionMock: vi.fn()
 }));
 
-vi.mock("../../../../db/dataSource", () => ({
+vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
         getRepository: getRepositoryMock,
         transaction: transactionMock,
