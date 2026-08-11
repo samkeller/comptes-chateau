@@ -76,10 +76,6 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
         return "Choisis ce qui te semble juste, puis confirme la règle. Passe si la suggestion n'est pas assez fiable."
     }, [currentProgress.level, isStarted, isWinning])
 
-    const handleStart = () => {
-        setIsStarted(true)
-    }
-
     const moveNext = () => {
         setCurrentIndex((prev) => Math.min(prev + 1, unmapped.length))
     }
@@ -108,10 +104,6 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
         } finally {
             setIsSubmitting(false)
         }
-    }
-
-    const handleSkip = () => {
-        moveNext()
     }
 
     return (
@@ -148,11 +140,11 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                             <div className="space-y-4 rounded-lg border border-surface p-4 bg-surface">
                                 <div className="text-sm text-500">Comment ça marche ?</div>
                                 <ul className="list-disc px-5 text-sm leading-6">
-                                    <li>Appuie sur GO pour lancer la session.</li>
                                     <li>Valide les suggestions de poste et nature en cliquant sur le pouce.</li>
                                     <li>Confirme la règle pour gagner de l'XP et avancer dans le classement.</li>
+                                    <li>Appuie sur GO pour lancer la session <small>(a la fin de la lecture bien sur)</small>.</li>
                                 </ul>
-                                <Button label="GO" icon="pi pi-play" severity="success" onClick={handleStart} className="mt-3" />
+                                <Button label="GO" icon="pi pi-play" severity="success" onClick={() => setIsStarted(true)} className="mt-3" />
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -169,9 +161,18 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                                                     <div className="text-sm text-500">Pattern proposé</div>
                                                     <div className="text-2xl font-semibold wrap-break-word">{currentItem.pattern}</div>
                                                 </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <Tag value={`${currentItem.account.label}`} severity="info" />
-                                                    <Tag value={`${currentItem.count} occurrences`} severity="contrast" />
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <Button
+                                                        icon="pi pi-arrow-left"
+                                                        severity="secondary"
+                                                        text rounded size="small"
+                                                        aria-label="Précédent"
+                                                        onClick={() => setIsStarted(false)}
+                                                        tooltip="Oh zut, j'ai oublié de tout lire ! Je veux recommencer la session mais avant, je veux relire les instructions !!!"
+                                                        tooltipOptions={{ position: "left" }}
+                                                    />
+                                                    <Tag className="min-w-30" value={`${currentItem.account.label}`} severity="info" />
+                                                    <Tag className="min-w-30" value={`${currentItem.count} occurrences`} severity="contrast" />
                                                 </div>
                                             </div>
                                             <div className="grid gap-3 lg:grid-cols-2">
@@ -219,7 +220,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                                                 label="Passer"
                                                 icon="pi pi-forward"
                                                 text
-                                                onClick={handleSkip}
+                                                onClick={() => moveNext()}
                                                 disabled={isSubmitting}
                                             />
                                             <Button
