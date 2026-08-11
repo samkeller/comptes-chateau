@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import OperationService from "../services/operation/OperationService";
-import { SaveOperationSchema, OperationBatchCheckSchema } from "../services/operation/OperationDtos";
+import OperationService from "../services/OperationService";
+import { SaveOperationSchema, OperationBatchCheckSchema } from "../dto/OperationDtos";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
 import requireUserId from "../utils/requireUserId";

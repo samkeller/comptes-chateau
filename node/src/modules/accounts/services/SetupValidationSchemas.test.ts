@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SaveNatureSchema } from "./operation/AccountLineNatureDto";
-import { SavePosteSchema } from "./operation/AccountLinePosteDtos";
+import { SaveNatureSchema } from "../dto/AccountLineNatureDtos";
+import { SavePosteSchema } from "../dto/AccountLinePosteDtos";
 
 describe("Setup validation schemas", () => {
     it("rejects whitespace-only nature label", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import AccountLineCategorizationService from "./AccountLineCategorizationService";
-import { AccountLineRuleValidationError } from "./rules/errors/AccountLineRuleErrors";
+import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 
 type RuleRecord = { pattern: string; accountId: number };
 type LineRecord = {

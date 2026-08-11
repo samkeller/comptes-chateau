@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { AccountLineNatureDto } from "../../../accounts/services/operation/AccountLineNatureDto";
-import { AccountLinePosteDto } from "../../../accounts/services/operation/AccountLinePosteDtos";
+import { AccountLineNatureDto } from "../../../accounts/dto/AccountLineNatureDtos";
+import { AccountLinePosteDto } from "../../../accounts/dto/AccountLinePosteDtos";
 
 export interface AccountLineRuleDto {
     id: number;
