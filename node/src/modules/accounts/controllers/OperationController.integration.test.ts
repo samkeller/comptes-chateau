@@ -6,20 +6,42 @@ import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
+import { User } from "../../core/entities/User";
 import { IMemoryDb } from "pg-mem";
 import SetupTestDb from "../../../tests/SetupTests";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 
 let testDataSource: DataSource;
+let seededUser: User;
 let natureChargesId: number;
 let natureRevenusId: number;
 let posteMaisonId: number;
 let posteLoisirsId: number;
 const accountId = 1;
+const mockUserRepo = {
+    findOne: vi.fn(async ({ where }: { where: { id: number } }) => {
+        if (!seededUser || where.id !== seededUser.id) {
+            return null;
+        }
+
+        return seededUser;
+    }),
+    increment: vi.fn(async ({ id }: { id: number }, field: string, value: number) => {
+        if (seededUser && id === seededUser.id && field === "totalXp") {
+            seededUser.totalXp += value;
+        }
+    })
+};
 
 vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
-        getRepository: <T>(entity: new () => T) => testDataSource.getRepository(entity),
+        getRepository: <T>(entity: new () => T) => {
+            if (entity === User) {
+                return mockUserRepo;
+            }
+
+            return testDataSource.getRepository(entity);
+        },
         transaction: <T>(runInTransaction: (entityManager: EntityManager) => Promise<T>) =>
             testDataSource.transaction(runInTransaction)
     }
@@ -31,6 +53,15 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
     const natureRepo = dataSource.getRepository(AccountLineNature);
     const posteRepo = dataSource.getRepository(AccountLinePoste);
     const lineRepo = dataSource.getRepository(AccountLine);
+    seededUser = {
+        id: 11,
+        username: "dojo-user",
+        avatar: "001-tiger.png",
+        totalXp: 100,
+        passwordHash: "hash",
+        kanbanAssignedTasks: []
+    } as User;
+
     const account = await accountRepo.save({
         id: accountId,
         label: "Compte principal",
@@ -121,6 +152,10 @@ describe("OperationControllers /lazy integration", () => {
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
         app = express();
         app.use(express.json());
+        app.use((req, _res, next) => {
+            (req as any).session = { userId: seededUser.id };
+            next();
+        });
         app.use("/accounts/:accountId", accountScopedRoutes);
         app.use(errorMiddleware);
     });
@@ -568,6 +603,7 @@ describe("OperationControllers /lazy integration", () => {
             .query({ skip: "0", take: "200", sortField: "dateOperation", sortOrder: "DESC" });
 
         expect(lazySourceResponse.status).toBe(200);
+        console.log(lazySourceResponse.body);
         const sourceTransfers = lazySourceResponse.body.data.filter(
             (l: { label: string }) => l.label === "Virement test"
         );
