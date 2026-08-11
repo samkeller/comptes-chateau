@@ -84,8 +84,10 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
 
   const brand = (
     <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/")}>
-      <img src={ChocoChou} className="h-12" />
-      <h1 className="text-xl md:text-2xl m-0 font-semibold1 md:break-all whitespace-nowrap overflow-hidden">
+      {
+        !isMobile && <img src={ChocoChou} className="h-12" />
+      }
+      <h1 className={"text-xl md:text-2xl m-0 font-semibold1 md:break-all" + (isMobile ? " text-center" : "whitespace-nowrap overflow-hidden text-ellipsis")}>
         {
           isMobile ?
             `${activeAccountId && accounts.find(account => account.id === activeAccountId)?.label}` :

@@ -18,7 +18,7 @@ export default function ChangelogDialog({ hideDialog }: ChangelogDialogProps) {
                     <h2>Changelog</h2>
                 </div>
             }
-            className="w-[50vw]"
+            className="w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[50vw]"
             modal
             dismissableMask
         >

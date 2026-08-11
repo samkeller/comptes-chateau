@@ -30,3 +30,10 @@
 - Système d'xp quand on fait des actions de création.
 - Page "Automatisations" posant les premières briques de pattern matching dans l'application
 - Ajout d'un dojo & de petites images rigolotes (j'adore l'humour)
+
+## [1.1.2 - 11/08/2026]
+### Added
+- Sprites nécessaires
+
+### Fixes
+- Affichages mobiles (dialogues, titres, etc)
