@@ -1,109 +1,66 @@
 import { useEffect, useRef, useState } from "react";
 import Sprite from "./Sprite";
 
-export default function CatsChase() {
-  const [positionX, setPositionX] = useState<number | null>(null);
-  const [direction, setDirection] = useState<"left" | "right">("left");
+const SPEED = 3;
+const CAT_WIDTH = 128;
 
-  // Gère qui est devant (true = Berlioz en tête, false = Toulouse en tête)
+export default function CatsChase() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const [direction, setDirection] = useState<"left" | "right">("left");
   const [isBerliozFirst, setIsBerliozFirst] = useState(true);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const catWidth = 128; // 64px * 2
-  const speed = 3;
-
-  const positionRef = useRef<number | null>(null);
-  const directionRef = useRef<"left" | "right">("left");
-  const isBerliozFirstRef = useRef(true);
-
-
   useEffect(() => {
-    const parentWidth =
-      containerRef.current?.parentElement?.clientWidth || window.innerWidth;
+    let animId: number;
+    let dir: "left" | "right" = "left";
 
-    positionRef.current = parentWidth;
-    setPositionX(parentWidth);
-
-    let animationFrameId: number;
-
-    const updatePosition = () => {
-      const containerWidth =
-        containerRef.current?.parentElement?.clientWidth || window.innerWidth;
-
-      const minX = -catWidth;
-      const maxX = containerWidth;
-
-      const currentX = positionRef.current;
-
-      if (currentX !== null) {
-        let nextX = currentX;
-
-        if (directionRef.current === "left") {
-          nextX = currentX - speed;
-
-          if (nextX <= minX) {
-            nextX = minX;
-            directionRef.current = "right";
-            setDirection("right");
-
-            const berliozFirst = Math.random() < 0.5;
-            isBerliozFirstRef.current = berliozFirst;
-            setIsBerliozFirst(berliozFirst);
-          }
-        } else {
-          nextX = currentX + speed;
-
-          if (nextX >= maxX) {
-            nextX = maxX;
-            directionRef.current = "left";
-            setDirection("left");
-
-            const berliozFirst = Math.random() < 0.5;
-            isBerliozFirstRef.current = berliozFirst;
-            setIsBerliozFirst(berliozFirst);
-          }
-        }
-
-        positionRef.current = nextX;
-        setPositionX(nextX);
-      }
-
-      animationFrameId = requestAnimationFrame(updatePosition);
+    const getBounds = () => {
+      const parentWidth = containerRef.current?.parentElement?.clientWidth || window.innerWidth;
+      return { min: -CAT_WIDTH, max: parentWidth };
     };
 
-    animationFrameId = requestAnimationFrame(updatePosition);
+    let { max: maxX, min: minX } = getBounds();
+    let x = maxX;
 
-    return () => cancelAnimationFrame(animationFrameId);
+    const animate = () => {
+      x += dir === "left" ? -SPEED : SPEED;
+
+      if (dir === "left" && x <= minX) {
+        dir = "right";
+        setDirection("right");
+        setIsBerliozFirst(Math.random() < 0.5);
+      } else if (dir === "right" && x >= maxX) {
+        dir = "left";
+        setDirection("left");
+        setIsBerliozFirst(Math.random() < 0.5);
+      }
+
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translateX(${x}px)`;
+      }
+
+      animId = requestAnimationFrame(animate);
+    };
+
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
   }, []);
 
-  if (positionX === null) return null;
-
   const actionVariant = direction === "left" ? "runLeft" : "runRight";
+  const [firstCat, secondCat]: ["berlioz" | "toulouse", "berlioz" | "toulouse"] = isBerliozFirst
+    ? ["berlioz", "toulouse"]
+    : ["toulouse", "berlioz"];
 
-  // L'ordre d'affichage dans la DOM dépend de qui mène et de la direction
-  const firstCat = isBerliozFirst ? "berlioz" : "toulouse";
-  const secondCat = isBerliozFirst ? "toulouse" : "berlioz";
+  // Inverse l'ordre visuel en fonction de la direction sans dupliquer le JSX
+  const leadCat: "berlioz" | "toulouse" = direction === "left" ? firstCat : secondCat;
+  const chaserCat: "berlioz" | "toulouse" = direction === "left" ? secondCat : firstCat;
 
   return (
     <div ref={containerRef} className="w-full relative h-16 overflow-hidden">
-      <div
-        className="absolute bottom-0 flex"
-        style={{ transform: `translateX(${positionX}px)` }}
-      >
-        {/* Quand ils vont à gauche, le premier du tableau est devant. 
-            Quand ils vont à droite, le second du tableau passe devant si le DOM ne bouge pas.
-            On adapte l'ordre pour que le meneur reste toujours la tête de course ! */}
-        {direction === "left" ? (
-          <>
-            <Sprite actionVariant={actionVariant} catVariant={firstCat} />
-            <Sprite actionVariant={actionVariant} catVariant={secondCat} />
-          </>
-        ) : (
-          <>
-            <Sprite actionVariant={actionVariant} catVariant={secondCat} />
-            <Sprite actionVariant={actionVariant} catVariant={firstCat} />
-          </>
-        )}
+      <div ref={trackRef} className="absolute bottom-0 flex">
+        <Sprite actionVariant={actionVariant} catVariant={leadCat} />
+        <Sprite actionVariant={actionVariant} catVariant={chaserCat} />
       </div>
     </div>
   );
