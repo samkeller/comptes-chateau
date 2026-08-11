@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RecurringExpenseFrequency } from "../../entities/RecurringExpense";
+import { RecurringExpenseFrequency } from "../entities/RecurringExpense";
 
 /** Schéma pour créer ou mettre à jour une dépense récurrente. */
 export const SaveRecurringExpenseSchema = z.object({

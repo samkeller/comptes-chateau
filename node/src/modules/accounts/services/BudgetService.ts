@@ -3,7 +3,7 @@ import { badRequest, notFound } from "../../../utils/AppError";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { BudgetItem } from "../entities/BudgetItem";
 import { RecurringExpense } from "../entities/RecurringExpense";
-import { BudgetItemDto, SaveBudgetItemPayload, toBudgetItemDto, UnifiedBudgetLine } from "./budget/BudgetDtos";
+import { BudgetItemDto, SaveBudgetItemPayload, toBudgetItemDto, UnifiedBudgetLine } from "../dto/BudgetDtos";
 
 export default class BudgetService {
     private budgetItemRepo = AppDataSource.getRepository(BudgetItem);

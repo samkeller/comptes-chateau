@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import BudgetService from "../services/BudgetService";
 import { getAccountIdFromParams } from "../utils/accountParams";
 import { IdParamSchema, validateBody, validateParams } from "../../core/middlewares/validate";
-import { SaveBudgetItemSchema } from "../services/budget/BudgetDtos";
+import { SaveBudgetItemSchema } from "../dto/BudgetDtos";
 
 const BudgetRoutes = Router({ mergeParams: true });
 const budgetService = new BudgetService();

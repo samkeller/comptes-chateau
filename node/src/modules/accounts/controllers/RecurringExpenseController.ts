@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import RecurringExpenseService from "../services/RecurringExpenseService";
-import { SaveRecurringExpenseSchema } from "../services/recurringExpense/RecurringExpenseDtos";
+import { SaveRecurringExpenseSchema } from "../dto/RecurringExpenseDtos";
 import { validateBody } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
 
