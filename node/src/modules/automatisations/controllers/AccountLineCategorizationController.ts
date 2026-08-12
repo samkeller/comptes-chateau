@@ -12,8 +12,8 @@ AccountLineCategorizationRoutes.get('/', async (_req: Request, res: Response) =>
     res.json(rules);
 });
 
-AccountLineCategorizationRoutes.post('/search',validateBody(searchPatternSchema) ,async (_req: Request, res: Response) => {
-    res.json(await accountLineCategorizationService.search(_req.body.pattern));
+AccountLineCategorizationRoutes.post('/search', validateBody(searchPatternSchema), async (req: Request, res: Response) => {
+    res.json(await accountLineCategorizationService.search(req.body.pattern));
 });
 
 AccountLineCategorizationRoutes.get('/unmapped', async (_req: Request, res: Response) => {
