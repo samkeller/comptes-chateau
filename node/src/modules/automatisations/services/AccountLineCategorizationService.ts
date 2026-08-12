@@ -6,6 +6,7 @@ import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { normalizeLabel } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
+import { Like } from "typeorm/find-options/operator/Like";
 
 export interface SaveRuleDto {
     pattern: string;
@@ -57,6 +58,23 @@ export default class AccountLineCategorizationService {
      */
     async getAll(): Promise<AccountLineRule[]> {
         return this.ruleRepo.find({
+            relations: ["poste", "nature"],
+            order: { pattern: "ASC" },
+        });
+    }
+
+    /**
+     * Recherche les règles de catégorisation correspondant au motif (pattern) fourni, après normalisation du motif.
+     * @param pattern 
+     * @returns 
+     */
+    async search(pattern: string): Promise<AccountLineRule[]> {
+        const cleanPattern = normalizeLabel(pattern);
+
+        if (!cleanPattern) return []; // Pas de pattern valide, retourner un tableau vide
+
+        return this.ruleRepo.find({
+            where: { pattern: Like(`%${cleanPattern}%`) },
             relations: ["poste", "nature"],
             order: { pattern: "ASC" },
         });

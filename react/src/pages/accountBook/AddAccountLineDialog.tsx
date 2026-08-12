@@ -1,7 +1,6 @@
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
@@ -16,19 +15,27 @@ import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import { useScreen } from "@/utils/hooks/useScreen";
+import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from "primereact/autocomplete";
+import AccountLineCategorizationService from "@/services/AccountLineCategorizationService";
+import { AccountLineRule } from "@/interfaces/AccountLineRule";
 
-interface AddAcountLineDialogProps {
+interface AddAccountLineDialogProps {
     accountId: number;
     editingLine: AccountLine | null;
     hideDialog: () => void;
     refresh: () => void;
 }
 
-export default function AddAccountLineDialog({ accountId, editingLine, hideDialog, refresh }: AddAcountLineDialogProps) {
+const accountService = new AccountService();
+const accountLineCategorizationService = new AccountLineCategorizationService();
+const accountingService = new AccountingService()
+
+export default function AddAccountLineDialog({ accountId, editingLine, hideDialog, refresh }: AddAccountLineDialogProps) {
     const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : parseDateToDDMMYYYY(new Date()));
     const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
     const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
-    const [label, setLabel] = useState<string>(editingLine?.label || "");
+    const [operationLabel, setOperationLabel] = useState<string>(editingLine?.label || "");
+    const [suggestedOperations, setSuggestedOperations] = useState<AccountLineRule[]>([]);
     const [natureId, setNatureId] = useState<number | null>(editingLine?.nature?.id || null);
     const [posteId, setPosteId] = useState<number | null>(editingLine?.poste?.id || null);
     const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
@@ -40,7 +47,6 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
     const { isMobile, isTablet } = useScreen();
 
     useEffect(() => {
-        const accountService = new AccountService();
         Promise.all([
             accountService.getAllAccounts()
         ]).then(([accountsData]) => {
@@ -65,7 +71,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             dateOperation: parseDDMMYYYYToDate(dateOperation),
             isChecked,
             dateValeur: isChecked ? (dateValeur ? parseDDMMYYYYToDate(dateValeur) : new Date()) : null,
-            label,
+            label: operationLabel,
             natureId,
             posteId,
             debit: amount < 0 ? (Math.abs(amount) || 0) : 0,
@@ -73,7 +79,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             targetAccount: targetAccount ?? null,
         };
 
-        new AccountingService()
+        accountingService
             .saveAccountLine(accountId, accountLine)
             .then(() => {
                 refresh();
@@ -85,6 +91,33 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                 hideDialog();
             })
     };
+
+    /**
+     *  Cherches les suggestions d'opérations correspondant au pattern fourni (LIKE).
+     * @param event 
+     */
+    async function searchOperationsSuggestions(event: AutoCompleteCompleteEvent): Promise<void> {
+        const query = event.query.trim().toLowerCase();
+        const results = await accountLineCategorizationService.search(query);
+
+        setSuggestedOperations(results);
+    }
+
+    /**
+     * Met à jour le label de l'opération et les informations de poste et nature associées à l'opération suggérée.
+     * @param event 
+     */
+    function changeOperationLabelAutocomplete(event: AutoCompleteChangeEvent<string>): void {
+        setOperationLabel(event.value ?? "");
+
+        // Récupères les informations de poste et nature associées à l'opération suggérée
+        const suggestedOperation = suggestedOperations.find((op) => op.pattern === event.value);
+
+        if (suggestedOperation) {
+            setNatureId(suggestedOperation.natureId ?? null);
+            setPosteId(suggestedOperation.posteId ?? null);
+        }
+    }
 
     const footer = (
         <div>
@@ -152,20 +185,19 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                         />
                         <label htmlFor="dateValeur">Date de valeur</label>
                     </FloatLabel>
-
-
                 </div>
-
                 <FloatLabel className="flex-1">
-                    <InputText
+                    <AutoComplete
                         id="operation"
-                        value={label}
-                        onChange={(e) => setLabel(e.target.value)}
+                        value={operationLabel}
+                        onChange={changeOperationLabelAutocomplete}
+                        completeMethod={searchOperationsSuggestions} // Autocomplete search method
+                        suggestions={suggestedOperations.map(v => v.pattern)} // Suggestions autocomplete
                         className="w-full"
+                        inputClassName="w-full"
                     />
                     <label htmlFor="operation">Opération</label>
                 </FloatLabel>
-
                 <div className="flex gap-1">
                     <FloatLabel className="flex-1">
                         <AccountLineNatureDropdown
@@ -177,7 +209,6 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                         />
                         <label htmlFor="nature">Nature <small>(optionnel)</small></label>
                     </FloatLabel>
-
                     <FloatLabel className="flex-1">
                         <AccountLinePosteDropdown
                             id="poste"

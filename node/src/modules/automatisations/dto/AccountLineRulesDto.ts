@@ -26,3 +26,7 @@ export const SaveRuleSchema = z.object({
     message: "Au moins un poste ou une nature doit être associé à la règle.",
     path: ["posteId"],
 });
+
+export const searchPatternSchema = z.object({
+    pattern: z.string().trim().min(1).max(255),
+});
