@@ -1,6 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { APIOptions, PrimeReactProvider, addLocale } from 'primereact/api';
+
+// Primereact V11
+import { PrimeReactProvider } from '@primereact/core';
+import LaraTheme from '@primeuix/themes/lara';
+// v11
+import { defineLocale} from '@primereact/core/locale';
+
 import './assets/index.css'
 import frLocale from './assets/primereact/Locale-FR.json';
 import "./config/chartJsSetup";
@@ -13,11 +19,8 @@ import { ConnectedUserProvider } from './context/ConnectedUserContext';
 import { XpFeedbackProvider } from './context/XpFeedbackContext';
 import { registerSW } from 'virtual:pwa-register';
 
-addLocale('fr', frLocale);
+defineLocale('fr', frLocale);
 
-const primeReactOptions: Partial<APIOptions> = {
-  locale: 'fr',
-}
 
 registerSW({
   onNeedRefresh() {
@@ -31,7 +34,7 @@ registerSW({
 createRoot(document.getElementById('root')!).render(
 
   <StrictMode>
-    <PrimeReactProvider value={primeReactOptions}>
+    <PrimeReactProvider theme={{preset: LaraTheme}} locale='fr'>
       <GlobalToastProvider>
         <ConnectedUserProvider>
           <XpFeedbackProvider>
