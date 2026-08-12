@@ -26,6 +26,17 @@ export default class AccountLineCategorizationService extends BaseService {
     return axios.get(`${this.apiUrl}/categorization`).then(r => r.data);
   }
 
+  /**
+   * Cherches les règles de catégorisation correspondant au pattern fourni (LIKE).
+   * @param pattern 
+   * @returns 
+   */
+  search(pattern: string): Promise<AccountLineRule[]> {
+
+    const payload = { pattern }
+    return axios.post(`${this.apiUrl}/categorization/search`, payload).then(r => r.data);
+  }
+
   create(
     pattern: string,
     accountId: number,

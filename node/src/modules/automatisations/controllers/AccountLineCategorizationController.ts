@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import AccountLineCategorizationService from "../services/AccountLineCategorizationService";
-import { SaveRuleSchema } from "../dto/AccountLineRulesDto";
+import { SaveRuleSchema, searchPatternSchema } from "../dto/AccountLineRulesDto";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import requireUserId from "../../accounts/utils/requireUserId";
 
@@ -10,6 +10,10 @@ const accountLineCategorizationService = new AccountLineCategorizationService();
 AccountLineCategorizationRoutes.get('/', async (_req: Request, res: Response) => {
     const rules = await accountLineCategorizationService.getAll();
     res.json(rules);
+});
+
+AccountLineCategorizationRoutes.post('/search',validateBody(searchPatternSchema) ,async (_req: Request, res: Response) => {
+    res.json(await accountLineCategorizationService.search(_req.body.pattern));
 });
 
 AccountLineCategorizationRoutes.get('/unmapped', async (_req: Request, res: Response) => {
