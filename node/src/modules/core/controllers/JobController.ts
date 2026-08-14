@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AppDataSource } from "../../../db/dataSource";
 import { processRecurringExpenses } from "../../../jobs/processRecurringExpenses";
 import customLog from "../../../jobs/customLog";
+import { backupDb } from "../../../jobs/backupDb";
 
 const JobRoutes = Router();
 
@@ -23,6 +24,21 @@ JobRoutes.post("/run-recurring-expenses", async (req, res) => {
         triggeredAt: currentDate.toISOString(),
         processedCount,
     });
+});
+
+JobRoutes.post("/backup-db", async (req, res) => {
+    const currentDate = new Date();
+    customLog("WARN", `Manual trigger of backup-db job by userId=${req.session.userId}`);
+
+    try {
+        await AppDataSource.transaction(async (manager) => {
+            await backupDb(manager, currentDate);
+        });
+        res.json({ triggeredAt: currentDate.toISOString(), message: 'Backup job completed successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while running the backup-db job.' });
+    }
 });
 
 export default JobRoutes;
