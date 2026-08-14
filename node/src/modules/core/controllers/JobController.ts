@@ -31,9 +31,7 @@ JobRoutes.post("/backup-db", async (req, res) => {
     customLog("WARN", `Manual trigger of backup-db job by userId=${req.session.userId}`);
 
     try {
-        await AppDataSource.transaction(async (manager) => {
-            await backupDb(manager, currentDate);
-        });
+        await backupDb(currentDate);
         res.json({ triggeredAt: currentDate.toISOString(), message: 'Backup job completed successfully.' });
     } catch (error) {
         console.error(error);

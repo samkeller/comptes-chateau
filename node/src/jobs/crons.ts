@@ -25,10 +25,9 @@ async function runJob() {
 
         await AppDataSource.transaction(async (manager) => {
             await processRecurringExpenses(manager, currentDate);
-
-            await backupDb(manager, currentDate)
         });
-
+        
+        await backupDb(currentDate);
 
         customLog("INFO", "Finished cron job");
     } catch (error) {

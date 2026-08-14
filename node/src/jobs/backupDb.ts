@@ -9,15 +9,14 @@ import JobExecutionLogService from '../modules/core/services/JobExecutionLogServ
 import { EntityManager } from 'typeorm/entity-manager/EntityManager';
 
 /**
- * Lists the names and IDs of up to 10 files.
+ * Creates a PostgreSQL dump (pg_dump) and uploads it to a configured Google Drive folder.
  */
 export async function backupDb(
-    manager: EntityManager,
     currentDate: Date
 
 ) {
     const jobName = 'backup-db';
-    const logService = new JobExecutionLogService(manager);
+    const logService = new JobExecutionLogService();
 
     await logService.logInfo(jobName, 'Starting backup process');
 
