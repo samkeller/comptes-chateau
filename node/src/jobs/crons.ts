@@ -1,4 +1,5 @@
 import { AppDataSource } from '../db/dataSource';
+import { backupDb } from './backupDb';
 import customLog from './customLog';
 import { processRecurringExpenses } from './processRecurringExpenses';
 import cron from "node-cron";
@@ -25,6 +26,8 @@ async function runJob() {
         await AppDataSource.transaction(async (manager) => {
             await processRecurringExpenses(manager, currentDate);
         });
+        
+        await backupDb(currentDate);
 
         customLog("INFO", "Finished cron job");
     } catch (error) {

@@ -13,12 +13,13 @@ const colors = {
  * @param message Le message à afficher
  */
 function customLog(
-    level: "INFO" | "ERROR" | "WARN" | "DEBUG", 
+    level: "SUCCESS" | "INFO" | "ERROR" | "WARN" | "DEBUG", 
     message: string,
     source: "job" | "service" | "controller" = "job"
 ) {
     const colorMap = {
-        INFO: colors.green,
+        SUCCESS: colors.green,
+        INFO: colors.cyan,
         WARN: colors.yellow,
         ERROR: colors.red,
         DEBUG: colors.cyan,

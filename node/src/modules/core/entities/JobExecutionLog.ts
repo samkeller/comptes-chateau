@@ -3,7 +3,8 @@ import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn } from "typeor
 export enum JobExecutionStatus {
     SUCCESS = 'success',
     ERROR = 'error',
-    WARNING = 'warning'
+    WARNING = 'warning',
+    INFO = 'info'
 }
 
 @Entity('job_execution_log')

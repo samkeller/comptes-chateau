@@ -42,7 +42,10 @@
 ### Added
 - Système XP backend pour les opérations validées, les créations d'opérations, les règles de catégorisation et les dépenses récurrentes
 
-## [1.1.4 - 11/08/2026]
+## [1.1.4 - 12/08/2026]
 ### Added
 - Autocompletion/auto-remplissage à la création d'une opération
 
+## [1.1.5 - 14/08/2026]
+### Added
+- Ajout auto-backup quotidien google drive.
