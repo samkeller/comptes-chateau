@@ -1,12 +1,11 @@
 import process from 'node:process';
-import { google } from 'googleapis';
+import { drive_v3, google } from 'googleapis';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import JobExecutionLogService from '../modules/core/services/JobExecutionLogService';
-import { EntityManager } from 'typeorm/entity-manager/EntityManager';
 
 /**
  * Creates a PostgreSQL dump (pg_dump) and uploads it to a configured Google Drive folder.
@@ -77,8 +76,6 @@ export async function backupDb(
     );
     const dumpPath = path.join(tempDir, 'backup.sql');
 
-
-
     const pgDumpDatabaseUrl =
         `postgresql://${db_user}:${db_pass}` +
         `@${db_host}:${db_port}` +
@@ -110,11 +107,17 @@ export async function backupDb(
         // Connect to Drive.
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+        const monthFolderId = await getOrCreateMonthFolder(
+            drive,
+            google_backup_folder_id,
+            currentDate,
+        );
+
         const response = await drive.files.create({
             requestBody: {
                 name: `backup-${dateName}.sql`,
                 mimeType: 'application/sql',
-                parents: [google_backup_folder_id], // Id du dossier "Backup chocosous"
+                parents: [monthFolderId], // Id du dossier "Backup chocosous/YYYY-MM"
             },
             media: {
                 mimeType: 'application/sql',
@@ -156,4 +159,31 @@ export async function backupDb(
             );
         }
     }
+}
+
+async function getOrCreateMonthFolder(
+    drive:drive_v3.Drive,
+    parentFolderId: string,
+    date: Date,
+): Promise<string> {
+    const name = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    const { data } = await drive.files.list({
+        q: `'${parentFolderId}' in parents and name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+        fields: 'files(id)',
+        pageSize: 1,
+    });
+
+    if (data.files?.[0]?.id) return data.files[0].id;
+
+    const { data: folder } = await drive.files.create({
+        requestBody: {
+            name,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentFolderId],
+        },
+        fields: 'id',
+    });
+
+    return folder.id!;
 }
