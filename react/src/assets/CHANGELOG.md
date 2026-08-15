@@ -49,3 +49,7 @@
 ## [1.1.5 - 14/08/2026]
 ### Added
 - Ajout auto-backup quotidien google drive.
+
+## [1.1.5b - 15/08/2026]
+### Added
+- Add docker build pour pg_dump
