@@ -1,30 +1,22 @@
-# 1. Image temporaire pour récupérer le binaire exact de pg_dump 17
+# 1. On pique pg_dump 17 de l'image officielle
 FROM postgres:17-bookworm AS pg-binaries
 
-# 2. Image principale Node.js
-FROM node:20-bookworm
+# 2. Votre environnement de travail Node
+FROM node:24-bookworm
 
-# Aligne la version de npm avec le champ "packageManager" du repo
-RUN npm install -g npm@11.11.0 --no-fund --no-audit
-
-# Copie explicite de pg_dump et ses dépendances système depuis l'image Postgres officielle
+# 3. On colle pg_dump dans l'env
 COPY --from=pg-binaries /usr/lib/postgresql/17/bin/pg_dump /usr/local/bin/pg_dump
-COPY --from=pg-binaries /usr/lib/x86_64-linux-gnu/libpq.so* /usr/lib/x86_64-linux-gnu/
+COPY --from=pg-binaries /usr/lib/*-linux-gnu/libpq.so* /usr/lib/
 
 WORKDIR /app
 
-# Copie des manifestes et lockfiles de dépendances
-COPY package*.json ./
-COPY node/package*.json ./node/
-COPY react/package*.json ./react/
-
-# Installation avec devDependencies incluses pour réussir le build
-RUN npm ci --include=dev && npm --prefix react ci --include=dev && npm --prefix node ci --include=dev
-
-# Copie du reste du code source
+# 4. On copie tout
 COPY . .
 
-# Exécution exacte de votre "npm run build"
+# 5. On installe, on build (utilise scripts deja existants)
+RUN npm install -g npm@11.11.0
+RUN npm run install:all
 RUN npm run build
 
-CMD ["npm", "--prefix", "node", "start"]
+# 6. On démarre
+CMD ["node", "node/dist/index.js"]
