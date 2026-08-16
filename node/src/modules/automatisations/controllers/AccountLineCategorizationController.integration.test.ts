@@ -127,7 +127,8 @@ describe("AccountLineCategorizationController integration", () => {
 
         expect(response.status).toBe(201);
         expect(response.body).toMatchObject({
-            pattern: "Netflix fr",
+            label: "Netflix fr",
+            pattern: "netflix fr",
             accountId: 1,
             natureId: seededNature.id,
         });

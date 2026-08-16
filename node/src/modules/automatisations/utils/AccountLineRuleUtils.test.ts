@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAccountLineRuleLabel } from "./AccountLineRulesUtils";
-
+import { normalizeAccountLineRuleLabel, normalizeForMatching } from "./AccountLineRulesUtils";
 
 /**
  * Règles de normalization des libellés :
@@ -18,7 +17,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - bonjour monde -> Bonjour monde
      * - BONJOUR MONDE -> Bonjour monde
      */
-    it("returns full LowerCase with first letter capitalized", async () => {
+    it("returns full LowerCase with first letter capitalized", () => {
         expect(normalizeAccountLineRuleLabel("bonjour")).toBe("Bonjour");
         expect(normalizeAccountLineRuleLabel("BONJOUR")).toBe("Bonjour");
         expect(normalizeAccountLineRuleLabel("bONjOuR")).toBe("Bonjour");
@@ -28,16 +27,17 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
     })
 
     /**
-    * - "   " -> null
-    * - "" -> null
-    * - null -> null
-    * - undefined -> null
+    * Chaînes vides ou ne contenant que des espaces :
+    * - "   " -> throw
+    * - "" -> throw
+    * - null -> throw
+    * - undefined -> throw
      */
-    it("returns null for empty or whitespace-only strings", async () => {
-        expect(normalizeAccountLineRuleLabel("   ")).toBe(null);
-        expect(normalizeAccountLineRuleLabel("")).toBe(null);
-        expect(normalizeAccountLineRuleLabel(null)).toBe(null);
-        expect(normalizeAccountLineRuleLabel(undefined)).toBe(null);
+    it("returns null for empty or whitespace-only strings", () => {
+        expect(() => normalizeAccountLineRuleLabel("   ")).toThrow("Le libellé normalisé ne peut pas être vide.");
+        expect(() => normalizeAccountLineRuleLabel("")).toThrow("Le libellé ne peut pas être vide.");
+        expect(() => normalizeAccountLineRuleLabel(null as any)).toThrow("Le libellé ne peut pas être vide.");
+        expect(() => normalizeAccountLineRuleLabel(undefined as any)).toThrow("Le libellé ne peut pas être vide.");
     })
 
     /**
@@ -47,7 +47,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - "\tabc\t" -> "abc"
      * - " abc   def " -> "abc def"
      */
-    it("trims leading and trailing whitespace", async () => {
+    it("trims leading and trailing whitespace", () => {
         expect(normalizeAccountLineRuleLabel(" abc ")).toBe("Abc");
         expect(normalizeAccountLineRuleLabel("   abc   ")).toBe("Abc");
         expect(normalizeAccountLineRuleLabel("\tabc\t")).toBe("Abc");
@@ -59,7 +59,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - "123" -> "123"
      * - "abc123" -> "Abc123"
      */
-    it("keeps numbers intact", async () => {
+    it("keeps numbers intact", () => {
         expect(normalizeAccountLineRuleLabel("123")).toBe("123");
         expect(normalizeAccountLineRuleLabel("abc123")).toBe("Abc123");
     })
@@ -72,7 +72,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - déjà vu -> Déjà vu
      * - Noël -> Noël
      */
-    it("handles accents and special characters", async () => {
+    it("handles accents and special characters", () => {
         expect(normalizeAccountLineRuleLabel("café")).toBe("Café");
         expect(normalizeAccountLineRuleLabel("CAFÉ")).toBe("Café");
         expect(normalizeAccountLineRuleLabel("école")).toBe("École");
@@ -86,7 +86,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - " hello, world " -> "Hello, world"
      * - "test..." -> "Test..."
      */
-    it("handles punctuation correctly", async () => {
+    it("handles punctuation correctly", () => {
         expect(normalizeAccountLineRuleLabel("bonjour!")).toBe("Bonjour!");
         expect(normalizeAccountLineRuleLabel(" hello, world ")).toBe("Hello, world");
         expect(normalizeAccountLineRuleLabel("test...")).toBe("Test...");
@@ -97,7 +97,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - "bonjour   monde" -> "Bonjour monde"
      * - "bonjour\tmonde" -> "Bonjour monde"
      */
-    it("handles internal whitespace correctly", async () => {
+    it("handles internal whitespace correctly", () => {
         expect(normalizeAccountLineRuleLabel("   bonjour   monde")).toBe("Bonjour monde");
         expect(normalizeAccountLineRuleLabel("bonjour   monde   ")).toBe("Bonjour monde");
         expect(normalizeAccountLineRuleLabel("     bonjour   monde   ")).toBe("Bonjour monde");
@@ -113,7 +113,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - "iPhone" -> "Iphone" (décider si attendu ou non)
      * - "McDonald's" -> "McDonald's" (décider si attendu ou non)
      */
-    it("handles special cases correctly", async () => {
+    it("handles special cases correctly", () => {
         expect(normalizeAccountLineRuleLabel("a")).toBe("A");
         expect(normalizeAccountLineRuleLabel("é")).toBe("É");
         expect(normalizeAccountLineRuleLabel("à propos")).toBe("À propos");
@@ -129,7 +129,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
      * - normalizer(normalizer("bonjour!")) === normalizer("bonjour!")
      * - normalizer(normalizer("   bonjour   monde")) === normalizer("bonjour monde")
      */
-    it("is idempotent", async () => {
+    it("is idempotent", () => {
         const testCases = [
             "bonjour",
             "  café  ",
@@ -143,5 +143,56 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
             const secondNormalization = normalizeAccountLineRuleLabel(firstNormalization);
             expect(secondNormalization).toBe(firstNormalization);
         }
-    }); 
+    });
+
 });
+
+describe("AccountLineCategorizationService.normalizeForMatching", () => {
+
+    it("returns null for empty or whitespace-only strings", () => {
+        expect(normalizeForMatching("   ")).toBe(null);
+        expect(normalizeForMatching("")).toBe(null);
+        expect(normalizeForMatching(null)).toBe(null);
+        expect(normalizeForMatching(undefined)).toBe(null);
+    })
+
+    it("normalizes strings for matching", () => {
+        const testCasesThatShouldBeEqual1 = [
+            "bonjour",
+            "BONJOUR",
+            "bONjOuR",
+            "Bonjour",
+        ];
+
+        for (const testCase of testCasesThatShouldBeEqual1) {
+            const normalized = normalizeForMatching(testCase);
+            expect(normalized).toBe("bonjour");
+        }
+
+        const testCasesThatShouldBeEqual2 = [
+            "Café Paris",
+            "CAFE PARIS",
+            "Cafe   Paris",
+            " café paris ",
+
+
+        ];
+        for (const testCase of testCasesThatShouldBeEqual2) {
+            const normalized = normalizeForMatching(testCase);
+            expect(normalized).toBe("cafe paris");
+        }
+    })
+
+    it("removes diacritics for matching", () => {
+        const testCases = [
+            "Café",
+            "Cafe",
+            "CAFÉ",
+            "café", // é (important en Unicode)
+        ];
+
+        for (const testCase of testCases) {
+            expect(normalizeForMatching(testCase)).toBe("cafe");
+        }
+    });
+})

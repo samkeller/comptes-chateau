@@ -10,6 +10,9 @@ export class AccountLineRule {
     id: number;
 
     @Column({ type: 'varchar', length: 255 })
+    label: string;
+
+    @Column({ type: 'varchar', length: 255 })
     pattern: string;
 
     @Column({ type: 'int', default: 0 })
