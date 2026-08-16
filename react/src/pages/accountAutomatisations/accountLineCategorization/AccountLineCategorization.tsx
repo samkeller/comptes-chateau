@@ -19,7 +19,7 @@ export default function AccountLineCategorization() {
       accountLineCategorizationService.getAll(),
       accountLineCategorizationService.getAllUnmapped(),
     ]);
-
+    console.log('loadedRules', loadedRules);
     setRules(loadedRules);
     setUnmapped(loadedUnmapped);
   }, []);
@@ -96,7 +96,7 @@ export default function AccountLineCategorization() {
 
   const handleUpdate = async (
     id: number,
-    pattern: string,
+    label: string,
     accountId: number,
     posteId?: number | null,
     natureId?: number | null,
@@ -109,7 +109,7 @@ export default function AccountLineCategorization() {
     try {
       const updatedRule = await accountLineCategorizationService.update(
         id,
-        pattern,
+        label,
         accountId,
         posteId,
         natureId

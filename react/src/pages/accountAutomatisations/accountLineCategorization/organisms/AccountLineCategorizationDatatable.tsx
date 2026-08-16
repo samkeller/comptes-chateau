@@ -15,7 +15,7 @@ interface AccountLineCategorizationDatatableProps {
     onDelete: (id: number) => Promise<void>;
     onUpdate: (
         id: number,
-        pattern: string,
+        label: string,
         accountId: number,
         posteId?: number | null,
         natureId?: number | null
@@ -24,6 +24,7 @@ interface AccountLineCategorizationDatatableProps {
 
 interface EditDraft {
     pattern: string;
+    label: string;
     posteId: number | null;
     natureId: number | null;
     accountId: number;
@@ -31,7 +32,6 @@ interface EditDraft {
 
 interface CategorizationTableRow extends AccountLineRule {
     uiEditing: boolean;
-    uiPattern: string;
     uiPosteId: number | null;
     uiNatureId: number | null;
     uiAccountId: number;
@@ -64,6 +64,7 @@ export default function AccountLineCategorizationDatatable({
                 return {
                     ...rule,
                     uiEditing: false,
+                    uiLabel: rule.label,
                     uiPattern: rule.pattern,
                     uiPosteId: rule.posteId ?? null,
                     uiNatureId: rule.natureId ?? null,
@@ -74,6 +75,7 @@ export default function AccountLineCategorizationDatatable({
             return {
                 ...rule,
                 uiEditing: true,
+                uiLabel: draft.label,
                 uiPattern: draft.pattern,
                 uiPosteId: draft.posteId,
                 uiNatureId: draft.natureId,
@@ -86,6 +88,7 @@ export default function AccountLineCategorizationDatatable({
         setEditingId(rule.id);
         setDraft({
             pattern: rule.pattern,
+            label: rule.label,
             accountId: rule.accountId,
             posteId: rule.posteId ?? null,
             natureId: rule.natureId ?? null,
@@ -106,7 +109,7 @@ export default function AccountLineCategorizationDatatable({
         try {
             const didSave = await onUpdate(
                 editingId,
-                draft.pattern,
+                draft.label,
                 draft.accountId,
                 draft.posteId,
                 draft.natureId,
@@ -146,25 +149,29 @@ export default function AccountLineCategorizationDatatable({
                 size="small"
             >
                 <Column
-                    field="pattern"
-                    header="Pattern"
+                    field="label"
+                    header="Libellé"
                     body={(rowData: CategorizationTableRow) => {
                         if (!rowData.uiEditing || !draft) {
-                            return rowData.pattern;
+                            return rowData.label;
                         }
 
                         return (
                             <InputText
-                                value={rowData.uiPattern}
+                                value={rowData.label}
                                 onChange={(event) => setDraft((previous) => previous ? {
                                     ...previous,
-                                    pattern: event.target.value,
+                                    label: event.target.value,
                                 } : previous)}
                                 className="w-full"
                                 autoFocus
                             />
                         );
                     }}
+                />
+                <Column
+                    field="pattern"
+                    header="Pattern"
                 />
                 <Column
                     field="poste"

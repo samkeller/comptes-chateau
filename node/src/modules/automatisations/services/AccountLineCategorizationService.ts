@@ -9,7 +9,7 @@ import UserXpService from "../../core/services/UserXpService";
 import { Like } from "typeorm/find-options/operator/Like";
 
 export interface SaveRuleDto {
-    pattern: string;
+    label: string;
     accountId: number;
     posteId?: number | null;
     natureId?: number | null;
@@ -88,7 +88,7 @@ export default class AccountLineCategorizationService {
      * @returns 
      */
     async create(payload: SaveRuleDto, creatorId: number): Promise<AccountLineRule> {
-        const cleanPattern = normalizeForMatching(payload.pattern);
+        const cleanPattern = normalizeForMatching(payload.label);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -98,7 +98,7 @@ export default class AccountLineCategorizationService {
 
         const rule = new AccountLineRule();
         rule.pattern = cleanPattern;
-        rule.label = normalizeAccountLineRuleLabel(payload.pattern);
+        rule.label = normalizeAccountLineRuleLabel(payload.label);
         rule.accountId = payload.accountId;
         rule.posteId = payload.posteId || null;
         rule.natureId = payload.natureId || null;
@@ -228,7 +228,7 @@ export default class AccountLineCategorizationService {
             throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`)
         }
 
-        const cleanPattern = normalizeForMatching(body.pattern);
+        const cleanPattern = normalizeForMatching(body.label);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -249,7 +249,7 @@ export default class AccountLineCategorizationService {
 
         existing.accountId = body.accountId;
         existing.pattern = cleanPattern;
-        existing.label = normalizeAccountLineRuleLabel(body.pattern);
+        existing.label = normalizeAccountLineRuleLabel(body.label);
         existing.natureId = body.natureId || null;
         existing.posteId = body.posteId || null;
         existing.occurrencesCount = await this.countOccurrences(cleanPattern, body.accountId);
