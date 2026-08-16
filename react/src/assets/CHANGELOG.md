@@ -53,3 +53,7 @@
 ## [1.1.5b - 15/08/2026]
 ### Added
 - Add docker build pour pg_dump
+
+## [1.1.6 - 15/08/2026]
+### Fixes
+- Correction de la méthode de normalisation des libellés pour les règles de catégorisation (accentuation, ponctuation, espaces multiples, etc). Ce changement a obligé de redémarrer la table de 0 (heureusement, l'xp gagnée reste gagnée).

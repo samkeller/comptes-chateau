@@ -3,7 +3,7 @@ import { AccountLineRule } from "../entities/AccountLineRule";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
-import { normalizeLabel } from "../utils/AccountLineRulesUtils";
+import { normalizeAccountLineRuleLabel } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
 import { Like } from "typeorm/find-options/operator/Like";
@@ -69,7 +69,7 @@ export default class AccountLineCategorizationService {
      * @returns 
      */
     async search(pattern: string): Promise<AccountLineRule[]> {
-        const cleanPattern = normalizeLabel(pattern);
+        const cleanPattern = normalizeAccountLineRuleLabel(pattern);
 
         if (!cleanPattern) return []; // Pas de pattern valide, retourner un tableau vide
 
@@ -86,7 +86,7 @@ export default class AccountLineCategorizationService {
      * @returns 
      */
     async create(payload: SaveRuleDto, creatorId: number): Promise<AccountLineRule> {
-        const cleanPattern = normalizeLabel(payload.pattern);
+        const cleanPattern = normalizeAccountLineRuleLabel(payload.pattern);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -137,7 +137,7 @@ export default class AccountLineCategorizationService {
         const aggregations = new Map<string, PatternAggregation>();
 
         for (const line of lines) {
-            const cleanPattern = normalizeLabel(line.label);
+            const cleanPattern = normalizeAccountLineRuleLabel(line.label);
             if (!cleanPattern) continue;
             const patternKey = this.getPatternKey(line.accountId, cleanPattern);
 
@@ -223,7 +223,7 @@ export default class AccountLineCategorizationService {
             throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`)
         }
 
-        const cleanPattern = normalizeLabel(body.pattern);
+        const cleanPattern = normalizeAccountLineRuleLabel(body.pattern);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -254,7 +254,7 @@ export default class AccountLineCategorizationService {
     }
 
     private async countOccurrences(pattern: string, accountId: number): Promise<number> {
-        const normalizedPattern = normalizeLabel(pattern);
+        const normalizedPattern = normalizeAccountLineRuleLabel(pattern);
         if (!normalizedPattern) {
             return 0;
         }
@@ -265,7 +265,7 @@ export default class AccountLineCategorizationService {
         });
 
         return lines.reduce((count, line) => {
-            return normalizeLabel(line.label) === normalizedPattern ? count + 1 : count;
+            return normalizeAccountLineRuleLabel(line.label) === normalizedPattern ? count + 1 : count;
         }, 0);
     }
 
