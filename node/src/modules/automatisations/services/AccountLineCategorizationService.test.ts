@@ -62,6 +62,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
         expect(result).toEqual([
             {
                 pattern: "cafe paris",
+                label: "Café paris",
                 count: 3,
                 account: { id: 1, label: "Compte courant" },
                 suggestedPoste: { id: 10, label: "Loisirs", color: "#123456" },
@@ -168,6 +169,7 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
 
         expect(result).toEqual([
             {
+                label: "Cafe paris",
                 pattern: "cafe paris",
                 count: 3,
                 account: { id: 2, label: "Compte B" },
@@ -204,7 +206,7 @@ describe("AccountLineCategorizationService.updateById", () => {
 
         await expect(
             service.updateById(12, {
-                pattern: "Nouveau motif",
+                label: "Nouveau motif",
                 accountId: 2,
                 posteId: 99,
             })

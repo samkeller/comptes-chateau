@@ -18,7 +18,7 @@ export interface SaveAccountLineRulePayload {
 }
 
 export const SaveRuleSchema = z.object({
-    pattern: z.string().trim().min(1).max(255),
+    label: z.string().trim().min(1).max(255),
     accountId: z.number().int().positive().nonoptional(),
     posteId: z.number().int().positive().nullable().optional(),
     natureId: z.number().int().positive().nullable().optional(),

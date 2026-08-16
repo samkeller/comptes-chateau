@@ -3,6 +3,7 @@ import AccountLinePoste from "./AccountLinePoste";
 
 export class AccountLineRule {
     id: number = 0;
+    label: string = "";
     pattern: string = "";
     occurrencesCount: number = 0;
     accountId: number = 0;

@@ -38,13 +38,13 @@ export default class AccountLineCategorizationService extends BaseService {
   }
 
   create(
-    pattern: string,
+    label: string,
     accountId: number,
     posteId?: number | null,
     natureId?: number | null
   ) {
     const payload = {
-      pattern,
+      label,
       accountId,
       posteId,
       natureId
@@ -59,13 +59,13 @@ export default class AccountLineCategorizationService extends BaseService {
    */
   update(
     id: number,
-    pattern: string,
+    label: string,
     accountId: number,
     posteId?: number | null,
     natureId?: number | null
   ) {
     const payload = {
-      pattern,
+      label,
       accountId,
       posteId,
       natureId

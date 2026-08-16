@@ -3,13 +3,13 @@ import { AccountLineRule } from "../entities/AccountLineRule";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
-import { normalizeLabel } from "../utils/AccountLineRulesUtils";
+import { normalizeAccountLineRuleLabel, normalizeForMatching } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
 import { Like } from "typeorm/find-options/operator/Like";
 
 export interface SaveRuleDto {
-    pattern: string;
+    label: string;
     accountId: number;
     posteId?: number | null;
     natureId?: number | null;
@@ -17,6 +17,7 @@ export interface SaveRuleDto {
 
 export interface UnmappedPatternDto {
     pattern: string;
+    label: string;
     count: number;
     account: {
         id: number,
@@ -36,6 +37,7 @@ export interface UnmappedPatternDto {
 
 interface PatternAggregation {
     pattern: string;
+    label: string;
     count: number;
     accountId: number;
     accountLabel: string;
@@ -69,7 +71,7 @@ export default class AccountLineCategorizationService {
      * @returns 
      */
     async search(pattern: string): Promise<AccountLineRule[]> {
-        const cleanPattern = normalizeLabel(pattern);
+        const cleanPattern = normalizeForMatching(pattern);
 
         if (!cleanPattern) return []; // Pas de pattern valide, retourner un tableau vide
 
@@ -86,7 +88,7 @@ export default class AccountLineCategorizationService {
      * @returns 
      */
     async create(payload: SaveRuleDto, creatorId: number): Promise<AccountLineRule> {
-        const cleanPattern = normalizeLabel(payload.pattern);
+        const cleanPattern = normalizeForMatching(payload.label);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -96,6 +98,7 @@ export default class AccountLineCategorizationService {
 
         const rule = new AccountLineRule();
         rule.pattern = cleanPattern;
+        rule.label = normalizeAccountLineRuleLabel(payload.label);
         rule.accountId = payload.accountId;
         rule.posteId = payload.posteId || null;
         rule.natureId = payload.natureId || null;
@@ -122,7 +125,7 @@ export default class AccountLineCategorizationService {
      */
     async getUnmapped(): Promise<UnmappedPatternDto[]> {
         // 1. Charger les règles existantes pour exclure leurs patterns
-        const existingRules = await this.ruleRepo.find({ select: ["pattern", "accountId"] });
+        const existingRules = await this.ruleRepo.find({ select: ["pattern", "label", "accountId"] });
         const existingPatterns = new Set(
             existingRules.map((r) => this.getPatternKey(r.accountId, r.pattern))
         );
@@ -137,7 +140,7 @@ export default class AccountLineCategorizationService {
         const aggregations = new Map<string, PatternAggregation>();
 
         for (const line of lines) {
-            const cleanPattern = normalizeLabel(line.label);
+            const cleanPattern = normalizeForMatching(line.label);
             if (!cleanPattern) continue;
             const patternKey = this.getPatternKey(line.accountId, cleanPattern);
 
@@ -148,6 +151,7 @@ export default class AccountLineCategorizationService {
             if (!agg) {
                 agg = {
                     pattern: cleanPattern,
+                    label: normalizeAccountLineRuleLabel(line.label),
                     count: 0,
                     accountId: line.account.id,
                     accountLabel: line.account.label,
@@ -196,6 +200,7 @@ export default class AccountLineCategorizationService {
             .sort((a, b) => b.agg.count - a.agg.count)
             .map(({ agg, topPosteEntry, topNatureEntry }) => ({
                 pattern: agg.pattern,
+                label: agg.label,
                 count: agg.count,
                 account: {
                     id: agg.accountId,
@@ -223,7 +228,7 @@ export default class AccountLineCategorizationService {
             throw new AccountLineRuleValidationError(`Categorization d'id ${id} introuvable`)
         }
 
-        const cleanPattern = normalizeLabel(body.pattern);
+        const cleanPattern = normalizeForMatching(body.label);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
@@ -244,6 +249,7 @@ export default class AccountLineCategorizationService {
 
         existing.accountId = body.accountId;
         existing.pattern = cleanPattern;
+        existing.label = normalizeAccountLineRuleLabel(body.label);
         existing.natureId = body.natureId || null;
         existing.posteId = body.posteId || null;
         existing.occurrencesCount = await this.countOccurrences(cleanPattern, body.accountId);
@@ -254,7 +260,7 @@ export default class AccountLineCategorizationService {
     }
 
     private async countOccurrences(pattern: string, accountId: number): Promise<number> {
-        const normalizedPattern = normalizeLabel(pattern);
+        const normalizedPattern = normalizeForMatching(pattern);
         if (!normalizedPattern) {
             return 0;
         }
@@ -265,7 +271,7 @@ export default class AccountLineCategorizationService {
         });
 
         return lines.reduce((count, line) => {
-            return normalizeLabel(line.label) === normalizedPattern ? count + 1 : count;
+            return normalizeForMatching(line.label) === normalizedPattern ? count + 1 : count;
         }, 0);
     }
 

@@ -120,13 +120,14 @@ describe("AccountLineCategorizationController integration", () => {
         const response = await request(app)
             .post("/categorization")
             .send({
-                pattern: "Netflix FR",
+                label: "Netflix FR",
                 accountId: 1,
                 natureId: seededNature.id,
             });
 
         expect(response.status).toBe(201);
         expect(response.body).toMatchObject({
+            label: "Netflix fr",
             pattern: "netflix fr",
             accountId: 1,
             natureId: seededNature.id,
@@ -140,7 +141,7 @@ describe("AccountLineCategorizationController integration", () => {
         const createdResponse = await request(app)
             .post("/categorization")
             .send({
-                pattern: "Abonnement sport",
+                label: "Abonnement sport",
                 accountId: 1,
                 natureId: seededNature.id,
             });
@@ -150,7 +151,7 @@ describe("AccountLineCategorizationController integration", () => {
         const updateResponse = await request(app)
             .put(`/categorization/${createdResponse.body.id}`)
             .send({
-                pattern: "Abonnement sport",
+                label: "Abonnement sport",
                 accountId: 1,
                 natureId: seededNatureAlt.id,
             });
