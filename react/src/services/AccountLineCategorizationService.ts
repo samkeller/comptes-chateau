@@ -4,6 +4,7 @@ import AccountLineRule from '@/interfaces/AccountLineRule';
 
 export interface UnmappedAccountLineRuleItem {
   pattern: string;
+  label: string;
   count: number;
   account: {
     id: number,

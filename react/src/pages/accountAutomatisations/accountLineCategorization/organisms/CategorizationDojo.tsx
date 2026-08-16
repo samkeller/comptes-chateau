@@ -15,7 +15,7 @@ import { Skeleton } from "primereact/skeleton"
 interface CategorizationDojoProps {
     unmapped: UnmappedAccountLineRuleItem[]
     onConfirm: (
-        pattern: string,
+        label: string,
         accountId: number,
         posteId?: number | null,
         natureId?: number | null
@@ -88,7 +88,7 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
 
         try {
             const didSave = await onConfirm(
-                currentItem.pattern,
+                currentItem.label,
                 currentItem.account.id,
                 selectedPoste ? currentItem.suggestedPoste?.id ?? null : null,
                 selectedNature ? currentItem.suggestedNature?.id ?? null : null,
@@ -158,8 +158,8 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                                         <div className="rounded-lg border border-surface p-4 bg-surface">
                                             <div className="mb-4 flex items-center justify-between gap-4">
                                                 <div>
-                                                    <div className="text-sm text-500">Pattern proposé</div>
-                                                    <div className="text-2xl font-semibold wrap-break-word">{currentItem.pattern}</div>
+                                                    <div className="text-sm text-500">Libellé proposé</div>
+                                                    <div className="text-2xl font-semibold wrap-break-word">{currentItem.label}</div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
                                                     <Button
