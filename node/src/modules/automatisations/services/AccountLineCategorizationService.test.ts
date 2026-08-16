@@ -206,7 +206,7 @@ describe("AccountLineCategorizationService.updateById", () => {
 
         await expect(
             service.updateById(12, {
-                pattern: "Nouveau motif",
+                label: "Nouveau motif",
                 accountId: 2,
                 posteId: 99,
             })
