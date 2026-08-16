@@ -192,7 +192,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
                         value={operationLabel}
                         onChange={changeOperationLabelAutocomplete}
                         completeMethod={searchOperationsSuggestions} // Autocomplete search method
-                        suggestions={suggestedOperations.map(v => v.pattern)} // Suggestions autocomplete
+                        suggestions={suggestedOperations.map(v => v.label)} // Suggestions autocomplete
                         className="w-full"
                         inputClassName="w-full"
                     />
