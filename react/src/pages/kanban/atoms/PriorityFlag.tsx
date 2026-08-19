@@ -1,3 +1,4 @@
+import { useScreen } from "@/utils/hooks/useScreen";
 import { KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
 
 
@@ -35,11 +36,11 @@ export function getPriorityLabel(priority: KanbanTaskPriority): string {
 }
 
 interface PriorityFlagProps {
-    priority: KanbanTaskPriority;
-    showLabel?: boolean;
+    priority: KanbanTaskPriority
 }
 
-export default function PriorityFlag({ priority, showLabel = false }: PriorityFlagProps) {
+export default function PriorityFlag({ priority }: PriorityFlagProps) {
+    const { isMobile } = useScreen();
 
     return (
         <div className="flex items-center gap-1.5">
@@ -48,7 +49,7 @@ export default function PriorityFlag({ priority, showLabel = false }: PriorityFl
                 style={{ color: getPriorityColor(priority) }}
                 data-pr-tooltip={getPriorityLabel(priority)}
             />
-            {showLabel && <span className="uppercase tracking-wide">{getPriorityLabel(priority)}</span>}
+            {!isMobile && <span className="capitalize tracking-wide">{getPriorityLabel(priority)}</span>}
         </div>
     )
 }

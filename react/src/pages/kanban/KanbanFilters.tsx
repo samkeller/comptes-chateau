@@ -3,6 +3,7 @@ import { MultiSelect } from "primereact/multiselect";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 import { User } from "@/interfaces/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
+import { useScreen } from "@/utils/hooks/useScreen";
 
 export interface KanbanFiltersData {
     users: User[];
@@ -17,15 +18,16 @@ interface KanbanFiltersProps {
 }
 
 export default function KanbanFilters({ allUsers, allTags, filters, changeFilters }: KanbanFiltersProps) {
+    const { isMobile } = useScreen();
 
     return (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 w-full">
             <MultiSelect
                 value={filters.tags}
                 options={allTags}
                 onChange={(e) => changeFilters({ ...filters, tags: e.value })}
                 placeholder="Tags"
-                className="w-60"
+                className="w-40"
                 itemTemplate={(option) => option && <KanbanTagDisplay tag={option} />}
                 selectedItemTemplate={(option) => option && <KanbanTagDisplay tag={option} />}
             />
@@ -35,7 +37,7 @@ export default function KanbanFilters({ allUsers, allTags, filters, changeFilter
                 optionLabel="username"
                 onChange={(e) => changeFilters({ ...filters, users: e.value })}
                 placeholder="Assignés"
-                className="w-60"
+                className="w-40"
                 itemTemplate={(option) => option && (
                     <div className="flex items-center gap-2">
                         <UserAvatar user={option} />
@@ -45,13 +47,14 @@ export default function KanbanFilters({ allUsers, allTags, filters, changeFilter
                 selectedItemTemplate={(option) => option && <UserAvatar user={option} />}
             />
             <Button
-                label="Terminées"
+                {...(!isMobile && { label: "Afficher les terminées" })}
                 icon={filters.showDone ? "pi pi-check-circle" : "pi pi-circle"}
                 outlined={!filters.showDone}
                 size="small"
+                className="shrink-0"
                 onClick={() => changeFilters({ ...filters, showDone: !filters.showDone })}
+                {...(isMobile && { tooltip: "Afficher les terminées", tooltipOptions: { position: "bottom" } })}
             />
-            <i className="pi pi-filter" />
         </div>
     )
 }

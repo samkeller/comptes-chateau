@@ -22,10 +22,7 @@ export default function ChangelogDialog({ hideDialog }: ChangelogDialogProps) {
             modal
             dismissableMask
         >
-            <MarkdownRenderer
-                skipHtml
-            >{changelog}
-            </MarkdownRenderer>
+            <MarkdownRenderer>{changelog}</MarkdownRenderer>
         </Dialog>
     );
 }

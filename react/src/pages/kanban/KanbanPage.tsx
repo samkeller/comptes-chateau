@@ -5,7 +5,7 @@ import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
 import KanbanColumn from "../../interfaces/kanban/KanbanColumn";
-import KanbanTaskDialog from "./KanbanTaskDialog";
+import KanbanTaskDialog from "./organisms/KanbanTaskDialog";
 import FillRemainingHeight from "../../components/layout/FillRemainingHeight";
 import {
     DndContext,
@@ -20,8 +20,12 @@ import KanbanTaskCard from "./KanbanTaskCard";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
 import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
+import { useScreen } from "@/utils/hooks/useScreen";
+import { Button } from "primereact/button";
 
 export default function KanbanPage() {
+    const { isMobile } = useScreen()
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 5 },
@@ -37,7 +41,8 @@ export default function KanbanPage() {
     const [loading, setLoading] = useState<boolean>(true);
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
-    const [activeId, setActiveId] = useState<number | null>(null);
+    const [activeTaskDragId, setActiveTaskDragId] = useState<number | null>(null);
+    const [mobileDisplayedColumn, setMobileDisplayedColumn] = useState<number>(0);
 
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
@@ -64,7 +69,7 @@ export default function KanbanPage() {
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
-        setActiveId(null);
+        setActiveTaskDragId(null);
 
         if (!over) return;
 
@@ -83,7 +88,7 @@ export default function KanbanPage() {
             .then(() => loadData())
     }
 
-    const activeTask = activeId ? tasks.find(t => t.id === activeId) ?? null : null;
+    const activeTask = activeTaskDragId ? tasks.find(t => t.id === activeTaskDragId) ?? null : null;
 
     const displayedTasks = useMemo(() => {
         const selectedTags = new Set(filters.tags);
@@ -101,15 +106,14 @@ export default function KanbanPage() {
             : byTagsAndUsers.filter(task => !task.isDone);
     }, [tasks, filters]);
 
-
     return (
         <PageTemplate pageTitle="Kanban">
             <DndContext
-                sensors={sensors}
+                sensors={isMobile ? [] : sensors}
                 collisionDetection={closestCorners}
                 autoScroll={false}
                 onDragEnd={handleDragEnd}
-                onDragStart={(event) => setActiveId(event.active.id as number)}
+                onDragStart={(event) => setActiveTaskDragId(event.active.id as number)}
             >
                 {loading ? (
                     <div className="w-full flex justify-center p-20">
@@ -117,14 +121,37 @@ export default function KanbanPage() {
                     </div>
                 ) : (
                     <FillRemainingHeight>
-                        <div className="flex flex-col w-full h-full gap-3">
+                        <div className="flex h-full min-h-0 w-full flex-col gap-3">
                             <KanbanFilters
                                 allUsers={allUsers}
                                 allTags={allTags}
                                 filters={filters}
                                 changeFilters={setFilters}
                             />
-                            <div className="flex flex-col xl:flex-row w-full h-full gap-4 xl:gap-6">
+
+                            {
+                                isMobile && (
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            icon="pi pi-arrow-left"
+                                            rounded text
+                                            size="small"
+                                            onClick={() => mobileDisplayedColumn - 1 >= 0 && setMobileDisplayedColumn(mobileDisplayedColumn - 1)}
+                                            tooltip="Colonne précédente"
+                                            tooltipOptions={{ position: "bottom" }}
+                                        />
+                                        <Button
+                                            icon="pi pi-arrow-right"
+                                            rounded text
+                                            size="small"
+                                            onClick={() => mobileDisplayedColumn + 1 < columns.length && setMobileDisplayedColumn(mobileDisplayedColumn + 1)}
+                                            tooltip="Colonne suivante"
+                                            tooltipOptions={{ position: "bottom" }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            <div className={"flex min-h-0 flex-1 flex-row gap-3 overflow-hidden"}>
                                 {
                                     selectedTask && (
                                         <KanbanTaskDialog
@@ -141,18 +168,32 @@ export default function KanbanPage() {
                                         />
                                     )
                                 }
-                                {
-                                    columns.map(column => (
-                                        <div className="flex-1 min-w-0" key={column.id}>
+                                <div className="flex min-h-0 flex-1 flex-row gap-3 overflow-hidden">
+                                    {isMobile ? (
+                                        <KanbanColumnDisplay
+                                            column={columns[mobileDisplayedColumn]}
+                                            tasks={displayedTasks.filter(
+                                                t => t.columnId === columns[mobileDisplayedColumn]?.id
+                                            )}
+                                            setSelectedTask={setSelectedTask}
+                                            activeId={activeTaskDragId}
+                                            className="w-full"
+                                        />
+                                    ) : (
+                                        columns.map(column => (
                                             <KanbanColumnDisplay
+                                                key={column.id}
                                                 column={column}
-                                                tasks={displayedTasks.filter(t => t.columnId === column.id)}
+                                                tasks={displayedTasks.filter(
+                                                    t => t.columnId === column.id
+                                                )}
                                                 setSelectedTask={setSelectedTask}
-                                                activeId={activeId}
+                                                activeId={activeTaskDragId}
+                                                className="min-w-0 flex-1"
                                             />
-                                        </div>
-                                    ))
-                                }
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </FillRemainingHeight>

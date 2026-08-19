@@ -25,10 +25,8 @@ if (!APP_SECRET) {
 if (!process.env.PORT) {
     throw new Error("No PORT provided in environment variables");
 }
-console.time("DB initialize");
+
 AppDataSource.initialize().then(() => {
-    const dbTime = performance.now() - serverStart;
-    console.info(`[startup] Database initialized - ${dbTime.toFixed(0)}ms`);
 
     const app = express();
     app.set("trust proxy", 1);
