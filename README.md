@@ -1,6 +1,15 @@
-# Comptes Chateau
+# Chocosous
 
 Application full-stack TypeScript pour la gestion comptable (operations, natures, postes, budgets, depenses recurrentes, dashboard).
+Deux utilisateurs (couple) avec plusieurs compte commun.
+Application qui gère aussi: 
+- gestion du budget
+- kanban
+- liste de courses
+- notifications
+- stocks placards
+- etc
+
 
 ## Vue d'ensemble technique
 
@@ -8,27 +17,6 @@ Application full-stack TypeScript pour la gestion comptable (operations, natures
 - Backend: Node.js + TypeScript + Express + TypeORM + PostgreSQL (`node/`)
 - Contrat de donnees: interfaces/DTO alignees entre front et back
 - Tests: Vitest (front et back)
-
-## Architecture du repository
-
-```text
-.
-|- react/                    # UI React
-|  |- src/pages/             # ecrans
-|  |- src/components/        # composants reutilisables
-|  |- src/services/          # appels HTTP
-|  |- src/interfaces/        # types metier/DTO
-|  \- src/utils/             # helpers purs
-|
-|- node/                     # API Node/Express
-|  |- src/controllers/       # couche HTTP + validation d'entree
-|  |- src/services/          # logique metier
-|  |- src/entities/          # mapping TypeORM
-|  |- src/db/migrations/     # migrations SQL generees via CLI
-|  \- src/utils/             # helpers transverses
-|
-\- docs/                     # documentation projet
-```
 
 ## Prerequis
 
@@ -78,19 +66,9 @@ npm start
 ```
 
 ## Tests
-
-Backend:
-
 ```bash
-cd node
-npm tests
-```
 
-Frontend:
-
-```bash
-cd react
-npm tests
+npm run tests
 ```
 
 ## Migrations base de donnees (TypeORM)
@@ -134,21 +112,3 @@ node dist/jobs/index.js
 - Pas de secrets dans le code
 - Requetes DB parametrees via TypeORM
 - Tests a chaque changement de comportement metier
-
-
-## Cadrage metier actuel (reponses confirmees)
-
-Les points suivants sont valides a date.
-
-1. Finalite produit:
-   application simple de gestion des comptes du foyer (couple).
-2. Regles metier:
-   pas de regles formelles pour l'instant.
-3. Vocabulaire metier minimal:
-   `nature` = type d'operation (CB, cheque, etc.),
-   `poste` = categorie ad-hoc libre.
-4. Gouvernance:
-   arbitrages fonctionnels via un "conseil de famille" (vous + votre femme).
-5. Roles et permissions:
-   rien de specifique prevu pour l'instant.
-   
