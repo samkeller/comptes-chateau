@@ -11,12 +11,14 @@ import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
 import { In } from "typeorm";
 import { forbidden, notFound } from "../../../utils/AppError";
+import UserXpService from "../../core/services/UserXpService";
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
     private kanbanColumnRepo = AppDataSource.getRepository(KanbanColumn);
     private kanbanCommentRepo = AppDataSource.getRepository(KanbanComment);
     private userRepo = AppDataSource.getRepository(User);
+    private userXpService = new UserXpService()
 
     async getColumns(): Promise<KanbanColumn[]> {
         return this.kanbanColumnRepo.find();
@@ -53,7 +55,7 @@ export default class KanbanBoardService {
         return rows.map(row => row.tag);
     }
 
-    async createTask(body: CreateKanbanTaskDto): Promise<KanbanTaskDto> {
+    async createTask(body: CreateKanbanTaskDto, connectedUserId: number): Promise<KanbanTaskDto> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
         const assignees = await this.resolveAssignees(body.assigneeIds);
 
@@ -69,6 +71,8 @@ export default class KanbanBoardService {
             assignees,
         });
         const savedTask = await this.kanbanTaskRepo.save(task);
+
+        await this.userXpService.addXPForUser(connectedUserId, "KANBAN_TASK_CREATED");
 
         return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
     }
@@ -121,7 +125,11 @@ export default class KanbanBoardService {
 
         task.isDone = true;
         task.doneByUserId = userId;
+        
         await this.kanbanTaskRepo.save(task);
+        
+        // Si save ok :
+        await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
     }
 
     async getTaskComments(taskId: number): Promise<KanbanCommentDto[]> {

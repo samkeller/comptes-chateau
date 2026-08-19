@@ -1,6 +1,7 @@
 import Markdown, { Options } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-interface MarkdownRendererProps  {
+interface MarkdownRendererProps {
     children: string | null | undefined;
 }
 
@@ -13,6 +14,8 @@ export function MarkdownRenderer({ children, ...props }: MarkdownRendererProps &
             `}
         >
             <Markdown
+                skipHtml
+                remarkPlugins={[remarkGfm]}
                 {...props}
                 components={{
                     h1: ({ children }) => (
@@ -52,15 +55,7 @@ export function MarkdownRenderer({ children, ...props }: MarkdownRendererProps &
                     ),
 
                     code: ({ children }) => (
-                        <code
-                            className="
-                            bg-surface-800
-                            text-teal-300
-                            px-1.5 py-0.5
-                            rounded
-                            text-sm
-                          "
-                        >
+                        <code>
                             {children}
                         </code>
                     )
