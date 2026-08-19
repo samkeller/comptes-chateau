@@ -170,15 +170,21 @@ export default function KanbanPage() {
                                 }
                                 <div className="flex min-h-0 flex-1 flex-row gap-3 overflow-hidden">
                                     {isMobile ? (
-                                        <KanbanColumnDisplay
-                                            column={columns[mobileDisplayedColumn] || []}
-                                            tasks={displayedTasks.filter(
-                                                t => t.columnId === columns[mobileDisplayedColumn]?.id
-                                            )}
-                                            setSelectedTask={setSelectedTask}
-                                            activeId={activeTaskDragId}
-                                            className="w-full"
-                                        />
+                                        columns[mobileDisplayedColumn] ? (
+                                            <KanbanColumnDisplay
+                                                column={columns[mobileDisplayedColumn]}
+                                                tasks={displayedTasks.filter(
+                                                    t => t.columnId === columns[mobileDisplayedColumn]?.id
+                                                )}
+                                                setSelectedTask={setSelectedTask}
+                                                activeId={activeTaskDragId}
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <div className="flex w-full items-center justify-center text-gray-400">
+                                                Aucune colonne disponible
+                                            </div>
+                                        )
                                     ) : (
                                         columns.map(column => (
                                             <KanbanColumnDisplay
