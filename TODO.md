@@ -6,10 +6,10 @@ Project Description
 
 ### Todo
 
-- [ ] Auto-backup  
+
+- [ ] Mettre à plat la création d'opérations / accountLines (back) & assurer que la modification unitaire avec isChecked & dateValeur ajoute bien de l'xp.  
 
 ### In Progress
 ### Done ✓
 - [x] Factoriser accountLineNatureDropdown & accountLinePosteDropdown -> Régler les contrats API id vs objet complet -> Repasser tous les dropdowns "nature" (DropdownProps) & "postes" (DropdownProps & accountId)
-
-
+- [x] Auto-backup

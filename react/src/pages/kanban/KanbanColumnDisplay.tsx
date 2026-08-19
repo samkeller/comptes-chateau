@@ -9,15 +9,19 @@ import { compareTaskPriority } from "./atoms/PriorityFlag"
 import { CreateKanbanTaskDto } from "../../services/kanban/dto/CreateKanbanTaskDto"
 import PriorityFlagSelect from "./atoms/PriorityFlagSelect"
 import { useDroppable } from "@dnd-kit/core"
+import { useScreen } from "@/utils/hooks/useScreen"
+import { ScrollPanel } from "primereact/scrollpanel"
 
 interface KanbanColumnProps {
     column: KanbanColumn
     tasks: KanbanTask[]
     setSelectedTask: (task: KanbanTask) => void
-    activeId: number | null
+    activeId: number | null,
+    className?: string
 }
 
-export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId }: KanbanColumnProps) {
+export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId, className }: KanbanColumnProps) {
+    const { isDesktop } = useScreen();
     const [newTask, setNewTask] = useState<CreateKanbanTaskDto>({
         title: "",
         columnId: column.id,
@@ -27,6 +31,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
 
     const { setNodeRef, isOver } = useDroppable({
         id: column.id,
+        disabled: !isDesktop,
     });
 
     const sortedTasks = useMemo(() => {
@@ -49,52 +54,58 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
     return (
         <div
             ref={setNodeRef}
-            className={"h-full border rounded-xl p-0.5 " + (isOver ? "border-cyan-300/60 shadow-lg" : " border-surface shadow-sm")}
+            className={"h-full border rounded-xl overflow-hidden " + (isOver ? "border-cyan-300/60 shadow-lg" : " border-surface shadow-sm") + (className ? " " + className : "")}
         >
             <Card
                 title={column.label}
-                className="h-full"
+                className="h-full w-full rounded-none border-0"
                 pt={{
                     body: { className: "h-full" },
-                    content: { className: "h-full flex flex-col gap-4" }
+                    content: { className: "h-full flex flex-col gap-3 pb-10" }
                 }}
             >
-                {sortedTasks.map(task => (
-                    activeId === task.id ? null : (
-                        <div
-                            key={task.id}
-                            style={activeId ? { pointerEvents: "none" } : undefined}
-                        >
-                            <KanbanTaskCard
-                                task={task}
-                                setSelectedTask={setSelectedTask}
-                            />
-                        </div>
-                    )
-                ))}
-                <div className="grow"></div>
+                <ScrollPanel className="grow min-h-0 min-w-0 px-2">
+                    <div className="flex flex-col gap-2 min-h-0 overflow-y-auto">
+                        {sortedTasks.map(task => (
+                            activeId === task.id ? null : (
+                                <div
+                                    key={task.id}
+                                    style={activeId ? { pointerEvents: "none" } : undefined}
+                                >
+                                    <KanbanTaskCard
+                                        task={task}
+                                        setSelectedTask={setSelectedTask}
+                                    />
+                                </div>
+                            )
+                        ))}
+                    </div>
+                </ScrollPanel>
 
-                <div className="flex flex-row shrink-0 py-2">
+                <div className="flex flex-row items-center gap-2 pt-2 shrink-0">
                     <InputText
                         placeholder="Ajouter une tâche..."
-                        className="grow "
+                        className="w-full"
                         value={newTask.title}
                         onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                     />
-                    <PriorityFlagSelect
-                        priority={newTask.priority}
-                        onChange={(priority) => {
-                            setNewTask({ ...newTask, priority: priority })
-                        }
-                        }
-                    />
-                    <Button
-                        className="shrink-0"
-                        text
-                        icon="pi pi-plus"
-                        rounded
-                        onClick={handleAddTask}
-                    />
+                    <div className="flex items-center">
+                        <PriorityFlagSelect
+                            btnClassName="w-6 h-6 p-4"
+                            priority={newTask.priority}
+                            onChange={(priority) => {
+                                setNewTask({ ...newTask, priority: priority })
+                            }
+                            }
+                        />
+                        <Button
+                            className="w-6 h-6 p-4"
+                            text
+                            icon="pi pi-plus"
+                            rounded
+                            onClick={handleAddTask}
+                        />
+                    </div>
                 </div>
             </Card>
         </div>

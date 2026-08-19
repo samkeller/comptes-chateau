@@ -56,7 +56,6 @@ export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps)
     return (
         <div className="flex flex-col gap-2">
            <MarkdownToolbar editor={editor} />
-
             <EditorContent
                 editor={editor}
                 className="markdown-editor-surface rounded-border bg-gray-900 p-4 min-h-[12rem] focus-within:ring-2 focus-within:ring-teal-400/30 focus-within:border-teal-400 transition-all cursor-text"

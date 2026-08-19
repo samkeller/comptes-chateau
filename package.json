@@ -4,12 +4,16 @@
   "main": "index.js",
   "scripts": {
     "install:all": "npm install && cd react && npm install && cd ../node && npm install",
-    "dev": "concurrently -n FRONT,BACK -c \"blue,magenta\" --kill-others \"npm:dev:react\" \"npm:dev:node\"",
+    "dev": "concurrently -n FRONT,BACK -c \"blue,magenta\" --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss.SSS\" --kill-others \"npm:dev:frontend\" \"npm:dev:node\"",
+    "dev:frontend": "wait-on http://localhost:8000/health && npm run dev:react",
     "dev:react": "npm --prefix react start",
     "dev:node": "npm --prefix node run dev",
     "build": "npm run build:react && npm run build:node",
     "build:react": "npm --prefix react run build",
-    "build:node": "npm --prefix node run build"
+    "build:node": "npm --prefix node run build",
+    "tests:front": "npm --prefix react run tests",
+    "tests:back": "npm --prefix node run tests",
+    "tests": "npm run tests:front && npm run tests:back"
   },
   "packageManager": "npm@11.11.0",
   "keywords": [],
@@ -17,6 +21,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "wait-on": "^9.1.0"
   }
 }

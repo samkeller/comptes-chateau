@@ -16,7 +16,8 @@ export default class KanbanController {
     };
 
     createTask = async (req: Request, res: Response) => {
-        const task = await this.boardService.createTask(req.body);
+        const connectedUser = requireUserId(req);
+        const task = await this.boardService.createTask(req.body, connectedUser);
         res.status(201).json(task);
     };
 

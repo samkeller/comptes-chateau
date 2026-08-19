@@ -14,7 +14,7 @@ export default class UserXpService {
     async addXPForUser(userId: number, action: UserXpActionsPointsKeys, multiplicator: number = 1): Promise<User> {
         const user = await this.userRepo.findOne({ where: { id: userId } });
  
-        if (!user) throw new UserNotFoundError(`User with id ${userId} not found`);
+        if (!userId || !user) throw new UserNotFoundError(`User with id ${userId} not found`);
 
         const previousTotalXp = user.totalXp;
         const gainedXp = UserXpActionsPoints[action] * multiplicator;

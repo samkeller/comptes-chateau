@@ -9,9 +9,10 @@ import { SelectItem } from "primereact/selectitem";
 interface PriorityFlagSelectProps {
     priority: KanbanTaskPriority,
     onChange: (priority: KanbanTaskPriority) => void
+    btnClassName?: string
 }
 
-export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagSelectProps) {
+export default function PriorityFlagSelect({ priority, onChange, btnClassName }: PriorityFlagSelectProps) {
 
     const op = useRef<OverlayPanel>(null);
     const [showMenu, setShowMenu] = useState(false);
@@ -27,6 +28,7 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
         <>
             <Button
                 icon={`pi pi-flag-fill`}
+                className={btnClassName}
                 style={{ color: getPriorityColor(priority) }}
                 text
                 rounded
@@ -46,9 +48,9 @@ export default function PriorityFlagSelect({ priority, onChange }: PriorityFlagS
                         op.current?.hide();
                     }}
                     options={menuData}
-                    itemTemplate={option => <PriorityFlag priority={option.value} showLabel={true}  />}
+                    itemTemplate={option => <PriorityFlag priority={option.value} />}
                     pt={{
-                        list:{className: "flex gap-2"},
+                        list: { className: "flex gap-2" },
                     }}
                 />
             </OverlayPanel>

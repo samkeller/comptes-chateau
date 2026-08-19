@@ -34,6 +34,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
+    "@swc/core": "^1.16.0",
+    "@swc/helpers": "^0.5.23",
     "@types/bcrypt": "^6.0.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",

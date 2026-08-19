@@ -81,3 +81,16 @@
 .tiptap strong {
     font-weight: 700;
 }
+
+/**
+* Markdown Editor Surface
+*/
+.markdown-editor-surface .ProseMirror {
+    min-height: 12rem;
+}
+
+@media (max-width: 640px) {
+    .markdown-editor-surface .ProseMirror {
+        min-height: 10rem;
+    }
+}
