@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Account } from "../../entities/Account";
-import { AccountLine } from "../../entities/AccountLine";
+import { Account } from "../entities/Account";
+import { AccountLine } from "../entities/AccountLine";
 import OperationService from "./OperationService";
 
 const { getRepositoryMock, transactionMock } = vi.hoisted(() => ({
@@ -119,9 +119,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: { id: 2 },
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1,);
+            natureId: null,
+            posteId: null
+        }, 1, 1);
 
         expect(savedLine.account?.id).toBe(1);
         expect(savedLine.targetAccount?.id).toBe(2);
@@ -134,7 +134,7 @@ describe("OperationService.save - transfer groups", () => {
         expect(Number(mirror?.debit)).toBe(0);
         expect(Number(mirror?.credit)).toBe(125);
         expect(mirror?.transferGroupId).toBe(savedLine.transferGroupId);
-        expect(mirror?.poste ?? null).toBeNull();
+        expect(mirror?.posteId ?? null).toBeNull();
     });
 
     it("does not update the sibling line when editing an existing transfer", async () => {
@@ -177,9 +177,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: { id: 2 },
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1);
+            natureId: null,
+            posteId: null
+        }, 1, 1);
 
         expect(savedLine.id).toBe(10);
         expect(storedLines).toHaveLength(2);
@@ -232,9 +232,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: { id: 3 },
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1);
+            natureId: null,
+            posteId: null
+        }, 1, 1);
 
         expect(storedLines).toHaveLength(2);
 
@@ -244,7 +244,7 @@ describe("OperationService.save - transfer groups", () => {
         expect(Number(sibling?.credit)).toBe(80);
         expect(Number(sibling?.debit)).toBe(0);
         expect(sibling?.transferGroupId).toBe("group-4");
-        expect(sibling?.poste ?? null).toBeNull();
+        expect(sibling?.posteId ?? null).toBeNull();
     });
 
     it("rejects a transfer to the same account", async () => {
@@ -258,9 +258,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: { id: 1 },
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_SAME_ACCOUNT", statusCode: 400 });
+            natureId: null,
+            posteId: null
+        }, 1, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_SAME_ACCOUNT", statusCode: 400 });
     });
 
     it("removes mirror line when targetAccount is cleared on an existing transfer", async () => {
@@ -303,9 +303,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: null,
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1);
+            natureId: null,
+            posteId: null
+        }, 1, 1);
 
         expect(savedLine.targetAccount).toBeNull();
         expect(savedLine.transferGroupId).toBeNull();
@@ -341,9 +341,9 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: { id: 2 },
             dateValeur: null,
-            nature: null,
-            poste: null
-        }, 1);
+            natureId: null,
+            posteId: null
+        }, 1, 1);
 
         expect(savedLine.targetAccount?.id).toBe(2);
         expect(savedLine.transferGroupId).toBeTruthy();
@@ -366,8 +366,8 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: false,
             targetAccount: null,
             dateValeur: null,
-            nature: null,
-            poste: null
+            natureId: null,
+            posteId: null
         }, 1, 15);
 
         expect(userRepo.increment).toHaveBeenCalledWith({ id: 15 }, "totalXp", 5);
@@ -401,8 +401,8 @@ describe("OperationService.save - transfer groups", () => {
             isChecked: true,
             targetAccount: null,
             dateValeur: "2026-03-21",
-            nature: null,
-            poste: null
+            natureId: null,
+            posteId: null
         }, 1, 20);
 
         expect(userRepo.increment).toHaveBeenCalledTimes(1);

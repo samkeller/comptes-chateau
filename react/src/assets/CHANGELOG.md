@@ -57,3 +57,10 @@
 ## [1.1.6 - 15/08/2026]
 ### Fixes
 - Correction de la méthode de normalisation des libellés pour les règles de catégorisation (accentuation, ponctuation, espaces multiples, etc). Ce changement a obligé de redémarrer la table de 0 (heureusement, l'xp gagnée reste gagnée).
+
+## [1.1.7 - 19/08/2026]
+### Added
+- Ajout de reward xp pour la création (10) et la complétion (40) des tâches kanban
+
+### Fixes
+- Fix kanban display on mobile & améliorations lisibilité diverses

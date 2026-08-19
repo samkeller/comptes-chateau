@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { Toolbar } from "primereact/toolbar";
-import { Button } from "primereact/button";
+import { Button, ButtonProps } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { SelectItem } from "primereact/selectitem";
 
@@ -38,69 +38,90 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
         }
     }
 
+    const btnProps: (isActive: boolean) => ButtonProps = (isActive) => ({
+        size: "small",
+        type: "button",
+        text: true,
+        severity: isActive ? "contrast" : undefined,
+        className: btnClassnames,
+    });
+
+    const btnClassnames = "p-2 w-8 h-8 text-sm"
+
     const startContent = (
-        <div className="flex gap-1 items-center">
+        <div className="flex flex-wrap justify-end gap-1 items-center">
             <Dropdown
                 value={getActiveHeadingLevel(editor)}
                 options={HEADING_OPTIONS}
                 onChange={e => onHeadingChange(e.value as number)}
-                className="w-[9rem]"
+                className={`w-[9rem] p-2 h-8`}
+                pt={{ 
+                    input: { className: "p-0 text-[11px]" },
+                 }}
             />
             <Button
-                type="button"
+                {...btnProps(editor.isActive("bold"))}
                 label="B"
                 tooltip="Gras"
-                text
-                className="font-bold"
-                severity={editor.isActive("bold") ? "contrast" : undefined}
+                className={`font-bold ${btnClassnames}`}
                 onClick={() => editor.chain().focus().toggleBold().run()}
             />
-
             <Button
-                type="button"
+                {...btnProps(editor.isActive("italic"))}
                 label="I"
                 tooltip="Italique"
-                text
-                className="italic"
-                severity={editor.isActive("italic") ? "contrast" : undefined}
+                className={`italic ${btnClassnames}`}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
             />
-
             <Button
-                type="button"
+                {...btnProps(editor.isActive("strike"))}
+                label="S"
+                tooltip="Barré"
+                className={`line-through ${btnClassnames}`}
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+            />
+            <Button
+                {...btnProps(editor.isActive("bulletList"))}
                 icon="pi pi-list"
                 tooltip="Liste à puces"
-                text
-                severity={editor.isActive("bulletList") ? "contrast" : undefined}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
             />
 
             <Button
-                type="button"
+                {...btnProps(editor.isActive("orderedList"))}
                 icon="pi pi-list-check"
                 tooltip="Liste numérotée"
-                text
-                severity={editor.isActive("orderedList") ? "contrast" : undefined}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
             />
 
             <Button
-                type="button"
+                {...btnProps(editor.isActive("codeBlock"))}
                 icon="pi pi-code"
                 tooltip="Bloc de code"
-                text
-                severity={editor.isActive("codeBlock") ? "contrast" : undefined}
                 onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             />
 
             <Button
-                type="button"
+                {...btnProps(editor.isActive("code"))}
+                icon="pi pi-code"
+                tooltip="Code inline"
+                onClick={() => editor.chain().focus().toggleCode().run()}
+            />
+
+            <Button
+                {...btnProps(editor.isActive("blockquote"))}
                 label="❝"
                 tooltip="Citation"
-                text
-                severity={editor.isActive("blockquote") ? "contrast" : undefined}
                 onClick={() => editor.chain().focus().toggleBlockquote().run()}
             />
+
+            <Button
+                {...btnProps(editor.isActive("horizontalRule"))}
+                label="—"
+                tooltip="Séparateur"
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            />
+
         </div>
     );
 
@@ -110,6 +131,9 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
                 type="button"
                 icon="pi pi-undo"
                 text
+                disabled={!editor.can().chain().focus().undo().run()}
+                tooltip="Annuler"
+                className={btnClassnames}
                 onClick={() => editor.chain().focus().undo().run()}
             />
 
@@ -117,10 +141,17 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
                 type="button"
                 icon="pi pi-refresh"
                 text
+                disabled={!editor.can().chain().focus().redo().run()}
+                tooltip="Rétablir"
+                className={btnClassnames}
                 onClick={() => editor.chain().focus().redo().run()}
             />
         </div>
     );
 
-    return <Toolbar start={startContent} end={endContent} />;
+    return <Toolbar
+        className="p-0 border-none"
+        start={startContent}
+        end={endContent}
+    />;
 }

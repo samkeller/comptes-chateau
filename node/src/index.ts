@@ -1,3 +1,4 @@
+const serverStart = performance.now();
 import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
@@ -26,6 +27,7 @@ if (!process.env.PORT) {
 }
 
 AppDataSource.initialize().then(() => {
+
     const app = express();
     app.set("trust proxy", 1);
 
@@ -53,6 +55,14 @@ AppDataSource.initialize().then(() => {
 
     const routes = Router()
 
+    /**
+     * Health check pour vérifier que le serveur est bien en ligne.
+     * A date, utile pour wait-on dans le script de démarrage du front pour attendre que le back soit prêt avant de lancer le front.
+     */
+    app.get("/health", (_req, res) => {
+        res.sendStatus(200);
+    });
+
     routes.use("/api/auth", AuthRoutes) // Avant -> Non protégé
     routes.use("/api", ApiRouter)
 
@@ -72,7 +82,9 @@ AppDataSource.initialize().then(() => {
     });
 
     return app.listen(Number(process.env.PORT), "0.0.0.0", () => {
-        console.info(`Server started on port ${process.env.PORT}`);
+        const totalTime = performance.now() - serverStart;
+
+        console.info(`[startup] Server listening on :${process.env.PORT} - ${totalTime.toFixed(0)}ms`);
     })
 })
 

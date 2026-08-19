@@ -33,6 +33,6 @@
     "dist"
   ],
   "ts-node": {
-    "files": true
+    "swc": true,
   }
 }
