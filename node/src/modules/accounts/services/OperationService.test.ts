@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Account } from "../../entities/Account";
-import { AccountLine } from "../../entities/AccountLine";
+import { Account } from "../entities/Account";
+import { AccountLine } from "../entities/AccountLine";
 import OperationService from "./OperationService";
 
 const { getRepositoryMock, transactionMock } = vi.hoisted(() => ({
