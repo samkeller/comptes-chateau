@@ -1,0 +1,46 @@
+name: Security checks
+
+on:
+    pull_request:
+        branches:
+            - main
+    push:
+        branches:
+            - main
+
+jobs:
+    audit:
+        name: npm audit
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+                  cache-dependency-path: |
+                      package-lock.json
+                      react/package-lock.json
+                      node/package-lock.json
+
+            - name: Install root dependencies
+              run: npm ci
+
+            - name: Install React dependencies
+              run: npm ci --prefix react
+
+            - name: Install Node dependencies
+              run: npm ci --prefix node
+
+            - name: Audit root dependencies
+              run: npm audit --audit-level=high
+
+            - name: Audit React dependencies
+              run: npm audit --prefix react --audit-level=high
+
+            - name: Audit Node dependencies
+              run: npm audit --prefix node --audit-level=high
