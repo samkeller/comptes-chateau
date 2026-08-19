@@ -125,10 +125,11 @@ export default class KanbanBoardService {
 
         task.isDone = true;
         task.doneByUserId = userId;
-
-        await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
-
+        
         await this.kanbanTaskRepo.save(task);
+        
+        // Si save ok :
+        await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
     }
 
     async getTaskComments(taskId: number): Promise<KanbanCommentDto[]> {

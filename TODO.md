@@ -7,7 +7,7 @@ Project Description
 ### Todo
 
 
-- [ ] Mettre à plat la créatrion d'opérations / accountLines (back) & assurer que la modification unitaire avec isChecked & dateValeur ajoute bien de l'xp.  
+- [ ] Mettre à plat la création d'opérations / accountLines (back) & assurer que la modification unitaire avec isChecked & dateValeur ajoute bien de l'xp.  
 
 ### In Progress
 ### Done ✓

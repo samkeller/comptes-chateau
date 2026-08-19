@@ -171,7 +171,7 @@ export default function KanbanPage() {
                                 <div className="flex min-h-0 flex-1 flex-row gap-3 overflow-hidden">
                                     {isMobile ? (
                                         <KanbanColumnDisplay
-                                            column={columns[mobileDisplayedColumn]}
+                                            column={columns[mobileDisplayedColumn] || []}
                                             tasks={displayedTasks.filter(
                                                 t => t.columnId === columns[mobileDisplayedColumn]?.id
                                             )}

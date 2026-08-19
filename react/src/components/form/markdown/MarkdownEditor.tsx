@@ -4,7 +4,6 @@ import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 import MarkdownToolbar from "./MarkdownToolbar";
 import { useEffect } from 'react';
-import { Divider } from 'primereact/divider';
 
 interface MarkdownEditorProps {
     value: string,
