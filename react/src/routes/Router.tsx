@@ -1,5 +1,6 @@
 import {
   createBrowserRouter,
+  Navigate,
 } from "react-router-dom";
 import AccountBook from "../pages/accountBook/AccountBook";
 import AuthPage from "../pages/AuthPage";
@@ -13,6 +14,10 @@ import AccountDashboard from "../pages/accountDashboard/AccountDashboard";
 import AccountScopedOutlet from "./AccountScopedOutlet";
 import AccountLineCategorization from "@/pages/accountAutomatisations/accountLineCategorization/AccountLineCategorization";
 import AddAccountLineDialog from "@/pages/accountBook/AddAccountLineDialog";
+import UnifiedBudgetView from "@/pages/budget/UnifiedBudgetView";
+import RecurringExpenses from "@/pages/budget/recurringExpenses/RecurringExpenses";
+import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecurringExpenseDialog";
+import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
 
 const router = createBrowserRouter([
   {
@@ -49,6 +54,30 @@ const router = createBrowserRouter([
         path: "budget",
         element: <Budget />,
         handle: { navKey: "account-budget" },
+        children: [
+          {
+            index: true,
+            element: <Navigate to="overview" replace />,
+          },
+          {
+            path: "overview",
+            element: <UnifiedBudgetView />,
+          },
+          {
+            path: "recurringExpenses",
+            element: <RecurringExpenses />,
+            children: [
+              {
+                path: ":expenseId",
+                element: <AddRecurringExpenseDialog />,
+              }
+            ]
+          },
+          {
+            path: "budgetLines",
+            element: <BudgetItemsTable />,
+          },
+        ]
       },
 
     ]

@@ -10,10 +10,7 @@ import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { BooleanIcon } from "@/components/datatableBodys/BooleanIcon";
-
-interface BudgetItemsTableProps {
-    accountId: number;
-}
+import { useAccountId } from "../../hooks/useAccountId";
 
 interface BudgetDraft {
     label: string;
@@ -31,7 +28,8 @@ const emptyDraft: BudgetDraft = {
     posteId: null,
 };
 
-export default function BudgetItemsTable({ accountId }: BudgetItemsTableProps) {
+export default function BudgetItemsTable() {
+    const accountId = useAccountId();
     const [lines, setLines] = useState<BudgetItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);

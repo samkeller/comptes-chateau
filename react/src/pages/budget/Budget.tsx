@@ -1,47 +1,31 @@
 import { PageTemplate } from "../PageTemplate";
-import RecurringExpenses from "./recurringExpenses/RecurringExpenses";
-import BudgetItemsTable from "./BudgetItemsTable";
-import UnifiedBudgetView from "./UnifiedBudgetView";
-import { useAccountId } from "../../hooks/useAccountId";
 import { TabPanel, TabView } from "primereact/tabview";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+
+const tabs = [
+    { label: "Budget global", path: "overview" },
+    { label: "Dépenses récurrentes", path: "recurringExpenses" },
+    { label: "Lignes de budget", path: "budgetLines" },
+];
 
 export default function Budget() {
-    const accountId = useAccountId();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-
-    const panel = ({
-        title,
-        children
-    }: { title: string; children: React.ReactNode }) => {
-        return (
-            <TabPanel header={title}>
-                <div className="p-2">
-                    {children}
-                </div>
-            </TabPanel>
-        )
-    }
+    const activeIndex = tabs.findIndex((tab) => location.pathname.includes(`/budget/${tab.path}`));
 
     return (
         <PageTemplate pageTitle="Budget">
-            <div className="flex flex-col gap-6 w-full">
-                <TabView>
-                    {panel({
-                        title: "Budget global",
-                        children: <UnifiedBudgetView accountId={accountId} />
-                    })}
-                    {
-                        panel({
-                            title: "Dépenses récurrentes",
-                            children: <RecurringExpenses accountId={accountId} />
-                        })
-                    }
-                    {
-                        panel({
-                            title: "Lignes de budget",
-                            children: <BudgetItemsTable accountId={accountId} />
-                        })
-                    }
+            <div className="flex flex-col w-full">
+                <TabView
+                    activeIndex={activeIndex === -1 ? 0 : activeIndex}
+                    onTabChange={(event) => navigate(tabs[event.index].path)}
+                >
+                    {tabs.map((tab) => (
+                        <TabPanel key={tab.path} header={tab.label}>
+                            <Outlet />
+                        </TabPanel>
+                    ))}
                 </TabView>
             </div>
         </PageTemplate>

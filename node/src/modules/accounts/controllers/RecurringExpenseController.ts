@@ -14,6 +14,12 @@ RecurringExpenseRoutes.get('/', async (req: Request, res: Response) => {
     res.json(expenses);
 });
 
+RecurringExpenseRoutes.get('/:id', async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const expense = await recurringExpenseService.getById(accountId, Number(req.params.id));
+    res.json(expense);
+});
+
 RecurringExpenseRoutes.post('/save', validateBody(SaveRecurringExpenseSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const creatorId = requireUserId(req);
