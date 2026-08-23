@@ -14,7 +14,7 @@ import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
 import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import Sprite from "@/components/atoms/Sprite/Sprite";
 
 const localStorageUtils = new LocalStorageUtils();

@@ -20,7 +20,7 @@ import KanbanTaskCard from "./KanbanTaskCard";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
 import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { Button } from "primereact/button";
 
 export default function KanbanPage() {

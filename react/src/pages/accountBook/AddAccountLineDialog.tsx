@@ -14,7 +14,7 @@ import AccountingService from "../../services/AccountingService";
 import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from "primereact/autocomplete";
 import AccountLineCategorizationService from "@/services/AccountLineCategorizationService";
 import { AccountLineRule } from "@/interfaces/AccountLineRule";

@@ -1,4 +1,4 @@
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
 
 

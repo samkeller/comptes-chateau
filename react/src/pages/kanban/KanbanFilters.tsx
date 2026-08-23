@@ -3,7 +3,7 @@ import { MultiSelect } from "primereact/multiselect";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 import { User } from "@/interfaces/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 
 export interface KanbanFiltersData {
     users: User[];

@@ -7,7 +7,7 @@ import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
 import UserAvatar from "../../components/atoms/UserAvatar";
 import { AvatarGroup } from "primereact/avatargroup";
 import TailwindTag from "@/components/atoms/TailwindTag";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 
 interface KanbanTaskCardProps {
     task: KanbanTask,

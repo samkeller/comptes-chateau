@@ -1,6 +1,6 @@
 import TooltipInfoIcon from "@/components/TooltipInfoIcon";
 import { DashboardOverview } from "@/interfaces/DashboardOverview";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";

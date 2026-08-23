@@ -9,7 +9,7 @@ import { User } from "../../../interfaces/User";
 import TailwindTag from "@/components/atoms/TailwindTag";
 import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
 import KanbanCommentSection from "./KanbanCommentSection";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import KanbanTaskDialogForm from "../molecules/KanbanTaskDialogForm";
 import { TabMenu } from "primereact/tabmenu";
 
