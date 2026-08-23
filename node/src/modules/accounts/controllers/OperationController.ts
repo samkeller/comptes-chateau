@@ -20,6 +20,12 @@ OperationRoutes.get('/export', async (req: Request, res: Response) => {
     res.json(data);
 });
 
+OperationRoutes.get('/:id', async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const data = await operationService.getById(accountId, Number(req.params.id));
+    res.json(data);
+});
+
 OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const userId = requireUserId(req)

@@ -12,6 +12,7 @@ import KanbanPage from "../pages/kanban/KanbanPage";
 import AccountDashboard from "../pages/accountDashboard/AccountDashboard";
 import AccountScopedOutlet from "./AccountScopedOutlet";
 import AccountLineCategorization from "@/pages/accountAutomatisations/accountLineCategorization/AccountLineCategorization";
+import AddAccountLineDialog from "@/pages/accountBook/AddAccountLineDialog";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,12 @@ const router = createBrowserRouter([
         path: "accountBook",
         element: <AccountBook />,
         handle: { navKey: "account-book" },
+        children: [
+          {
+            path: ":lineId",
+            element: <AddAccountLineDialog />,
+          }
+        ]
       },
       {
         path: "accountChecks",

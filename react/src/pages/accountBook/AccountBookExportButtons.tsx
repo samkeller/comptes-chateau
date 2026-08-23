@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "primereact/button";
-import AccountingService from "../../services/AccountingService";
+import AccountLineService from "../../services/AccountLineService";
 import { parseDateToDDMMYYYY } from "../../utils/DatesUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import AccountLine from "../../interfaces/AccountLine";
@@ -11,7 +11,7 @@ interface AccountBookExportButtonsProps {
 }
 
 export default function AccountBookExportButtons({ accountId }: AccountBookExportButtonsProps) {
-    const [accountingService] = useState(new AccountingService());
+    const [accountingService] = useState(new AccountLineService());
     const [isLoading, setIsLoading] = useState(false);
     const showGlobalToast = useGlobalToast();
 
