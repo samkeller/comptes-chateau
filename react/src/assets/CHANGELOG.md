@@ -64,3 +64,7 @@
 
 ### Fixes
 - Fix kanban display on mobile & améliorations lisibilité diverses
+
+## [1.1.8 - 20/08/2026]
+### Fixes
+- Routes multiples & secures
