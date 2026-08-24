@@ -33,11 +33,17 @@ export default class OperationService {
      * @param accountLineId 
      * @returns 
      */
-    getById(accountId: number, accountLineId: number) {
-        return this.accountLineRepo.findOne({
+async getById(accountId: number, accountLineId: number) {
+        const accountLine = await this.accountLineRepo.findOne({
             where: { id: accountLineId, account: { id: accountId } },
             relations: { account: true, targetAccount: true, nature: true, poste: true }
         });
+
+        if (!accountLine) {
+            throw notFound("OPERATION_NOT_FOUND", "Operation not found.");
+        }
+
+        return accountLine;
     }
 
     private validateTransferAmounts(line: SaveOperationPayload): void {
