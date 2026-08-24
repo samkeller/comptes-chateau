@@ -20,6 +20,7 @@ import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecur
 import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
 import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
+import StocksPage from "@/pages/stocks/StocksPage";
 
 const router = createBrowserRouter([
   {
@@ -99,6 +100,11 @@ const router = createBrowserRouter([
         path: routePaths.automatisations,
         element: <AccountLineCategorization />,
         handle: { navKey: "automatisations" },
+      },
+      {
+        path: routePaths.stocks,
+        element: <StocksPage />,
+        handle: { navKey: "stocks" },
       },
       {
         path: "/kanban",

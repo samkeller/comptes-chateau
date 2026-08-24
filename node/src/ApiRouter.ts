@@ -4,6 +4,7 @@ import AccountRoutes from './modules/accounts/controllers/AccountController';
 import AccountScopedRoutes from './modules/accounts/controllers/AccountScopedRoutes';
 import NatureRoutes from './modules/accounts/controllers/NatureController'
 import KanbanRoutes from './modules/kanban/routes/KanbanRoutes'
+import StockRoutes from './modules/stocks/routes/StockRoutes'
 import UserRoutes from "./modules/core/controllers/UserController";
 import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
@@ -19,6 +20,7 @@ ApiRouter.use('/accounts/:accountId', AccountScopedRoutes)
 
 ApiRouter.use('/nature', NatureRoutes)
 ApiRouter.use('/kanban', KanbanRoutes)
+ApiRouter.use('/stocks', StockRoutes)
 ApiRouter.use('/users', UserRoutes)
 ApiRouter.use('/jobs', JobRoutes)
 ApiRouter.use('/categorization', AccountLineCategorizationRoutes)

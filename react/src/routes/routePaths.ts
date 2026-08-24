@@ -15,4 +15,5 @@ export const routePaths = {
     },
     setup: "/setup",
     automatisations: "/automatisations",
+    stocks: "/stocks",
 } as const;
