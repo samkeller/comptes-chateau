@@ -42,7 +42,7 @@ export default function AddAccountLineDialog() {
         refresh: () => Promise<void>;
     }>();
 
-    const [dateOperation, setDateOperation] = useState<string>("");
+const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(new Date()));
     const [isChecked, setIsChecked] = useState<boolean>(false);
     const [dateValeur, setDateValeur] = useState<string>("");
     const [operationLabel, setOperationLabel] = useState<string>("");
