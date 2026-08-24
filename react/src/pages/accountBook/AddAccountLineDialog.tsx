@@ -30,7 +30,7 @@ export default function AddAccountLineDialog() {
 
     const accountId = useAccountId();
     const { accountLineId } = useParams<{ accountLineId: string | "new" }>();
-    const [editingLine, setEditingLine] = useState<AccountLine | null>(null);
+    const isEditing = accountLineId && accountLineId !== "new";
     const navigate = useNavigate();
     /**
      * Permet de rafraichir la liste des lignes de compte après l'ajout ou la modification d'une ligne.
@@ -41,15 +41,15 @@ export default function AddAccountLineDialog() {
         refresh: () => Promise<void>;
     }>();
 
-    const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : parseDateToDDMMYYYY(new Date()));
-    const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
-    const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
-    const [operationLabel, setOperationLabel] = useState<string>(editingLine?.label || "");
+    const [dateOperation, setDateOperation] = useState<string>("");
+    const [isChecked, setIsChecked] = useState<boolean>(false);
+    const [dateValeur, setDateValeur] = useState<string>("");
+    const [operationLabel, setOperationLabel] = useState<string>("");
     const [suggestedOperations, setSuggestedOperations] = useState<AccountLineRule[]>([]);
-    const [natureId, setNatureId] = useState<number | null>(editingLine?.nature?.id || null);
-    const [posteId, setPosteId] = useState<number | null>(editingLine?.poste?.id || null);
-    const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
-    const [targetAccount, setTargetAccount] = useState<Account | null>(editingLine?.targetAccount || null);
+    const [natureId, setNatureId] = useState<number | null>(null);
+    const [posteId, setPosteId] = useState<number | null>(null);
+    const [amount, setAmount] = useState<number>(0);
+    const [targetAccount, setTargetAccount] = useState<Account | null>(null);
 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,9 +59,16 @@ export default function AddAccountLineDialog() {
     useEffect(() => {
         const fetchData = async () => {
             // Charge la ligne de compte si un ID est fourni et qu'il n'est pas "new"
-            if (accountLineId && accountLineId !== "new") {
+            if (isEditing) {
                 const line = await accountLineService.getAccountLine(accountId, parseInt(accountLineId));
-                setEditingLine(line);
+                setDateOperation(parseDateToDDMMYYYY(line.dateOperation));
+                setIsChecked(line.isChecked);
+                setDateValeur(line.dateValeur ? parseDateToDDMMYYYY(line.dateValeur) : "");
+                setOperationLabel(line.label);
+                setNatureId(line.nature?.id ?? null);
+                setPosteId(line.poste?.id ?? null);
+                setAmount((line.credit || 0) - (line.debit || 0));
+                setTargetAccount(line.targetAccount || null);
             }
 
             // Charge la liste des comptes pour le dropdown
@@ -71,7 +78,7 @@ export default function AddAccountLineDialog() {
         };
 
         fetchData();
-    }, [editingLine, accountId]);
+    }, [accountId, accountLineId]);
 
     const targetAccountOptions = accounts
         .filter((a) => a.id !== accountId)
@@ -83,7 +90,7 @@ export default function AddAccountLineDialog() {
         }
 
         const accountLine: Partial<AccountLine> = {
-            id: editingLine ? editingLine.id : 0,
+            id: accountLineId && accountLineId !== "new" ? parseInt(accountLineId) : 0,
             dateOperation: parseDDMMYYYYToDate(dateOperation),
             isChecked,
             dateValeur: isChecked ? (dateValeur ? parseDDMMYYYYToDate(dateValeur) : new Date()) : null,
@@ -101,8 +108,8 @@ export default function AddAccountLineDialog() {
             .then(() => {
                 showGlobalToast({
                     severity: "success",
-                    summary: editingLine ? "Dépense modifiée" : "Dépense ajoutée",
-                    detail: editingLine ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
+                    summary: accountLineId && accountLineId !== "new" ? "Dépense modifiée" : "Dépense ajoutée",
+                    detail: accountLineId && accountLineId !== "new" ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
                 });
                 navigate(`/${accountId}/accountBook`, {
                     replace: true
@@ -146,7 +153,7 @@ export default function AddAccountLineDialog() {
     const footer = (
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
-            <Button label={editingLine?.id ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
+            <Button label={isEditing ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
         </div>
     );
 
@@ -161,7 +168,7 @@ export default function AddAccountLineDialog() {
     return (
         <Dialog
             visible
-            header={editingLine?.id ? "Modifier une dépense" : "Ajouter une dépense"}
+            header={isEditing ? "Modifier une dépense" : "Ajouter une dépense"}
             footer={footer}
             style={{ width: isMobile || isTablet ? "90vw" : "60vw" }}
             onHide={hideDialog}

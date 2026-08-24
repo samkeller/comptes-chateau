@@ -40,7 +40,7 @@ const router = createBrowserRouter([
         handle: { navKey: "account-book" },
         children: [
           {
-            path: ":lineId",
+            path: ":accountLineId",
             element: <AddAccountLineDialog />,
           }
         ]
