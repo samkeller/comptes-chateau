@@ -5,7 +5,8 @@ import AccountLineService from "@/services/AccountLineService"
 import { Button, ButtonProps } from "primereact/button"
 import { ConfirmDialog } from "primereact/confirmdialog"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { generatePath, useNavigate } from "react-router-dom"
+import { routePaths } from "@/routes/routePaths"
 
 interface AccountBookActionsBodyProps {
     data: AccountLine,
@@ -63,7 +64,10 @@ export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: 
                 icon="pi pi-pencil"
                 tooltip="Modifier"
                 onClick={() => {
-                    navigate(`/${accountId}/accountBook/${data.id}`)
+                    navigate(generatePath(routePaths.account.accountBookDialog, {
+                        accountId: String(accountId),
+                        accountLineId: String(data.id),
+                    }))
                 }}
             ></Button>
             <Button

@@ -2,8 +2,9 @@ import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Button } from "primereact/button";
 import { ProgressBar } from "primereact/progressbar";
-import { useNavigate } from "react-router-dom";
+import { generatePath, useNavigate } from "react-router-dom";
 import { AccountOverviewModel } from "../../Index";
+import { routePaths } from "@/routes/routePaths";
 
 interface AccountOverviewProps {
     model: AccountOverviewModel;
@@ -23,7 +24,11 @@ export default function AccountOverview({ model }: AccountOverviewProps) {
 
     const navigateToAccount = (accountId: number, path: "dashboard" | "accountChecks") => {
         localStorageUtils.setActiveAccountId(accountId);
-        navigate(`/${accountId}/${path}`);
+        const paths = {
+            dashboard: routePaths.account.dashboard,
+            accountChecks: routePaths.account.accountChecks,
+        } as const;
+        navigate(generatePath(paths[path], { accountId: String(accountId) }));
     };
 
     return (

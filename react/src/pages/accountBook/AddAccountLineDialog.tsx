@@ -19,7 +19,8 @@ import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from
 import AccountLineCategorizationService from "@/services/AccountLineCategorizationService";
 import { AccountLineRule } from "@/interfaces/AccountLineRule";
 import { useAccountId } from "@/hooks/useAccountId";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { generatePath, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { routePaths } from "@/routes/routePaths";
 
 
 const accountService = new AccountService();
@@ -111,7 +112,9 @@ export default function AddAccountLineDialog() {
                     summary: accountLineId && accountLineId !== "new" ? "Dépense modifiée" : "Dépense ajoutée",
                     detail: accountLineId && accountLineId !== "new" ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
                 });
-                navigate(`/${accountId}/accountBook`, {
+                navigate(generatePath(routePaths.account.accountBook, {
+                    accountId: String(accountId),
+                }), {
                     replace: true
                 });
 

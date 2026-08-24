@@ -18,87 +18,101 @@ import UnifiedBudgetView from "@/pages/budget/UnifiedBudgetView";
 import RecurringExpenses from "@/pages/budget/recurringExpenses/RecurringExpenses";
 import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecurringExpenseDialog";
 import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
+import ProtectedLayout from "./ProtectedLayout";
+import { routePaths } from "./routePaths";
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Index />,
-    handle: { navKey: "home" },
-  },
-  {
-    path: "/:accountId",
-    element: <AccountScopedOutlet />, // Rafraichit tous les composants enfants lors du changement de compte
+    element: <ProtectedLayout />,
     children: [
       {
-        path: "dashboard",
-        element: <AccountDashboard />,
-        handle: { navKey: "account-dashboard" },
+        path: routePaths.home,
+        element: <Index />,
+        handle: { navKey: "home" },
       },
       {
-        path: "accountBook",
-        element: <AccountBook />,
-        handle: { navKey: "account-book" },
-        children: [
-          {
-            path: ":accountLineId",
-            element: <AddAccountLineDialog />,
-          }
-        ]
-      },
-      {
-        path: "accountChecks",
-        element: <AccountChecks />,
-        handle: { navKey: "account-checks" },
-      },
-      {
-        path: "budget",
-        element: <Budget />,
-        handle: { navKey: "account-budget" },
+        path: routePaths.account.root,
+        element: <AccountScopedOutlet />,
         children: [
           {
             index: true,
-            element: <Navigate to="overview" replace />,
+            element: <Navigate to="dashboard" replace />,
           },
           {
-            path: "overview",
-            element: <UnifiedBudgetView />,
+            path: "dashboard",
+            element: <AccountDashboard />,
+            handle: { navKey: "account-dashboard" },
           },
           {
-            path: "recurringExpenses",
-            element: <RecurringExpenses />,
+            path: "accountBook",
+            element: <AccountBook />,
+            handle: { navKey: "account-book" },
             children: [
               {
-                path: ":expenseId",
-                element: <AddRecurringExpenseDialog />,
+                path: ":accountLineId",
+                element: <AddAccountLineDialog />,
               }
             ]
           },
           {
-            path: "budgetLines",
-            element: <BudgetItemsTable />,
+            path: "accountChecks",
+            element: <AccountChecks />,
+            handle: { navKey: "account-checks" },
+          },
+          {
+            path: "budget",
+            element: <Budget />,
+            handle: { navKey: "account-budget" },
+            children: [
+              {
+                index: true,
+                element: <Navigate to="overview" replace />,
+              },
+              {
+                path: "overview",
+                element: <UnifiedBudgetView />,
+              },
+              {
+                path: "recurringExpenses",
+                element: <RecurringExpenses />,
+                children: [
+                  {
+                    path: ":expenseId",
+                    element: <AddRecurringExpenseDialog />,
+                  }
+                ]
+              },
+              {
+                path: "budgetLines",
+                element: <BudgetItemsTable />,
+              },
+            ]
           },
         ]
       },
-
+      {
+        path: routePaths.setup,
+        element: <Setup />,
+        handle: { navKey: "setup" },
+      },
+      {
+        path: routePaths.automatisations,
+        element: <AccountLineCategorization />,
+        handle: { navKey: "automatisations" },
+      },
+      {
+        path: "/kanban",
+        element: <KanbanPage />,
+        handle: { navKey: "kanban" },
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      }
     ]
   },
   {
-    path: "/setup",
-    element: <Setup />,
-    handle: { navKey: "setup" },
-  },
-  {
-    path: "automatisations",
-    element: <AccountLineCategorization />,
-    handle: { navKey: "automatisations" },
-  },
-  {
-    path: "/kanban",
-    element: <KanbanPage />,
-    handle: { navKey: "kanban" },
-  },
-  {
-    path: "/auth",
+    path: routePaths.auth,
     element: <AuthPage />,
   },
   {

@@ -21,7 +21,8 @@ import { useAccountId } from "../../hooks/useAccountId"
 import AccountBookActionsBody from "./molecules/AccountBookActionsBody"
 import { InputNumber } from "primereact/inputnumber"
 import { toMonetaryAmount } from "@/utils/NumberUtils"
-import { Outlet, useNavigate } from "react-router-dom"
+import { generatePath, Outlet, useNavigate } from "react-router-dom"
+import { routePaths } from "@/routes/routePaths"
 
 const accountLineService = new AccountLineService()
 
@@ -82,7 +83,10 @@ export default function AccountBook() {
             <div className="flex justify-end mb-6">
                 <div className="flex flex-wrap justify-end gap-2">
                     <AccountBookExportButtons accountId={accountId} />
-                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => navigate(`/${accountId}/accountBook/new`)} />
+                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => navigate(generatePath(routePaths.account.accountBookDialog, {
+                        accountId: String(accountId),
+                        accountLineId: "new",
+                    }))} />
                 </div>
             </div>
             <Card>

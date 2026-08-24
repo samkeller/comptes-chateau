@@ -2,9 +2,10 @@ import { Menu } from "primereact/menu";
 import { MenuItem } from "primereact/menuitem";
 import { Button } from "primereact/button";
 import { useMemo, useRef } from "react";
-import { matchPath, useLocation, useMatches } from "react-router-dom";
+import { generatePath, matchPath, useLocation, useMatches } from "react-router-dom";
 import Account from "../../interfaces/Account";
 import { classNames } from "primereact/utils";
+import { routePaths } from "../../routes/routePaths";
 
 interface AppNavigationMenuProps {
     navigateTo: (path: string) => void;
@@ -50,7 +51,9 @@ export default function AppNavigationMenu({
 
     const resolvedAccountId = activeAccountId ?? (routeAccountId ? Number(routeAccountId) : null) ?? accounts[0]?.id ?? null;
 
-    const accountPath = (suffix: string): string => resolvedAccountId ? `/${resolvedAccountId}/${suffix}` : "/";
+    const accountPath = (path: string): string => resolvedAccountId
+        ? generatePath(path, { accountId: String(resolvedAccountId) })
+        : routePaths.home;
     const isOnAccountDashboard = activeNavKey === "account-dashboard";
     const isOnAccountBook = activeNavKey === "account-book";
     const isOnAccountChecks = activeNavKey === "account-checks";
@@ -121,25 +124,25 @@ export default function AppNavigationMenu({
                                     label: "Dashboard",
                                     icon: "pi pi-chart-line",
                                     className: "font-bold " + (isOnAccountDashboard ? " bg-surface-200" : ""),
-                                    command: () => navigateTo(accountPath("dashboard")),
+                                    command: () => navigateTo(accountPath(routePaths.account.dashboard)),
                                 },
                                 {
                                     label: "Opérations",
                                     icon: "pi pi-book",
                                     className: (isOnAccountBook ? " bg-surface-200" : ""),
-                                    command: () => navigateTo(accountPath("accountBook")),
+                                    command: () => navigateTo(accountPath(routePaths.account.accountBook)),
                                 },
                                 {
                                     label: "Vérifications",
                                     icon: "pi pi-check-square",
                                     className: (isOnAccountChecks ? " bg-surface-200" : ""),
-                                    command: () => navigateTo(accountPath("accountChecks"))
+                                    command: () => navigateTo(accountPath(routePaths.account.accountChecks))
                                 },
                                 {
                                     label: "Budget",
                                     icon: "pi pi-calculator",
                                     className: isOnAccountBudget ? "bg-surface-200" : undefined,
-                                    command: () => navigateTo(accountPath("budget"))
+                                    command: () => navigateTo(accountPath(routePaths.account.budget))
                                 },
 
                             ]}
