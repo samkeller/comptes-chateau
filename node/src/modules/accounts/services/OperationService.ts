@@ -22,10 +22,29 @@ const lazyTableQueryParserOptions = {
 };
 
 export default class OperationService {
-
+    
     private accountLineRepo = AppDataSource.getRepository(AccountLine);
 
     private userXpService = new UserXpService()
+
+    /**
+     *  Récupère une ligne de compte spécifique pour un compte donné.
+     * @param accountId 
+     * @param accountLineId 
+     * @returns 
+     */
+async getById(accountId: number, accountLineId: number) {
+        const accountLine = await this.accountLineRepo.findOne({
+            where: { id: accountLineId, account: { id: accountId } },
+            relations: { account: true, targetAccount: true, nature: true, poste: true }
+        });
+
+        if (!accountLine) {
+            throw notFound("OPERATION_NOT_FOUND", "Operation not found.");
+        }
+
+        return accountLine;
+    }
 
     private validateTransferAmounts(line: SaveOperationPayload): void {
         const debit = Number(line.debit ?? 0);

@@ -9,7 +9,7 @@ import { useGlobalToast } from "../context/GlobalToastContext";
 import { SelectButton } from "primereact/selectbutton";
 import { useConnectedUser } from "../context/ConnectedUserContext";
 import CatsChase from "@/components/atoms/Sprite/CatsChase";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 
 export default function AuthPage() {
     const [username, setUsername] = useState<"Gaelle" | "Sam" | "70ul0u53&b3rl10z">("Gaelle");

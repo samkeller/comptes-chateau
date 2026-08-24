@@ -1,7 +1,7 @@
 import UserAvatar from "@/components/atoms/UserAvatar";
 import { useConnectedUser } from "@/context/ConnectedUserContext";
 import { useXpFeedbackPulse } from "@/context/XpFeedbackContext";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { getUserFullProgress } from "@/utils/levelProgress";
 import { ProgressBar } from "primereact/progressbar";
 

@@ -20,6 +20,19 @@ OperationRoutes.get('/export', async (req: Request, res: Response) => {
     res.json(data);
 });
 
+OperationRoutes.get('/unchecked', async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const data = await operationService.getAllUncheckedLines(accountId);
+    res.json(data);
+});
+
+OperationRoutes.get('/:id', validateParams(IdParamSchema), async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const id = Number(req.params.id);
+    const data = await operationService.getById(accountId, id);
+    res.json(data);
+});
+
 OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const userId = requireUserId(req)
@@ -31,10 +44,12 @@ OperationRoutes.post('/', validateBody(SaveOperationSchema), async (req: Request
 OperationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveOperationSchema), async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const userId = requireUserId(req)
+    const id = Number(req.params.id);
+
     const accountLine = await operationService.save(
         {
             ...req.body,
-            id: Number(req.params.id)
+            id: id
         },
         accountId,
         userId
@@ -53,12 +68,6 @@ OperationRoutes.post('/check-batch', validateBody(OperationBatchCheckSchema), as
 
     const result = await operationService.checkBatch(req.body, accountId, userId);
     res.json(result);
-});
-
-OperationRoutes.get('/unchecked', async (req: Request, res: Response) => {
-    const accountId = getAccountIdFromParams(req.params);
-    const data = await operationService.getAllUncheckedLines(accountId);
-    res.json(data);
 });
 
 OperationRoutes.delete('/:id', validateParams(IdParamSchema), async (req: Request, res: Response) => {

@@ -3,6 +3,8 @@ import { Button, ButtonProps } from "primereact/button";
 import { Card } from "primereact/card";
 import { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
+import { generatePath } from "react-router-dom";
+import { routePaths } from "@/routes/routePaths";
 
 interface HomeGlobalActionsCardProps {
     assignedKanbanTasksCount: number
@@ -66,7 +68,9 @@ export default function HomeGlobalActionsCard({ assignedKanbanTasksCount, totalO
                     {
                         label: "Vérifier",
                         icon: "pi pi-arrow-right",
-                        onClick: () => navigate(`/${localStorageUtils.getActiveAccountId()}/accountChecks`),
+                        onClick: () => navigate(generatePath(routePaths.account.accountChecks, {
+                            accountId: String(localStorageUtils.getActiveAccountId()),
+                        })),
                     })
             }
         </Card>

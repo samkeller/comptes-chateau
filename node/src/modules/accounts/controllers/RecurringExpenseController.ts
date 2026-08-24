@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import RecurringExpenseService from "../services/RecurringExpenseService";
 import { SaveRecurringExpenseSchema } from "../dto/RecurringExpenseDtos";
-import { validateBody } from "../../core/middlewares/validate";
+import { IdParamSchema, validateBody, validateParams } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
 import requireUserId from "../utils/requireUserId";
 
@@ -12,6 +12,13 @@ RecurringExpenseRoutes.get('/', async (req: Request, res: Response) => {
     const accountId = getAccountIdFromParams(req.params);
     const expenses = await recurringExpenseService.getAllRecurringExpenses(accountId);
     res.json(expenses);
+});
+
+RecurringExpenseRoutes.get('/:id', validateParams(IdParamSchema) ,async (req: Request, res: Response) => {
+    const accountId = getAccountIdFromParams(req.params);
+    const id = Number(req.params.id);
+    const expense = await recurringExpenseService.getById(accountId, id);
+    res.json(expense);
 });
 
 RecurringExpenseRoutes.post('/save', validateBody(SaveRecurringExpenseSchema), async (req: Request, res: Response) => {

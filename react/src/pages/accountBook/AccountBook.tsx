@@ -8,10 +8,9 @@ import { InputText } from "primereact/inputtext"
 import { Calendar } from "primereact/calendar"
 import AccountLineNatureDropdown from "../../components/atoms/accountLine/AccountLineNatureDropdown";
 import AccountLinePosteDropdown from "../../components/atoms/accountLine/AccountLinePosteDropdown";
-import AddAccountLineDialog from "./AddAccountLineDialog"
 import { PageTemplate } from "../PageTemplate"
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel"
-import AccountingService from "../../services/AccountingService"
+import AccountLineService from "../../services/AccountLineService"
 import { FilterMatchMode, SortOrder } from "primereact/api"
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Tooltip } from "primereact/tooltip"
@@ -22,15 +21,18 @@ import { useAccountId } from "../../hooks/useAccountId"
 import AccountBookActionsBody from "./molecules/AccountBookActionsBody"
 import { InputNumber } from "primereact/inputnumber"
 import { toMonetaryAmount } from "@/utils/NumberUtils"
+import { generatePath, Outlet, useNavigate } from "react-router-dom"
+import { routePaths } from "@/routes/routePaths"
+
+const accountLineService = new AccountLineService()
 
 export default function AccountBook() {
     const accountId = useAccountId()
+    const navigate = useNavigate()
 
     const [accountLines, setAccountLines] = useState<AccountLine[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [totalRecords, setTotalRecords] = useState<number>(0)
-
-    const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
 
     const [lazyState, setLazyState] = useState<DataTableLazyState>({
         first: 0,
@@ -49,11 +51,6 @@ export default function AccountBook() {
         }
     });
 
-    // Ligne actuellement modifiée (dialog).
-    const [editingLine, setEditingLine] = useState<AccountLine | null>(null)
-
-
-
     useEffect(() => {
         loadAccountLines();
     }, [lazyState, accountId]);
@@ -61,8 +58,7 @@ export default function AccountBook() {
     const loadAccountLines = async () => {
         setLoading(true)
         try {
-            const service = new AccountingService()
-            const lines = await service.getAccountLinesLazy(accountId, lazyState)
+            const lines = await accountLineService.getAccountLinesLazy(accountId, lazyState)
             setAccountLines(lines.data)
             setTotalRecords(lines.totalRecords)
         } finally {
@@ -80,21 +76,17 @@ export default function AccountBook() {
 
     return (
         <PageTemplate pageTitle="Opérations">
-            {
-                showAddDialog && <AddAccountLineDialog
-                    accountId={accountId}
-                    editingLine={editingLine}
-                    hideDialog={() => {
-                        setEditingLine(null)
-                        setShowAddDialog(false)
-                    }}
-                    refresh={loadAccountLines}
-                />
-            }
+            {/* Dialogue d'édition */}
+            <Outlet
+                context={{ refresh: loadAccountLines }}
+            />
             <div className="flex justify-end mb-6">
                 <div className="flex flex-wrap justify-end gap-2">
                     <AccountBookExportButtons accountId={accountId} />
-                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                    <Button label="Ajouter une dépense" icon="pi pi-plus" onClick={() => navigate(generatePath(routePaths.account.accountBookDialog, {
+                        accountId: String(accountId),
+                        accountLineId: "new",
+                    }))} />
                 </div>
             </div>
             <Card>
@@ -277,9 +269,9 @@ export default function AccountBook() {
                         body={(data: AccountLine) => {
                             return <AccountBookActionsBody
                                 data={data}
-                                setEditingLine={setEditingLine}
-                                setShowAddDialog={setShowAddDialog}
-                                refresh={loadAccountLines}
+                                // TODO: Faire quelque chose de plus propre que de recharger toute la table après une suppression ou un duplicata.
+                                onDelete={() => loadAccountLines()}
+                                onDuplicate={() => loadAccountLines()}
                             />
                         }}
                     />

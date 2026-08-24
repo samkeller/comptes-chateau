@@ -4,7 +4,6 @@ import RecurringExpenseService from "../../../services/RecurringExpenseService";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import AddRecurringExpenseDialog from "./AddRecurringExpenseDialog";
 import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { Message } from "primereact/message";
 import { formatDistanceToNow } from "@/utils/DatesUtils";
@@ -12,15 +11,13 @@ import { Tooltip } from "primereact/tooltip";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import JobService from "@/services/JobService";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAccountId } from "@/hooks/useAccountId";
 
-interface RecurringExpensesProps {
-    accountId: number;
-}
-
-export default function RecurringExpenses({ accountId }: RecurringExpensesProps) {
+export default function RecurringExpenses() {
+    const accountId = useAccountId();
+    const navigate = useNavigate();
     const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
-    const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
-    const [editingExpense, setEditingExpense] = useState<RecurringExpense | null>(null)
     const showGlobalToast = useGlobalToast();
     const jobService = new JobService()
 
@@ -41,10 +38,7 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
                 <Button
                     rounded text icon="pi pi-pencil" className="p-1"
                     tooltip="Modifier"
-                    onClick={() => {
-                        setEditingExpense(data)
-                        setShowAddDialog(true)
-                    }}
+                    onClick={() => navigate(`${data.id}`)}
                 ></Button>
             </div>
         )
@@ -73,22 +67,11 @@ export default function RecurringExpenses({ accountId }: RecurringExpensesProps)
 
     return (
         <>
-            {
-                showAddDialog && <AddRecurringExpenseDialog
-                    key={editingExpense?.id ?? 'new'}
-                    accountId={accountId}
-                    editingExpense={editingExpense}
-                    hideDialog={() => {
-                        setEditingExpense(null)
-                        setShowAddDialog(false)
-                    }}
-                    refresh={loadRecurringExpenses}
-                />
-            }
+            <Outlet context={{ refresh: loadRecurringExpenses }} />
             <div className="flex-1">
                 <Message text="Les dépenses récurrentes sont automatiquement ajoutées comme opérations à une fréquence donnée." className="mb-2" />
                 <div className="flex justify-end mb-6 gap-4">
-                    <Button label="Ajouter" icon="pi pi-plus" onClick={() => setShowAddDialog(true)} />
+                    <Button label="Ajouter" icon="pi pi-plus" onClick={() => navigate('new')} />
                     <Button
                         severity="danger" text icon="pi pi-server"
                         tooltip="⚠️ Déclencher manuellement les crons"

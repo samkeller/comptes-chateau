@@ -9,7 +9,7 @@ import { compareTaskPriority } from "./atoms/PriorityFlag"
 import { CreateKanbanTaskDto } from "../../services/kanban/dto/CreateKanbanTaskDto"
 import PriorityFlagSelect from "./atoms/PriorityFlagSelect"
 import { useDroppable } from "@dnd-kit/core"
-import { useScreen } from "@/utils/hooks/useScreen"
+import { useScreen } from "@/hooks/useScreen"
 import { ScrollPanel } from "primereact/scrollpanel"
 
 interface KanbanColumnProps {

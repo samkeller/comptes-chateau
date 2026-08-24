@@ -7,10 +7,7 @@ import { Tag } from "primereact/tag";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-
-interface UnifiedBudgetViewProps {
-    accountId: number;
-}
+import { useAccountId } from "../../hooks/useAccountId";
 
 interface GroupedData {
     posteLabel: string;
@@ -21,7 +18,8 @@ interface GroupedData {
     percentage: number;
 }
 
-export default function UnifiedBudgetView({ accountId }: UnifiedBudgetViewProps) {
+export default function UnifiedBudgetView() {
+    const accountId = useAccountId();
     const [lines, setLines] = useState<UnifiedBudgetLine[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 

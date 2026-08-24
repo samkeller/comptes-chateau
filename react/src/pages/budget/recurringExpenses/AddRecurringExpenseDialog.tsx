@@ -14,22 +14,26 @@ import { Calendar } from 'primereact/calendar';
 import { useGlobalToast } from '../../../context/GlobalToastContext';
 import AccountLineNatureService from '../../../services/AccountLineNatureService';
 import AccountLinePosteService from '../../../services/AccountLinePosteService';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useAccountId } from '@/hooks/useAccountId';
 
-interface AddRecurringExpenseDialogProps {
-    accountId: number;
-    editingExpense: RecurringExpense | null;
-    hideDialog: () => void;
-    refresh: () => void;
-}
+const recurringExpenseService = new RecurringExpenseService();
 
-export default function AddRecurringExpenseDialog({ accountId, editingExpense, hideDialog, refresh }: AddRecurringExpenseDialogProps) {
-    const [label, setLabel] = useState<string>(editingExpense?.label || '');
-    const [natureId, setNatureId] = useState<number | null>(editingExpense?.nature?.id ?? null);
-    const [posteId, setPosteId] = useState<number | null>(editingExpense?.poste?.id ?? null);
-    const [solde, setSolde] = useState<number>(editingExpense?.solde || 0);
-    const [isActive, setIsActive] = useState<boolean>(editingExpense?.isActive ?? true);
-    const [nextOccurrence, setNextOccurrence] = useState<Date>(editingExpense?.nextOccurrence || new Date());
-    const [frequency, setFrequency] = useState<RecurringExpenseFrequency>(editingExpense?.frequency ?? "monthly");
+export default function AddRecurringExpenseDialog() {
+    const accountId = useAccountId();
+    const navigate = useNavigate();
+    const { expenseId } = useParams<{ expenseId: string }>();
+    const { refresh } = useOutletContext<{ refresh: () => void }>();
+
+    const [editingExpense, setEditingExpense] = useState<RecurringExpense | null>(null);
+
+    const [label, setLabel] = useState<string>('');
+    const [natureId, setNatureId] = useState<number | null>(null);
+    const [posteId, setPosteId] = useState<number | null>(null);
+    const [solde, setSolde] = useState<number>(0);
+    const [isActive, setIsActive] = useState<boolean>(true);
+    const [nextOccurrence, setNextOccurrence] = useState<Date>(new Date());
+    const [frequency, setFrequency] = useState<RecurringExpenseFrequency>("monthly");
 
 
     const [loading, setLoading] = useState(true);
@@ -40,25 +44,31 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
         const posteService = new AccountLinePosteService();
 
         void Promise.all([
+            expenseId && expenseId !== "new" ? recurringExpenseService.getRecurringExpense(accountId, parseInt(expenseId, 10)) : Promise.resolve(null),
             natureService.getAllNatures(),
             posteService.getAllAccountPostes(accountId)
         ])
-            .then(([naturesData, postesData]) => {
-                if (!editingExpense) {
+            .then(([expense, naturesData, postesData]) => {
+                setEditingExpense(expense);
+                setLabel(expense?.label ?? '');
+                setSolde(expense?.solde ?? 0);
+                setIsActive(expense?.isActive ?? true);
+                setNextOccurrence(expense?.nextOccurrence ?? new Date());
+                setFrequency(expense?.frequency ?? "monthly");
+
+                if (!expense) {
                     setNatureId(naturesData[0]?.id ?? null);
                     setPosteId(postesData[0]?.id ?? null);
                     return;
                 }
 
-                setNatureId(editingExpense.nature?.id ?? null);
-                setPosteId(editingExpense.poste?.id ?? null);
+                setNatureId(expense.nature?.id ?? null);
+                setPosteId(expense.poste?.id ?? null);
             })
             .finally(() => {
                 setLoading(false);
             });
-    }, [editingExpense, accountId]);
-
-
+    }, [expenseId, accountId]);
 
     const handleSubmit = () => {
         if (!label || !natureId || !posteId) return;
@@ -76,8 +86,8 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
 
         new RecurringExpenseService()
             .saveAccountRecurringExpense(accountId, expense)
+            .then(() => refresh())
             .then(() => {
-                refresh();
                 showGlobalToast({
                     severity: 'success',
                     summary: editingExpense ? "Dépense récurrente modifiée" : "Dépense récurrente ajoutée",
@@ -86,6 +96,8 @@ export default function AddRecurringExpenseDialog({ accountId, editingExpense, h
                 hideDialog();
             })
     };
+
+    const hideDialog = () => navigate(-1);
 
     const footer = <div>
         <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />

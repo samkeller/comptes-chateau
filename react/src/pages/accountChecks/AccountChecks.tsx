@@ -4,7 +4,7 @@ import { Card } from "primereact/card";
 import { DataTable, DataTableSelectionMultipleChangeEvent } from "primereact/datatable";
 import { Column } from "primereact/column";
 import AccountLine from "../../interfaces/AccountLine";
-import AccountingService from "../../services/AccountingService";
+import AccountLineService from "../../services/AccountLineService";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
@@ -35,7 +35,7 @@ export default function AccountChecks() {
 
     const loadUncheckedLines = async () => {
         setLoading(true);
-        new AccountingService().getAllUncheckedLines(accountId)
+        new AccountLineService().getAllUncheckedLines(accountId)
             .then(setAccountLines)
             .finally(() => {
                 setLoading(false);
@@ -120,7 +120,7 @@ export default function AccountChecks() {
         }
 
         setSubmitting(true);
-        new AccountingService()
+        new AccountLineService()
             .checkBatch(
                 accountId,
                 selectedLines.map((line) => ({

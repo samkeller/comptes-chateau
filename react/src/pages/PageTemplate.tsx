@@ -14,8 +14,9 @@ import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
 import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import Sprite from "@/components/atoms/Sprite/Sprite";
+import { routePaths } from "../routes/routePaths";
 
 const localStorageUtils = new LocalStorageUtils();
 
@@ -59,7 +60,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
   const logout = async () => {
     await new AuthService().logout();
     clearUser();
-    navigate("/auth", { replace: true });
+    navigate(routePaths.auth, { replace: true });
     showGlobalToast({
       severity: "info",
       detail: <div className="flex flex-col gap-1 ">
@@ -88,11 +89,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         !isMobile && <img src={ChocoChou} className="h-12" alt="Chocosous" />
       }
       <h1 className={"text-xl md:text-2xl m-0 font-semibold1 md:break-all" + (isMobile ? " text-center" : " whitespace-nowrap overflow-hidden text-ellipsis")}>
-        {
-          isMobile ?
-            `${activeAccountId && accounts.find(account => account.id === activeAccountId)?.label}` :
-            `Chocosous ${activeAccountId && `- ${accounts.find(account => account.id === activeAccountId)?.label}`}`
-        }
+        {pageTitle}
       </h1>
     </button>
   )

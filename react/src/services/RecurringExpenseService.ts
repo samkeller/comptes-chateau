@@ -16,6 +16,17 @@ class RecurringExpenseService extends BaseService {
     }
 
     /**
+     * Get a specific recurring expense for a given account.
+     * @param accountId - The account ID
+     * @param expenseId - The recurring expense ID
+     */
+    getRecurringExpense(accountId: number, expenseId: number): Promise<RecurringExpense> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/recurring-expenses/${expenseId}`).then(response => {
+            return new RecurringExpense(response.data)
+        })
+    }
+
+    /**
      * Save (create or update) a recurring expense for a specific account.
      * @param accountId - The account ID
      * @param expense - The recurring expense data

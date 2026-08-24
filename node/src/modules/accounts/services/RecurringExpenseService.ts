@@ -25,6 +25,13 @@ export default class RecurringExpenseService {
         })
     }
 
+    async getById(accountId: number, id: number) {
+        return this.recurringExpenseRepo.findOne({
+            where: { id, accountId },
+            relations: ['nature', 'poste']
+        })
+    }
+
     async getAllRecurringExpensesBefore(date: Date) {
         return this.recurringExpenseRepo.find({
             where: {

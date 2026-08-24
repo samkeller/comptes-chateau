@@ -1,28 +1,32 @@
 import { useGlobalToast } from "@/context/GlobalToastContext"
 import { useAccountId } from "@/hooks/useAccountId"
 import AccountLine from "@/interfaces/AccountLine"
-import AccountingService from "@/services/AccountingService"
+import AccountLineService from "@/services/AccountLineService"
 import { Button, ButtonProps } from "primereact/button"
 import { ConfirmDialog } from "primereact/confirmdialog"
 import { useState } from "react"
+import { generatePath, useNavigate } from "react-router-dom"
+import { routePaths } from "@/routes/routePaths"
 
 interface AccountBookActionsBodyProps {
-    data: AccountLine
-    setEditingLine: (line: AccountLine) => void
-    setShowAddDialog: (show: boolean) => void
-    refresh: () => void
+    data: AccountLine,
+    onDelete?: (accountLineId: number) => void,
+    onDuplicate?: (accountLineId: number) => void,
 }
 
-export default function AccountBookActionsBody({ data, setEditingLine, setShowAddDialog, refresh }: AccountBookActionsBodyProps) {
+const accountService = new AccountLineService();
+
+export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: AccountBookActionsBodyProps) {
     const accountId = useAccountId()
-    const accountService = new AccountingService();
+    const navigate = useNavigate()
     const showGlobalToast = useGlobalToast();
+    
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const duplicateLine = () => {
         accountService
             .duplicateLine(accountId, data.id)
-            .then(() => refresh());
+            .then(() => onDuplicate?.(data.id));
     }
 
     const confirmLineDeletion = () => {
@@ -33,7 +37,7 @@ export default function AccountBookActionsBody({ data, setEditingLine, setShowAd
                     severity: 'success',
                     summary: 'Suppression confirmée',
                 });
-                refresh();
+                onDelete?.(data.id);
             });
     }
 
@@ -60,8 +64,10 @@ export default function AccountBookActionsBody({ data, setEditingLine, setShowAd
                 icon="pi pi-pencil"
                 tooltip="Modifier"
                 onClick={() => {
-                    setEditingLine(data)
-                    setShowAddDialog(true)
+                    navigate(generatePath(routePaths.account.accountBookDialog, {
+                        accountId: String(accountId),
+                        accountLineId: String(data.id),
+                    }))
                 }}
             ></Button>
             <Button

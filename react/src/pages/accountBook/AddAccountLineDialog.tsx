@@ -10,36 +10,47 @@ import AccountLine from "../../interfaces/AccountLine";
 import Account from "../../interfaces/Account";
 import AccountLineNatureDropdown from "../../components/atoms/accountLine/AccountLineNatureDropdown";
 import AccountLinePosteDropdown from "@/components/atoms/accountLine/AccountLinePosteDropdown";
-import AccountingService from "../../services/AccountingService";
+import AccountLineService from "../../services/AccountLineService";
 import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
-import { useScreen } from "@/utils/hooks/useScreen";
+import { useScreen } from "@/hooks/useScreen";
 import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from "primereact/autocomplete";
 import AccountLineCategorizationService from "@/services/AccountLineCategorizationService";
 import { AccountLineRule } from "@/interfaces/AccountLineRule";
+import { useAccountId } from "@/hooks/useAccountId";
+import { generatePath, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { routePaths } from "@/routes/routePaths";
 
-interface AddAccountLineDialogProps {
-    accountId: number;
-    editingLine: AccountLine | null;
-    hideDialog: () => void;
-    refresh: () => void;
-}
 
 const accountService = new AccountService();
 const accountLineCategorizationService = new AccountLineCategorizationService();
-const accountingService = new AccountingService()
+const accountLineService = new AccountLineService()
 
-export default function AddAccountLineDialog({ accountId, editingLine, hideDialog, refresh }: AddAccountLineDialogProps) {
-    const [dateOperation, setDateOperation] = useState<string>(editingLine ? parseDateToDDMMYYYY(editingLine.dateOperation) : parseDateToDDMMYYYY(new Date()));
-    const [isChecked, setIsChecked] = useState<boolean>(editingLine?.isChecked ?? false);
-    const [dateValeur, setDateValeur] = useState<string>(editingLine && editingLine.dateValeur ? parseDateToDDMMYYYY(editingLine.dateValeur) : "");
-    const [operationLabel, setOperationLabel] = useState<string>(editingLine?.label || "");
+export default function AddAccountLineDialog() {
+
+    const accountId = useAccountId();
+    const { accountLineId } = useParams<{ accountLineId: string | "new" }>();
+    const isEditing = accountLineId && accountLineId !== "new";
+    const navigate = useNavigate();
+    /**
+     * Permet de rafraichir la liste des lignes de compte après l'ajout ou la modification d'une ligne.
+     * Cette fonction est fournie par le composant parent via le contexte de l'outlet.
+     * Elle est utilisée pour déclencher un rafraichissement de la liste des lignes de compte après l'ajout ou la modification d'une ligne.
+     */
+    const { refresh } = useOutletContext<{
+        refresh: () => Promise<void>;
+    }>();
+
+const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(new Date()));
+    const [isChecked, setIsChecked] = useState<boolean>(false);
+    const [dateValeur, setDateValeur] = useState<string>("");
+    const [operationLabel, setOperationLabel] = useState<string>("");
     const [suggestedOperations, setSuggestedOperations] = useState<AccountLineRule[]>([]);
-    const [natureId, setNatureId] = useState<number | null>(editingLine?.nature?.id || null);
-    const [posteId, setPosteId] = useState<number | null>(editingLine?.poste?.id || null);
-    const [amount, setAmount] = useState<number>((editingLine?.credit || 0) - (editingLine?.debit || 0));
-    const [targetAccount, setTargetAccount] = useState<Account | null>(editingLine?.targetAccount || null);
+    const [natureId, setNatureId] = useState<number | null>(null);
+    const [posteId, setPosteId] = useState<number | null>(null);
+    const [amount, setAmount] = useState<number>(0);
+    const [targetAccount, setTargetAccount] = useState<Account | null>(null);
 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,19 +58,32 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
     const { isMobile, isTablet } = useScreen();
 
     useEffect(() => {
-        Promise.all([
-            accountService.getAllAccounts()
-        ]).then(([accountsData]) => {
-            setAccounts(accountsData);
+        const fetchData = async () => {
+            // Charge la ligne de compte si un ID est fourni et qu'il n'est pas "new"
+            if (isEditing) {
+                const line = await accountLineService.getAccountLine(accountId, parseInt(accountLineId));
+                setDateOperation(parseDateToDDMMYYYY(line.dateOperation));
+                setIsChecked(line.isChecked);
+                setDateValeur(line.dateValeur ? parseDateToDDMMYYYY(line.dateValeur) : "");
+                setOperationLabel(line.label);
+                setNatureId(line.nature?.id ?? null);
+                setPosteId(line.poste?.id ?? null);
+                setAmount((line.credit || 0) - (line.debit || 0));
+                setTargetAccount(line.targetAccount || null);
+            }
+
+            // Charge la liste des comptes pour le dropdown
+            const accounts = await accountService.getAllAccounts();
+            setAccounts(accounts);
             setLoading(false);
-        });
-    }, [editingLine, accountId]);
+        };
+
+        fetchData();
+    }, [accountId, accountLineId]);
 
     const targetAccountOptions = accounts
         .filter((a) => a.id !== accountId)
         .map((value) => ({ label: value.label, value }));
-
-
 
     const handleSubmit = () => {
         if (!dateOperation) {
@@ -67,7 +91,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
         }
 
         const accountLine: Partial<AccountLine> = {
-            id: editingLine ? editingLine.id : 0,
+            id: accountLineId && accountLineId !== "new" ? parseInt(accountLineId) : 0,
             dateOperation: parseDDMMYYYYToDate(dateOperation),
             isChecked,
             dateValeur: isChecked ? (dateValeur ? parseDDMMYYYYToDate(dateValeur) : new Date()) : null,
@@ -79,16 +103,21 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
             targetAccount: targetAccount ?? null,
         };
 
-        accountingService
+        accountLineService
             .saveAccountLine(accountId, accountLine)
+            .then(() => refresh()) // Rafraichit la liste des lignes de compte après l'ajout ou la modification
             .then(() => {
-                refresh();
                 showGlobalToast({
                     severity: "success",
-                    summary: editingLine ? "Dépense modifiée" : "Dépense ajoutée",
-                    detail: editingLine ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
+                    summary: accountLineId && accountLineId !== "new" ? "Dépense modifiée" : "Dépense ajoutée",
+                    detail: accountLineId && accountLineId !== "new" ? "La dépense a été modifiée avec succès." : "La dépense a été ajoutée avec succès."
                 });
-                hideDialog();
+                navigate(generatePath(routePaths.account.accountBook, {
+                    accountId: String(accountId),
+                }), {
+                    replace: true
+                });
+
             })
     };
 
@@ -119,10 +148,15 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
         }
     }
 
+    /**
+     *  Masque le dialogue d'ajout/modification d'une ligne de compte.
+     */
+    const hideDialog = () => navigate(-1)
+
     const footer = (
         <div>
             <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
-            <Button label={editingLine?.id ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
+            <Button label={isEditing ? "Modifier" : "Ajouter"} icon="pi pi-check" onClick={handleSubmit} />
         </div>
     );
 
@@ -137,7 +171,7 @@ export default function AddAccountLineDialog({ accountId, editingLine, hideDialo
     return (
         <Dialog
             visible
-            header={editingLine?.id ? "Modifier une dépense" : "Ajouter une dépense"}
+            header={isEditing ? "Modifier une dépense" : "Ajouter une dépense"}
             footer={footer}
             style={{ width: isMobile || isTablet ? "90vw" : "60vw" }}
             onHide={hideDialog}

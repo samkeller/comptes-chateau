@@ -15,7 +15,7 @@ export interface CheckBatchInput {
     dateValeur: Date;
 }
 
-class AccountingService extends BaseService {
+class AccountLineService extends BaseService {
 
     /**
      * Fetch account lines for a specific account with lazy loading.
@@ -98,25 +98,35 @@ class AccountingService extends BaseService {
     }
 
     /**
+     * Récupères une ligne de compte spécifique pour un compte donné.
+     * @param accountId - L'ID du compte
+     * @param accountLineId - L'ID de la ligne de compte
+     */
+    getAccountLine(accountId: number, accountLineId: number): Promise<AccountLine> {
+        return axios.get(`${this.apiUrl}/accounts/${accountId}/operations/${accountLineId}`)
+            .then((response) => new AccountLine(response.data))
+    }
+
+    /**
      * Delete an account line for a specific account.
      * @param accountId 
-     * @param lineId 
+     * @param accountLineId 
      * @returns 
      */
-    deleteAccountingLine(accountId: number, lineId: number): Promise<void> {
-        return axios.delete(`${this.apiUrl}/accounts/${accountId}/operations/${lineId}`)
+    deleteAccountingLine(accountId: number, accountLineId: number): Promise<void> {
+        return axios.delete(`${this.apiUrl}/accounts/${accountId}/operations/${accountLineId}`)
     }
 
     /**
      * Duplicate an account line for a specific account.
      * @param accountId 
-     * @param id 
+     * @param accountLineId 
      */
-    duplicateLine(accountId: number, lineId: number): Promise<AccountLine> {
-        return axios.post(`${this.apiUrl}/accounts/${accountId}/operations/${lineId}/duplicate`).then((response) => {
+    duplicateLine(accountId: number, accountLineId: number): Promise<AccountLine> {
+        return axios.post(`${this.apiUrl}/accounts/${accountId}/operations/${accountLineId}/duplicate`).then((response) => {
             return new AccountLine(response.data);
         });
     }
 }
 
-export default AccountingService
+export default AccountLineService
