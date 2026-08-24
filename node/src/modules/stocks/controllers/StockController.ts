@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import StockService from "../services/StockService";
 import { AppError } from "../../../utils/AppError";
 import { StockItemsQuerySchema } from "../dto/CreateStockItemDto";
+import { UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
 
 export default class StockController {
     private readonly stockService = new StockService();
@@ -15,7 +16,7 @@ export default class StockController {
     };
 
     updateLocation = async (req: Request, res: Response) => {
-        res.json(await this.stockService.updateLocation(Number(req.params.id), req.body));
+        res.json(await this.stockService.updateLocation(Number(req.params.id), req.body as UpdateStockLocationDto));
     };
 
     deleteLocation = async (req: Request, res: Response) => {

@@ -1,6 +1,7 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { badRequest, conflict, notFound } from "../../../utils/AppError";
-import { CreateStockItemDto, CreateStockLocationDto, UpdateStockItemDto } from "../dto/CreateStockItemDto";
+import { CreateStockItemDto, UpdateStockItemDto } from "../dto/CreateStockItemDto";
+import { CreateStockLocationDto, UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
 import { RecordStockMovementDto } from "../dto/RecordStockMovementDto";
 import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
 import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
@@ -35,7 +36,7 @@ export default class StockService {
         return toStockLocationDto(savedLocation);
     }
 
-    async updateLocation(id: number, dto: CreateStockLocationDto): Promise<StockLocationDto> {
+    async updateLocation(id: number, dto: UpdateStockLocationDto): Promise<StockLocationDto> {
         const location = await this.stockLocationRepo.findOneBy({ id });
         if (!location) {
             throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");

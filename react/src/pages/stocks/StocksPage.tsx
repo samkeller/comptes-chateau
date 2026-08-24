@@ -215,6 +215,13 @@ export default function StocksPage() {
                         if (selectedLocationId !== null) {
                             return loadItems(selectedLocationId);
                         }
+                    })
+                    .catch(() => {
+                        showToast({
+                            severity: "error",
+                            summary: "Suppression impossible",
+                            detail: "Le produit n'a pas pu être supprimé.",
+                        });
                     });
             },
         });
@@ -374,7 +381,7 @@ export default function StocksPage() {
                                             <div>
                                                 <div className="text-lg font-semibold">{item.label}</div>
                                                 <div className="text-sm text-surface-500">
-                                                    {formatQuantity(item.currentQuantity)} {item.unit}{item.currentQuantity > 1 ? "s" : ""}
+                                                    {formatQuantity(item.currentQuantity)} {item.unit}
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">

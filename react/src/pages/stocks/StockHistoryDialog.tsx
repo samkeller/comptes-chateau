@@ -23,6 +23,7 @@ export default function StockHistoryDialog({
 }: StockHistoryDialogProps) {
     const [loading, setLoading] = useState(true);
     const [movements, setMovements] = useState<StockMovement[]>([]);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         if (!visible || !item) {
@@ -31,6 +32,9 @@ export default function StockHistoryDialog({
 
         stockService.getItemHistory(item.id)
             .then(setMovements)
+            .catch(() => {
+                setErrorMessage("Impossible de charger l'historique de ce produit.");
+            })
             .finally(() => setLoading(false));
     }, [visible, item]);
 
@@ -45,6 +49,8 @@ export default function StockHistoryDialog({
                 <div className="flex justify-center p-10">
                     <ProgressSpinner />
                 </div>
+            ) : errorMessage ? (
+                <div className="p-4 text-red-500">{errorMessage}</div>
             ) : (
                 <DataTable value={movements} size="small" emptyMessage="Aucun mouvement">
                     <Column
