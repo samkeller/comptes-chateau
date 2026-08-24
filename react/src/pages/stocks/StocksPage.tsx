@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
@@ -45,25 +45,12 @@ export default function StocksPage() {
     const [movementItem, setMovementItem] = useState<StockItem | null>(null);
     const [historyItem, setHistoryItem] = useState<StockItem | null>(null);
 
-    useEffect(() => {
-        void loadLocations();
-    }, []);
-
-    useEffect(() => {
-        if (selectedLocationId === null) {
-            setItems([]);
-            return;
-        }
-
-        void loadItems(selectedLocationId);
-    }, [selectedLocationId]);
-
     const selectedLocation = useMemo(
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
         [locations, selectedLocationId]
     );
 
-    async function loadLocations(nextSelectedLocationId?: number | null): Promise<void> {
+    const loadLocations = useCallback(async (nextSelectedLocationId?: number | null): Promise<void> => {
         setLoadingLocations(true);
         setErrorMessage(null);
 
@@ -83,9 +70,9 @@ export default function StocksPage() {
         } finally {
             setLoadingLocations(false);
         }
-    }
+    }, [selectedLocationId]);
 
-    async function loadItems(locationId: number): Promise<void> {
+    const loadItems = useCallback(async (locationId: number): Promise<void> => {
         setLoadingItems(true);
         setErrorMessage(null);
 
@@ -96,7 +83,29 @@ export default function StocksPage() {
         } finally {
             setLoadingItems(false);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            void loadLocations();
+        }, 0);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [loadLocations]);
+
+    useEffect(() => {
+        if (selectedLocationId !== null) {
+            const timeoutId = window.setTimeout(() => {
+                void loadItems(selectedLocationId);
+            }, 0);
+
+            return () => {
+                window.clearTimeout(timeoutId);
+            };
+        }
+    }, [loadItems, selectedLocationId]);
 
     async function handleLocationSubmit(payload: { label: string }): Promise<void> {
         if (editingLocation) {
@@ -216,40 +225,52 @@ export default function StocksPage() {
             <ConfirmDialog group={LOCATION_DELETE_GROUP} />
             <ConfirmDialog group={ITEM_DELETE_GROUP} />
 
-            <StockLocationDialog
-                visible={isLocationDialogVisible}
-                location={editingLocation}
-                onHide={() => {
-                    setIsLocationDialogVisible(false);
-                    setEditingLocation(null);
-                }}
-                onSubmit={handleLocationSubmit}
-            />
+            {isLocationDialogVisible && (
+                <StockLocationDialog
+                    key={editingLocation?.id ?? "new-location"}
+                    visible
+                    location={editingLocation}
+                    onHide={() => {
+                        setIsLocationDialogVisible(false);
+                        setEditingLocation(null);
+                    }}
+                    onSubmit={handleLocationSubmit}
+                />
+            )}
 
-            <StockItemDialog
-                visible={isItemDialogVisible}
-                item={editingItem}
-                locations={locations}
-                selectedLocationId={selectedLocationId}
-                onHide={() => {
-                    setIsItemDialogVisible(false);
-                    setEditingItem(null);
-                }}
-                onSubmit={handleItemSubmit}
-            />
+            {isItemDialogVisible && (
+                <StockItemDialog
+                    key={`${editingItem?.id ?? "new-item"}-${selectedLocationId ?? "no-location"}`}
+                    visible
+                    item={editingItem}
+                    locations={locations}
+                    selectedLocationId={selectedLocationId}
+                    onHide={() => {
+                        setIsItemDialogVisible(false);
+                        setEditingItem(null);
+                    }}
+                    onSubmit={handleItemSubmit}
+                />
+            )}
 
-            <StockMovementDialog
-                visible={Boolean(movementItem)}
-                item={movementItem}
-                onHide={() => setMovementItem(null)}
-                onSubmit={handleMovementSubmit}
-            />
+            {movementItem && (
+                <StockMovementDialog
+                    key={movementItem.id}
+                    visible
+                    item={movementItem}
+                    onHide={() => setMovementItem(null)}
+                    onSubmit={handleMovementSubmit}
+                />
+            )}
 
-            <StockHistoryDialog
-                visible={Boolean(historyItem)}
-                item={historyItem}
-                onHide={() => setHistoryItem(null)}
-            />
+            {historyItem && (
+                <StockHistoryDialog
+                    key={historyItem.id}
+                    visible
+                    item={historyItem}
+                    onHide={() => setHistoryItem(null)}
+                />
+            )}
 
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import StockController from "../controllers/StockController";
-import { validateBody, validateParams, validateQuery, IdParamSchema } from "../../core/middlewares/validate";
+import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import { CreateStockLocationSchema } from "../dto/CreateStockLocationDto";
-import { CreateStockItemSchema, StockItemsQuerySchema, UpdateStockItemSchema } from "../dto/CreateStockItemDto";
+import { CreateStockItemSchema, UpdateStockItemSchema } from "../dto/CreateStockItemDto";
 import { RecordStockMovementSchema } from "../dto/RecordStockMovementDto";
 
 const StockRoutes = Router();
@@ -13,7 +13,7 @@ StockRoutes.post("/locations", validateBody(CreateStockLocationSchema), stockCon
 StockRoutes.patch("/locations/:id", validateParams(IdParamSchema), validateBody(CreateStockLocationSchema), stockController.updateLocation);
 StockRoutes.delete("/locations/:id", validateParams(IdParamSchema), stockController.deleteLocation);
 
-StockRoutes.get("/items", validateQuery(StockItemsQuerySchema), stockController.listItems);
+StockRoutes.get("/items", stockController.listItems);
 StockRoutes.post("/items", validateBody(CreateStockItemSchema), stockController.createItem);
 StockRoutes.patch("/items/:id", validateParams(IdParamSchema), validateBody(UpdateStockItemSchema), stockController.updateItem);
 StockRoutes.delete("/items/:id", validateParams(IdParamSchema), stockController.deleteItem);

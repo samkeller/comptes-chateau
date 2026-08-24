@@ -21,16 +21,14 @@ export default function StockHistoryDialog({
     item,
     onHide,
 }: StockHistoryDialogProps) {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [movements, setMovements] = useState<StockMovement[]>([]);
 
     useEffect(() => {
         if (!visible || !item) {
-            setMovements([]);
             return;
         }
 
-        setLoading(true);
         stockService.getItemHistory(item.id)
             .then(setMovements)
             .finally(() => setLoading(false));

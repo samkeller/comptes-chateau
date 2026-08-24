@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
@@ -28,24 +28,14 @@ export default function StockItemDialog({
     onHide,
     onSubmit,
 }: StockItemDialogProps) {
-    const [label, setLabel] = useState("");
-    const [barcode, setBarcode] = useState("");
-    const [unit, setUnit] = useState("");
-    const [locationId, setLocationId] = useState<number | null>(selectedLocationId);
-    const [expirationDate, setExpirationDate] = useState<Date | null>(null);
-    const [imageUrl, setImageUrl] = useState("");
+    const [label, setLabel] = useState(() => item?.label ?? "");
+    const [barcode, setBarcode] = useState(() => item?.barcode ?? "");
+    const [unit, setUnit] = useState(() => item?.unit ?? "");
+    const [locationId, setLocationId] = useState<number | null>(() => item?.locationId ?? selectedLocationId);
+    const [expirationDate, setExpirationDate] = useState<Date | null>(() => item?.expirationDate ? parseISO(item.expirationDate) : null);
+    const [imageUrl, setImageUrl] = useState(() => item?.imageUrl ?? "");
     const [initialQuantity, setInitialQuantity] = useState(0);
     const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        setLabel(item?.label ?? "");
-        setBarcode(item?.barcode ?? "");
-        setUnit(item?.unit ?? "");
-        setLocationId(item?.locationId ?? selectedLocationId);
-        setExpirationDate(item?.expirationDate ? parseISO(item.expirationDate) : null);
-        setImageUrl(item?.imageUrl ?? "");
-        setInitialQuantity(0);
-    }, [item, selectedLocationId, visible]);
 
     const handleSubmit = async () => {
         if (!locationId) {

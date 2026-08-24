@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
@@ -18,12 +18,8 @@ export default function StockLocationDialog({
     onHide,
     onSubmit,
 }: StockLocationDialogProps) {
-    const [label, setLabel] = useState("");
+    const [label, setLabel] = useState(() => location?.label ?? "");
     const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        setLabel(location?.label ?? "");
-    }, [location, visible]);
 
     const handleSubmit = async () => {
         setSaving(true);

@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import StockService from "../services/StockService";
+import { AppError } from "../../../utils/AppError";
+import { StockItemsQuerySchema } from "../dto/CreateStockItemDto";
 
 export default class StockController {
     private readonly stockService = new StockService();
@@ -22,7 +24,18 @@ export default class StockController {
     };
 
     listItems = async (req: Request, res: Response) => {
-        res.json(await this.stockService.listItems(req.query.locationId ? Number(req.query.locationId) : undefined));
+        const result = StockItemsQuerySchema.safeParse(req.query);
+        if (!result.success) {
+            throw new AppError(
+                400,
+                "VALIDATION_ERROR",
+                result.error.issues
+                    .map((issue) => issue.message)
+                    .join("; ")
+            );
+        }
+
+        res.json(await this.stockService.listItems(result.data.locationId));
     };
 
     createItem = async (req: Request, res: Response) => {

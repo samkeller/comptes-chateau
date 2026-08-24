@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
@@ -22,16 +22,10 @@ export default function StockMovementDialog({
     onHide,
     onSubmit,
 }: StockMovementDialogProps) {
-    const [type, setType] = useState<StockMovementType>("IN");
-    const [quantity, setQuantity] = useState(1);
-    const [occurredAt, setOccurredAt] = useState<Date>(new Date());
+    const [type, setType] = useState<StockMovementType>(() => "IN");
+    const [quantity, setQuantity] = useState(() => 1);
+    const [occurredAt, setOccurredAt] = useState<Date>(() => new Date());
     const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        setType("IN");
-        setQuantity(1);
-        setOccurredAt(new Date());
-    }, [item, visible]);
 
     const handleSubmit = async () => {
         setSaving(true);

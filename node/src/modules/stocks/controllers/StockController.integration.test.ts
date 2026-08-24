@@ -42,7 +42,9 @@ describe("StockRoutes integration", () => {
     });
 
     beforeEach(async () => {
-        await testDataSource.synchronize(true);
+        await testDataSource.query(`DELETE FROM "stock_movement"`);
+        await testDataSource.query(`DELETE FROM "stock_item"`);
+        await testDataSource.query(`DELETE FROM "stock_location"`);
     });
 
     afterAll(async () => {

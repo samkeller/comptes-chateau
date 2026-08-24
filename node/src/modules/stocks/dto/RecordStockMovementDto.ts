@@ -15,7 +15,5 @@ export const RecordStockMovementSchema = z.object({
     source: z.union([
         z.string().trim().max(50),
         z.literal(""),
-        z.null(),
-        z.undefined(),
-    ]),
+    ]).optional().nullable(),
 });
