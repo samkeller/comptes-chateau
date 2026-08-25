@@ -120,4 +120,150 @@ describe("StockService", () => {
         });
         expect(movementCount).toBe(1);
     });
+
+    it("creates an item with zero initial quantity without recording a movement", async () => {
+        const item = await service.createItem({
+            label: "Sel",
+            unit: "boîte",
+            locationId: seededLocationId,
+            initialQuantity: 0,
+        });
+
+        expect(item.currentQuantity).toBe(0);
+
+        const movements = await service.getItemHistory(item.id);
+        expect(movements).toHaveLength(0);
+    });
+
+    it("throws when creating an item for a non-existent location", async () => {
+        await expect(service.createItem({
+            label: "Farine",
+            unit: "kg",
+            locationId: 99999,
+            initialQuantity: 1,
+        })).rejects.toMatchObject({
+            code: "STOCK_LOCATION_NOT_FOUND",
+        });
+    });
+
+    it("throws when recording a movement for a non-existent item", async () => {
+        await expect(service.recordMovement(99999, {
+            type: "IN",
+            quantity: 1,
+            source: "manual",
+        })).rejects.toMatchObject({
+            code: "STOCK_ITEM_NOT_FOUND",
+        });
+    });
+
+    it("throws when fetching history for a non-existent item", async () => {
+        await expect(service.getItemHistory(99999)).rejects.toMatchObject({
+            code: "STOCK_ITEM_NOT_FOUND",
+        });
+    });
+
+    it("updates a location label", async () => {
+        const updated = await service.updateLocation(seededLocationId, { label: "  Nouveau label  " });
+
+        expect(updated.label).toBe("Nouveau label");
+    });
+
+    it("throws when updating a non-existent location", async () => {
+        await expect(service.updateLocation(99999, { label: "X" })).rejects.toMatchObject({
+            code: "STOCK_LOCATION_NOT_FOUND",
+        });
+    });
+
+    it("throws when deleting a non-existent location", async () => {
+        await expect(service.deleteLocation(99999)).rejects.toMatchObject({
+            code: "STOCK_LOCATION_NOT_FOUND",
+        });
+    });
+
+    it("throws when deleting a location that still has items", async () => {
+        await service.createItem({
+            label: "Poivre",
+            unit: "pot",
+            locationId: seededLocationId,
+            initialQuantity: 0,
+        });
+
+        await expect(service.deleteLocation(seededLocationId)).rejects.toMatchObject({
+            code: "STOCK_LOCATION_NOT_EMPTY",
+        });
+    });
+
+    it("soft-deletes a location when it is empty", async () => {
+        await service.deleteLocation(seededLocationId);
+
+        const locations = await service.listLocations();
+        expect(locations.find((l) => l.id === seededLocationId)).toBeUndefined();
+    });
+
+    it("updates an item and reflects changes immediately", async () => {
+        const item = await service.createItem({
+            label: "Riz",
+            unit: "kg",
+            locationId: seededLocationId,
+            initialQuantity: 1,
+        });
+
+        const newLocation = await testDataSource.getRepository(StockLocation).save({ label: "Cave" });
+
+        const updated = await service.updateItem(item.id, {
+            label: "  Riz basmati  ",
+            unit: "kg",
+            locationId: newLocation.id,
+        });
+
+        expect(updated.label).toBe("Riz basmati");
+        expect(updated.location.id).toBe(newLocation.id);
+    });
+
+    it("throws when updating a non-existent item", async () => {
+        await expect(service.updateItem(99999, {
+            label: "X",
+            unit: "kg",
+            locationId: seededLocationId,
+        })).rejects.toMatchObject({
+            code: "STOCK_ITEM_NOT_FOUND",
+        });
+    });
+
+    it("throws when updating an item to a non-existent location", async () => {
+        const item = await service.createItem({
+            label: "Sucre",
+            unit: "kg",
+            locationId: seededLocationId,
+            initialQuantity: 0,
+        });
+
+        await expect(service.updateItem(item.id, {
+            label: "Sucre",
+            unit: "kg",
+            locationId: 99999,
+        })).rejects.toMatchObject({
+            code: "STOCK_LOCATION_NOT_FOUND",
+        });
+    });
+
+    it("soft-deletes an item", async () => {
+        const item = await service.createItem({
+            label: "Café",
+            unit: "paquet",
+            locationId: seededLocationId,
+            initialQuantity: 0,
+        });
+
+        await service.deleteItem(item.id);
+
+        const items = await service.listItems(seededLocationId);
+        expect(items.find((i) => i.id === item.id)).toBeUndefined();
+    });
+
+    it("throws when deleting a non-existent item", async () => {
+        await expect(service.deleteItem(99999)).rejects.toMatchObject({
+            code: "STOCK_ITEM_NOT_FOUND",
+        });
+    });
 });
