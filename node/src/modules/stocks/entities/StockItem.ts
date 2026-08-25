@@ -10,7 +10,7 @@ import {
     UpdateDateColumn,
 } from "typeorm";
 import { StockLocation } from "./StockLocation";
-import { StockMovement } from "./StockMovement";
+import type { StockMovement } from "./StockMovement";
 
 @Entity("stock_item")
 export class StockItem {
@@ -42,7 +42,7 @@ export class StockItem {
     @Column({ type: "text", nullable: true })
     imageUrl: string | null;
 
-    @OneToMany(() => StockMovement, (movement) => movement.item)
+    @OneToMany("StockMovement", (movement: StockMovement) => movement.item)
     movements: StockMovement[];
 
     @CreateDateColumn()

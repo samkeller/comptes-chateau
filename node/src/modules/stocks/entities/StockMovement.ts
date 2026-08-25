@@ -6,7 +6,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from "typeorm";
-import { StockItem } from "./StockItem";
+import type { StockItem } from "./StockItem";
 import { STOCK_MOVEMENT_TYPES, StockMovementType } from "../dto/StockMovementType";
 
 @Entity("stock_movement")
@@ -17,7 +17,7 @@ export class StockMovement {
     @Column({ type: "int" })
     itemId: number;
 
-    @ManyToOne(() => StockItem, (item) => item.movements, { nullable: false, onDelete: "CASCADE" })
+    @ManyToOne("StockItem", (item: StockItem) => item.movements, { nullable: false, onDelete: "CASCADE" })
     @JoinColumn({ name: "itemId" })
     item: StockItem;
 
