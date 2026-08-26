@@ -35,7 +35,7 @@ export default function StockItemDialog({
     const [barcode, setBarcode] = useState(() => item?.barcode ?? "");
     const [unit, setUnit] = useState(() => item?.unit ?? "");
     const [locationId, setLocationId] = useState<number | null>(() => item?.locationId ?? selectedLocationId);
-    const [expirationDate, setExpirationDate] = useState<Date | null>(() => item?.expirationDate ? parseISO(item.expirationDate) : null);
+    const [expirationDate, setExpirationDate] = useState<Date | null>(() => item?.expirationDate ?? null);
     const [imageUrl, setImageUrl] = useState(() => item?.imageUrl ?? "");
     const [initialQuantity, setInitialQuantity] = useState(0);
     const [saving, setSaving] = useState(false);

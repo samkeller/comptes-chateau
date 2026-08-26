@@ -36,16 +36,44 @@ export default function StockLocationsPanel({
         }
     ) => {
         const isSelected = location.id === selectedLocation?.id;
-        return <Button
-            outlined={!isSelected}
-            className={`w-full justify-start ${className ?? ""}`}
-            onClick={() => onSelect(location)}
-            label={location.label}
-        />
-    }
+        return (
+            <div className={`flex ${className ?? ""}`}>
+                <Button
+                    outlined={!isSelected}
+                    className={`grow`}
+                    onClick={() => onSelect(location)}
+                    label={location.label}
+                />
+                {isSelected && (
+                    <>
+                        <Button
+                            icon="pi pi-pencil"
+                            outlined
+                            size="small"
+                            rounded text
+                            onClick={() => onEditLocation(location)}
+                            tooltip="Renommer"
+                            tooltipOptions={{ position: "top" }}
+                        />
+                        <Button
+                            icon="pi pi-trash"
+                            outlined
+                            severity="danger"
+                            size="small"
+                            rounded text
+                            onClick={() => onDeleteLocation(location)}
+                            tooltip="Supprimer"
+                            tooltipOptions={{ position: "top" }}
+                        />
+                    </>
+                )}
+            </div>
+        );
+    };
+
     return (
         <Card
-            title="Lieux de stockage"
+            title={"Lieux de stockage"}
             className={className}
             pt={{ body: { className: "h-full" }, content: { className: "h-full flex flex-col gap-4" } }}
         >
@@ -53,64 +81,45 @@ export default function StockLocationsPanel({
                 <div className="flex justify-center p-8">
                     <ProgressSpinner />
                 </div>
-            ) : locations.length === 0 ? (
-                <div className="flex flex-col gap-3 text-surface-500">
-                    <span>Aucun lieu configuré.</span>
-                    <div>
-                        <Button label="Créer le premier lieu" onClick={onAddLocation} />
-                    </div>
-                </div>
             ) : (
-                <FillRemainingHeight>
-                    <div className="flex h-full min-h-0 flex-col gap-4">
-                        {isDesktop ? (
-                            <ScrollPanel className="min-h-0 flex-1 min-w-0 px-2">
-                                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
+                    <div className="flex justify-end">
+                        <Button
+                            label="Ajouter"
+                            icon="pi pi-plus"
+                            size="small"
+                            onClick={onAddLocation}
+                        />
+                        </div>
+                    <FillRemainingHeight>
+                        <div className="flex h-full min-h-0 flex-col gap-4">
+                            {isDesktop ? (
+                                <ScrollPanel className="min-h-0 flex-1 min-w-0 px-2">
+                                    <div className="flex flex-col gap-2">
+                                        {locations.map((location) => (
+                                            <StockLocationListItem
+                                                key={location.id}
+                                                location={location}
+                                                className="w-full"
+                                            />
+                                        ))}
+                                    </div>
+                                </ScrollPanel>
+                            ) : (
+                                <div className="flex gap-3 overflow-x-auto pb-1">
                                     {locations.map((location) => (
                                         <StockLocationListItem
                                             key={location.id}
                                             location={location}
-                                            className="w-full"
+                                            className="min-w-44"
                                         />
                                     ))}
                                 </div>
-                            </ScrollPanel>
-                        ) : (
-                            <div className="flex gap-3 overflow-x-auto pb-1">
-                                {locations.map((location) => (
-                                    <StockLocationListItem
-                                        key={location.id}
-                                        location={location}
-                                        className="min-w-44"
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-2">
-                            <Button label="Ajouter un lieu" icon="pi pi-map-marker" size="small" onClick={onAddLocation} />
-                            {selectedLocation && (
-                                <>
-                                    <Button
-                                        label="Renommer"
-                                        icon="pi pi-pencil"
-                                        outlined
-                                        size="small"
-                                        onClick={() => onEditLocation(selectedLocation)}
-                                    />
-                                    <Button
-                                        label="Supprimer"
-                                        icon="pi pi-trash"
-                                        outlined
-                                        severity="danger"
-                                        size="small"
-                                        onClick={() => onDeleteLocation(selectedLocation)}
-                                    />
-                                </>
                             )}
+
                         </div>
-                    </div>
-                </FillRemainingHeight>
+                    </FillRemainingHeight>
+                </div>
             )}
         </Card>
     );

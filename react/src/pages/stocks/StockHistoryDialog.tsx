@@ -55,7 +55,7 @@ export default function StockHistoryDialog({
                 <DataTable value={movements} size="small" emptyMessage="Aucun mouvement">
                     <Column
                         header="Date"
-                        body={(movement: StockMovement) => format(parseISO(movement.occurredAt), "dd/MM/yyyy HH:mm")}
+                        body={(movement: StockMovement) => format(movement.occurredAt, "dd/MM/yyyy HH:mm")}
                     />
                     <Column
                         header="Type"

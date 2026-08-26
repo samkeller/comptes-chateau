@@ -242,7 +242,6 @@ export default function StocksPage() {
             setEditingItem(item);
             setIsItemDialogVisible(true);
         },
-        onAdjust: setMovementItem,
         onDelete: requestDeleteItem,
         onQuickMovement: (item, type) => void applyQuickMovement(item, type),
     };
