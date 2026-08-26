@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { ProgressSpinner } from "primereact/progressspinner";
-import { format, parseISO } from "date-fns";
+import { generatePath, Outlet, useNavigate, useParams } from "react-router-dom";
 import { PageTemplate } from "../PageTemplate";
+import { routePaths } from "@/routes/routePaths";
 import StockService from "@/services/stocks/StockService";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockItem from "@/interfaces/stocks/StockItem";
@@ -13,6 +12,9 @@ import StockLocationDialog from "./StockLocationDialog";
 import StockItemDialog from "./StockItemDialog";
 import StockMovementDialog from "./StockMovementDialog";
 import StockHistoryDialog from "./StockHistoryDialog";
+import StockLocationsPanel from "./organisms/StockLocationsPanel";
+import StockItemsPanel from "./organisms/StockItemsPanel";
+import { StockItemsOutletContext } from "./StockItemsOutletContext";
 import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
 import { RecordStockMovementDto } from "@/services/stocks/dto/RecordStockMovementDto";
 
@@ -20,15 +22,11 @@ const stockService = new StockService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
 const ITEM_DELETE_GROUP = "stock-item-delete";
 
-function formatQuantity(quantity: number): string {
-    return new Intl.NumberFormat("fr-FR", {
-        minimumFractionDigits: Number.isInteger(quantity) ? 0 : 2,
-        maximumFractionDigits: 2,
-    }).format(quantity);
-}
-
 export default function StocksPage() {
     const showToast = useGlobalToast();
+    const navigate = useNavigate();
+    const { locationId: locationIdParam } = useParams<{ locationId: string }>();
+    const selectedLocationId = locationIdParam ? Number(locationIdParam) : null;
 
     const [loadingLocations, setLoadingLocations] = useState(true);
     const [loadingItems, setLoadingItems] = useState(false);
@@ -36,7 +34,6 @@ export default function StocksPage() {
 
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [items, setItems] = useState<StockItem[]>([]);
-    const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
 
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
@@ -50,27 +47,18 @@ export default function StocksPage() {
         [locations, selectedLocationId]
     );
 
-    const loadLocations = useCallback(async (nextSelectedLocationId?: number | null): Promise<void> => {
+    const loadLocations = useCallback(async (): Promise<void> => {
         setLoadingLocations(true);
         setErrorMessage(null);
 
         try {
-            const fetchedLocations = await stockService.listLocations();
-            setLocations(fetchedLocations);
-
-            const resolvedLocationId =
-                nextSelectedLocationId
-                ?? (selectedLocationId && fetchedLocations.some((location) => location.id === selectedLocationId) ? selectedLocationId : null)
-                ?? fetchedLocations[0]?.id
-                ?? null;
-
-            setSelectedLocationId(resolvedLocationId);
+            setLocations(await stockService.listLocations());
         } catch {
             setErrorMessage("Impossible de charger les lieux de stockage.");
         } finally {
             setLoadingLocations(false);
         }
-    }, [selectedLocationId]);
+    }, []);
 
     const loadItems = useCallback(async (locationId: number): Promise<void> => {
         setLoadingItems(true);
@@ -96,26 +84,45 @@ export default function StocksPage() {
     }, [loadLocations]);
 
     useEffect(() => {
-        if (selectedLocationId !== null) {
-            const timeoutId = window.setTimeout(() => {
+        const timeoutId = window.setTimeout(() => {
+            if (selectedLocationId === null) {
+                setItems([]);
+            } else {
                 void loadItems(selectedLocationId);
-            }, 0);
+            }
+        }, 0);
 
-            return () => {
-                window.clearTimeout(timeoutId);
-            };
-        }
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
     }, [loadItems, selectedLocationId]);
+
+    // Garde l'URL cohérente avec les lieux disponibles : sélectionne le premier lieu par défaut,
+    // ou redirige si le lieu demandé n'existe plus (ex: suppression).
+    useEffect(() => {
+        if (loadingLocations) {
+            return;
+        }
+
+        if (selectedLocationId !== null && locations.some((location) => location.id === selectedLocationId)) {
+            return;
+        }
+
+        if (selectedLocationId !== null) {
+            navigate(routePaths.stocks, { replace: true });
+        }
+    }, [loadingLocations, locations, selectedLocationId, navigate]);
 
     async function handleLocationSubmit(payload: { label: string }): Promise<void> {
         if (editingLocation) {
             await stockService.updateLocation(editingLocation.id, payload);
             showToast({ severity: "success", summary: "Lieu mis à jour" });
-            await loadLocations(editingLocation.id);
+            await loadLocations();
         } else {
             const createdLocation = await stockService.createLocation(payload);
             showToast({ severity: "success", summary: "Lieu créé" });
-            await loadLocations(createdLocation.id);
+            await loadLocations();
+            navigate(generatePath(routePaths.stocksLocation, { locationId: String(createdLocation.id) }));
         }
 
         setIsLocationDialogVisible(false);
@@ -132,8 +139,8 @@ export default function StocksPage() {
         }
 
         if (payload.locationId !== selectedLocationId) {
-            await loadLocations(payload.locationId);
-        } else if (selectedLocationId) {
+            navigate(generatePath(routePaths.stocksLocation, { locationId: String(payload.locationId) }));
+        } else if (selectedLocationId !== null) {
             await loadItems(selectedLocationId);
         }
 
@@ -188,7 +195,7 @@ export default function StocksPage() {
                 stockService.deleteLocation(location.id)
                     .then(() => {
                         showToast({ severity: "success", summary: "Lieu supprimé" });
-                        return loadLocations(null);
+                        return loadLocations();
                     })
                     .catch(() => {
                         showToast({
@@ -226,6 +233,19 @@ export default function StocksPage() {
             },
         });
     }
+
+    const itemsOutletContext: StockItemsOutletContext = {
+        items,
+        loading: loadingItems,
+        onShowHistory: setHistoryItem,
+        onEdit: (item) => {
+            setEditingItem(item);
+            setIsItemDialogVisible(true);
+        },
+        onAdjust: setMovementItem,
+        onDelete: requestDeleteItem,
+        onQuickMovement: (item, type) => void applyQuickMovement(item, type),
+    };
 
     return (
         <PageTemplate pageTitle="Stocks">
@@ -279,145 +299,38 @@ export default function StocksPage() {
                 />
             )}
 
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h2 className="m-0 text-2xl font-semibold">Chocostocks</h2>
-                        <p className="m-0 text-surface-500">Suivi rapide des produits, lieux et mouvements de stock.</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Button label="Ajouter un lieu" icon="pi pi-map-marker" onClick={() => setIsLocationDialogVisible(true)} />
-                        <Button
-                            label="Ajouter un produit"
-                            icon="pi pi-plus"
-                            onClick={() => setIsItemDialogVisible(true)}
-                            disabled={locations.length === 0}
-                        />
-                    </div>
-                </div>
-
+            <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
                 {errorMessage && (
                     <Card>
                         <div className="text-red-500">{errorMessage}</div>
                     </Card>
                 )}
 
-                <Card title="Lieux de stockage">
-                    {loadingLocations ? (
-                        <div className="flex justify-center p-8">
-                            <ProgressSpinner />
-                        </div>
-                    ) : locations.length === 0 ? (
-                        <div className="flex flex-col gap-3 text-surface-500">
-                            <span>Aucun lieu configuré.</span>
-                            <div>
-                                <Button label="Créer le premier lieu" onClick={() => setIsLocationDialogVisible(true)} />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-4">
-                            <div className="flex gap-3 overflow-x-auto pb-1">
-                                {locations.map((location) => (
-                                    <button
-                                        key={location.id}
-                                        type="button"
-                                        className={`min-w-44 rounded-xl border px-4 py-3 text-left transition ${location.id === selectedLocationId ? "border-primary bg-primary-50" : "border-surface-300 bg-white"}`}
-                                        onClick={() => setSelectedLocationId(location.id)}
-                                    >
-                                        <div className="font-semibold">{location.label}</div>
-                                        <div className="text-sm text-surface-500">
-                                            {location.id === selectedLocationId ? "Lieu actif" : "Appuyer pour afficher"}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-6">
+                    <StockLocationsPanel
+                        className="lg:h-full lg:min-h-0 lg:w-72 lg:shrink-0"
+                        locations={locations}
+                        selectedLocation={selectedLocation}
+                        loading={loadingLocations}
+                        onSelect={(location) => navigate(generatePath(routePaths.stocksLocation, { locationId: String(location.id) }))}
+                        onAddLocation={() => setIsLocationDialogVisible(true)}
+                        onEditLocation={(location) => {
+                            setEditingLocation(location);
+                            setIsLocationDialogVisible(true);
+                        }}
+                        onDeleteLocation={requestDeleteLocation}
+                    />
 
-                            {selectedLocation && (
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        label="Renommer"
-                                        icon="pi pi-pencil"
-                                        outlined
-                                        size="small"
-                                        onClick={() => {
-                                            setEditingLocation(selectedLocation);
-                                            setIsLocationDialogVisible(true);
-                                        }}
-                                    />
-                                    <Button
-                                        label="Supprimer"
-                                        icon="pi pi-trash"
-                                        outlined
-                                        severity="danger"
-                                        size="small"
-                                        onClick={() => requestDeleteLocation(selectedLocation)}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </Card>
-
-                <Card title={selectedLocation ? `Produits — ${selectedLocation.label}` : "Produits"}>
-                    {selectedLocationId === null ? (
-                        <div className="text-surface-500">Créez d'abord un lieu pour ajouter des produits.</div>
-                    ) : loadingItems ? (
-                        <div className="flex justify-center p-8">
-                            <ProgressSpinner />
-                        </div>
-                    ) : items.length === 0 ? (
-                        <div className="flex flex-col gap-3 text-surface-500">
-                            <span>Aucun produit dans ce lieu.</span>
-                            <div>
-                                <Button label="Ajouter un produit" icon="pi pi-plus" onClick={() => setIsItemDialogVisible(true)} />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                            {items.map((item) => (
-                                <div key={item.id} className="rounded-xl border border-surface-200 p-4 shadow-sm">
-                                    <div className="flex flex-col gap-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div className="text-lg font-semibold">{item.label}</div>
-                                                <div className="text-sm text-surface-500">
-                                                    {formatQuantity(item.currentQuantity)} {item.unit}
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button icon="pi pi-history" text rounded aria-label="Historique" onClick={() => setHistoryItem(item)} />
-                                                <Button
-                                                    icon="pi pi-pencil"
-                                                    text
-                                                    rounded
-                                                    aria-label="Modifier"
-                                                    onClick={() => {
-                                                        setEditingItem(item);
-                                                        setIsItemDialogVisible(true);
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col gap-1 text-sm text-surface-500">
-                                            {item.barcode && <span>Code-barres : {item.barcode}</span>}
-                                            {item.expirationDate && <span>Péremption : {format(parseISO(item.expirationDate), "dd/MM/yyyy")}</span>}
-                                            {item.imageUrl && <span className="truncate">Image : {item.imageUrl}</span>}
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                                            <Button label="-1" severity="secondary" outlined onClick={() => void applyQuickMovement(item, "OUT")} />
-                                            <Button label="+1" onClick={() => void applyQuickMovement(item, "IN")} />
-                                            <Button label="Ajuster" text onClick={() => setMovementItem(item)} />
-                                            <Button label="Supprimer" text severity="danger" onClick={() => requestDeleteItem(item)} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </Card>
+                    <StockItemsPanel
+                        className="lg:h-full lg:min-h-0 lg:min-w-0 lg:flex-1"
+                        selectedLocation={selectedLocation}
+                        onAddItem={() => setIsItemDialogVisible(true)}
+                    >
+                        <Outlet context={itemsOutletContext} />
+                    </StockItemsPanel>
+                </div>
             </div>
         </PageTemplate>
     );
 }
+

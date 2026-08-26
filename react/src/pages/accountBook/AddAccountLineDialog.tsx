@@ -21,7 +21,7 @@ import { AccountLineRule } from "@/interfaces/AccountLineRule";
 import { useAccountId } from "@/hooks/useAccountId";
 import { generatePath, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { routePaths } from "@/routes/routePaths";
-
+import Optional from "@/components/atoms/form/Optional";
 
 const accountService = new AccountService();
 const accountLineCategorizationService = new AccountLineCategorizationService();
@@ -241,7 +241,7 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
                             className="w-full"
                             showClear
                         />
-                        <label htmlFor="nature">Nature <small>(optionnel)</small></label>
+                        <label htmlFor="nature">Nature <Optional /></label>
                     </FloatLabel>
                     <FloatLabel className="flex-1">
                         <AccountLinePosteDropdown
@@ -252,7 +252,7 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
                             className="w-full"
                             showClear
                         />
-                        <label htmlFor="poste">Poste <small>(optionnel)</small></label>
+                        <label htmlFor="poste">Poste <Optional /></label>
                     </FloatLabel>
                 </div>
 
@@ -286,7 +286,7 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
                         dataKey="id"
                         showClear
                     />
-                    <label htmlFor="targetAccount">Compte lié <small>(optionnel)</small></label>
+                    <label htmlFor="targetAccount">Compte lié <Optional /></label>
                 </FloatLabel>
             </div>
         </Dialog>

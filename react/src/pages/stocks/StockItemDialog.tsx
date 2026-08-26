@@ -10,6 +10,9 @@ import { format, parseISO } from "date-fns";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
+import { AutoComplete, AutoCompleteCompleteEvent } from "primereact/autocomplete";
+import RequiredMark from "@/components/atoms/form/RequiredMark";
+import Optional from "@/components/atoms/form/Optional";
 
 interface StockItemDialogProps {
     visible: boolean;
@@ -37,8 +40,13 @@ export default function StockItemDialog({
     const [initialQuantity, setInitialQuantity] = useState(0);
     const [saving, setSaving] = useState(false);
 
+    const stockUnitsAutocompleteSuggestions = ["kg", "g", "L", "mL", "Unité", "Bouteille", "Carton", "Sachet", "Boîte", "Paquet", "Pièce"];
+    const [filteredUnits, setFilteredUnits] = useState<string[]>([]);
+
+    const isFormValid = label.trim().length > 0 && unit.trim().length > 0 && locationId !== null;
+
     const handleSubmit = async () => {
-        if (!locationId) {
+        if (!isFormValid || !locationId) {
             return;
         }
 
@@ -60,6 +68,12 @@ export default function StockItemDialog({
         }
     };
 
+    const searchUnits = (event: AutoCompleteCompleteEvent) => {
+        const query = event.query.toLowerCase();
+        const filtered = stockUnitsAutocompleteSuggestions.filter((unit) => unit.toLowerCase().includes(query));
+        setFilteredUnits(filtered);
+    }
+
     return (
         <Dialog
             visible={visible}
@@ -69,25 +83,32 @@ export default function StockItemDialog({
             footer={(
                 <div>
                     <Button label="Annuler" text onClick={onHide} />
-                    <Button label={item ? "Enregistrer" : "Créer"} onClick={() => void handleSubmit()} loading={saving} />
+                    <Button label={item ? "Enregistrer" : "Créer"} onClick={() => void handleSubmit()} loading={saving} disabled={!isFormValid} />
                 </div>
             )}
         >
             <div className="flex flex-col gap-6 pt-6">
                 <FloatLabel>
                     <InputText id="stock-item-label" value={label} onChange={(event) => setLabel(event.target.value)} className="w-full" autoFocus />
-                    <label htmlFor="stock-item-label">Nom du produit</label>
+                    <label htmlFor="stock-item-label">Nom du produit<RequiredMark /></label>
                 </FloatLabel>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FloatLabel>
                         <InputText id="stock-item-barcode" value={barcode} onChange={(event) => setBarcode(event.target.value)} className="w-full" />
-                        <label htmlFor="stock-item-barcode">Code-barres</label>
+                        <label htmlFor="stock-item-barcode">Code-barres <small>(optionnel)</small></label>
                     </FloatLabel>
 
                     <FloatLabel>
-                        <InputText id="stock-item-unit" value={unit} onChange={(event) => setUnit(event.target.value)} className="w-full" />
-                        <label htmlFor="stock-item-unit">Unité</label>
+                        <AutoComplete
+                            id="stock-item-unit"
+                            value={unit}
+                            suggestions={filteredUnits}
+                            onChange={(event) => setUnit(event.value)}
+                            completeMethod={searchUnits}
+                            className="w-full"
+                        />
+                        <label htmlFor="stock-item-unit">Unité<RequiredMark /></label>
                     </FloatLabel>
                 </div>
 
@@ -100,7 +121,7 @@ export default function StockItemDialog({
                             onChange={(event) => setLocationId(event.value as number | null)}
                             className="w-full"
                         />
-                        <label htmlFor="stock-item-location">Lieu</label>
+                        <label htmlFor="stock-item-location">Lieu<RequiredMark /></label>
                     </FloatLabel>
 
                     <FloatLabel>
@@ -112,13 +133,13 @@ export default function StockItemDialog({
                             className="w-full"
                             showIcon
                         />
-                        <label htmlFor="stock-item-expiration">Date de péremption</label>
+                        <label htmlFor="stock-item-expiration">Date de péremption <Optional /></label>
                     </FloatLabel>
                 </div>
 
                 <FloatLabel>
                     <InputText id="stock-item-image" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="w-full" />
-                    <label htmlFor="stock-item-image">Image (URL ou chemin)</label>
+                    <label htmlFor="stock-item-image">Image (URL ou chemin) <Optional /></label>
                 </FloatLabel>
 
                 {!item && (

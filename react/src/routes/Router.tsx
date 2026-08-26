@@ -21,6 +21,8 @@ import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
 import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
 import StocksPage from "@/pages/stocks/StocksPage";
+import StockNoLocationSelected from "@/pages/stocks/organisms/StockNoLocationSelected";
+import StockLocationItemsView from "@/pages/stocks/organisms/StockLocationItemsView";
 
 const router = createBrowserRouter([
   {
@@ -105,9 +107,19 @@ const router = createBrowserRouter([
         path: routePaths.stocks,
         element: <StocksPage />,
         handle: { navKey: "stocks" },
+        children: [
+          {
+            index: true,
+            element: <StockNoLocationSelected />,
+          },
+          {
+            path: ":locationId",
+            element: <StockLocationItemsView />,
+          },
+        ],
       },
       {
-        path: "/kanban",
+        path: routePaths.kanban,
         element: <KanbanPage />,
         handle: { navKey: "kanban" },
       },

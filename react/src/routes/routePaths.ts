@@ -15,5 +15,7 @@ export const routePaths = {
     },
     setup: "/setup",
     automatisations: "/automatisations",
+    kanban: "/kanban",
     stocks: "/stocks",
+    stocksLocation: "/stocks/:locationId",
 } as const;

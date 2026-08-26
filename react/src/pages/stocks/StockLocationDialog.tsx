@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import StockLocation from "@/interfaces/stocks/StockLocation";
+import RequiredMark from "@/components/atoms/form/RequiredMark";
 
 interface StockLocationDialogProps {
     visible: boolean;
@@ -20,8 +21,13 @@ export default function StockLocationDialog({
 }: StockLocationDialogProps) {
     const [label, setLabel] = useState(() => location?.label ?? "");
     const [saving, setSaving] = useState(false);
+    const isFormValid = label.trim().length > 0;
 
     const handleSubmit = async () => {
+        if (!isFormValid) {
+            return;
+        }
+
         setSaving(true);
         try {
             await onSubmit({ label });
@@ -39,7 +45,7 @@ export default function StockLocationDialog({
             footer={(
                 <div>
                     <Button label="Annuler" text onClick={onHide} />
-                    <Button label={location ? "Enregistrer" : "Créer"} onClick={() => void handleSubmit()} loading={saving} />
+                    <Button label={location ? "Enregistrer" : "Créer"} onClick={() => void handleSubmit()} loading={saving} disabled={!isFormValid} />
                 </div>
             )}
         >
@@ -52,7 +58,7 @@ export default function StockLocationDialog({
                         className="w-full"
                         autoFocus
                     />
-                    <label htmlFor="stock-location-label">Nom du lieu</label>
+                    <label htmlFor="stock-location-label">Nom du lieu<RequiredMark /></label>
                 </FloatLabel>
             </div>
         </Dialog>

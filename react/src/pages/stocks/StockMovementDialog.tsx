@@ -8,6 +8,7 @@ import { Calendar } from "primereact/calendar";
 import StockItem from "@/interfaces/stocks/StockItem";
 import { RecordStockMovementDto } from "@/services/stocks/dto/RecordStockMovementDto";
 import { StockMovementType } from "@/interfaces/stocks/StockMovement";
+import RequiredMark from "@/components/atoms/form/RequiredMark";
 
 interface StockMovementDialogProps {
     visible: boolean;
@@ -26,8 +27,13 @@ export default function StockMovementDialog({
     const [quantity, setQuantity] = useState(() => 1);
     const [occurredAt, setOccurredAt] = useState<Date>(() => new Date());
     const [saving, setSaving] = useState(false);
+    const isFormValid = quantity > 0;
 
     const handleSubmit = async () => {
+        if (!isFormValid) {
+            return;
+        }
+
         setSaving(true);
         try {
             await onSubmit({
@@ -50,7 +56,7 @@ export default function StockMovementDialog({
             footer={(
                 <div>
                     <Button label="Annuler" text onClick={onHide} />
-                    <Button label="Enregistrer" onClick={() => void handleSubmit()} loading={saving} />
+                    <Button label="Enregistrer" onClick={() => void handleSubmit()} loading={saving} disabled={!isFormValid} />
                 </div>
             )}
         >
@@ -66,7 +72,7 @@ export default function StockMovementDialog({
                         onChange={(event) => setType(event.value as StockMovementType)}
                         className="w-full"
                     />
-                    <label htmlFor="stock-movement-type">Type de mouvement</label>
+                    <label htmlFor="stock-movement-type">Type de mouvement<RequiredMark /></label>
                 </FloatLabel>
 
                 <FloatLabel>
@@ -79,7 +85,7 @@ export default function StockMovementDialog({
                         minFractionDigits={0}
                         maxFractionDigits={2}
                     />
-                    <label htmlFor="stock-movement-quantity">Quantité</label>
+                    <label htmlFor="stock-movement-quantity">Quantité<RequiredMark /></label>
                 </FloatLabel>
 
                 <FloatLabel>
