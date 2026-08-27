@@ -1,8 +1,7 @@
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { ScrollPanel } from "primereact/scrollpanel";
-import StockLocation from "@/interfaces/stocks/StockLocation";
+    import StockLocation from "@/interfaces/stocks/StockLocation";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import { useScreen } from "@/hooks/useScreen";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";

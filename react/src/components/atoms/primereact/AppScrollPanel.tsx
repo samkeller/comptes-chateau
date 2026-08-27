@@ -3,6 +3,16 @@ import { ScrollPanel, type ScrollPanelProps } from "primereact/scrollpanel";
 
 interface AppScrollPanelProps extends ScrollPanelProps {
     children: ReactNode;
+    /**
+     * Direction of the scroll panel. Can be "vertical", "horizontal", or "both". Defaults to "both".
+     * @default "both"
+     * @type {"vertical" | "horizontal" | "both"}
+     * @memberof AppScrollPanelProps
+     * @example
+     * <AppScrollPanel direction="vertical">
+     *   <div>Content</div>
+     * </AppScrollPanel>
+     */
     direction?: "vertical" | "horizontal" | "both";
 }
 

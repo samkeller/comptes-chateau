@@ -159,31 +159,6 @@ export default function StocksPage() {
         setMovementItem(null);
     }
 
-    async function applyQuickMovement(item: StockItem, type: "IN" | "OUT"): Promise<void> {
-        try {
-            await stockService.recordMovement(item.id, {
-                type,
-                quantity: 1,
-                occurredAt: new Date(),
-                source: "manual",
-            });
-
-            showToast({
-                severity: "success",
-                summary: type === "IN" ? "Quantité augmentée" : "Quantité diminuée",
-            });
-            if (selectedLocationId !== null) {
-                await loadItems(selectedLocationId);
-            }
-        } catch {
-            showToast({
-                severity: "error",
-                summary: "Mouvement refusé",
-                detail: "Vérifiez la quantité disponible pour ce produit.",
-            });
-        }
-    }
-
     function requestDeleteLocation(location: StockLocation): void {
         confirmDialog({
             group: LOCATION_DELETE_GROUP,
@@ -243,7 +218,6 @@ export default function StocksPage() {
             setIsItemDialogVisible(true);
         },
         onDelete: requestDeleteItem,
-        onQuickMovement: (item, type) => void applyQuickMovement(item, type),
     };
 
     return (

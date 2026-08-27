@@ -7,5 +7,4 @@ export interface StockItemsOutletContext {
     onEdit: (item: StockItem) => void;
     // onAdjust: (item: StockItem) => void;
     onDelete: (item: StockItem) => void;
-    onQuickMovement: (item: StockItem, type: "IN" | "OUT") => void;
 }
