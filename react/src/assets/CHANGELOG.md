@@ -68,3 +68,8 @@
 ## [1.1.8 - 20/08/2026]
 ### Fixes
 - Routes multiples & secures
+
+## [1.2.0 - 27/08/2026]
+### Added
+- Chocostocks module
+- Adding fine history tracking for future data analytics
