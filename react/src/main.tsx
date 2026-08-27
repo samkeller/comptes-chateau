@@ -17,6 +17,22 @@ addLocale('fr', frLocale);
 
 const primeReactOptions: Partial<APIOptions> = {
   locale: 'fr',
+  pt: {
+    scrollpanel: {
+      content: {
+        className: [
+          "pr-[calc(18px+0.5rem)]!",
+          "pb-[calc(18px+0.5rem)]!"
+        ]
+      },
+      barX: {
+        className: "h-[0.3rem]!"
+      },
+      barY: {
+        className: "w-[0.3rem]!"
+      }
+    }
+  }
 }
 
 registerSW({

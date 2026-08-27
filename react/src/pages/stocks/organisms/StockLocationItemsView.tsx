@@ -41,11 +41,10 @@ export default function StockLocationItemsView() {
 
     return (
         <FillRemainingHeight>
-            <ScrollPanel className="h-full w-full">
+            <ScrollPanel className="h-full w-full" >
                 {/* {itemsGrid} */}
                 <DataTable
                     value={items}
-                    className="w-full"
                     size="small"
 
                     // Expansion
@@ -77,7 +76,7 @@ export default function StockLocationItemsView() {
                     <Column
                         header="Actions"
                         body={(item) => (
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 min-w-0">
                                 <Button
                                     label="-1"
                                     severity="secondary"

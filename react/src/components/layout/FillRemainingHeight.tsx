@@ -1,9 +1,13 @@
-export default function FillRemainingHeight({ children, }: { children: React.ReactNode }) {
+
+interface FillRemainingHeightProps {
+    children: React.ReactNode,
+    className?: string,
+}
+
+export default function FillRemainingHeight({ children, className }: FillRemainingHeightProps) {
     return (
-        <div className="flex h-full min-h-0 flex-col">
-            <div className="flex min-h-0 flex-1 flex-col">
-                {children}
-            </div>
+        <div className={`flex min-h-0 flex-1 flex-col ${className ?? ""}`}  >
+            {children}
         </div>
     )
 }
