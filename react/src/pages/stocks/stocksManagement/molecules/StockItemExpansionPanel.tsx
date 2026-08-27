@@ -13,7 +13,7 @@ export default function StockItemExpansionPanel({ item, movements }: StockItemEx
     const hasDetails = Boolean(item.barcode || item.imageUrl);
 
     return (
-        <div className="flex flex-col gap-3 py-2 text-sm text-surface-500">
+        <div className="flex gap-3 py-2 text-sm text-surface-500">
             {hasDetails && (
                 <div className="flex flex-col gap-1">
                     {item.barcode && <span>Code-barres : {item.barcode}</span>}
@@ -21,11 +21,7 @@ export default function StockItemExpansionPanel({ item, movements }: StockItemEx
                 </div>
             )}
 
-            <div className={hasDetails ? "border-t border-surface-200 pt-3" : undefined}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-surface-400">
-                    Historique des mouvements
-                </div>
-
+            <div className="grow">
                 {movements === "loading" && (
                     <div className="flex justify-center p-4">
                         <ProgressSpinner style={{ width: "2rem", height: "2rem" }} />

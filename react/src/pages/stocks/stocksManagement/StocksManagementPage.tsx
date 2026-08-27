@@ -3,7 +3,6 @@ import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { generatePath, useNavigate, useParams } from "react-router-dom";
-import { PageTemplate } from "../PageTemplate";
 import { routePaths } from "@/routes/routePaths";
 import StockService from "@/services/stocks/StockService";
 import StockLocation from "@/interfaces/stocks/StockLocation";
@@ -19,7 +18,7 @@ const stockService = new StockService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
 const ITEM_DELETE_GROUP = "stock-item-delete";
 
-export default function StocksPage() {
+export default function StocksManagementPage() {
     const showToast = useGlobalToast();
     const navigate = useNavigate();
     const { locationId: locationIdParam } = useParams<{ locationId: string }>();
@@ -104,7 +103,7 @@ export default function StocksPage() {
         }
 
         if (selectedLocationId !== null) {
-            navigate(routePaths.stocks, { replace: true });
+            navigate(routePaths.stocksManagement, { replace: true });
         }
     }, [loadingLocations, locations, selectedLocationId, navigate]);
 
@@ -117,7 +116,7 @@ export default function StocksPage() {
             const createdLocation = await stockService.createLocation(payload);
             showToast({ severity: "success", summary: "Lieu créé" });
             await loadLocations();
-            navigate(generatePath(routePaths.stocksLocation, { locationId: String(createdLocation.id) }));
+            navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(createdLocation.id) }));
         }
 
         setIsLocationDialogVisible(false);
@@ -218,7 +217,7 @@ export default function StocksPage() {
     }
 
     return (
-        <PageTemplate pageTitle="Stocks">
+        <>
             <ConfirmDialog group={LOCATION_DELETE_GROUP} />
             <ConfirmDialog group={ITEM_DELETE_GROUP} />
 
@@ -266,9 +265,9 @@ export default function StocksPage() {
                         loading={loadingLocations}
                         onSelect={(location) => {
                             if (location.id === selectedLocationId)
-                                navigate(routePaths.stocks, { replace: true });
+                                navigate(routePaths.stocksManagement, { replace: true });
                             else
-                                navigate(generatePath(routePaths.stocksLocation, { locationId: String(location.id) }))
+                                navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(location.id) }))
                         }}
                         onAddLocation={() => setIsLocationDialogVisible(true)}
                         onEditLocation={(location) => {
@@ -277,19 +276,20 @@ export default function StocksPage() {
                         }}
                         onDeleteLocation={requestDeleteLocation}
                     />
+                    <div className="flex flex-col gap-4 w-full">
 
-                    <Card
-                        title={selectedLocation
-                            ? `Produits — ${selectedLocation.label}`
-                            : "Produits"}
-                        className="lg:h-full lg:min-h-0 lg:min-w-0 lg:flex-1"
-                        pt={{ body: { className: "h-full" }, content: { className: "h-full flex flex-col gap-4" } }}
-                    >
-                        {selectedLocation && (
-                            <div className="flex justify-end">
+                        <div className="flex justify-between items-center gap-4 lg:w-full">
+                            <h2 className="m-0 text-lg font-semibold">
+                                {
+                                    selectedLocation
+                                        ? `Produits — ${selectedLocation.label}`
+                                        : "Produits"
+                                }
+                            </h2>
+                            {selectedLocation && (
                                 <Button label="Ajouter un produit" icon="pi pi-plus" size="small" onClick={() => setIsItemDialogVisible(true)} />
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         {!selectedLocation ? (
                             <div className="text-surface-500">Créez d'abord un lieu pour ajouter des produits.</div>
@@ -305,10 +305,10 @@ export default function StocksPage() {
                                 onQuantityChange={handleQuantityChange}
                             />
                         )}
-                    </Card>
+                    </div>
                 </div>
             </div>
-        </PageTemplate>
+        </>
     );
 }
 

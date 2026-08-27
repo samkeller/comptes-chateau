@@ -97,20 +97,7 @@ export default function StockItemDialog({
                     <InputText id="stock-item-label" value={label} onChange={(event) => setLabel(event.target.value)} className="w-full" autoFocus />
                     <label htmlFor="stock-item-label">Nom du produit<RequiredMark /></label>
                 </FloatLabel>
-
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <FloatLabel>
-                        <AutoComplete
-                            id="stock-item-unit"
-                            value={unit}
-                            suggestions={filteredUnits}
-                            onChange={(event) => setUnit(event.value)}
-                            completeMethod={searchUnits}
-                            className="w-full"
-                        />
-                        <label htmlFor="stock-item-unit">Unité<RequiredMark /></label>
-                    </FloatLabel>
-
                     <FloatLabel>
                         <InputNumber
                             id="stock-item-quantity"
@@ -124,8 +111,19 @@ export default function StockItemDialog({
                         />
                         <label htmlFor="stock-item-quantity">Quantité</label>
                     </FloatLabel>
+                    <FloatLabel>
+                        <AutoComplete
+                            id="stock-item-unit"
+                            value={unit}
+                            suggestions={filteredUnits}
+                            onChange={(event) => setUnit(event.value)}
+                            completeMethod={searchUnits}
+                            className="w-full"
+                            inputClassName="w-full"
+                        />
+                        <label htmlFor="stock-item-unit">Unité<RequiredMark /></label>
+                    </FloatLabel>
                 </div>
-
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FloatLabel>
                         <Dropdown
@@ -137,14 +135,6 @@ export default function StockItemDialog({
                         />
                         <label htmlFor="stock-item-location">Lieu<RequiredMark /></label>
                     </FloatLabel>
-
-                    <FloatLabel>
-                        <InputText id="stock-item-barcode" value={barcode} onChange={(event) => setBarcode(event.target.value)} className="w-full" />
-                        <label htmlFor="stock-item-barcode">Code-barres <Optional /></label>
-                    </FloatLabel>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FloatLabel>
                         <Calendar
                             id="stock-item-expiration"
@@ -156,7 +146,12 @@ export default function StockItemDialog({
                         />
                         <label htmlFor="stock-item-expiration">Date de péremption <Optional /></label>
                     </FloatLabel>
-
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <FloatLabel>
+                        <InputText id="stock-item-barcode" value={barcode} onChange={(event) => setBarcode(event.target.value)} className="w-full" />
+                        <label htmlFor="stock-item-barcode">Code-barres <Optional /></label>
+                    </FloatLabel>
                     <FloatLabel>
                         <InputText id="stock-item-image" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="w-full" />
                         <label htmlFor="stock-item-image">Image (URL ou chemin) <Optional /></label>

@@ -7,3 +7,7 @@
 .p-component.p-autocomplete.p-autocomplete-multiple>ul.p-autocomplete-multiple-container {
     padding: 0.25rem 0.5rem!important;
 }
+
+.p-component.p-card.light {
+        background-color: var(--surface-100) !important;
+}

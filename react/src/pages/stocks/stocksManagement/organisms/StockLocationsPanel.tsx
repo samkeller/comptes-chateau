@@ -70,10 +70,9 @@ export default function StockLocationsPanel({
 
     return (
 
-
         <Card
             title="Lieux de stockage"
-            className={`h-full min-h-0 ${className ?? ""}`}
+            className={`light h-full min-h-0 ${className ?? ""}`}
             pt={{
                 body: {
                     className: "h-full min-h-0 flex flex-col"
