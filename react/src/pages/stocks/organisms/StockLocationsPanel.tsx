@@ -1,7 +1,7 @@
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
-    import StockLocation from "@/interfaces/stocks/StockLocation";
+import StockLocation from "@/interfaces/stocks/StockLocation";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import { useScreen } from "@/hooks/useScreen";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
@@ -92,7 +92,7 @@ export default function StockLocationsPanel({
                 </div>
             ) : (
                 <FillRemainingHeight>
-                    <div className="flex shrink-0 justify-end">
+                    <div className="flex shrink-0 justify-end mb-4">
                         <Button
                             label="Ajouter"
                             icon="pi pi-plus"
@@ -100,7 +100,6 @@ export default function StockLocationsPanel({
                             onClick={onAddLocation}
                         />
                     </div>
-
                     <div className="min-h-0 flex-1">
                         <AppScrollPanel>
                             <div className="flex flex-col gap-2">

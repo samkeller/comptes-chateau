@@ -18,7 +18,7 @@ export default function StockItemsPanel({ selectedLocation, onAddItem, className
             pt={{ body: { className: "h-full" }, content: { className: "h-full flex flex-col gap-4" } }}
         >
             {selectedLocation && (
-                <div>
+                <div className="flex justify-end">
                     <Button label="Ajouter un produit" icon="pi pi-plus" size="small" onClick={onAddItem} />
                 </div>
             )}

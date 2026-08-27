@@ -285,7 +285,12 @@ export default function StocksPage() {
                         locations={locations}
                         selectedLocation={selectedLocation}
                         loading={loadingLocations}
-                        onSelect={(location) => navigate(generatePath(routePaths.stocksLocation, { locationId: String(location.id) }))}
+                        onSelect={(location) => {
+                            if (location.id === selectedLocationId)
+                                navigate(routePaths.stocks, { replace: true });
+                            else
+                                navigate(generatePath(routePaths.stocksLocation, { locationId: String(location.id) }))
+                        }}
                         onAddLocation={() => setIsLocationDialogVisible(true)}
                         onEditLocation={(location) => {
                             setEditingLocation(location);

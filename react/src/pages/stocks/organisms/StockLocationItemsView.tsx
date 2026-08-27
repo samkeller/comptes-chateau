@@ -33,7 +33,6 @@ export default function StockLocationItemsView() {
     const itemExpansionTemplate = (item: StockItem) => (
         <div className="flex flex-col gap-1 text-sm text-surface-500">
             {item.barcode && <span>Code-barres : {item.barcode}</span>}
-            {item.expirationDate && <span>Péremption : {format(item.expirationDate, "dd/MM/yyyy")}</span>}
             {item.imageUrl && <span className="truncate">Image : {item.imageUrl}</span>}
         </div>
     );
