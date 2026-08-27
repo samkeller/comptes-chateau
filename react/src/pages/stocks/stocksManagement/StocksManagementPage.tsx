@@ -91,8 +91,6 @@ export default function StocksManagementPage() {
         };
     }, [loadItems, selectedLocationId]);
 
-    // Garde l'URL cohérente avec les lieux disponibles : sélectionne le premier lieu par défaut,
-    // ou redirige si le lieu demandé n'existe plus (ex: suppression).
     useEffect(() => {
         if (loadingLocations) {
             return;
