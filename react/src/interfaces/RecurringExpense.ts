@@ -1,6 +1,6 @@
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
-import { parseApiDate } from "../services/ApiDateCodec"
+import { parseApiDate } from "../utils/DatesUtils"
 
 export type RecurringExpenseFrequency = "weekly" | "monthly" | "quarterly" | "yearly"
 

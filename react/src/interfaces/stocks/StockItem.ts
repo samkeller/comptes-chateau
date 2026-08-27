@@ -1,5 +1,5 @@
 import StockLocation from "./StockLocation";
-import { parseApiDateTime } from "@/services/ApiDateCodec";
+import { parseApiDate, parseApiDateTime } from "@/utils/DatesUtils";
 
 export default class StockItem {
     id: number = 0;
@@ -19,7 +19,7 @@ export default class StockItem {
         this.location = partial.location ? new StockLocation(partial.location) : new StockLocation({});
         // Convertir les dates ISO en objets Date
         if(partial.expirationDate) {
-            this.expirationDate = parseApiDateTime(partial.expirationDate) ?? null;
+            this.expirationDate = parseApiDate(partial.expirationDate) ?? null;
         }
         if (partial.createdAt) {
             this.createdAt = parseApiDateTime(partial.createdAt) ?? undefined;
