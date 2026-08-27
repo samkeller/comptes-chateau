@@ -22,6 +22,7 @@ type NavKey =
     | "account-budget"
     | "automatisations"
     | "setup"
+    | "stocks"
     | "kanban";
 
 interface NavHandle {
@@ -167,6 +168,12 @@ export default function AppNavigationMenu({
     ];
 
     const endItems: MenuItem[] = [
+        {
+            label: "Stocks",
+            icon: "pi pi-box",
+            className: activeNavKey === "stocks" ? "bg-surface-200" : undefined,
+            command: () => navigateTo("/stocks")
+        },
         {
             label: "Kanban",
             icon: "pi pi-th-large",

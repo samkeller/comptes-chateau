@@ -68,7 +68,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
     return (
         <FillRemainingHeight>
             <ScrollPanel className="w-full h-full">
-                <div className="flex h-full min-h-0 flex-col">
+                <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
                         Commentaires {!loading && `(${comments.length})`}
                     </h3>
