@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "primereact/card";
+import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { generatePath, Outlet, useNavigate, useParams } from "react-router-dom";
+import { generatePath, useNavigate, useParams } from "react-router-dom";
 import { PageTemplate } from "../PageTemplate";
 import { routePaths } from "@/routes/routePaths";
 import StockService from "@/services/stocks/StockService";
@@ -10,13 +11,9 @@ import StockItem from "@/interfaces/stocks/StockItem";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import StockLocationDialog from "./StockLocationDialog";
 import StockItemDialog from "./StockItemDialog";
-import StockMovementDialog from "./StockMovementDialog";
-import StockHistoryDialog from "./StockHistoryDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
-import StockItemsPanel from "./organisms/StockItemsPanel";
-import { StockItemsOutletContext } from "./StockItemsOutletContext";
+import StockLocationItemsView from "./organisms/StockLocationItemsView";
 import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
-import { RecordStockMovementDto } from "@/services/stocks/dto/RecordStockMovementDto";
 
 const stockService = new StockService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
@@ -39,8 +36,6 @@ export default function StocksPage() {
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
     const [editingItem, setEditingItem] = useState<StockItem | null>(null);
     const [isItemDialogVisible, setIsItemDialogVisible] = useState(false);
-    const [movementItem, setMovementItem] = useState<StockItem | null>(null);
-    const [historyItem, setHistoryItem] = useState<StockItem | null>(null);
 
     const selectedLocation = useMemo(
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
@@ -138,9 +133,7 @@ export default function StocksPage() {
             showToast({ severity: "success", summary: "Produit créé" });
         }
 
-        if (payload.locationId !== selectedLocationId) {
-            navigate(generatePath(routePaths.stocksLocation, { locationId: String(payload.locationId) }));
-        } else if (selectedLocationId !== null) {
+        if (selectedLocationId !== null) {
             await loadItems(selectedLocationId);
         }
 
@@ -148,15 +141,30 @@ export default function StocksPage() {
         setEditingItem(null);
     }
 
-    async function handleMovementSubmit(payload: RecordStockMovementDto): Promise<void> {
-        if (!movementItem || selectedLocationId === null) {
+    async function handleQuantityChange(item: StockItem, newQuantity: number): Promise<void> {
+        const delta = newQuantity - item.currentQuantity;
+        if (delta === 0) {
             return;
         }
 
-        await stockService.recordMovement(movementItem.id, payload);
-        showToast({ severity: "success", summary: "Mouvement enregistré" });
-        await loadItems(selectedLocationId);
-        setMovementItem(null);
+        try {
+            await stockService.recordMovement(item.id, {
+                type: delta > 0 ? "IN" : "OUT",
+                quantity: Math.abs(delta),
+                occurredAt: new Date(),
+                source: "manual",
+            });
+
+            if (selectedLocationId !== null) {
+                await loadItems(selectedLocationId);
+            }
+        } catch {
+            showToast({
+                severity: "error",
+                summary: "Mouvement refusé",
+                detail: "Vérifiez la quantité disponible pour ce produit.",
+            });
+        }
     }
 
     function requestDeleteLocation(location: StockLocation): void {
@@ -209,17 +217,6 @@ export default function StocksPage() {
         });
     }
 
-    const itemsOutletContext: StockItemsOutletContext = {
-        items,
-        loading: loadingItems,
-        onShowHistory: setHistoryItem,
-        onEdit: (item) => {
-            setEditingItem(item);
-            setIsItemDialogVisible(true);
-        },
-        onDelete: requestDeleteItem,
-    };
-
     return (
         <PageTemplate pageTitle="Stocks">
             <ConfirmDialog group={LOCATION_DELETE_GROUP} />
@@ -250,25 +247,7 @@ export default function StocksPage() {
                         setEditingItem(null);
                     }}
                     onSubmit={handleItemSubmit}
-                />
-            )}
-
-            {movementItem && (
-                <StockMovementDialog
-                    key={movementItem.id}
-                    visible
-                    item={movementItem}
-                    onHide={() => setMovementItem(null)}
-                    onSubmit={handleMovementSubmit}
-                />
-            )}
-
-            {historyItem && (
-                <StockHistoryDialog
-                    key={historyItem.id}
-                    visible
-                    item={historyItem}
-                    onHide={() => setHistoryItem(null)}
+                    onQuantityChange={handleQuantityChange}
                 />
             )}
 
@@ -299,13 +278,34 @@ export default function StocksPage() {
                         onDeleteLocation={requestDeleteLocation}
                     />
 
-                    <StockItemsPanel
+                    <Card
+                        title={selectedLocation
+                            ? `Produits — ${selectedLocation.label}`
+                            : "Produits"}
                         className="lg:h-full lg:min-h-0 lg:min-w-0 lg:flex-1"
-                        selectedLocation={selectedLocation}
-                        onAddItem={() => setIsItemDialogVisible(true)}
+                        pt={{ body: { className: "h-full" }, content: { className: "h-full flex flex-col gap-4" } }}
                     >
-                        <Outlet context={itemsOutletContext} />
-                    </StockItemsPanel>
+                        {selectedLocation && (
+                            <div className="flex justify-end">
+                                <Button label="Ajouter un produit" icon="pi pi-plus" size="small" onClick={() => setIsItemDialogVisible(true)} />
+                            </div>
+                        )}
+
+                        {!selectedLocation ? (
+                            <div className="text-surface-500">Créez d'abord un lieu pour ajouter des produits.</div>
+                        ) : (
+                            <StockLocationItemsView
+                                items={items}
+                                loading={loadingItems}
+                                onEdit={(item) => {
+                                    setEditingItem(item);
+                                    setIsItemDialogVisible(true);
+                                }}
+                                onDelete={requestDeleteItem}
+                                onQuantityChange={handleQuantityChange}
+                            />
+                        )}
+                    </Card>
                 </div>
             </div>
         </PageTemplate>

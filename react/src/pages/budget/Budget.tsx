@@ -21,11 +21,11 @@ export default function Budget() {
                     activeIndex={activeIndex === -1 ? 0 : activeIndex}
                     onTabChange={(event) => navigate(tabs[event.index].path)}
                 >
-{tabs.map((tab, index) => (
-    <TabPanel key={tab.path} header={tab.label}>
-        {index === (activeIndex === -1 ? 0 : activeIndex) && <Outlet />}
-    </TabPanel>
-))}
+                    {tabs.map((tab, index) => (
+                        <TabPanel key={tab.path} header={tab.label}>
+                            {index === (activeIndex === -1 ? 0 : activeIndex) && <Outlet />}
+                        </TabPanel>
+                    ))}
                 </TabView>
             </div>
         </PageTemplate>

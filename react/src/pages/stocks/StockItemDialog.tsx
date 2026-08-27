@@ -6,7 +6,7 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { InputNumber } from "primereact/inputnumber";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
@@ -21,6 +21,7 @@ interface StockItemDialogProps {
     selectedLocationId: number | null;
     onHide: () => void;
     onSubmit: (payload: SaveStockItemDto) => Promise<void>;
+    onQuantityChange: (item: StockItem, quantity: number) => void;
 }
 
 export default function StockItemDialog({
@@ -30,6 +31,7 @@ export default function StockItemDialog({
     selectedLocationId,
     onHide,
     onSubmit,
+    onQuantityChange,
 }: StockItemDialogProps) {
     const [label, setLabel] = useState(() => item?.label ?? "");
     const [barcode, setBarcode] = useState(() => item?.barcode ?? "");
@@ -37,7 +39,7 @@ export default function StockItemDialog({
     const [locationId, setLocationId] = useState<number | null>(() => item?.locationId ?? selectedLocationId);
     const [expirationDate, setExpirationDate] = useState<Date | null>(() => item?.expirationDate ?? null);
     const [imageUrl, setImageUrl] = useState(() => item?.imageUrl ?? "");
-    const [initialQuantity, setInitialQuantity] = useState(0);
+    const [quantity, setQuantity] = useState(() => item?.currentQuantity ?? 0);
     const [saving, setSaving] = useState(false);
 
     const stockUnitsAutocompleteSuggestions = ["kg", "g", "L", "mL", "Unité", "Bouteille", "Carton", "Sachet", "Boîte", "Paquet", "Pièce"];
@@ -57,12 +59,15 @@ export default function StockItemDialog({
             locationId,
             expirationDate: expirationDate ? format(expirationDate, "yyyy-MM-dd") : null,
             imageUrl: imageUrl || null,
-            ...(item ? {} : { initialQuantity, occurredAt: new Date(), source: "manual" }),
+            ...(item ? {} : { initialQuantity: quantity, occurredAt: new Date(), source: "manual" }),
         };
 
         setSaving(true);
         try {
             await onSubmit(payload);
+            if (item && quantity !== item.currentQuantity) {
+                onQuantityChange(item, quantity);
+            }
         } finally {
             setSaving(false);
         }
@@ -95,11 +100,6 @@ export default function StockItemDialog({
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FloatLabel>
-                        <InputText id="stock-item-barcode" value={barcode} onChange={(event) => setBarcode(event.target.value)} className="w-full" />
-                        <label htmlFor="stock-item-barcode">Code-barres <small>(optionnel)</small></label>
-                    </FloatLabel>
-
-                    <FloatLabel>
                         <AutoComplete
                             id="stock-item-unit"
                             value={unit}
@@ -109,6 +109,20 @@ export default function StockItemDialog({
                             className="w-full"
                         />
                         <label htmlFor="stock-item-unit">Unité<RequiredMark /></label>
+                    </FloatLabel>
+
+                    <FloatLabel>
+                        <InputNumber
+                            id="stock-item-quantity"
+                            value={quantity}
+                            onValueChange={(event) => setQuantity(event.value ?? 0)}
+                            className="w-full"
+                            min={0}
+                            minFractionDigits={0}
+                            maxFractionDigits={2}
+                            suffix={unit ? ` ${unit}` : undefined}
+                        />
+                        <label htmlFor="stock-item-quantity">Quantité</label>
                     </FloatLabel>
                 </div>
 
@@ -125,6 +139,13 @@ export default function StockItemDialog({
                     </FloatLabel>
 
                     <FloatLabel>
+                        <InputText id="stock-item-barcode" value={barcode} onChange={(event) => setBarcode(event.target.value)} className="w-full" />
+                        <label htmlFor="stock-item-barcode">Code-barres <Optional /></label>
+                    </FloatLabel>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <FloatLabel>
                         <Calendar
                             id="stock-item-expiration"
                             value={expirationDate}
@@ -135,27 +156,12 @@ export default function StockItemDialog({
                         />
                         <label htmlFor="stock-item-expiration">Date de péremption <Optional /></label>
                     </FloatLabel>
-                </div>
 
-                <FloatLabel>
-                    <InputText id="stock-item-image" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="w-full" />
-                    <label htmlFor="stock-item-image">Image (URL ou chemin) <Optional /></label>
-                </FloatLabel>
-
-                {!item && (
                     <FloatLabel>
-                        <InputNumber
-                            id="stock-item-initial-quantity"
-                            value={initialQuantity}
-                            onValueChange={(event) => setInitialQuantity(event.value ?? 0)}
-                            className="w-full"
-                            min={0}
-                            minFractionDigits={0}
-                            maxFractionDigits={2}
-                        />
-                        <label htmlFor="stock-item-initial-quantity">Quantité initiale</label>
+                        <InputText id="stock-item-image" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="w-full" />
+                        <label htmlFor="stock-item-image">Image (URL ou chemin) <Optional /></label>
                     </FloatLabel>
-                )}
+                </div>
             </div>
         </Dialog>
     );

@@ -3,7 +3,6 @@ import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
-import { useScreen } from "@/hooks/useScreen";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
 
 interface StockLocationsPanelProps {
@@ -27,8 +26,6 @@ export default function StockLocationsPanel({
     onDeleteLocation,
     className,
 }: StockLocationsPanelProps) {
-    const { isDesktop } = useScreen();
-
     const StockLocationListItem = (
         { location, className }: {
             location: StockLocation,
