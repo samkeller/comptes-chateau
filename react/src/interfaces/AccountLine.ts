@@ -1,4 +1,6 @@
 import { parseDateToDisplay, parseApiDate, parseApiDateTime } from "../utils/DatesUtils"
+import { AccountLineNature } from "./AccountLineNature"
+import { AccountLinePoste } from "./AccountLinePoste"
 import Account from "./Account"
 
 class AccountLine {
