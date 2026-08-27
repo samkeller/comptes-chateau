@@ -61,10 +61,9 @@ export default function StockLocationItemsView() {
                     header="Produit"
                     field="label"
                     className="grow"
-                    body={(d, o) => (
+                    body={(d) => (
                         <StockQuantityBodyTemplate
                             data={d}
-                            options={o}
                             // TODO / ERR: onEdit =/= modifier un objet mais ouvrir une dialog. A corriger !
                             onQuantityChange={(newQuantity) => onEdit({ ...d, currentQuantity: newQuantity })}
                         />

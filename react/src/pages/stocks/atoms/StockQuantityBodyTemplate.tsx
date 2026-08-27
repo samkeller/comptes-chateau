@@ -1,5 +1,4 @@
 import StockItem from "@/interfaces/stocks/StockItem";
-import { ColumnBodyOptions } from "primereact/column";
 import { useState } from "react";
 import { Button } from "primereact/button";
 import { InputNumber } from "primereact/inputnumber";
@@ -7,11 +6,10 @@ import { InputNumber } from "primereact/inputnumber";
 
 interface StockQuantityBodyTemplateProps {
     data: StockItem;
-    options: ColumnBodyOptions;
     onQuantityChange?: (newQuantity: number) => void;
 }
 
-export default function StockQuantityBodyTemplate({ data, options, onQuantityChange }: StockQuantityBodyTemplateProps) {
+export default function StockQuantityBodyTemplate({ data, onQuantityChange }: StockQuantityBodyTemplateProps) {
     const [editMode, setEditMode] = useState(false);
     const [inputValue, setInputValue] = useState<number>(data.currentQuantity);
 
