@@ -121,7 +121,7 @@ export default function KanbanPage() {
                     </div>
                 ) : (
                     <FillRemainingHeight>
-                        <div className="flex h-full min-h-0 w-full flex-col gap-3">
+                        <div className="flex h-full w-full flex-col gap-3">
                             <KanbanFilters
                                 allUsers={allUsers}
                                 allTags={allTags}
