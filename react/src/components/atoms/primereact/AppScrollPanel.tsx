@@ -30,12 +30,8 @@ export default function AppScrollPanel({
             className={`h-full w-full ${props.className ?? ""}`}
             pt={{
                 ...props.pt,
-                barX: {
-                    className: !showHorizontal ? "hidden!" : ""
-                },
-                barY: {
-                    className: !showVertical ? "hidden!" : ""
-                }
+                ...(!showHorizontal ? { barX: { className: "hidden!" } } : {}),
+                ...(!showVertical ? { barY: { className: "hidden!" } } : {}),
             }}
         >
             {children}
