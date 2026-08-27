@@ -18,18 +18,6 @@ export default function StockLocationItemsView() {
         useOutletContext<StockItemsOutletContext>();
     const [expandedRows, setExpandedRows] = useState<StockItem[]>([]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center p-8">
-                <ProgressSpinner />
-            </div>
-        );
-    }
-
-    if (items.length === 0) {
-        return <div className="text-surface-500">Aucun produit dans ce lieu.</div>;
-    }
-
     const itemExpansionTemplate = (item: StockItem) => (
         <div className="flex flex-col gap-1 text-sm text-surface-500">
             {item.barcode && <span>Code-barres : {item.barcode}</span>}
@@ -54,6 +42,8 @@ export default function StockLocationItemsView() {
                 scrollable
                 scrollHeight={"flex"}
                 className="pb-4 w-full"
+                loading={loading}
+                emptyMessage="Aucun produit trouvé"
             >
                 <Column expander={true} style={{ width: '5rem' }} />
                 <Column
