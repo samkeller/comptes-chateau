@@ -4,7 +4,7 @@ import {
     DataTableFilterMetaData,
     DataTableOperatorFilterMetaData
 } from "primereact/datatable";
-import { formatApiDate } from "../ApiDateCodec";
+import { formatApiDate } from "../../utils/DatesUtils";
 
 export interface TablePagination {
     first: number;

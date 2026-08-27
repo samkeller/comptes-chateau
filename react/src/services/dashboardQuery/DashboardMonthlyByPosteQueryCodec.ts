@@ -1,4 +1,4 @@
-import { formatApiDate } from "../ApiDateCodec";
+import { formatApiDate } from "../../utils/DatesUtils";
 
 export interface DashboardMonthlyByPosteQueryInput {
     from: Date;

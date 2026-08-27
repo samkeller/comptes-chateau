@@ -1,6 +1,6 @@
 import axios from "axios"
 import AccountLine from "../interfaces/AccountLine"
-import { formatApiDate } from "./ApiDateCodec"
+import { formatApiDate } from "../utils/DatesUtils"
 import BaseService from "./BaseService"
 import DataTableQueryCodec, { DataTableLazyState } from "./tableQuery/DataTableQueryCodec"
 
