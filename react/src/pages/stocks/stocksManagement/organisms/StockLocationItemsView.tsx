@@ -1,115 +1,96 @@
-import { useEffect, useRef, useState } from "react";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
+import { useState } from "react";
 import { Button } from "primereact/button";
-import { format } from "date-fns";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { Timeline } from "primereact/timeline";
+import { format, parseISO } from "date-fns";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
-import StockItem from "@/interfaces/stocks/StockItem";
 import StockMovement from "@/interfaces/stocks/StockMovement";
+import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockService from "@/services/stocks/StockService";
-import StockQuantityBodyTemplate from "../molecules/StockQuantityBodyTemplate";
-import StockItemExpansionPanel from "../molecules/StockItemExpansionPanel";
+import StockUnitSummary from "../molecules/StockUnitSummary";
 
 interface StockLocationItemsViewProps {
-    items: StockItem[];
+    units: StockUnit[];
     loading: boolean;
-    onEdit: (item: StockItem) => void;
-    onDelete: (item: StockItem) => void;
-    onQuantityChange: (item: StockItem, quantity: number) => void;
+    onTake: (unit: StockUnit) => void;
 }
 
 const stockService = new StockService();
 
-export default function StockLocationItemsView({ items, loading, onEdit, onDelete, onQuantityChange }: StockLocationItemsViewProps) {
-    const [expandedRows, setExpandedRows] = useState<StockItem[]>([]);
+export default function StockLocationItemsView({ units, loading, onTake }: StockLocationItemsViewProps) {
+    const [expandedRows, setExpandedRows] = useState<StockUnit[]>([]);
     const [movementsByItemId, setMovementsByItemId] = useState<Record<number, StockMovement[] | "loading" | "error">>({});
-    const previousQuantityByItemId = useRef<Record<number, number>>({});
 
-    function loadHistory(item: StockItem, force = false): void {
-        if (!force && movementsByItemId[item.id]) {
+    function loadHistory(unit: StockUnit): void {
+        if (movementsByItemId[unit.itemId]) {
             return;
         }
 
-        setMovementsByItemId((prev) => ({ ...prev, [item.id]: "loading" }));
-        stockService.getItemHistory(item.id)
-            .then((movements) => setMovementsByItemId((prev) => ({ ...prev, [item.id]: movements })))
-            .catch(() => setMovementsByItemId((prev) => ({ ...prev, [item.id]: "error" })));
+        setMovementsByItemId((previous) => ({ ...previous, [unit.itemId]: "loading" }));
+        stockService.getItemHistory(unit.itemId)
+            .then((movements) => setMovementsByItemId((previous) => ({ ...previous, [unit.itemId]: movements })))
+            .catch(() => setMovementsByItemId((previous) => ({ ...previous, [unit.itemId]: "error" })));
     }
 
-    // Une quantité modifiée (dialog, +/-1, édition inline) invalide l'historique en cache.
-    useEffect(() => {
-        items.forEach((item) => {
-            const previousQuantity = previousQuantityByItemId.current[item.id];
-            previousQuantityByItemId.current[item.id] = item.currentQuantity;
+    function renderHistory(unit: StockUnit) {
+        const movements = movementsByItemId[unit.itemId];
 
-            if (previousQuantity === undefined || previousQuantity === item.currentQuantity) {
-                return;
-            }
+        if (movements === "loading") {
+            return <span className="text-sm text-surface-500">Chargement de l'historique...</span>;
+        }
 
-            if (expandedRows.some((row) => row.id === item.id)) {
-                loadHistory(item, true);
-            } else {
-                setMovementsByItemId((prev) => {
-                    if (!(item.id in prev)) {
-                        return prev;
-                    }
-                    const next = { ...prev };
-                    delete next[item.id];
-                    return next;
-                });
-            }
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items]);
+        if (movements === "error") {
+            return <span className="text-sm text-red-500">Impossible de charger l'historique.</span>;
+        }
 
-    const itemExpansionTemplate = (item: StockItem) => (
-        <StockItemExpansionPanel item={item} movements={movementsByItemId[item.id]} />
-    );
+        if (!movements || movements.length === 0) {
+            return <span className="text-sm text-surface-500">Aucun mouvement pour ce produit.</span>;
+        }
 
+        return (
+            <Timeline
+                value={movements}
+                opposite={(movement: StockMovement) => (
+                    <span className="text-xs whitespace-nowrap">
+                        {format(parseISO(movement.occurredAt), "dd/MM/yyyy HH:mm")}
+                    </span>
+                )}
+                marker={(movement: StockMovement) => (
+                    <span className={`pi ${movement.type === "IN" ? "pi-arrow-circle-up text-green-600" : "pi-arrow-circle-down text-red-500"}`} />
+                )}
+                content={(movement: StockMovement) => (
+                    <span className="text-sm">
+                        {movement.type === "IN" ? "+" : "-"}{movement.quantity} {unit.unit}
+                        {movement.source && <span className="text-surface-400"> - {movement.source}</span>}
+                    </span>
+                )}
+            />
+        );
+    }
 
     return (
         <FillRemainingHeight>
             <DataTable
-                value={items}
+                value={units}
                 size="small"
-
-                // Expansion
                 expandedRows={expandedRows}
-                onRowToggle={(e) => setExpandedRows(e.data as StockItem[])}
-                onRowExpand={(e) => loadHistory(e.data as StockItem)}
-                rowExpansionTemplate={itemExpansionTemplate}
-
-                // Scrollable
+                onRowToggle={(event) => setExpandedRows(event.data as StockUnit[])}
+                onRowExpand={(event) => loadHistory(event.data as StockUnit)}
+                rowExpansionTemplate={(unit: StockUnit) => renderHistory(unit)}
                 scrollable
                 scrollHeight="flex"
                 className="pb-4 w-full"
                 loading={loading}
-                emptyMessage="Aucun produit trouvé"
+                emptyMessage="Aucun produit disponible"
             >
-                <Column expander style={{ width: "5rem" }} />
-                <Column
-                    header="Produit"
-                    field="label"
-                    className="grow"
-                    body={(item: StockItem) => (
-                        <StockQuantityBodyTemplate
-                            data={item}
-                            onQuantityChange={(newQuantity) => onQuantityChange(item, newQuantity)}
-                        />
-                    )}
-                />
-                <Column
-                    header="Péremption"
-                    field="expirationDate"
-                    body={(item: StockItem) => item.expirationDate && format(item.expirationDate, "dd/MM/yyyy")}
-                />
+                <Column expander style={{ width: "4rem" }} />
+                <Column header="Produit" body={(unit: StockUnit) => <StockUnitSummary unit={unit} />} />
+                <Column header="Lieu" body={(unit: StockUnit) => unit.location.label} />
                 <Column
                     header="Actions"
-                    body={(item: StockItem) => (
-                        <div className="flex gap-1 min-w-0">
-                            <Button icon="pi pi-pencil" text rounded aria-label="Modifier" onClick={() => onEdit(item)} />
-                            <Button icon="pi pi-trash" text rounded severity="danger" aria-label="Supprimer" onClick={() => onDelete(item)} />
-                        </div>
+                    body={(unit: StockUnit) => (
+                        <Button label="Prendre" icon="pi pi-check" size="small" onClick={() => onTake(unit)} />
                     )}
                 />
             </DataTable>

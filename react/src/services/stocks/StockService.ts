@@ -1,35 +1,29 @@
 import axios from "axios";
 import BaseService from "../BaseService";
-import StockItem from "@/interfaces/stocks/StockItem";
 import StockMovement from "@/interfaces/stocks/StockMovement";
-import { SaveStockItemDto } from "./dto/SaveStockItemDto";
-import { RecordStockMovementDto } from "./dto/RecordStockMovementDto";
+import StockUnit from "@/interfaces/stocks/StockUnit";
+import { StockIntakeDto } from "./dto/StockIntakeDto";
+import { TakeStockUnitDto } from "./dto/TakeStockUnitDto";
 
 export default class StockService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks`;
-    
-    listItems(locationId?: number): Promise<StockItem[]> {
-        return axios.get(`${this.stocksApiUrl}/items`, {
+
+    listAvailableUnits(locationId?: number): Promise<StockUnit[]> {
+        return axios.get(`${this.stocksApiUrl}/units`, {
             params: locationId ? { locationId } : undefined,
         }).then((res) =>
-            res.data.map((item: Partial<StockItem>) => new StockItem(item))
+            res.data.map((unit: Partial<StockUnit>) => new StockUnit(unit))
         );
     }
 
-    createItem(payload: SaveStockItemDto): Promise<StockItem> {
-        return axios.post(`${this.stocksApiUrl}/items`, payload).then((res) => new StockItem(res.data));
+    intake(payload: StockIntakeDto): Promise<StockUnit[]> {
+        return axios.post(`${this.stocksApiUrl}/intake`, payload).then((res) =>
+            res.data.map((unit: Partial<StockUnit>) => new StockUnit(unit))
+        );
     }
 
-    updateItem(id: number, payload: SaveStockItemDto): Promise<StockItem> {
-        return axios.patch(`${this.stocksApiUrl}/items/${id}`, payload).then((res) => new StockItem(res.data));
-    }
-
-    deleteItem(id: number): Promise<void> {
-        return axios.delete(`${this.stocksApiUrl}/items/${id}`);
-    }
-
-    recordMovement(itemId: number, payload: RecordStockMovementDto): Promise<StockItem> {
-        return axios.post(`${this.stocksApiUrl}/items/${itemId}/movements`, payload).then((res) => new StockItem(res.data));
+    takeUnit(unitId: number, payload: TakeStockUnitDto): Promise<StockUnit> {
+        return axios.post(`${this.stocksApiUrl}/units/${unitId}/take`, payload).then((res) => new StockUnit(res.data));
     }
 
     getItemHistory(itemId: number): Promise<StockMovement[]> {

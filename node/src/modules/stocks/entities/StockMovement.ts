@@ -9,8 +9,7 @@ import {
 import type { StockItem } from "./StockItem";
 import type { StockLocation } from "./StockLocation";
 import type { StockUnit } from "./StockUnit";
-
-export type StockMovementType = "IN" | "OUT" | "MOVE" | "ADJUST" | "DISCARD";
+import { STOCK_MOVEMENT_TYPES, StockMovementType } from "../dto/StockMovementType";
 
 @Entity("stock_movement")
 export class StockMovement {
@@ -47,7 +46,7 @@ export class StockMovement {
 
     @Column({
         type: "enum",
-        enum: ["IN", "OUT", "MOVE", "ADJUST", "DISCARD"],
+        enum: STOCK_MOVEMENT_TYPES,
     })
     type: StockMovementType;
 

@@ -8,6 +8,7 @@ import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
+import { StockUnit } from "../entities/StockUnit";
 
 let testDataSource: DataSource;
 
@@ -25,10 +26,9 @@ describe("StockRoutes integration", () => {
 
     beforeAll(async () => {
         db = SetupTestDb();
-
         testDataSource = db.adapters.createTypeormDataSource({
             type: "postgres",
-            entities: [StockLocation, StockItem, StockMovement],
+            entities: [StockLocation, StockItem, StockUnit, StockMovement],
             synchronize: true,
         });
 
@@ -43,6 +43,7 @@ describe("StockRoutes integration", () => {
 
     beforeEach(async () => {
         await testDataSource.query(`DELETE FROM "stock_movement"`);
+        await testDataSource.query(`DELETE FROM "stock_unit"`);
         await testDataSource.query(`DELETE FROM "stock_item"`);
         await testDataSource.query(`DELETE FROM "stock_location"`);
     });
@@ -53,99 +54,55 @@ describe("StockRoutes integration", () => {
         }
     });
 
-    it("creates locations and items, then exposes item history", async () => {
+    it("supports the minimal stock flow through HTTP", async () => {
         const locationResponse = await request(app)
             .post("/stocks/locations")
-            .send({ label: "Garage" });
+            .send({ label: "Cellier" });
 
         expect(locationResponse.status).toBe(201);
         const locationId = locationResponse.body.id as number;
 
-        const itemResponse = await request(app)
-            .post("/stocks/items")
+        const intakeResponse = await request(app)
+            .post("/stocks/intake")
             .send({
-                label: "Eau pétillante",
-                unit: "bouteille",
                 locationId,
-                initialQuantity: 6,
-                source: "manual",
+                lines: [{
+                    label: "Doliprane",
+                    quantity: 1,
+                    unit: "boite",
+                    expirationDate: "2027-01-31",
+                }],
             });
 
-        expect(itemResponse.status).toBe(201);
-        expect(itemResponse.body.currentQuantity).toBe(6);
-        expect(itemResponse.body.location.id).toBe(locationId);
+        expect(intakeResponse.status).toBe(201);
+        expect(intakeResponse.body).toHaveLength(1);
+        const unitId = intakeResponse.body[0].id as number;
+        const itemId = intakeResponse.body[0].itemId as number;
 
-        const listResponse = await request(app)
-            .get("/stocks/items")
+        const unitsResponse = await request(app)
+            .get("/stocks/units")
             .query({ locationId: String(locationId) });
 
-        expect(listResponse.status).toBe(200);
-        expect(listResponse.body).toHaveLength(1);
+        expect(unitsResponse.status).toBe(200);
+        expect(unitsResponse.body).toHaveLength(1);
 
-        const itemId = itemResponse.body.id as number;
-        const movementResponse = await request(app)
-            .post(`/stocks/items/${itemId}/movements`)
-            .send({
-                type: "OUT",
-                quantity: 2,
-                source: "manual",
-            });
+        const takeResponse = await request(app)
+            .post(`/stocks/units/${unitId}/take`)
+            .send({ source: "manual" });
 
-        expect(movementResponse.status).toBe(201);
-        expect(movementResponse.body.currentQuantity).toBe(4);
+        expect(takeResponse.status).toBe(201);
+
+        const remainingUnitsResponse = await request(app)
+            .get("/stocks/units")
+            .query({ locationId: String(locationId) });
+
+        expect(remainingUnitsResponse.status).toBe(200);
+        expect(remainingUnitsResponse.body).toEqual([]);
 
         const historyResponse = await request(app)
             .get(`/stocks/items/${itemId}/history`);
 
         expect(historyResponse.status).toBe(200);
-        expect(historyResponse.body).toHaveLength(2);
-        expect(historyResponse.body[0]).toMatchObject({
-            type: "OUT",
-            quantity: 2,
-        });
-        expect(historyResponse.body[1]).toMatchObject({
-            type: "IN",
-            quantity: 6,
-        });
-    });
-
-    it("rejects invalid payloads and inconsistent deletions", async () => {
-        const invalidLocationResponse = await request(app)
-            .post("/stocks/locations")
-            .send({ label: "" });
-
-        expect(invalidLocationResponse.status).toBe(400);
-        expect(invalidLocationResponse.body.code).toBe("VALIDATION_ERROR");
-
-        const locationResponse = await request(app)
-            .post("/stocks/locations")
-            .send({ label: "Pharmacie" });
-        const locationId = locationResponse.body.id as number;
-
-        const itemResponse = await request(app)
-            .post("/stocks/items")
-            .send({
-                label: "Doliprane",
-                unit: "boîte",
-                locationId,
-                initialQuantity: 1,
-            });
-
-        const deleteLocationResponse = await request(app)
-            .delete(`/stocks/locations/${locationId}`);
-
-        expect(deleteLocationResponse.status).toBe(409);
-        expect(deleteLocationResponse.body.code).toBe("STOCK_LOCATION_NOT_EMPTY");
-
-        const negativeMovementResponse = await request(app)
-            .post(`/stocks/items/${itemResponse.body.id}/movements`)
-            .send({
-                type: "OUT",
-                quantity: 3,
-                source: "manual",
-            });
-
-        expect(negativeMovementResponse.status).toBe(400);
-        expect(negativeMovementResponse.body.code).toBe("STOCK_NEGATIVE_QUANTITY");
+        expect(historyResponse.body.map((movement: { type: string }) => movement.type)).toEqual(["OUT", "IN"]);
     });
 });

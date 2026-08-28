@@ -1,25 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { generatePath, useNavigate, useParams } from "react-router-dom";
 import { routePaths } from "@/routes/routePaths";
-import StockService from "@/services/stocks/StockService";
-import StockLocation from "@/interfaces/stocks/StockLocation";
-import StockItem from "@/interfaces/stocks/StockItem";
 import { useGlobalToast } from "@/context/GlobalToastContext";
+import StockLocation from "@/interfaces/stocks/StockLocation";
+import StockUnit from "@/interfaces/stocks/StockUnit";
+import StockLocationService from "@/services/stocks/StockLocationService";
+import StockService from "@/services/stocks/StockService";
+import { StockIntakeDto } from "@/services/stocks/dto/StockIntakeDto";
 import StockLocationDialog from "./StockLocationDialog";
-import StockItemDialog from "./StockItemDialog";
+import StockIntakeDialog from "./StockIntakeDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockLocationItemsView from "./organisms/StockLocationItemsView";
-import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
-import { showGlobalToast } from "@/services/GlobalToast";
-import StockLocationService from "@/services/stocks/StockLocationService";
 
 const stockService = new StockService();
 const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
-const ITEM_DELETE_GROUP = "stock-item-delete";
+const STOCK_TAKE_GROUP = "stock-take";
 
 export default function StocksManagementPage() {
     const showToast = useGlobalToast();
@@ -28,15 +26,12 @@ export default function StocksManagementPage() {
     const selectedLocationId = locationIdParam ? Number(locationIdParam) : null;
 
     const [loadingLocations, setLoadingLocations] = useState(true);
-    const [loadingItems, setLoadingItems] = useState(false);
-
+    const [loadingUnits, setLoadingUnits] = useState(false);
     const [locations, setLocations] = useState<StockLocation[]>([]);
-    const [items, setItems] = useState<StockItem[]>([]);
-
+    const [units, setUnits] = useState<StockUnit[]>([]);
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
-    const [editingItem, setEditingItem] = useState<StockItem | null>(null);
-    const [isItemDialogVisible, setIsItemDialogVisible] = useState(false);
+    const [isIntakeDialogVisible, setIsIntakeDialogVisible] = useState(false);
 
     const selectedLocation = useMemo(
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
@@ -45,33 +40,25 @@ export default function StocksManagementPage() {
 
     const loadLocations = useCallback(async (): Promise<void> => {
         setLoadingLocations(true);
-
         try {
             setLocations(await stockLocationService.listLocations());
         } catch {
-            showGlobalToast({
-                severity: "error",
-                summary: "Impossible de charger les lieux de stockage.",
-            });
+            showToast({ severity: "error", summary: "Impossible de charger les lieux de stockage." });
         } finally {
             setLoadingLocations(false);
         }
-    }, []);
+    }, [showToast]);
 
-    const loadItems = useCallback(async (locationId: number): Promise<void> => {
-        setLoadingItems(true);
-
+    const loadUnits = useCallback(async (locationId: number | null): Promise<void> => {
+        setLoadingUnits(true);
         try {
-            setItems(await stockService.listItems(locationId));
+            setUnits(await stockService.listAvailableUnits(locationId ?? undefined));
         } catch {
-            showGlobalToast({
-                severity: "error",
-                summary: "Impossible de charger les produits en stock.",
-            })
+            showToast({ severity: "error", summary: "Impossible de charger les produits disponibles." });
         } finally {
-            setLoadingItems(false);
+            setLoadingUnits(false);
         }
-    }, []);
+    }, [showToast]);
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
@@ -85,17 +72,13 @@ export default function StocksManagementPage() {
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
-            if (selectedLocationId === null) {
-                setItems([]);
-            } else {
-                void loadItems(selectedLocationId);
-            }
+            void loadUnits(selectedLocationId);
         }, 0);
 
         return () => {
             window.clearTimeout(timeoutId);
         };
-    }, [loadItems, selectedLocationId]);
+    }, [loadUnits, selectedLocationId]);
 
     useEffect(() => {
         if (loadingLocations) {
@@ -111,63 +94,54 @@ export default function StocksManagementPage() {
         }
     }, [loadingLocations, locations, selectedLocationId, navigate]);
 
+    async function refreshStock(): Promise<void> {
+        await Promise.all([
+            loadLocations(),
+            loadUnits(selectedLocationId),
+        ]);
+    }
+
     async function handleLocationSubmit(payload: { label: string }): Promise<void> {
         if (editingLocation) {
             await stockLocationService.updateLocation(editingLocation.id, payload);
-            showToast({ severity: "success", summary: "Lieu mis à jour" });
-            await loadLocations();
+            showToast({ severity: "success", summary: "Lieu mis a jour" });
         } else {
             const createdLocation = await stockLocationService.createLocation(payload);
-            showToast({ severity: "success", summary: "Lieu créé" });
-            await loadLocations();
+            showToast({ severity: "success", summary: "Lieu cree" });
             navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(createdLocation.id) }));
         }
 
         setIsLocationDialogVisible(false);
         setEditingLocation(null);
+        await refreshStock();
     }
 
-    async function handleItemSubmit(payload: SaveStockItemDto): Promise<void> {
-        if (editingItem) {
-            await stockService.updateItem(editingItem.id, payload);
-            showToast({ severity: "success", summary: "Produit mis à jour" });
-        } else {
-            await stockService.createItem(payload);
-            showToast({ severity: "success", summary: "Produit créé" });
-        }
-
-        if (selectedLocationId !== null) {
-            await loadItems(selectedLocationId);
-        }
-
-        setIsItemDialogVisible(false);
-        setEditingItem(null);
+    async function handleIntakeSubmit(payload: StockIntakeDto): Promise<void> {
+        await stockService.intake(payload);
+        showToast({ severity: "success", summary: "Produit ajoute au stock" });
+        setIsIntakeDialogVisible(false);
+        await loadUnits(selectedLocationId);
     }
 
-    async function handleQuantityChange(item: StockItem, newQuantity: number): Promise<void> {
-        const delta = newQuantity - item.currentQuantity;
-        if (delta === 0) {
-            return;
-        }
-
-        try {
-            await stockService.recordMovement(item.id, {
-                type: delta > 0 ? "IN" : "OUT",
-                quantity: Math.abs(delta),
-                occurredAt: new Date(),
-                source: "manual",
-            });
-
-            if (selectedLocationId !== null) {
-                await loadItems(selectedLocationId);
-            }
-        } catch {
-            showToast({
-                severity: "error",
-                summary: "Mouvement refusé",
-                detail: "Vérifiez la quantité disponible pour ce produit.",
-            });
-        }
+    function requestTakeUnit(unit: StockUnit): void {
+        confirmDialog({
+            group: STOCK_TAKE_GROUP,
+            header: "Prendre ce produit",
+            message: `Marquer "${unit.item.label}" comme pris ?`,
+            icon: "pi pi-check-circle",
+            acceptLabel: "Prendre",
+            rejectLabel: "Annuler",
+            accept: () => {
+                stockService.takeUnit(unit.id, { occurredAt: new Date(), source: "manual" })
+                    .then(() => {
+                        showToast({ severity: "success", summary: "Produit pris" });
+                        return loadUnits(selectedLocationId);
+                    })
+                    .catch(() => {
+                        showToast({ severity: "error", summary: "Action impossible" });
+                    });
+            },
+        });
     }
 
     function requestDeleteLocation(location: StockLocation): void {
@@ -180,40 +154,14 @@ export default function StocksManagementPage() {
             accept: () => {
                 stockLocationService.deleteLocation(location.id)
                     .then(() => {
-                        showToast({ severity: "success", summary: "Lieu supprimé" });
-                        return loadLocations();
+                        showToast({ severity: "success", summary: "Lieu supprime" });
+                        return refreshStock();
                     })
                     .catch(() => {
                         showToast({
                             severity: "error",
                             summary: "Suppression impossible",
-                            detail: "Déplacez ou supprimez d'abord les produits rattachés à ce lieu.",
-                        });
-                    });
-            },
-        });
-    }
-
-    function requestDeleteItem(item: StockItem): void {
-        confirmDialog({
-            group: ITEM_DELETE_GROUP,
-            header: "Supprimer le produit",
-            message: `Supprimer "${item.label}" des stocks actifs ?`,
-            icon: "pi pi-exclamation-triangle",
-            acceptClassName: "p-button-danger",
-            accept: () => {
-                stockService.deleteItem(item.id)
-                    .then(() => {
-                        showToast({ severity: "success", summary: "Produit supprimé" });
-                        if (selectedLocationId !== null) {
-                            return loadItems(selectedLocationId);
-                        }
-                    })
-                    .catch(() => {
-                        showToast({
-                            severity: "error",
-                            summary: "Suppression impossible",
-                            detail: "Le produit n'a pas pu être supprimé.",
+                            detail: "Retirez d'abord les produits disponibles dans ce lieu.",
                         });
                     });
             },
@@ -223,7 +171,7 @@ export default function StocksManagementPage() {
     return (
         <>
             <ConfirmDialog group={LOCATION_DELETE_GROUP} />
-            <ConfirmDialog group={ITEM_DELETE_GROUP} />
+            <ConfirmDialog group={STOCK_TAKE_GROUP} />
 
             {isLocationDialogVisible && (
                 <StockLocationDialog
@@ -238,19 +186,12 @@ export default function StocksManagementPage() {
                 />
             )}
 
-            {isItemDialogVisible && (
-                <StockItemDialog
-                    key={`${editingItem?.id ?? "new-item"}-${selectedLocationId ?? "no-location"}`}
+            {isIntakeDialogVisible && selectedLocationId !== null && (
+                <StockIntakeDialog
                     visible
-                    item={editingItem}
-                    locations={locations}
-                    selectedLocationId={selectedLocationId}
-                    onHide={() => {
-                        setIsItemDialogVisible(false);
-                        setEditingItem(null);
-                    }}
-                    onSubmit={handleItemSubmit}
-                    onQuantityChange={handleQuantityChange}
+                    locationId={selectedLocationId}
+                    onHide={() => setIsIntakeDialogVisible(false)}
+                    onSubmit={handleIntakeSubmit}
                 />
             )}
 
@@ -262,10 +203,11 @@ export default function StocksManagementPage() {
                         selectedLocation={selectedLocation}
                         loading={loadingLocations}
                         onSelect={(location) => {
-                            if (location.id === selectedLocationId)
+                            if (location.id === selectedLocationId) {
                                 navigate(routePaths.stocksManagement, { replace: true });
-                            else
-                                navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(location.id) }))
+                            } else {
+                                navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(location.id) }));
+                            }
                         }}
                         onAddLocation={() => setIsLocationDialogVisible(true)}
                         onEditLocation={(location) => {
@@ -274,33 +216,24 @@ export default function StocksManagementPage() {
                         }}
                         onDeleteLocation={requestDeleteLocation}
                     />
-                    <div className="flex flex-col gap-4 w-full">
 
+                    <div className="flex flex-col gap-4 w-full">
                         <div className="flex justify-between items-center gap-4 lg:w-full">
                             <h2 className="m-0 text-lg font-semibold">
-                                {
-                                    selectedLocation
-                                        ? `Produits — ${selectedLocation.label}`
-                                        : "Produits"
-                                }
+                                {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
                             {selectedLocation && (
-                                <Button label="Ajouter un produit" icon="pi pi-plus" size="small" onClick={() => setIsItemDialogVisible(true)} />
+                                <Button label="Ajouter au stock" icon="pi pi-plus" size="small" onClick={() => setIsIntakeDialogVisible(true)} />
                             )}
                         </div>
 
                         {!selectedLocation ? (
-                            <div className="text-surface-500">Créez d'abord un lieu pour ajouter des produits.</div>
+                            <div className="text-surface-500">Selectionnez un lieu pour consulter ou ajouter des produits.</div>
                         ) : (
                             <StockLocationItemsView
-                                items={items}
-                                loading={loadingItems}
-                                onEdit={(item) => {
-                                    setEditingItem(item);
-                                    setIsItemDialogVisible(true);
-                                }}
-                                onDelete={requestDeleteItem}
-                                onQuantityChange={handleQuantityChange}
+                                units={units}
+                                loading={loadingUnits}
+                                onTake={requestTakeUnit}
                             />
                         )}
                     </div>
@@ -309,4 +242,3 @@ export default function StocksManagementPage() {
         </>
     );
 }
-

@@ -13,8 +13,6 @@ import type { StockItem } from "./StockItem";
 import { StockLocation } from "./StockLocation";
 import type { StockMovement } from "./StockMovement";
 
-export type StockUnitStatus = "AVAILABLE" | "CONSUMED" | "DISCARDED";
-
 @Entity("stock_unit")
 export class StockUnit {
     @PrimaryGeneratedColumn()
@@ -42,13 +40,6 @@ export class StockUnit {
 
     @Column({ type: "date", nullable: true })
     expirationDate: string | null;
-
-    @Column({
-        type: "enum",
-        enum: ["AVAILABLE", "CONSUMED", "DISCARDED"],
-        default: "AVAILABLE",
-    })
-    status: StockUnitStatus;
 
     @Column({ type: "varchar", length: 255, nullable: true })
     label: string | null;

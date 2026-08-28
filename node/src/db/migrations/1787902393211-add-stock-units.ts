@@ -7,8 +7,7 @@ export class AddStockUnits1787902393211 implements MigrationInterface {
         await queryRunner.query(`TRUNCATE TABLE "stock_item" CASCADE`);
         await queryRunner.query(`TRUNCATE TABLE "stock_movement" CASCADE`);
         await queryRunner.query(`ALTER TABLE "stock_item" DROP CONSTRAINT "FK_79569e763910987b7685d69244d"`);
-        await queryRunner.query(`CREATE TYPE "comptes_chateau"."stock_unit_status_enum" AS ENUM('AVAILABLE', 'CONSUMED', 'DISCARDED')`);
-        await queryRunner.query(`CREATE TABLE "stock_unit" ("id" SERIAL NOT NULL, "itemId" integer NOT NULL, "locationId" integer NOT NULL, "quantity" double precision NOT NULL, "unit" character varying(64) NOT NULL, "expirationDate" date, "status" "comptes_chateau"."stock_unit_status_enum" NOT NULL DEFAULT 'AVAILABLE', "label" character varying(255), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, CONSTRAINT "PK_0621388b9d4fcd587d394279cad" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "stock_unit" ("id" SERIAL NOT NULL, "itemId" integer NOT NULL, "locationId" integer NOT NULL, "quantity" double precision NOT NULL, "unit" character varying(64) NOT NULL, "expirationDate" date, "label" character varying(255), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, CONSTRAINT "PK_0621388b9d4fcd587d394279cad" PRIMARY KEY ("id"))`);
         await queryRunner.query(`ALTER TABLE "stock_item" DROP COLUMN "currentQuantity"`);
         await queryRunner.query(`ALTER TABLE "stock_item" DROP COLUMN "locationId"`);
         await queryRunner.query(`ALTER TABLE "stock_item" DROP COLUMN "expirationDate"`);
@@ -18,7 +17,7 @@ export class AddStockUnits1787902393211 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "stock_movement" ADD "fromLocationId" integer`);
         await queryRunner.query(`ALTER TABLE "stock_movement" ADD "toLocationId" integer`);
         await queryRunner.query(`ALTER TYPE "comptes_chateau"."stock_movement_type_enum" RENAME TO "stock_movement_type_enum_old"`);
-        await queryRunner.query(`CREATE TYPE "comptes_chateau"."stock_movement_type_enum" AS ENUM('IN', 'OUT', 'MOVE', 'ADJUST', 'DISCARD')`);
+        await queryRunner.query(`CREATE TYPE "comptes_chateau"."stock_movement_type_enum" AS ENUM('IN', 'OUT')`);
         await queryRunner.query(`ALTER TABLE "stock_movement" ALTER COLUMN "type" TYPE "comptes_chateau"."stock_movement_type_enum" USING "type"::"text"::"comptes_chateau"."stock_movement_type_enum"`);
         await queryRunner.query(`DROP TYPE "comptes_chateau"."stock_movement_type_enum_old"`);
         await queryRunner.query(`ALTER TABLE "stock_unit" ADD CONSTRAINT "FK_49d2a96ed3a5346041bf60eaf4d" FOREIGN KEY ("itemId") REFERENCES "stock_item"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
@@ -48,7 +47,6 @@ export class AddStockUnits1787902393211 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "stock_item" ADD "locationId" integer NOT NULL`);
         await queryRunner.query(`ALTER TABLE "stock_item" ADD "currentQuantity" double precision NOT NULL DEFAULT '0'`);
         await queryRunner.query(`DROP TABLE "stock_unit"`);
-        await queryRunner.query(`DROP TYPE "comptes_chateau"."stock_unit_status_enum"`);
         await queryRunner.query(`ALTER TABLE "stock_item" ADD CONSTRAINT "FK_79569e763910987b7685d69244d" FOREIGN KEY ("locationId") REFERENCES "stock_location"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 

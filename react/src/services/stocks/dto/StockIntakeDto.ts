@@ -1,11 +1,16 @@
-export interface SaveStockItemDto {
+export interface StockIntakeLineDto {
     label: string;
     barcode?: string | null;
     unit: string;
-    locationId: number;
+    quantity: number;
     expirationDate?: string | null;
     imageUrl?: string | null;
-    initialQuantity?: number;
+    unitLabel?: string | null;
+}
+
+export interface StockIntakeDto {
+    locationId: number;
     occurredAt?: Date;
     source?: string | null;
+    lines: StockIntakeLineDto[];
 }
