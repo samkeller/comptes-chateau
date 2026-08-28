@@ -3,14 +3,12 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    JoinColumn,
-    ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm";
-import { StockLocation } from "./StockLocation";
 import type { StockMovement } from "./StockMovement";
+import type { StockUnit } from "./StockUnit";
 
 @Entity("stock_item")
 export class StockItem {
@@ -23,24 +21,14 @@ export class StockItem {
     @Column({ type: "varchar", length: 64, nullable: true })
     barcode: string | null;
 
-    @Column({ type: "double precision", default: 0 })
-    currentQuantity: number;
-
     @Column({ type: "varchar", length: 64 })
-    unit: string;
-
-    @Column({ type: "int" })
-    locationId: number;
-
-    @ManyToOne(() => StockLocation, (location) => location.items, { nullable: false })
-    @JoinColumn({ name: "locationId" })
-    location: StockLocation;
-
-    @Column({ type: "date", nullable: true })
-    expirationDate: string | null;
+    defaultUnit: string;
 
     @Column({ type: "text", nullable: true })
     imageUrl: string | null;
+
+    @OneToMany("StockUnit", (unit: StockUnit) => unit.item)
+    units: StockUnit[];
 
     @OneToMany("StockMovement", (movement: StockMovement) => movement.item)
     movements: StockMovement[];

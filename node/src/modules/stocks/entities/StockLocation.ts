@@ -7,7 +7,7 @@ import {
     UpdateDateColumn,
     Column,
 } from "typeorm";
-import type { StockItem } from "./StockItem";
+import type { StockUnit } from "./StockUnit";
 
 @Entity("stock_location")
 export class StockLocation {
@@ -17,8 +17,8 @@ export class StockLocation {
     @Column({ type: "varchar", length: 255 })
     label: string;
 
-    @OneToMany("StockItem", (item: StockItem) => item.location)
-    items: StockItem[];
+    @OneToMany("StockUnit", (unit: StockUnit) => unit.location)
+    units: StockUnit[];
 
     @CreateDateColumn()
     createdAt: Date;

@@ -13,8 +13,11 @@ import StockItemDialog from "./StockItemDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockLocationItemsView from "./organisms/StockLocationItemsView";
 import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
+import { showGlobalToast } from "@/services/GlobalToast";
+import StockLocationService from "@/services/stocks/StockLocationService";
 
 const stockService = new StockService();
+const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
 const ITEM_DELETE_GROUP = "stock-item-delete";
 
@@ -26,7 +29,6 @@ export default function StocksManagementPage() {
 
     const [loadingLocations, setLoadingLocations] = useState(true);
     const [loadingItems, setLoadingItems] = useState(false);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [items, setItems] = useState<StockItem[]>([]);
@@ -43,12 +45,14 @@ export default function StocksManagementPage() {
 
     const loadLocations = useCallback(async (): Promise<void> => {
         setLoadingLocations(true);
-        setErrorMessage(null);
 
         try {
-            setLocations(await stockService.listLocations());
+            setLocations(await stockLocationService.listLocations());
         } catch {
-            setErrorMessage("Impossible de charger les lieux de stockage.");
+            showGlobalToast({
+                severity: "error",
+                summary: "Impossible de charger les lieux de stockage.",
+            });
         } finally {
             setLoadingLocations(false);
         }
@@ -56,12 +60,14 @@ export default function StocksManagementPage() {
 
     const loadItems = useCallback(async (locationId: number): Promise<void> => {
         setLoadingItems(true);
-        setErrorMessage(null);
 
         try {
             setItems(await stockService.listItems(locationId));
         } catch {
-            setErrorMessage("Impossible de charger les produits en stock.");
+            showGlobalToast({
+                severity: "error",
+                summary: "Impossible de charger les produits en stock.",
+            })
         } finally {
             setLoadingItems(false);
         }
@@ -107,11 +113,11 @@ export default function StocksManagementPage() {
 
     async function handleLocationSubmit(payload: { label: string }): Promise<void> {
         if (editingLocation) {
-            await stockService.updateLocation(editingLocation.id, payload);
+            await stockLocationService.updateLocation(editingLocation.id, payload);
             showToast({ severity: "success", summary: "Lieu mis à jour" });
             await loadLocations();
         } else {
-            const createdLocation = await stockService.createLocation(payload);
+            const createdLocation = await stockLocationService.createLocation(payload);
             showToast({ severity: "success", summary: "Lieu créé" });
             await loadLocations();
             navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(createdLocation.id) }));
@@ -172,7 +178,7 @@ export default function StocksManagementPage() {
             icon: "pi pi-exclamation-triangle",
             acceptClassName: "p-button-danger",
             accept: () => {
-                stockService.deleteLocation(location.id)
+                stockLocationService.deleteLocation(location.id)
                     .then(() => {
                         showToast({ severity: "success", summary: "Lieu supprimé" });
                         return loadLocations();
@@ -249,12 +255,6 @@ export default function StocksManagementPage() {
             )}
 
             <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
-                {errorMessage && (
-                    <Card>
-                        <div className="text-red-500">{errorMessage}</div>
-                    </Card>
-                )}
-
                 <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-6">
                     <StockLocationsPanel
                         className="lg:h-full lg:min-h-0 lg:w-72 lg:shrink-0"

@@ -7,7 +7,10 @@ import {
     PrimaryGeneratedColumn,
 } from "typeorm";
 import type { StockItem } from "./StockItem";
-import { STOCK_MOVEMENT_TYPES, StockMovementType } from "../dto/StockMovementType";
+import type { StockLocation } from "./StockLocation";
+import type { StockUnit } from "./StockUnit";
+
+export type StockMovementType = "IN" | "OUT" | "MOVE" | "ADJUST" | "DISCARD";
 
 @Entity("stock_movement")
 export class StockMovement {
@@ -21,9 +24,30 @@ export class StockMovement {
     @JoinColumn({ name: "itemId" })
     item: StockItem;
 
+    @Column({ type: "int", nullable: true })
+    unitId: number | null;
+
+    @ManyToOne("StockUnit", (unit: StockUnit) => unit.movements, { nullable: true, onDelete: "SET NULL" })
+    @JoinColumn({ name: "unitId" })
+    unit: StockUnit | null;
+
+    @Column({ type: "int", nullable: true })
+    fromLocationId: number | null;
+
+    @ManyToOne("StockLocation", { nullable: true, onDelete: "SET NULL" })
+    @JoinColumn({ name: "fromLocationId" })
+    fromLocation: StockLocation | null;
+
+    @Column({ type: "int", nullable: true })
+    toLocationId: number | null;
+
+    @ManyToOne("StockLocation", { nullable: true, onDelete: "SET NULL" })
+    @JoinColumn({ name: "toLocationId" })
+    toLocation: StockLocation | null;
+
     @Column({
         type: "enum",
-        enum: STOCK_MOVEMENT_TYPES,
+        enum: ["IN", "OUT", "MOVE", "ADJUST", "DISCARD"],
     })
     type: StockMovementType;
 

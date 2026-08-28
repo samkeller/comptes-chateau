@@ -1,17 +1,14 @@
 import { Router } from "express";
 import StockController from "../controllers/StockController";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
-import { CreateStockLocationSchema, UpdateStockLocationSchema } from "../dto/CreateStockLocationDto";
 import { CreateStockItemSchema, UpdateStockItemSchema } from "../dto/CreateStockItemDto";
 import { RecordStockMovementSchema } from "../dto/RecordStockMovementDto";
+import StockLocationRoutes from "./StockLocationRoutes";
 
 const StockRoutes = Router();
 const stockController = new StockController();
 
-StockRoutes.get("/locations", stockController.listLocations);
-StockRoutes.post("/locations", validateBody(CreateStockLocationSchema), stockController.createLocation);
-StockRoutes.patch("/locations/:id", validateParams(IdParamSchema), validateBody(UpdateStockLocationSchema), stockController.updateLocation);
-StockRoutes.delete("/locations/:id", validateParams(IdParamSchema), stockController.deleteLocation);
+StockRoutes.use("/locations", StockLocationRoutes);
 
 StockRoutes.get("/items", stockController.listItems);
 StockRoutes.post("/items", validateBody(CreateStockItemSchema), stockController.createItem);

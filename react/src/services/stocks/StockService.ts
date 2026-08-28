@@ -1,33 +1,13 @@
 import axios from "axios";
 import BaseService from "../BaseService";
 import StockItem from "@/interfaces/stocks/StockItem";
-import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockMovement from "@/interfaces/stocks/StockMovement";
-import { CreateStockLocationDto } from "./dto/CreateStockLocationDto";
 import { SaveStockItemDto } from "./dto/SaveStockItemDto";
 import { RecordStockMovementDto } from "./dto/RecordStockMovementDto";
 
 export default class StockService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks`;
-
-    listLocations(): Promise<StockLocation[]> {
-        return axios.get(`${this.stocksApiUrl}/locations`).then((res) =>
-            res.data.map((location: Partial<StockLocation>) => new StockLocation(location))
-        );
-    }
-
-    createLocation(payload: CreateStockLocationDto): Promise<StockLocation> {
-        return axios.post(`${this.stocksApiUrl}/locations`, payload).then((res) => new StockLocation(res.data));
-    }
-
-    updateLocation(id: number, payload: CreateStockLocationDto): Promise<StockLocation> {
-        return axios.patch(`${this.stocksApiUrl}/locations/${id}`, payload).then((res) => new StockLocation(res.data));
-    }
-
-    deleteLocation(id: number): Promise<void> {
-        return axios.delete(`${this.stocksApiUrl}/locations/${id}`);
-    }
-
+    
     listItems(locationId?: number): Promise<StockItem[]> {
         return axios.get(`${this.stocksApiUrl}/items`, {
             params: locationId ? { locationId } : undefined,

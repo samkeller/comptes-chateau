@@ -50,7 +50,8 @@ export function validateBody<T>(schema: ZodType<T>) {
 /**
  * Factory de middleware Express qui valide `req.query` contre un schéma Zod.
  *
- * En cas de succès, la valeur parsée remplace `req.query`.
+ * En cas de succès, la requête continue. Express 5 expose `req.query` via un getter,
+ * donc ce middleware ne remplace pas directement la propriété.
  * En cas d'échec, transmet une AppError(400, "VALIDATION_ERROR", ...).
  *
  * Usage :
@@ -63,7 +64,6 @@ export function validateQuery<T>(schema: ZodType<T>) {
             next(new AppError(400, "VALIDATION_ERROR", formatZodError(result.error)));
             return;
         }
-        req.query = result.data as typeof req.query;
         next();
     };
 }
