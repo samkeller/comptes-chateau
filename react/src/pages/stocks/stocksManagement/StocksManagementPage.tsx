@@ -13,7 +13,6 @@ import StockLocationDialog from "./StockLocationDialog";
 import StockIntakeDialog from "./StockIntakeDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockItemsDatatable from "./organisms/StockItemsDatatable";
-import StockItem from "@/interfaces/stocks/StockItem";
 
 const stockItemsService = new StockItemsService();
 const stockLocationService = new StockLocationService();
@@ -27,9 +26,7 @@ export default function StocksManagementPage() {
     const selectedLocationId = locationIdParam ? Number(locationIdParam) : null;
 
     const [loadingLocations, setLoadingLocations] = useState(true);
-    const [loadingUnits, setLoadingUnits] = useState(false);
     const [locations, setLocations] = useState<StockLocation[]>([]);
-    const [items, setItems] = useState<StockItem[]>([]);
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
     const [isIntakeDialogVisible, setIsIntakeDialogVisible] = useState(false);
@@ -43,23 +40,11 @@ export default function StocksManagementPage() {
         loadInitialData();
     }, [])
 
-
-    useEffect(() => {
-        loadData()
-    }, [selectedLocationId]);
-
     const loadInitialData = async (): Promise<void> => {
         await Promise.all([
             loadLocations(),
         ]);
     };
-
-    const loadData = async (): Promise<void> => {
-        await Promise.all([
-            loadUnits(),
-        ]);
-    };
-
 
     const loadLocations = useCallback(async (): Promise<void> => {
         setLoadingLocations(true);
@@ -69,17 +54,6 @@ export default function StocksManagementPage() {
             showToast({ severity: "error", summary: "Impossible de charger les lieux de stockage." });
         } finally {
             setLoadingLocations(false);
-        }
-    }, [showToast]);
-
-    const loadUnits = useCallback(async (locationId?: number): Promise<void> => {
-        setLoadingUnits(true);
-        try {
-            setItems(await stockItemsService.getAllStockItems(locationId ?? undefined));
-        } catch {
-            showToast({ severity: "error", summary: "Impossible de charger les produits disponibles." });
-        } finally {
-            setLoadingUnits(false);
         }
     }, [showToast]);
 
@@ -243,13 +217,17 @@ export default function StocksManagementPage() {
                                 {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
                             {selectedLocation && (
-                                <Button label="Ajouter au stock" icon="pi pi-plus" size="small" onClick={() => setIsIntakeDialogVisible(true)} />
+                                <Button
+                                    label="Ajouter au stock"
+                                    icon="pi pi-plus"
+                                    size="small"
+                                    onClick={() => setIsIntakeDialogVisible(true)}
+                                />
                             )}
                         </div>
                         <StockItemsDatatable
-                            units={items}
-                            loading={loadingUnits}
-                            // onTake={() => void} TODO?
+                            locationId={selectedLocationId}
+                        // onTake={() => void} TODO?
                         />
                     </div>
                 </div>

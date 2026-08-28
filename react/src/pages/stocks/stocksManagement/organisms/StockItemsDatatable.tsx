@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
@@ -7,15 +7,28 @@ import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemUnitsView from "./StockItemUnitsView";
 
 interface StockItemsDatatableProps {
-    units: StockItem[];
-    loading: boolean;
+    locationId: number | null;
     // onTake: (unit: StockItem) => void; TODO ?
 }
 
 const stockService = new StockItemsService();
 
-export default function StockItemsDatatable({ units, loading }: StockItemsDatatableProps) {
+export default function StockItemsDatatable({ locationId }: StockItemsDatatableProps) {
+
+    const [stockItems, setStockItems] = useState<StockItem[]>([]);
     const [expandedRows, setExpandedRows] = useState<StockItem[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        loadData()
+    }, [locationId]);
+
+    const loadData = async () => {
+        setLoading(true);
+        const data = await stockService.getAllStockItems(locationId ?? undefined);
+        setStockItems(data);
+        setLoading(false);
+    }
 
     const stockUnitExpansionTemplate = (unit: StockItem) => {
         return <StockItemUnitsView stockItemId={unit.id} />
@@ -24,14 +37,14 @@ export default function StockItemsDatatable({ units, loading }: StockItemsDatata
     return (
         <FillRemainingHeight>
             <DataTable
-                value={units}
+                value={stockItems}
                 size="small"
                 // Expanded rows
                 expandedRows={expandedRows}
                 onRowToggle={(event) => setExpandedRows(event.data as StockItem[])}
                 // onRowExpand={(event) => loadHistory(event.data as StockUnit)}
                 rowExpansionTemplate={stockUnitExpansionTemplate}
-                
+
                 // Scroll
                 scrollable
                 scrollHeight="flex"
