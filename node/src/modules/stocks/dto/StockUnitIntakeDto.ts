@@ -28,7 +28,7 @@ export interface StockIntakeDto {
     lines: StockIntakeLineDto[];
 }
 
-export const StockIntakeSchema = z.object({
+export const StockUnitIntakeSchema = z.object({
     locationId: z.number().int().positive(),
     occurredAt: z.coerce.date().optional(),
     source: optionalTextField(50),

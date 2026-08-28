@@ -7,14 +7,15 @@ import { useGlobalToast } from "@/context/GlobalToastContext";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockLocationService from "@/services/stocks/StockLocationService";
-import StockService from "@/services/stocks/StockService";
+import StockItemsService from "@/services/stocks/StockItemsService";
 import { StockIntakeDto } from "@/services/stocks/dto/StockIntakeDto";
 import StockLocationDialog from "./StockLocationDialog";
 import StockIntakeDialog from "./StockIntakeDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
-import StockLocationItemsView from "./organisms/StockItemsView";
+import StockUnitDatatable from "./organisms/StockUnitDatatable";
+import StockItem from "@/interfaces/stocks/StockItem";
 
-const stockService = new StockService();
+const stockItemsService = new StockItemsService();
 const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
 const STOCK_TAKE_GROUP = "stock-take";
@@ -28,7 +29,7 @@ export default function StocksManagementPage() {
     const [loadingLocations, setLoadingLocations] = useState(true);
     const [loadingUnits, setLoadingUnits] = useState(false);
     const [locations, setLocations] = useState<StockLocation[]>([]);
-    const [units, setUnits] = useState<StockUnit[]>([]);
+    const [items, setItems] = useState<StockItem[]>([]);
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
     const [isIntakeDialogVisible, setIsIntakeDialogVisible] = useState(false);
@@ -37,6 +38,28 @@ export default function StocksManagementPage() {
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
         [locations, selectedLocationId]
     );
+
+    useEffect( ()=> {
+        loadInitialData();
+    }, [])
+    
+    
+    useEffect(() => {
+        loadData()
+    }, [selectedLocationId]);
+
+    const loadInitialData = async (): Promise<void> => {
+        await Promise.all([
+            loadLocations(),
+        ]);
+    };
+
+    const loadData = async (): Promise<void> => {
+        await Promise.all([
+            loadUnits(),
+        ]);
+    };
+
 
     const loadLocations = useCallback(async (): Promise<void> => {
         setLoadingLocations(true);
@@ -49,10 +72,10 @@ export default function StocksManagementPage() {
         }
     }, [showToast]);
 
-    const loadUnits = useCallback(async (locationId: number | null): Promise<void> => {
+    const loadUnits = useCallback(async (locationId?: number): Promise<void> => {
         setLoadingUnits(true);
         try {
-            setUnits(await stockService.listAvailableUnits(locationId ?? undefined));
+            setItems(await stockItemsService.getAllStockItems(locationId ?? undefined));
         } catch {
             showToast({ severity: "error", summary: "Impossible de charger les produits disponibles." });
         } finally {
@@ -71,16 +94,6 @@ export default function StocksManagementPage() {
     }, [loadLocations]);
 
     useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            void loadUnits(selectedLocationId);
-        }, 0);
-
-        return () => {
-            window.clearTimeout(timeoutId);
-        };
-    }, [loadUnits, selectedLocationId]);
-
-    useEffect(() => {
         if (loadingLocations) {
             return;
         }
@@ -97,7 +110,6 @@ export default function StocksManagementPage() {
     async function refreshStock(): Promise<void> {
         await Promise.all([
             loadLocations(),
-            loadUnits(selectedLocationId),
         ]);
     }
 
@@ -116,32 +128,40 @@ export default function StocksManagementPage() {
         await refreshStock();
     }
 
+    /**
+     * @deprecated TODO
+     * @param payload 
+     */
     async function handleIntakeSubmit(payload: StockIntakeDto): Promise<void> {
-        await stockService.intake(payload);
-        showToast({ severity: "success", summary: "Produit ajoute au stock" });
-        setIsIntakeDialogVisible(false);
-        await loadUnits(selectedLocationId);
+        // await stockItemsService.intake(payload);
+        // showToast({ severity: "success", summary: "Produit ajoute au stock" });
+        // setIsIntakeDialogVisible(false);
+        // await loadUnits(selectedLocationId ?? undefined);
     }
 
+    /**
+     * @deprecated TODO
+     * @param payload 
+     */
     function requestTakeUnit(unit: StockUnit): void {
-        confirmDialog({
-            group: STOCK_TAKE_GROUP,
-            header: "Prendre ce produit",
-            message: `Marquer "${unit.item.label}" comme pris ?`,
-            icon: "pi pi-check-circle",
-            acceptLabel: "Prendre",
-            rejectLabel: "Annuler",
-            accept: () => {
-                stockService.takeUnit(unit.id, { occurredAt: new Date(), source: "manual" })
-                    .then(() => {
-                        showToast({ severity: "success", summary: "Produit pris" });
-                        return loadUnits(selectedLocationId);
-                    })
-                    .catch(() => {
-                        showToast({ severity: "error", summary: "Action impossible" });
-                    });
-            },
-        });
+        // confirmDialog({
+        //     group: STOCK_TAKE_GROUP,
+        //     header: "Prendre ce produit",
+        //     message: `Marquer "${unit.item.label}" comme pris ?`,
+        //     icon: "pi pi-check-circle",
+        //     acceptLabel: "Prendre",
+        //     rejectLabel: "Annuler",
+        //     accept: () => {
+        //         stockItemsService.takeUnit(unit.id, { occurredAt: new Date(), source: "manual" })
+        //             .then(() => {
+        //                 showToast({ severity: "success", summary: "Produit pris" });
+        //                 return loadUnits(selectedLocationId ?? undefined);
+        //             })
+        //             .catch(() => {
+        //                 showToast({ severity: "error", summary: "Action impossible" });
+        //             });
+        //     },
+        // });
     }
 
     function requestDeleteLocation(location: StockLocation): void {
@@ -226,16 +246,11 @@ export default function StocksManagementPage() {
                                 <Button label="Ajouter au stock" icon="pi pi-plus" size="small" onClick={() => setIsIntakeDialogVisible(true)} />
                             )}
                         </div>
-
-                        {!selectedLocation ? (
-                            <div className="text-surface-500">Selectionnez un lieu pour consulter ou ajouter des produits.</div>
-                        ) : (
-                            <StockLocationItemsView
-                                units={units}
-                                loading={loadingUnits}
-                                onTake={requestTakeUnit}
-                            />
-                        )}
+                        <StockUnitDatatable
+                            units={items}
+                            loading={loadingUnits}
+                            onTake={requestTakeUnit}
+                        />
                     </div>
                 </div>
             </div>

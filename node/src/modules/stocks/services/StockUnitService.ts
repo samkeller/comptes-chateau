@@ -1,10 +1,7 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { conflict, notFound } from "../../../utils/AppError";
-import { CreateStockLocationDto, UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
-import { StockIntakeDto, StockIntakeLineDto } from "../dto/StockIntakeDto";
-import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
-import { StockMovementDto, toStockMovementDto } from "../dto/StockMovementDto";
+import { StockIntakeDto, StockIntakeLineDto } from "../dto/StockUnitIntakeDto";
 import { StockUnitDto, toStockUnitDto } from "../dto/StockUnitDto";
 import { TakeStockUnitDto } from "../dto/TakeStockUnitDto";
 import { StockItem } from "../entities/StockItem";
@@ -14,73 +11,8 @@ import { StockUnit } from "../entities/StockUnit";
 
 const DEFAULT_MOVEMENT_SOURCE = "manual";
 
-export default class StockService {
-    private readonly stockLocationRepo = AppDataSource.getRepository(StockLocation);
-    private readonly stockItemRepo = AppDataSource.getRepository(StockItem);
+export default class StockUnitService {
     private readonly stockUnitRepo = AppDataSource.getRepository(StockUnit);
-    private readonly stockMovementRepo = AppDataSource.getRepository(StockMovement);
-
-    async listLocations(): Promise<StockLocationDto[]> {
-        const locations = await this.stockLocationRepo.find({
-            order: {
-                label: "ASC",
-            },
-        });
-
-        return locations.map(toStockLocationDto);
-    }
-
-    async createLocation(dto: CreateStockLocationDto): Promise<StockLocationDto> {
-        const location = this.stockLocationRepo.create({
-            label: dto.label.trim(),
-        });
-
-        return toStockLocationDto(await this.stockLocationRepo.save(location));
-    }
-
-    async updateLocation(id: number, dto: UpdateStockLocationDto): Promise<StockLocationDto> {
-        const location = await this.stockLocationRepo.findOneBy({ id });
-        if (!location) {
-            throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");
-        }
-
-        location.label = dto.label.trim();
-        return toStockLocationDto(await this.stockLocationRepo.save(location));
-    }
-
-    async deleteLocation(id: number): Promise<void> {
-        const location = await this.stockLocationRepo.findOneBy({ id });
-        if (!location) {
-            throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");
-        }
-
-        const availableUnits = await this.listAvailableUnits(id);
-        if (availableUnits.length > 0) {
-            throw conflict("STOCK_LOCATION_NOT_EMPTY", "Impossible de supprimer un lieu contenant encore des produits disponibles");
-        }
-
-        await this.stockLocationRepo.softDelete({ id });
-    }
-
-    async listAvailableUnits(locationId?: number): Promise<StockUnitDto[]> {
-        const units = await this.stockUnitRepo.find({
-            where: locationId ? { locationId } : undefined,
-            relations: {
-                item: true,
-                location: true,
-            },
-            order: {
-                expirationDate: "ASC",
-                createdAt: "ASC",
-            },
-        });
-
-        const takenUnitIds = await this.findTakenUnitIds(units.map((unit) => unit.id));
-        return units
-            .filter((unit) => !takenUnitIds.has(unit.id))
-            .map(toStockUnitDto);
-    }
-
     /**
      * Ajoute les produits ranges en une seule transaction: chaque ligne cree ou reutilise une fiche produit,
      * cree une unite physique, puis journalise l'entree via un mouvement `IN`.
@@ -179,42 +111,6 @@ export default class StockService {
         }
 
         return toStockUnitDto(takenUnit);
-    }
-
-    async getItemHistory(itemId: number): Promise<StockMovementDto[]> {
-        const item = await this.stockItemRepo.findOneBy({ id: itemId });
-        if (!item) {
-            throw notFound("STOCK_ITEM_NOT_FOUND", "Produit en stock introuvable");
-        }
-
-        const movements = await this.stockMovementRepo.find({
-            where: { itemId },
-            order: {
-                occurredAt: "DESC",
-                createdAt: "DESC",
-            },
-        });
-
-        return movements.map(toStockMovementDto);
-    }
-
-    private async findTakenUnitIds(unitIds: number[]): Promise<Set<number>> {
-        if (unitIds.length === 0) {
-            return new Set();
-        }
-
-        const movements = await this.stockMovementRepo.find({
-            where: {
-                type: "OUT",
-            },
-            select: {
-                unitId: true,
-            },
-        });
-
-        return new Set(movements
-            .map((movement) => movement.unitId)
-            .filter((unitId): unitId is number => unitId !== null && unitIds.includes(unitId)));
     }
 
     private async loadUnitsByIds(unitIds: number[]): Promise<StockUnitDto[]> {

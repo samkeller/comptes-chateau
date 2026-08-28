@@ -7,18 +7,19 @@ import { format, parseISO } from "date-fns";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import StockMovement from "@/interfaces/stocks/StockMovement";
 import StockUnit from "@/interfaces/stocks/StockUnit";
-import StockService from "@/services/stocks/StockService";
+import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitSummary from "../molecules/StockUnitSummary";
+import StockItem from "@/interfaces/stocks/StockItem";
 
-interface StockLocationItemsViewProps {
-    units: StockUnit[];
+interface StockUnitDatatableProps {
+    units: StockItem[];
     loading: boolean;
     onTake: (unit: StockUnit) => void;
 }
 
-const stockService = new StockService();
+const stockService = new StockItemsService();
 
-export default function StockLocationItemsView({ units, loading, onTake }: StockLocationItemsViewProps) {
+export default function StockUnitDatatable({ units, loading, onTake }: StockUnitDatatableProps) {
     // const [expandedRows, setExpandedRows] = useState<StockUnit[]>([]);
     // const [movementsByItemId, setMovementsByItemId] = useState<Record<number, StockMovement[] | "loading" | "error">>({});
 
@@ -37,29 +38,26 @@ export default function StockLocationItemsView({ units, loading, onTake }: Stock
     return (
         <FillRemainingHeight>
             <></>
-            {/* <DataTable
+            <DataTable
                 value={units}
                 size="small"
-                expandedRows={expandedRows}
-                onRowToggle={(event) => setExpandedRows(event.data as StockUnit[])}
-                onRowExpand={(event) => loadHistory(event.data as StockUnit)}
-                rowExpansionTemplate={(unit: StockUnit) => renderHistory(unit)}
+                // expandedRows={expandedRows}
+                // onRowToggle={(event) => setExpandedRows(event.data as StockUnit[])}
+                // onRowExpand={(event) => loadHistory(event.data as StockUnit)}
+                // rowExpansionTemplate={(unit: StockUnit) => renderHistory(unit)}
                 scrollable
                 scrollHeight="flex"
                 className="pb-4 w-full"
                 loading={loading}
                 emptyMessage="Aucun produit disponible"
             >
-                <Column expander style={{ width: "4rem" }} />
-                <Column header="Produit" body={(unit: StockUnit) => <StockUnitSummary unit={unit} />} />
-                <Column header="Lieu" body={(unit: StockUnit) => unit.location.label} />
+                {/* <Column expander style={{ width: "4rem" }} /> */}
                 <Column
-                    header="Actions"
-                    body={(unit: StockUnit) => (
-                        <Button label="Prendre" icon="pi pi-check" size="small" onClick={() => onTake(unit)} />
-                    )}
+                    field="label"
+                    header="Produit"
                 />
-            </DataTable> */}
+
+            </DataTable>
         </FillRemainingHeight>
     );
 }

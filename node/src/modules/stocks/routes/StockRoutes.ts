@@ -1,18 +1,14 @@
 import { Router } from "express";
-import StockController from "../controllers/StockController";
-import { validateBody, validateParams, validateQuery, IdParamSchema } from "../../core/middlewares/validate";
-import { StockIntakeSchema } from "../dto/StockIntakeDto";
-import { StockUnitsQuerySchema } from "../dto/StockUnitsQueryDto";
-import { TakeStockUnitSchema } from "../dto/TakeStockUnitDto";
+import StockUnitController from "../controllers/StockUnitController";
+import { StockItemsQuerySchema } from "../dto/StockUnitsQueryDto";
 import StockLocationRoutes from "./StockLocationRoutes";
+import StockUnitRoutes from "./StockUnitRoutes";
+import StockItemRoutes from "./StockItemRoutes";
 
 const StockRoutes = Router();
-const stockController = new StockController();
 
 StockRoutes.use("/locations", StockLocationRoutes);
-
-StockRoutes.post("/intake", validateBody(StockIntakeSchema), stockController.intake);
-StockRoutes.get("/units", validateQuery(StockUnitsQuerySchema), stockController.listAvailableUnits);
-StockRoutes.post("/units/:id/take", validateParams(IdParamSchema), validateBody(TakeStockUnitSchema), stockController.takeUnit);
+StockRoutes.use("/items", StockItemRoutes);
+StockRoutes.use("/units", StockUnitRoutes);
 
 export default StockRoutes;

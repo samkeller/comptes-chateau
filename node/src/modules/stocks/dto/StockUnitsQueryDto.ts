@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export interface StockUnitsQueryDto {
+export interface StockItemsQueryDto {
     locationId?: number;
 }
 
-export const StockUnitsQuerySchema = z.object({
+export const StockItemsQuerySchema = z.object({
     locationId: z.coerce.number().int().positive().optional(),
 });

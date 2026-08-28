@@ -6,13 +6,13 @@ import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockUnitSummary from "../molecules/StockUnitSummary";
 
-interface StockLocationItemsViewProps {
+interface StockItemsViewProps {
     units: StockUnit[];
     loading: boolean;
     onTake: (unit: StockUnit) => void;
 }
 
-export default function StockLocationItemsView({ units, loading, onTake }: StockLocationItemsViewProps) {
+export default function StockItemsView({ units, loading, onTake }: StockItemsViewProps) {
     const [expandedRows, setExpandedRows] = useState<StockUnit[]>([]);
 
     return (

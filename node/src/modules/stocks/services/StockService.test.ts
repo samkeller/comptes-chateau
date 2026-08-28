@@ -2,7 +2,7 @@ import { DataSource, EntityManager } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import SetupTestDb from "../../../tests/SetupTests";
 import { IMemoryDb } from "pg-mem";
-import StockService from "./StockService";
+import StockUnitService from "./StockUnitService";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
@@ -20,7 +20,7 @@ vi.mock("../../../db/dataSource", () => ({
 
 describe("StockService", () => {
     let db: IMemoryDb;
-    let service: StockService;
+    let service: StockUnitService;
     let locationId: number;
 
     beforeAll(async () => {
@@ -40,7 +40,7 @@ describe("StockService", () => {
         await testDataSource.query(`DELETE FROM "stock_item"`);
         await testDataSource.query(`DELETE FROM "stock_location"`);
 
-        service = new StockService();
+        service = new StockUnitService();
         const location = await testDataSource.getRepository(StockLocation).save({ label: "Cellier" });
         locationId = location.id;
     });
@@ -93,7 +93,7 @@ describe("StockService", () => {
 
         await service.takeUnit(unit.id, { source: "manual" });
 
-        expect(await service.listAvailableUnits(locationId)).toEqual([]);
+        expect(await service.getAll(locationId)).toEqual([]);
         await expect(service.takeUnit(unit.id, { source: "manual" })).rejects.toMatchObject({
             code: "STOCK_UNIT_ALREADY_TAKEN",
         });
