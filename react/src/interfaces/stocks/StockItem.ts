@@ -4,10 +4,11 @@ export default class StockItem {
     id: number = 0;
     label: string = "";
     barcode: string | null = null;
-
     defaultUnit: string = "";
-
     imageUrl: string | null = null;
+
+    stockUnitsCount: number = 0;
+    stockUnitsIds: number[] = [];
 
     createdAt?: Date;
     updatedAt?: Date;

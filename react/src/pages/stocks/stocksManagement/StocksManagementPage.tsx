@@ -12,7 +12,7 @@ import { StockIntakeDto } from "@/services/stocks/dto/StockIntakeDto";
 import StockLocationDialog from "./StockLocationDialog";
 import StockIntakeDialog from "./StockIntakeDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
-import StockUnitDatatable from "./organisms/StockUnitDatatable";
+import StockItemsDatatable from "./organisms/StockItemsDatatable";
 import StockItem from "@/interfaces/stocks/StockItem";
 
 const stockItemsService = new StockItemsService();
@@ -39,11 +39,11 @@ export default function StocksManagementPage() {
         [locations, selectedLocationId]
     );
 
-    useEffect( ()=> {
+    useEffect(() => {
         loadInitialData();
     }, [])
-    
-    
+
+
     useEffect(() => {
         loadData()
     }, [selectedLocationId]);
@@ -246,10 +246,10 @@ export default function StocksManagementPage() {
                                 <Button label="Ajouter au stock" icon="pi pi-plus" size="small" onClick={() => setIsIntakeDialogVisible(true)} />
                             )}
                         </div>
-                        <StockUnitDatatable
+                        <StockItemsDatatable
                             units={items}
                             loading={loadingUnits}
-                            onTake={requestTakeUnit}
+                            // onTake={() => void} TODO?
                         />
                     </div>
                 </div>

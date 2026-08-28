@@ -7,7 +7,7 @@ export interface StockItemDto {
     defaultUnit: string;
     imageUrl: string | null;
 
-    stockUnitsId: number[]
+    stockUnitsCount: number
 
     createdAt: string;
     updatedAt: string;
@@ -21,7 +21,7 @@ export function toStockItemDto(item: StockItem): StockItemDto {
         barcode: item.barcode,
         defaultUnit: item.defaultUnit,
         imageUrl: item.imageUrl ?? null,
-        stockUnitsId: item.units.map(unit => unit.id),
+        stockUnitsCount: item.units ? item.units.length : 0,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
         deletedAt: item.deletedAt ? item.deletedAt.toISOString() : null,

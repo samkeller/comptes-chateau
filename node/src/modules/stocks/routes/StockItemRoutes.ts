@@ -6,6 +6,6 @@ import { StockItemsQuerySchema } from "../dto/StockUnitsQueryDto";
 const StockItemRoutes = Router();
 const stockItemController = new StockItemController();
 
-StockItemRoutes.get("/", validateQuery(StockItemsQuerySchema),stockItemController.getAll);
+StockItemRoutes.get("/", validateQuery(StockItemsQuerySchema), stockItemController.getAll);
 
 export default StockItemRoutes;

@@ -13,10 +13,32 @@ const DEFAULT_MOVEMENT_SOURCE = "manual";
 
 export default class StockUnitService {
     private readonly stockUnitRepo = AppDataSource.getRepository(StockUnit);
+
     /**
-     * Ajoute les produits ranges en une seule transaction: chaque ligne cree ou reutilise une fiche produit,
-     * cree une unite physique, puis journalise l'entree via un mouvement `IN`.
+     * Récupères toutes les unités de stocks en fonction des filtres.
+     * @param itemId 
      */
+    async getStockUnitsByItemId(itemId?: number): Promise<StockUnitDto[]> {
+        const result = await this.stockUnitRepo.find({
+            where: {
+                ...(itemId ? { itemId } : {}),
+            },
+            relations: {
+                item: true,
+                location: true
+            },
+            order: {
+                expirationDate: "ASC",
+                createdAt: "ASC",
+            }
+        });
+        return result.map(toStockUnitDto);
+    }
+
+    /**
+   * Ajoute les produits ranges en une seule transaction: chaque ligne cree ou reutilise une fiche produit,
+   * cree une unite physique, puis journalise l'entree via un mouvement `IN`.
+   */
     async intake(dto: StockIntakeDto): Promise<StockUnitDto[]> {
         const createdUnitIds: number[] = [];
 
