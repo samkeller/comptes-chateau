@@ -12,7 +12,7 @@ import { StockIntakeDto } from "@/services/stocks/dto/StockIntakeDto";
 import StockLocationDialog from "./StockLocationDialog";
 import StockIntakeDialog from "./StockIntakeDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
-import StockLocationItemsView from "./organisms/StockLocationItemsView";
+import StockLocationItemsView from "./organisms/StockItemsView";
 
 const stockService = new StockService();
 const stockLocationService = new StockLocationService();

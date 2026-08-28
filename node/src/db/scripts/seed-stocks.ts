@@ -95,7 +95,7 @@ const ITEM_FIXTURES: ItemFixture[] = [
         imageUrl: null,
         units: [
             { unitsCount: 4, quantity: 0.45, unit: "kg", label: "Sachet sous vide", expiresInDays: 90, boughtDaysAgo: 10, locationIndex: CONGELATEUR },
-            { unitsCount: 1, quantity: 0.45, unit: "kg", label: "Sachet sous vide", expiresInDays: -10, boughtDaysAgo: 120, locationIndex: CONGELATEUR, status: "DISCARDED" },
+            { unitsCount: 1, quantity: 0.45, unit: "kg", label: "Sachet sous vide", expiresInDays: -10, boughtDaysAgo: 120, locationIndex: CONGELATEUR },
         ],
     },
     {
@@ -333,7 +333,7 @@ async function seedStocks(reset: boolean): Promise<void> {
                             itemId: item.id,
                             unitId: unit.id,
                             fromLocationId: location.id,
-                            type: status === "CONSUMED" ? "OUT" : "DISCARD",
+                            type: "OUT",
                             quantity: unit.quantity,
                             occurredAt: addDays(intakeDate, Math.min(template.boughtDaysAgo, 7)),
                             source: SEED_SOURCE,

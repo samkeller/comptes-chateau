@@ -26,9 +26,4 @@ export default class StockService extends BaseService {
         return axios.post(`${this.stocksApiUrl}/units/${unitId}/take`, payload).then((res) => new StockUnit(res.data));
     }
 
-    getItemHistory(itemId: number): Promise<StockMovement[]> {
-        return axios.get(`${this.stocksApiUrl}/items/${itemId}/history`).then((res) =>
-            res.data.map((movement: Partial<StockMovement>) => new StockMovement(movement))
-        );
-    }
 }
