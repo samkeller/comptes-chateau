@@ -1,4 +1,4 @@
-export type StockMovementType = "IN" | "OUT";
+import type { StockMovementType } from "@chocosous/shared";
 
 export default class StockMovement {
     id: number = 0;

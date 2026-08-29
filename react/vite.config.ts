@@ -90,6 +90,9 @@ export default defineConfig({
       }
     })
   ],
+  optimizeDeps: {
+    exclude: ["@chocosous/shared"]
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

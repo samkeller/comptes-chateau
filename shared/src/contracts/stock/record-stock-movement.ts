@@ -1,12 +1,8 @@
 import { z } from "zod";
-import { STOCK_MOVEMENT_TYPES, StockMovementType } from "./StockMovementType";
 
-export interface RecordStockMovementDto {
-    type: StockMovementType;
-    quantity: number;
-    occurredAt?: Date;
-    source?: string | null;
-}
+export const STOCK_MOVEMENT_TYPES = ["IN", "OUT"] as const;
+
+export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
 
 export const RecordStockMovementSchema = z.object({
     type: z.enum(STOCK_MOVEMENT_TYPES),
@@ -17,3 +13,5 @@ export const RecordStockMovementSchema = z.object({
         z.literal(""),
     ]).optional().nullable(),
 });
+
+export type RecordStockMovementDto = z.infer<typeof RecordStockMovementSchema>;

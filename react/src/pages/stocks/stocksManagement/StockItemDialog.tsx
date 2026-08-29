@@ -7,9 +7,9 @@ import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { InputNumber } from "primereact/inputnumber";
 import { format } from "date-fns";
+import type { CreateStockItemDto } from "@chocosous/shared";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
 import { AutoComplete, AutoCompleteCompleteEvent } from "primereact/autocomplete";
 import RequiredMark from "@/components/atoms/form/RequiredMark";
 import Optional from "@/components/atoms/form/Optional";
@@ -20,7 +20,7 @@ interface StockItemDialogProps {
     locations: StockLocation[];
     selectedLocationId: number | null;
     onHide: () => void;
-    onSubmit: (payload: SaveStockItemDto) => Promise<void>;
+    onSubmit: (payload: CreateStockItemDto) => Promise<void>;
     onQuantityChange: (item: StockItem, quantity: number) => void;
 }
 
@@ -52,7 +52,7 @@ export default function StockItemDialog({
             return;
         }
 
-        const payload: SaveStockItemDto = {
+        const payload: CreateStockItemDto = {
             label,
             barcode: barcode || null,
             unit,

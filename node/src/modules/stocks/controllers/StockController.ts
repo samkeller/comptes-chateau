@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
+import { StockItemsQuerySchema, type UpdateStockLocationDto } from "@chocosous/shared";
 import StockService from "../services/StockService";
 import { AppError } from "../../../utils/AppError";
-import { StockItemsQuerySchema } from "../dto/CreateStockItemDto";
-import { UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
 
 export default class StockController {
     private readonly stockService = new StockService();

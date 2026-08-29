@@ -13,9 +13,9 @@ WORKDIR /app
 # 4. On copie tout
 COPY . .
 
-# 5. On installe, on build (utilise scripts deja existants)
+# 5. On installe les workspaces, puis on construit les packages dans l'ordre
 RUN npm install -g npm@11.11.0
-RUN npm run install:all
+RUN npm ci
 RUN npm run build
 
 # 6. On démarre

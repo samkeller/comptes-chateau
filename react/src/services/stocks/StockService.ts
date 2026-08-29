@@ -3,9 +3,13 @@ import BaseService from "../BaseService";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockMovement from "@/interfaces/stocks/StockMovement";
-import { CreateStockLocationDto } from "./dto/CreateStockLocationDto";
-import { SaveStockItemDto } from "./dto/SaveStockItemDto";
-import { RecordStockMovementDto } from "./dto/RecordStockMovementDto";
+import type {
+    CreateStockItemDto,
+    CreateStockLocationDto,
+    RecordStockMovementDto,
+    UpdateStockItemDto,
+    UpdateStockLocationDto,
+} from "@chocosous/shared";
 
 export default class StockService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks`;
@@ -20,7 +24,7 @@ export default class StockService extends BaseService {
         return axios.post(`${this.stocksApiUrl}/locations`, payload).then((res) => new StockLocation(res.data));
     }
 
-    updateLocation(id: number, payload: CreateStockLocationDto): Promise<StockLocation> {
+    updateLocation(id: number, payload: UpdateStockLocationDto): Promise<StockLocation> {
         return axios.patch(`${this.stocksApiUrl}/locations/${id}`, payload).then((res) => new StockLocation(res.data));
     }
 
@@ -36,11 +40,11 @@ export default class StockService extends BaseService {
         );
     }
 
-    createItem(payload: SaveStockItemDto): Promise<StockItem> {
+    createItem(payload: CreateStockItemDto): Promise<StockItem> {
         return axios.post(`${this.stocksApiUrl}/items`, payload).then((res) => new StockItem(res.data));
     }
 
-    updateItem(id: number, payload: SaveStockItemDto): Promise<StockItem> {
+    updateItem(id: number, payload: UpdateStockItemDto): Promise<StockItem> {
         return axios.patch(`${this.stocksApiUrl}/items/${id}`, payload).then((res) => new StockItem(res.data));
     }
 

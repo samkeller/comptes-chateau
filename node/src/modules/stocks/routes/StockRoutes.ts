@@ -1,9 +1,13 @@
 import { Router } from "express";
+import {
+	CreateStockItemSchema,
+	CreateStockLocationSchema,
+	RecordStockMovementSchema,
+	UpdateStockItemSchema,
+	UpdateStockLocationSchema,
+} from "@chocosous/shared";
 import StockController from "../controllers/StockController";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
-import { CreateStockLocationSchema, UpdateStockLocationSchema } from "../dto/CreateStockLocationDto";
-import { CreateStockItemSchema, UpdateStockItemSchema } from "../dto/CreateStockItemDto";
-import { RecordStockMovementSchema } from "../dto/RecordStockMovementDto";
 
 const StockRoutes = Router();
 const stockController = new StockController();

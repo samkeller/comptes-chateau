@@ -3,6 +3,7 @@ import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { generatePath, useNavigate, useParams } from "react-router-dom";
+import type { CreateStockItemDto } from "@chocosous/shared";
 import { routePaths } from "@/routes/routePaths";
 import StockService from "@/services/stocks/StockService";
 import StockLocation from "@/interfaces/stocks/StockLocation";
@@ -12,7 +13,6 @@ import StockLocationDialog from "./StockLocationDialog";
 import StockItemDialog from "./StockItemDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockLocationItemsView from "./organisms/StockLocationItemsView";
-import { SaveStockItemDto } from "@/services/stocks/dto/SaveStockItemDto";
 
 const stockService = new StockService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
@@ -121,7 +121,7 @@ export default function StocksManagementPage() {
         setEditingLocation(null);
     }
 
-    async function handleItemSubmit(payload: SaveStockItemDto): Promise<void> {
+    async function handleItemSubmit(payload: CreateStockItemDto): Promise<void> {
         if (editingItem) {
             await stockService.updateItem(editingItem.id, payload);
             showToast({ severity: "success", summary: "Produit mis à jour" });

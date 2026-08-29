@@ -1,30 +1,5 @@
 import { z } from "zod";
 
-export interface CreateStockItemDto {
-    label: string;
-    barcode?: string | null;
-    unit: string;
-    locationId: number;
-    expirationDate?: string | null;
-    imageUrl?: string | null;
-    initialQuantity?: number;
-    occurredAt?: Date;
-    source?: string;
-}
-
-export interface UpdateStockItemDto {
-    label: string;
-    barcode?: string | null;
-    unit: string;
-    locationId: number;
-    expirationDate?: string | null;
-    imageUrl?: string | null;
-}
-
-export interface StockItemsQueryDto {
-    locationId?: number;
-}
-
 const optionalTextField = (maxLength: number) =>
     z.union([
         z.string().trim().max(maxLength),
@@ -47,13 +22,19 @@ const stockItemBaseSchema = {
 
 export const CreateStockItemSchema = z.object({
     ...stockItemBaseSchema,
-    initialQuantity: z.number().min(0).default(0),
+    initialQuantity: z.number().min(0).optional(),
     occurredAt: z.coerce.date().optional(),
     source: optionalTextField(50),
 });
 
+export type CreateStockItemDto = z.infer<typeof CreateStockItemSchema>;
+
 export const UpdateStockItemSchema = z.object(stockItemBaseSchema);
+
+export type UpdateStockItemDto = z.infer<typeof UpdateStockItemSchema>;
 
 export const StockItemsQuerySchema = z.object({
     locationId: z.coerce.number().int().positive().optional(),
 });
+
+export type StockItemsQueryDto = z.infer<typeof StockItemsQuerySchema>;

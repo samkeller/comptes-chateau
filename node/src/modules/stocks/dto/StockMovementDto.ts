@@ -1,5 +1,5 @@
 import { StockMovement } from "../entities/StockMovement";
-import { StockMovementType } from "./StockMovementType";
+import type { StockMovementType } from "@chocosous/shared";
 
 export interface StockMovementDto {
     id: number;
