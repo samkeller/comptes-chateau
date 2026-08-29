@@ -3,14 +3,15 @@ import { useGlobalToast } from '@/context/GlobalToastContext';
 import { PageTemplate } from '../../PageTemplate';
 import AccountLineCategorizationDatatable from './organisms/AccountLineCategorizationDatatable';
 import AccountLineRule from '@/interfaces/AccountLineRule';
-import AccountLineCategorizationService, { UnmappedAccountLineRuleItem } from '../../../services/AccountLineCategorizationService';
+import AccountLineCategorizationService from '../../../services/AccountLineCategorizationService';
+import type { UnmappedAccountLineRuleResponse } from '@chocosous/shared';
 import CategorizationDojo from './organisms/CategorizationDojo';
 
 const accountLineCategorizationService = new AccountLineCategorizationService();
 
 export default function AccountLineCategorization() {
 
-  const [unmapped, setUnmapped] = useState<UnmappedAccountLineRuleItem[]>([]);
+  const [unmapped, setUnmapped] = useState<UnmappedAccountLineRuleResponse[]>([]);
   const [rules, setRules] = useState<AccountLineRule[]>([]);
   const showGlobalToast = useGlobalToast();
 

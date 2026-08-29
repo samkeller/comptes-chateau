@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import RecurringExpenseService from "../services/RecurringExpenseService";
-import { SaveRecurringExpenseSchema } from "../dto/RecurringExpenseDtos";
+import { SaveRecurringExpenseSchema } from "@chocosous/shared";
 import { IdParamSchema, validateBody, validateParams } from "../../core/middlewares/validate";
 import { getAccountIdFromParams } from "../utils/accountParams";
 import requireUserId from "../utils/requireUserId";

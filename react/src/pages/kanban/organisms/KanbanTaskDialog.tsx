@@ -7,7 +7,7 @@ import KanbanTask from "../../../interfaces/kanban/KanbanTask";
 import { showGlobalToast } from "../../../services/GlobalToast";
 import { User } from "../../../interfaces/User";
 import TailwindTag from "@/components/atoms/TailwindTag";
-import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
+import type { CreateKanbanTaskRequest } from "@chocosous/shared";
 import KanbanCommentSection from "./KanbanCommentSection";
 import { useScreen } from "@/hooks/useScreen";
 import KanbanTaskDialogForm from "../molecules/KanbanTaskDialogForm";
@@ -31,7 +31,7 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
     /**
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
      */
-    const [taskData, setTaskData] = useState<CreateKanbanTaskDto>({
+    const [taskData, setTaskData] = useState<CreateKanbanTaskRequest>({
         ...task,
         assigneeIds: task.assignees.map(assignee => assignee.id),
     });

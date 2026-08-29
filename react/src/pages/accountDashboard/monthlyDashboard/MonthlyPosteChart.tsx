@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import { ChartData, ChartDataset, ChartOptions, TooltipItem } from "chart.js";
-import { MonthlyAggregateByPoste } from "../../../interfaces/MonthlyAggregateByPoste";
+import type { MonthlyAggregateByPoste } from "@chocosous/shared";
 import { toMonetaryAmount } from "../../../utils/NumberUtils";
 
 interface MonthlyPosteChartProps {

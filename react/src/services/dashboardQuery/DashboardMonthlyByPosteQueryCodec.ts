@@ -1,16 +1,11 @@
 import { formatApiDate } from "../../utils/DatesUtils";
-
-export interface DashboardMonthlyByPosteQueryInput {
-    from: Date;
-    to: Date;
-    posteIds: number[];
-}
+import type { DashboardMonthlyByPosteQuery } from "@chocosous/shared";
 
 /**
  * Convertit les filtres dashboard en query params API.
  */
 export default class DashboardMonthlyByPosteQueryCodec {
-    static toQueryParams(input: DashboardMonthlyByPosteQueryInput): URLSearchParams {
+    static toQueryParams(input: DashboardMonthlyByPosteQuery): URLSearchParams {
         const params = new URLSearchParams();
 
         params.append("from", formatApiDate(input.from));

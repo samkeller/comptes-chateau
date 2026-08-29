@@ -1,5 +1,5 @@
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel";
-import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
+import type { BudgetByPoste } from "@chocosous/shared";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { ProgressBar } from "primereact/progressbar";
 

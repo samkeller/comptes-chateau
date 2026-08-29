@@ -1,25 +1,7 @@
 import axios from 'axios';
 import BaseService from './BaseService';
 import AccountLineRule from '@/interfaces/AccountLineRule';
-
-export interface UnmappedAccountLineRuleItem {
-  pattern: string;
-  count: number;
-  account: {
-    id: number,
-    label: string
-  },
-  suggestedPoste: {
-    id: number,
-    label: string,
-    color: string
-  } | null
-  suggestedNature: {
-    id: number,
-    label: string,
-    color: string
-  } | null
-}
+import type { SaveAccountLineRuleRequest, SearchAccountLineRulePatternRequest, UnmappedAccountLineRuleResponse } from '@chocosous/shared';
 
 export default class AccountLineCategorizationService extends BaseService {
   getAll(): Promise<AccountLineRule[]> {
@@ -33,7 +15,7 @@ export default class AccountLineCategorizationService extends BaseService {
    */
   search(pattern: string): Promise<AccountLineRule[]> {
 
-    const payload = { pattern }
+    const payload: SearchAccountLineRulePatternRequest = { pattern }
     return axios.post(`${this.apiUrl}/categorization/search`, payload).then(r => r.data);
   }
 
@@ -43,7 +25,7 @@ export default class AccountLineCategorizationService extends BaseService {
     posteId?: number | null,
     natureId?: number | null
   ) {
-    const payload = {
+    const payload: SaveAccountLineRuleRequest = {
       label,
       accountId,
       posteId,
@@ -64,7 +46,7 @@ export default class AccountLineCategorizationService extends BaseService {
     posteId?: number | null,
     natureId?: number | null
   ) {
-    const payload = {
+    const payload: SaveAccountLineRuleRequest = {
       label,
       accountId,
       posteId,
@@ -77,7 +59,7 @@ export default class AccountLineCategorizationService extends BaseService {
     return axios.delete(`${this.apiUrl}/categorization/${id}`);
   }
 
-  getAllUnmapped(): Promise<UnmappedAccountLineRuleItem[]> {
-    return axios.get(`${this.apiUrl}/categorization/unmapped`).then(r => r.data as UnmappedAccountLineRuleItem[]);
+  getAllUnmapped(): Promise<UnmappedAccountLineRuleResponse[]> {
+    return axios.get(`${this.apiUrl}/categorization/unmapped`).then(r => r.data as UnmappedAccountLineRuleResponse[]);
   }
 }

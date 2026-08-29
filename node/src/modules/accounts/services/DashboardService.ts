@@ -4,38 +4,7 @@ import { BudgetItem } from "../entities/BudgetItem";
 import { RecurringExpense } from "../entities/RecurringExpense";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
-
-export interface MonthlyPosteAggregate {
-    year: number;
-    month: number; // 1-12
-    posteId: number;
-    posteLabel: string;
-    posteColor: string;
-    total: number;
-    budgetAmount: number;
-}
-
-export interface DashboardOverview {
-    currentBalance: number;
-
-    forecastBalanceMonthEnd: number;
-    forecastBalanceThreeMonths: number;
-    forecastBalanceFinal: number;
-
-    monthExpenses: number;
-    monthlyBudget: number;
-    operationsToCheckInAccountCount: number;
-    operationsToCheckHorsCompteCount: number;
-    assignedKanbanTasksCount: number;
-}
-
-export interface BudgetVsActualByPoste {
-    posteId: number;
-    posteLabel: string;
-    posteColor: string;
-    budgetAmount: number;
-    actualAmount: number;
-}
+import type { MonthlyAggregateByPoste, DashboardOverview, BudgetByPoste } from "@chocosous/shared";
 
 interface PosteBudget {
     label: string;
@@ -108,7 +77,7 @@ export default class DashboardService {
         toMonth: Date,
         posteIds: number[],
         accountId: number
-    ): Promise<MonthlyPosteAggregate[]> {
+    ): Promise<MonthlyAggregateByPoste[]> {
         const [rawResults, budgetByPoste] = await Promise.all([
             this.getMonthlyByPosteRaw(fromMonth, toMonth, posteIds, accountId),
             this.computeBudgetByPoste(accountId, posteIds),
@@ -125,7 +94,7 @@ export default class DashboardService {
         }));
     }
 
-    async getBudgetVsActual(accountId: number, month: number, year: number): Promise<BudgetVsActualByPoste[]> {
+    async getBudgetVsActual(accountId: number, month: number, year: number): Promise<BudgetByPoste[]> {
 
         const [actualResults, budgetByPoste] = await Promise.all([
             this.accountLineRepo

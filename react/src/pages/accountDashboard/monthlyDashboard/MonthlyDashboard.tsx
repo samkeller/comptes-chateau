@@ -1,7 +1,7 @@
 import { Card } from "primereact/card";
 import { useEffect, useState } from "react";
 import DashboardService from "../../../services/DashboardService";
-import { MonthlyAggregateByPoste } from "../../../interfaces/MonthlyAggregateByPoste";
+import type { MonthlyAggregateByPoste } from "@chocosous/shared";
 import MonthlyPosteChart from "./MonthlyPosteChart";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { MultiSelect } from "primereact/multiselect";

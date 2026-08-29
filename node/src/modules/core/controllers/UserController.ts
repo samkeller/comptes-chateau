@@ -1,14 +1,10 @@
 import { Router } from "express";
-import { z } from "zod";
+import { AvatarSchema } from "@chocosous/shared";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 import { toUserDto } from "../dto/UserDto";
 import { unauthorized } from "../../../utils/AppError";
 import { validateBody } from "../middlewares/validate";
-
-const AvatarSchema = z.object({
-    avatar: z.string().regex(/^\d{3}-[\w-]+\.png$/, "Nom de fichier avatar invalide"),
-});
 
 const UserRoutes = Router();
 const userRepo = AppDataSource.getRepository(User);

@@ -7,6 +7,7 @@ interface XpBaseEvent {
     occurredAt: string;
 }
 
+/** Événement temps réel émis lorsque l'XP d'un utilisateur est mise à jour. */
 export interface XpUpdatedEvent extends XpBaseEvent {
     type: "xp.updated";
     gainedXp: number;

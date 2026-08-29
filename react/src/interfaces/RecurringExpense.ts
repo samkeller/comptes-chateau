@@ -1,8 +1,7 @@
 import { AccountLineNature } from "./AccountLineNature"
 import { AccountLinePoste } from "./AccountLinePoste"
 import { parseApiDate } from "../utils/DatesUtils"
-
-export type RecurringExpenseFrequency = "weekly" | "monthly" | "quarterly" | "yearly"
+import type { RecurringExpenseFrequency } from "@chocosous/shared";
 
 class RecurringExpense {
     id: number = 0

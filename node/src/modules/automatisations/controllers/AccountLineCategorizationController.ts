@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import AccountLineCategorizationService from "../services/AccountLineCategorizationService";
-import { SaveRuleSchema, searchPatternSchema } from "../dto/AccountLineRulesDto";
+import { SaveAccountLineRuleSchema, SearchAccountLineRulePatternSchema } from "@chocosous/shared";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
 import requireUserId from "../../accounts/utils/requireUserId";
 
@@ -12,7 +12,7 @@ AccountLineCategorizationRoutes.get('/', async (_req: Request, res: Response) =>
     res.json(rules);
 });
 
-AccountLineCategorizationRoutes.post('/search', validateBody(searchPatternSchema), async (req: Request, res: Response) => {
+AccountLineCategorizationRoutes.post('/search', validateBody(SearchAccountLineRulePatternSchema), async (req: Request, res: Response) => {
     res.json(await accountLineCategorizationService.search(req.body.pattern));
 });
 
@@ -21,7 +21,7 @@ AccountLineCategorizationRoutes.get('/unmapped', async (_req: Request, res: Resp
     res.json(unmapped);
 });
 
-AccountLineCategorizationRoutes.post('/', validateBody(SaveRuleSchema), async (req: Request, res: Response) => {
+AccountLineCategorizationRoutes.post('/', validateBody(SaveAccountLineRuleSchema), async (req: Request, res: Response) => {
     const connectedUser = requireUserId(req);
 
     const created = await accountLineCategorizationService.create(req.body, connectedUser);
@@ -29,7 +29,7 @@ AccountLineCategorizationRoutes.post('/', validateBody(SaveRuleSchema), async (r
     res.status(201).json(created);
 });
 
-AccountLineCategorizationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveRuleSchema), async (req: Request, res: Response) => {
+AccountLineCategorizationRoutes.put('/:id', validateParams(IdParamSchema), validateBody(SaveAccountLineRuleSchema), async (req: Request, res: Response) => {
 
     const id = Number(req.params.id)
 

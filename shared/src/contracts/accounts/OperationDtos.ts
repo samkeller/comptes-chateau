@@ -1,16 +1,6 @@
 import { z } from "zod";
 
-export interface OperationBatchCheckInput {
-    id: number;
-    isChecked: boolean;
-    dateValeur: string;
-}
-
-export interface OperationBatchCheckPayload {
-    checks: OperationBatchCheckInput[];
-}
-
-/** Schéma pour créer ou mettre à jour une opération. */
+/** Schéma de validation pour la création ou la modification d'une opération. */
 export const SaveOperationSchema = z.object({
     id: z.number().int().nonnegative().optional(),
     label: z.string().min(1),
@@ -26,7 +16,7 @@ export const SaveOperationSchema = z.object({
 
 export type SaveOperationPayload = z.infer<typeof SaveOperationSchema>;
 
-/** Schéma pour la validation en lot d'opérations. */
+/** Schéma de validation pour la validation en lot d'opérations. */
 export const OperationBatchCheckSchema = z.object({
     checks: z.array(z.object({
         id: z.number().int().positive(),
@@ -34,3 +24,7 @@ export const OperationBatchCheckSchema = z.object({
         dateValeur: z.string().min(1),
     })).min(1),
 });
+
+export type OperationBatchCheckPayload = z.infer<typeof OperationBatchCheckSchema>;
+
+export type OperationBatchCheckInput = OperationBatchCheckPayload["checks"][number];

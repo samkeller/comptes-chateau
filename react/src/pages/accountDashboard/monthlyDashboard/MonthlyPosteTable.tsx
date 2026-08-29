@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { MonthlyAggregateByPoste } from "../../../interfaces/MonthlyAggregateByPoste";
+import type { MonthlyAggregateByPoste } from "@chocosous/shared";
 import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { toMonetaryAmount } from "../../../utils/NumberUtils";
 

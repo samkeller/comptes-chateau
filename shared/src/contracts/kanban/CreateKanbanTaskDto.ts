@@ -1,15 +1,7 @@
 import { z } from "zod";
-import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "./KanbanTaskPriority";
+import { KANBAN_TASK_PRIORITIES } from "./KanbanTaskPriority";
 
-export interface CreateKanbanTaskDto {
-    title: string;
-    columnId: number;
-    priority?: KanbanTaskPriority;
-    description?: string | null;
-    tags?: string[];
-    assigneeIds?: number[];
-}
-
+/** Schéma de validation pour la création ou la modification d'une tâche kanban. */
 export const CreateKanbanTaskSchema = z.object({
     title: z.string().trim().min(1),
     columnId: z.number().int(),
@@ -18,3 +10,5 @@ export const CreateKanbanTaskSchema = z.object({
     tags: z.array(z.string().min(1).max(32)).max(15).optional(),
     assigneeIds: z.array(z.number().int().positive()).max(20).optional(),
 });
+
+export type CreateKanbanTaskRequest = z.input<typeof CreateKanbanTaskSchema>;

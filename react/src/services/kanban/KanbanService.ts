@@ -1,17 +1,22 @@
 import axios from "axios";
 import BaseService from "../BaseService";
-import { KanbanBoardDataDto } from "./dto/KanbanBoardDataDto";
-import { CreateKanbanTaskDto } from "./dto/CreateKanbanTaskDto";
+import type { CreateKanbanTaskRequest, KanbanCommentResponse } from "@chocosous/shared";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
-import { KanbanComment } from "../../interfaces/kanban/KanbanComment";
 import KanbanColumn from "@/interfaces/kanban/KanbanColumn";
 import { User } from "@/interfaces/User";
+
+/** Contenu du tableau kanban une fois les entités API hydratées en modèles frontend. */
+interface KanbanBoardData {
+    columns: KanbanColumn[];
+    tasks: KanbanTask[];
+    users: User[];
+}
 
 export default class KanbanService extends BaseService {
     
     private kanbanApiUrl = this.apiUrl + "/kanban";
 
-    getBoardData(): Promise<KanbanBoardDataDto> {
+    getBoardData(): Promise<KanbanBoardData> {
         return axios.get(this.kanbanApiUrl + "/board").then(res => {
             return {
                 columns: res.data.columns.map((column: any) => new KanbanColumn(column)),
@@ -25,11 +30,11 @@ export default class KanbanService extends BaseService {
         return axios.get(this.kanbanApiUrl + "/tags").then(res => res.data);
     }
 
-    createKanbanTask(formData: CreateKanbanTaskDto): Promise<KanbanTask> {
+    createKanbanTask(formData: CreateKanbanTaskRequest): Promise<KanbanTask> {
         return axios.post(this.kanbanApiUrl + "/task", formData).then(res => res.data);
     }
 
-    saveKanbanTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTask> {
+    saveKanbanTask(task: CreateKanbanTaskRequest, id: number): Promise<KanbanTask> {
         return axios.patch(this.kanbanApiUrl + "/task/" + id, task).then(res => res.data);
     }
 
@@ -41,11 +46,11 @@ export default class KanbanService extends BaseService {
         return axios.patch(this.kanbanApiUrl + `/task/mark-done/${taskId}`);
     }
 
-    getTaskComments(taskId: number): Promise<KanbanComment[]> {
+    getTaskComments(taskId: number): Promise<KanbanCommentResponse[]> {
         return axios.get(this.kanbanApiUrl + `/task/${taskId}/comments`).then(res => res.data);
     }
 
-    createComment(taskId: number, content: string): Promise<KanbanComment> {
+    createComment(taskId: number, content: string): Promise<KanbanCommentResponse> {
         return axios.post(this.kanbanApiUrl + `/task/${taskId}/comments`, { taskId, content }).then(res => res.data);
     }
 

@@ -1,5 +1,5 @@
 import TooltipInfoIcon from "@/components/TooltipInfoIcon";
-import { DashboardOverview } from "@/interfaces/DashboardOverview";
+import type { DashboardOverview } from "@chocosous/shared";
 import { useScreen } from "@/hooks/useScreen";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Button } from "primereact/button";
