@@ -1,7 +1,6 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { conflict, notFound } from "../../../utils/AppError";
-import { StockIntakeDto, StockIntakeLineDto } from "../dto/StockUnitIntakeDto";
 import { StockUnitDto, toStockUnitDto } from "../dto/StockUnitDto";
 import { TakeStockUnitDto } from "../dto/TakeStockUnitDto";
 import { StockItem } from "../entities/StockItem";
@@ -36,55 +35,9 @@ export default class StockUnitService {
     }
 
     /**
-   * Ajoute les produits ranges en une seule transaction: chaque ligne cree ou reutilise une fiche produit,
-   * cree une unite physique, puis journalise l'entree via un mouvement `IN`.
-   */
-    async intake(dto: StockIntakeDto): Promise<StockUnitDto[]> {
-        const createdUnitIds: number[] = [];
-
-        await AppDataSource.transaction(async (entityManager) => {
-            const locationRepo = entityManager.getRepository(StockLocation);
-            const itemRepo = entityManager.getRepository(StockItem);
-            const unitRepo = entityManager.getRepository(StockUnit);
-            const movementRepo = entityManager.getRepository(StockMovement);
-
-            const location = await locationRepo.findOneBy({ id: dto.locationId });
-            if (!location) {
-                throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");
-            }
-
-            for (const line of dto.lines) {
-                const item = await this.findOrCreateItemForIntake(itemRepo, line);
-                const unit = await unitRepo.save(unitRepo.create({
-                    itemId: item.id,
-                    locationId: location.id,
-                    quantity: line.quantity,
-                    unit: line.unit.trim(),
-                    expirationDate: this.normalizeOptionalString(line.expirationDate),
-                    label: this.normalizeOptionalString(line.unitLabel),
-                }));
-
-                await movementRepo.save(movementRepo.create({
-                    itemId: item.id,
-                    unitId: unit.id,
-                    toLocationId: location.id,
-                    type: "IN",
-                    quantity: unit.quantity,
-                    occurredAt: dto.occurredAt ?? new Date(),
-                    source: this.normalizeSource(dto.source),
-                }));
-
-                createdUnitIds.push(unit.id);
-            }
-        });
-
-        return this.loadUnitsByIds(createdUnitIds);
-    }
-
-    /**
-     * Retire une unite complete du stock en journalisant uniquement un mouvement `OUT`.
-     * La disponibilite est deduite de l'historique: une unite ayant deja un `OUT` n'apparait plus dans le stock courant.
-     */
+    * Retire une unite complete du stock en journalisant uniquement un mouvement `OUT`.
+    * La disponibilite est deduite de l'historique: une unite ayant deja un `OUT` n'apparait plus dans le stock courant.
+    */
     async takeUnit(unitId: number, dto: TakeStockUnitDto): Promise<StockUnitDto> {
         let takenUnit: StockUnit | null = null;
 
@@ -152,35 +105,6 @@ export default class StockUnitService {
         });
 
         return units.map(toStockUnitDto);
-    }
-
-    private async findOrCreateItemForIntake(
-        itemRepo: Repository<StockItem>,
-        line: StockIntakeLineDto
-    ): Promise<StockItem> {
-        const label = line.label.trim();
-        const existingItem = await itemRepo.findOne({
-            where: {
-                label,
-            },
-        });
-
-        if (existingItem) {
-            if (!existingItem.barcode) {
-                existingItem.barcode = this.normalizeOptionalString(line.barcode);
-            }
-            if (!existingItem.imageUrl) {
-                existingItem.imageUrl = this.normalizeOptionalString(line.imageUrl);
-            }
-            return itemRepo.save(existingItem);
-        }
-
-        return itemRepo.save(itemRepo.create({
-            label,
-            barcode: this.normalizeOptionalString(line.barcode),
-            defaultUnit: line.unit.trim(),
-            imageUrl: this.normalizeOptionalString(line.imageUrl),
-        }));
     }
 
     private normalizeOptionalString(value: string | null | undefined): string | null {

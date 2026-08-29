@@ -7,14 +7,11 @@ import { useGlobalToast } from "@/context/GlobalToastContext";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockLocationService from "@/services/stocks/StockLocationService";
-import StockItemsService from "@/services/stocks/StockItemsService";
-import { StockIntakeDto } from "@/services/stocks/dto/StockIntakeDto";
 import StockLocationDialog from "./StockLocationDialog";
-import StockIntakeDialog from "./StockIntakeDialog";
+import SaveStockUnitDialog from "./SaveStockUnitDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockItemsDatatable from "./organisms/StockItemsDatatable";
 
-const stockItemsService = new StockItemsService();
 const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
 const STOCK_TAKE_GROUP = "stock-take";
@@ -29,7 +26,10 @@ export default function StocksManagementPage() {
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
-    const [isIntakeDialogVisible, setIsIntakeDialogVisible] = useState(false);
+    /**
+     * Affiche la dialogue de création/modification de StockItem/StockUnit
+     */
+    const [isSaveDialogVisible, setIsSaveDialogVisible] = useState(true);
 
     const selectedLocation = useMemo(
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
@@ -102,18 +102,7 @@ export default function StocksManagementPage() {
         await refreshStock();
     }
 
-    /**
-     * @deprecated TODO
-     * @param payload 
-     */
-    async function handleIntakeSubmit(payload: StockIntakeDto): Promise<void> {
-        // await stockItemsService.intake(payload);
-        // showToast({ severity: "success", summary: "Produit ajoute au stock" });
-        // setIsIntakeDialogVisible(false);
-        // await loadUnits(selectedLocationId ?? undefined);
-    }
-
-    /**
+      /**
      * @deprecated TODO
      * @param payload 
      */
@@ -180,12 +169,10 @@ export default function StocksManagementPage() {
                 />
             )}
 
-            {isIntakeDialogVisible && selectedLocationId !== null && (
-                <StockIntakeDialog
-                    visible
-                    locationId={selectedLocationId}
-                    onHide={() => setIsIntakeDialogVisible(false)}
-                    onSubmit={handleIntakeSubmit}
+            {isSaveDialogVisible && (
+                <SaveStockUnitDialog
+                    locationId={selectedLocationId ?? undefined}
+                    onHide={() => setIsSaveDialogVisible(false)}
                 />
             )}
 
@@ -216,14 +203,12 @@ export default function StocksManagementPage() {
                             <h2 className="m-0 text-lg font-semibold">
                                 {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
-                            {selectedLocation && (
-                                <Button
-                                    label="Ajouter au stock"
-                                    icon="pi pi-plus"
-                                    size="small"
-                                    onClick={() => setIsIntakeDialogVisible(true)}
-                                />
-                            )}
+                            {/* <Button
+                                label={"Ajouter au stock"}
+                                icon="pi pi-plus"
+                                size="small"
+                                onClick={() => setIsSaveDialogVisible(true)}
+                            /> */}
                         </div>
                         <StockItemsDatatable
                             locationId={selectedLocationId}

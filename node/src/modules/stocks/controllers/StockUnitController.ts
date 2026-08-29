@@ -12,10 +12,6 @@ export default class StockUnitController {
         res.status(200).json(await this.stockService.getStockUnitsByItemId(itemId));
     };
 
-    intake = async (req: Request, res: Response) => {
-        res.status(201).json(await this.stockService.intake(req.body));
-    };
-
     takeUnit = async (req: Request, res: Response) => {
         res.status(201).json(await this.stockService.takeUnit(Number(req.params.id), req.body));
     };

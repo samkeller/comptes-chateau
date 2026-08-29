@@ -2,6 +2,7 @@ import { AppDataSource } from "../../../db/dataSource";
 import { StockItem } from "../entities/StockItem";
 import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
 import { StockItemsQueryDto } from "../dto/StockUnitsQueryDto";
+import { StockItemCreateDto } from "../dto/StockItemCreateDto";
 
 export default class StockItemService {
     private readonly stockItemRepo = AppDataSource.getRepository(StockItem);
@@ -25,5 +26,9 @@ export default class StockItemService {
             }
         });
         return units.map(toStockItemDto);
+    }
+
+    create(body: StockItemCreateDto): any {
+        throw new Error("Method not implemented.");
     }
 }

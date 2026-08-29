@@ -1,8 +1,8 @@
 import axios from "axios";
 import BaseService from "../BaseService";
 import StockUnit from "@/interfaces/stocks/StockUnit";
-import { StockIntakeDto } from "./dto/StockIntakeDto";
 import { TakeStockUnitDto } from "./dto/TakeStockUnitDto";
+import { CreateStockUnitDto } from "./dto/CreateStockUnitDto";
 
 export default class StockUnitsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/units`;
@@ -15,8 +15,8 @@ export default class StockUnitsService extends BaseService {
         );
     }
 
-    intake(payload: StockIntakeDto): Promise<StockUnit[]> {
-        return axios.post(`${this.stocksApiUrl}/intake`, payload).then((res) =>
+    save(payload: CreateStockUnitDto): Promise<StockUnit[]> {
+        return axios.post(`${this.stocksApiUrl}/`, payload).then((res) =>
             res.data.map((unit: Partial<StockUnit>) => new StockUnit(unit))
         );
     }
