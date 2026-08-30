@@ -3,7 +3,6 @@ import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
-import { SelectItemOptionsType } from "primereact/selectitem";
 
 export const textEditor = (options: ColumnEditorOptions) => (
     <InputText
@@ -37,12 +36,18 @@ interface SelectOption {
  * @param options - Column editor options provided by PrimeReact.
  * @param dropdownOptions - Array of options to display in the dropdown.
  */
-export const dropdownEditor = (options: ColumnEditorOptions, dropdownOptions: SelectOption[]) => (
-    <Dropdown
-        value={options.value}
-        options={dropdownOptions}
-        onChange={(event) => options.editorCallback?.(event.value)}
-        optionLabel="label"
-        optionValue="id"
-    />
-);
+export const dropdownEditor = (options: ColumnEditorOptions, dropdownOptions: SelectOption[]) => {
+
+    console.log("Dropdown editor options:", options);
+    console.log("Dropdown options:", dropdownOptions);
+
+    return (
+        <Dropdown
+            value={options.value}
+            options={dropdownOptions}
+            onChange={(event) => options.editorCallback?.(event.value)}
+            optionLabel="label"
+            optionValue="id"
+        />
+    );
+};

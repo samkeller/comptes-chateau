@@ -1,20 +1,65 @@
 
 import { CreateStockUnitDto } from "../../../../services/stocks/dto/CreateStockUnitDto";
 import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
+import { Column, ColumnEvent } from "primereact/column";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
 import StockLocation from "@/interfaces/stocks/StockLocation";
+import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 
+/**
+ * Représentation d'un groupe de stock units pour la DataTable.
+ *
+ * Une ligne de la DataTable représente une ou plusieurs `CreateStockUnitDto`
+ * qui possèdent exactement les mêmes propriétés métier.
+ *
+ * `stockUnits` conserve les références vers les stock units originales ainsi
+ * que leur index dans le tableau source. Cela permet, lors d'une édition,
+ * de retrouver toutes les stock units appartenant au groupe et de propager
+ * la modification à chacune d'entre elles.
+ *
+ * Les propriétés `quantity`, `unit`, `label`, `expirationDate` et `locationId`
+ * sont volontairement dupliquées au niveau du groupe.
+ */
 export interface StockUnitGroup {
     key: string;
     stockUnits: {
         stockUnit: CreateStockUnitDto;
         index: number;
     }[];
+
+    /**
+     * Quantité commune à toutes les stock units du groupe.
+     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].quantity"`.
+     */
+    quantity: number;
+
+    /**
+     * Unité commune à toutes les stock units du groupe.
+     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].unit"`.
+     */
+    unit: string;
+
+    /**
+     * Label commun à toutes les stock units du groupe.
+     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].label"`.
+     */
+    label?: string;
+
+    /**
+     * Date d'expiration commune à toutes les stock units du groupe.
+     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].expirationDate"`.
+     */
+    expirationDate?: Date;
+
+    /**
+     * Identifiant de l'emplacement commun à toutes les stock units du groupe.
+     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].locationId"`.
+     */
+    locationId: number;
 }
 
 interface StockUnitEditableListProps {
@@ -69,8 +114,18 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
     };
 
     /**
-     * Regroupement des stock units identiques.
-     */
+    * Regroupement des stock units identiques.
+    *
+    * Les stock units identiques sont regroupées en une seule ligne visuelle.
+    * La première stock unit du groupe sert de référence pour exposer les
+    * propriétés communes (`quantity`, `unit`, `label`, etc.) directement
+    * sur `StockUnitGroup`.
+    *
+    * Important :
+    * `StockUnitGroup` est un ViewModel propre à la DataTable et ne constitue
+    * pas une nouvelle source de vérité. Toute modification doit être
+    * répercutée dans le tableau `stockUnits` via `onChange`.
+    */
     const stockUnitGroups = useMemo<StockUnitGroup[]>(() => {
         const groups = new Map<string, StockUnitGroup>();
 
@@ -93,6 +148,11 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                             index,
                         },
                     ],
+                    quantity: stockUnit.quantity,
+                    unit: stockUnit.unit,
+                    label: stockUnit.label,
+                    expirationDate: stockUnit.expirationDate,
+                    locationId: stockUnit.locationId,
                 });
             }
         });
@@ -177,6 +237,33 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
     };
 
     /**
+     * Important: Quand on change un groupe, on doit changer toutes les stock units du groupe.
+     * Exemple : on change la quantité d'un groupe de 3 stock units identiques.
+     * @param event 
+     */
+    const onGroupCellEditComplete = (event: ColumnEvent) => {
+        const group = event.rowData as StockUnitGroup;
+
+        onChange(
+            stockUnits.map((stockUnit, index) => {
+                const belongsToGroup = group.stockUnits.some(
+                    (entry) => entry.index === index
+                );
+
+                if (!belongsToGroup) {
+                    return stockUnit;
+                }
+
+                return {
+                    ...stockUnit,
+                    [event.field]: event.newValue,
+                };
+            })
+        );
+    };
+
+
+    /**
      * Actions rapides sur un groupe.
      */
     const groupActionsTemplate = (group: StockUnitGroup) => {
@@ -210,7 +297,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
     };
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-3">
             <ConfirmDialog />
 
             <div className="flex justify-end">
@@ -240,22 +327,19 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                         deleteStockUnit={deleteStockUnit}
                     />
                 )}
-                emptyMessage="Aucune stock unit."
+                // Important: Quand on change un groupe, on doit changer toutes les stock units du groupe.
+                editMode="cell"
+                emptyMessage="Rien dans le stock :("
                 size="small"
             >
                 <Column
-                    expander
+                    expander={(group: StockUnitGroup) => group.stockUnits.length > 1}
                     style={{
                         width: "3rem",
                     }}
                 />
-
                 <Column
-                    header="Produit"
-                    body={(group) => group.stockUnits[0].stockUnit.label ?? "-"}
-                />
-
-                <Column
+                    field="quantity"
                     header="Quantité"
                     body={(group: StockUnitGroup) => {
                         /**
@@ -283,35 +367,43 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                             </div>
                         );
                     }}
+                    editor={numberEditor}
+                    onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 
                 <Column
+                    field="unit"
                     header="Unité"
                     body={(group) => group.stockUnits[0].stockUnit.unit}
+                    editor={numberEditor}
+                    onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 
                 <Column
+                    field="expirationDate"
                     header="Expiration"
                     body={(group) => {
                         const expirationDate = group.stockUnits[0].stockUnit.expirationDate;
                         return expirationDate ? expirationDate.toLocaleDateString("fr-FR") : "-";
                     }}
+                    editor={dateEditor}
+                    onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 
                 <Column
+                    field="locationId"
                     header="Emplacement"
                     body={(group) => {
                         const label = stockLocations.find((location) => location.id === group.stockUnits[0].stockUnit.locationId)?.label;
                         return label ?? group.stockUnits[0].stockUnit.locationId;
                     }}
+                    editor={opts => dropdownEditor(opts, stockLocations)}
+                    onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 
                 <Column
                     header="Actions"
                     body={groupActionsTemplate}
-                    style={{
-                        width: "8rem",
-                    }}
                 />
             </DataTable>
         </div>

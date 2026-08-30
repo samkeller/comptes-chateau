@@ -105,11 +105,7 @@ export default function StockUnitEditableListExpansionTemplate({
                     field="stockUnit.locationId"
                     header="Emplacement"
                     body={(entry) => entry.stockUnit.locationId}
-                    editor={(options: ColumnEditorOptions) =>
-                        dropdownEditor(options, stockLocations.map((location) => ({
-                            id: location.id,
-                            label: location.label,
-                        })))}
+                    editor={(options: ColumnEditorOptions) => dropdownEditor(options, stockLocations)}
                 />
                 <Column
                     rowEditor

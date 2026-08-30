@@ -23,7 +23,6 @@ export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewPr
         setLoading(true);
         stockUnitsService.getStockUnitsByItemId(itemId)
             .then((units) => {
-                console.log(units)
                 setUnits(units);
             })
             .catch((error) => {

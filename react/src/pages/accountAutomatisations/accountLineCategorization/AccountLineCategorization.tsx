@@ -19,7 +19,6 @@ export default function AccountLineCategorization() {
       accountLineCategorizationService.getAll(),
       accountLineCategorizationService.getAllUnmapped(),
     ]);
-    console.log('loadedRules', loadedRules);
     setRules(loadedRules);
     setUnmapped(loadedUnmapped);
   }, []);
