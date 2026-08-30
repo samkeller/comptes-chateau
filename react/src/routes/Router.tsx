@@ -22,6 +22,7 @@ import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
 import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
 import Stocks from "@/pages/stocks/Stocks";
+import ProductManagementPage from "@/pages/stocks/stocksManagement/ProductManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -103,7 +104,7 @@ const router = createBrowserRouter([
         handle: { navKey: "automatisations" },
       },
       {
-        path: routePaths.stocks,
+        path: routePaths.stocks.index,
         element: <Stocks />,
         handle: { navKey: "stocks" },
         children: [
@@ -118,6 +119,10 @@ const router = createBrowserRouter([
           {
             path: "stocksManagement/:locationId",
             element: <StocksManagementPage />,
+          },
+          {
+            path: "productManagement",
+            element: <ProductManagementPage />,
           },
         ],
       },

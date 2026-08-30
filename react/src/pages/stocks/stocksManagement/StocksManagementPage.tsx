@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { generatePath, useNavigate, useParams } from "react-router-dom";
 import { routePaths } from "@/routes/routePaths";
@@ -8,7 +7,6 @@ import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockLocationDialog from "./StockLocationDialog";
-import SaveStockUnitDialog from "./SaveStockUnitDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockItemsDatatable from "./organisms/StockItemsDatatable";
 
@@ -77,7 +75,7 @@ export default function StocksManagementPage() {
         }
 
         if (selectedLocationId !== null) {
-            navigate(routePaths.stocksManagement, { replace: true });
+            navigate(routePaths.stocks.stocksManagement, { replace: true });
         }
     }, [loadingLocations, locations, selectedLocationId, navigate]);
 
@@ -94,7 +92,7 @@ export default function StocksManagementPage() {
         } else {
             const createdLocation = await stockLocationService.createLocation(payload);
             showToast({ severity: "success", summary: "Lieu cree" });
-            navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(createdLocation.id) }));
+            navigate(generatePath(routePaths.stocks.stocksManagementLocation, { locationId: String(createdLocation.id) }));
         }
 
         setIsLocationDialogVisible(false);
@@ -169,13 +167,6 @@ export default function StocksManagementPage() {
                 />
             )}
 
-            {isSaveDialogVisible && (
-                <SaveStockUnitDialog
-                    locationId={selectedLocationId ?? undefined}
-                    onHide={() => setIsSaveDialogVisible(false)}
-                />
-            )}
-
             <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
                 <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-6">
                     <StockLocationsPanel
@@ -185,9 +176,9 @@ export default function StocksManagementPage() {
                         loading={loadingLocations}
                         onSelect={(location) => {
                             if (location.id === selectedLocationId) {
-                                navigate(routePaths.stocksManagement, { replace: true });
+                                navigate(routePaths.stocks.stocksManagement, { replace: true });
                             } else {
-                                navigate(generatePath(routePaths.stocksManagementLocation, { locationId: String(location.id) }));
+                                navigate(generatePath(routePaths.stocks.stocksManagementLocation, { locationId: String(location.id) }));
                             }
                         }}
                         onAddLocation={() => setIsLocationDialogVisible(true)}
