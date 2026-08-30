@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
 import { Message } from "primereact/message";
 import { CreateStockItemDto } from "@/services/stocks/dto/CreateStockItemDto";
-import StockItemAutocomplete from "./atoms/StockItemAutocomplete";
+import StockItemAutocomplete from "../stocksManagement/atoms/StockItemAutocomplete";
 import { InputText } from "primereact/inputtext";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
@@ -181,17 +181,20 @@ export default function ProductManagementPage() {
                             <label htmlFor="imageUrl">URL de l'image</label>
                         </FloatLabel>
                     </div>
-                    <div className="flex w-full gap-2">
-                        <StockUnitEditableList
-                            stockUnits={formData.units}
-                            onChange={(newUnits) => {
-                                setFormData({
-                                    ...formData,
-                                    units: newUnits,
-                                });
-                            }}
-                        />
-                    </div>
+                    {
+                        formData.label.length > 0 &&
+                        <div className="flex w-full gap-2">
+                            <StockUnitEditableList
+                                stockUnits={formData.units}
+                                onChange={(newUnits) => {
+                                    setFormData({
+                                        ...formData,
+                                        units: newUnits,
+                                    });
+                                }}
+                            />
+                        </div>
+                    }
                 </div>
             </AppScrollPanel>
         </FillRemainingHeight>

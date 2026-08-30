@@ -25,29 +25,52 @@ export const dateEditor = (options: ColumnEditorOptions) => (
         showIcon
     />
 );
-
 interface SelectOption {
     id: number;
     label: string;
 }
 
-/**
- * Editor for a dropdown column in a PrimeReact DataTable.
- * @param options - Column editor options provided by PrimeReact.
- * @param dropdownOptions - Array of options to display in the dropdown.
- */
-export const dropdownEditor = (options: ColumnEditorOptions, dropdownOptions: SelectOption[]) => {
+type DropdownOptions = string[] | SelectOption[];
 
-    console.log("Dropdown editor options:", options);
-    console.log("Dropdown options:", dropdownOptions);
+/**
+ * Editor générique pour les colonnes PrimeReact utilisant un Dropdown.
+ *
+ * Deux formats d'options sont supportés :
+ * - `string[]` : lorsque la valeur affichée est directement la valeur métier.
+ * - `SelectOption[]` : lorsque le libellé affiché et la valeur métier sont distincts.
+ *  Dans ce cas, `optionLabel` et `optionValue` doivent être fournis pour indiquer les propriétés correspondantes.
+ *
+ * @param options - Options d'édition fournies par PrimeReact.
+ * @param dropdownOptions - Options affichées dans le Dropdown.
+ *
+ * @example
+ * // Valeur et libellé identiques
+ * dropdownEditor(options, ["g", "kg", "L"]);
+ *
+ * @example
+ * // Valeur métier différente du libellé
+ * dropdownEditor(
+ *     options,
+ *     stockLocations,
+ * );
+ */
+export const dropdownEditor = (
+    options: ColumnEditorOptions,
+    dropdownOptions: DropdownOptions
+) => {
+    const isDropdownOptionsStringArray = (options: DropdownOptions): options is string[] => {
+        return options.length === 0 || typeof options[0] === "string";
+    }
 
     return (
         <Dropdown
             value={options.value}
             options={dropdownOptions}
+            {...(isDropdownOptionsStringArray(dropdownOptions)
+                ? {}
+                : { optionLabel: "label", optionValue: "id" }
+            )}
             onChange={(event) => options.editorCallback?.(event.value)}
-            optionLabel="label"
-            optionValue="id"
         />
     );
 };

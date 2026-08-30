@@ -20,9 +20,9 @@ import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecur
 import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
 import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
-import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
 import Stocks from "@/pages/stocks/Stocks";
-import ProductManagementPage from "@/pages/stocks/stocksManagement/ProductManagementPage";
+import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
+import ProductManagementPage from "@/pages/stocks/productsManagement/ProductManagementPage";
 
 const router = createBrowserRouter([
   {

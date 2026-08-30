@@ -9,6 +9,7 @@ import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 
 /**
  * Représentation d'un groupe de stock units pour la DataTable.
@@ -62,13 +63,12 @@ export interface StockUnitGroup {
     locationId: number;
 }
 
+const stockLocationService = new StockLocationService();
+
 interface StockUnitEditableListProps {
     stockUnits: CreateStockUnitDto[];
     onChange: (updatedStockUnits: CreateStockUnitDto[]) => void;
 }
-
-const stockLocationService = new StockLocationService();
-
 /**
  * Composant pour afficher une liste de stock units éditables.
  * L'idée est de rendre facile la modification des stock units d'un produit.
@@ -372,7 +372,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     field="unit"
                     header="Unité"
                     body={(group) => group.stockUnits[0].stockUnit.unit}
-                    editor={numberEditor}
+                    editor={opts => dropdownEditor(opts, [...STOCK_UNIT_UNITS])}
                     onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 

@@ -5,6 +5,8 @@ import { DataTable } from "primereact/datatable";
 import { dateEditor, dropdownEditor, numberEditor, textEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
+import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
+import { parseDateToDisplay } from "@/utils/DatesUtils";
 
 interface StockUnitEditableListExpansionTemplateProps {
     stockUnitGroup: StockUnitGroup;
@@ -79,24 +81,14 @@ export default function StockUnitEditableListExpansionTemplate({
                     field="stockUnit.unit"
                     header="Unité"
                     body={(entry) => entry.stockUnit.unit}
-                    editor={textEditor}
+                    editor={(options: ColumnEditorOptions) => dropdownEditor(options, [...STOCK_UNIT_UNITS])}
                 />
-
-                <Column
-                    field="stockUnit.label"
-                    header="Label"
-                    body={(entry) => entry.stockUnit.label || "-"}
-                    editor={textEditor}
-                />
-
                 <Column
                     field="stockUnit.expirationDate"
                     header="Expiration"
                     body={(entry) =>
                         entry.stockUnit.expirationDate
-                            ? entry.stockUnit.expirationDate.toLocaleDateString(
-                                "fr-FR"
-                            )
+                            ? parseDateToDisplay(entry.stockUnit.expirationDate)
                             : "-"
                     }
                     editor={dateEditor}
@@ -104,7 +96,10 @@ export default function StockUnitEditableListExpansionTemplate({
                 <Column
                     field="stockUnit.locationId"
                     header="Emplacement"
-                    body={(entry) => entry.stockUnit.locationId}
+                    body={(entry) => {
+                        const label = stockLocations.find((location) => location.id === entry.stockUnit.locationId)?.label;
+                        return label ?? entry.stockUnit.locationId;
+                    }}
                     editor={(options: ColumnEditorOptions) => dropdownEditor(options, stockLocations)}
                 />
                 <Column
