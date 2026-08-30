@@ -3,5 +3,5 @@ export interface CreateStockUnitDto {
     quantity: number;
     unit: string;
     label?: string;
-    expirationDate?: string;
+    expirationDate?: Date;
 }

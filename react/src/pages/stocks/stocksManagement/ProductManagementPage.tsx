@@ -7,6 +7,10 @@ import StockItemAutocomplete from "./atoms/StockItemAutocomplete";
 import { InputText } from "primereact/inputtext";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
+import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
+import StockUnitEditableList from "./molecules/StockUnitEditableList";
+import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
+import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
 
 const stockUnitsService = new StockUnitsService()
 
@@ -74,90 +78,123 @@ export default function ProductManagementPage() {
             imageUrl: stockItem.imageUrl ?? undefined,
             units: [],
         });
+
+        // Charge les stocks units du stockItem sélectionné
+        stockUnitsService.getStockUnitsByItemId(stockItem.id).then((units) => {
+            const transformedUnits: CreateStockUnitDto[] = units.map((unit) => {
+                return {
+                    locationId: unit.locationId,
+                    quantity: unit.quantity,
+                    unit: unit.unit,
+                    expirationDate: unit.expirationDate ?? undefined,
+                    label: unit.label ?? undefined,
+                }
+            })
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                units: transformedUnits,
+            }));
+        });
     }
 
     return (
+        <FillRemainingHeight>
+            <AppScrollPanel
+                direction="vertical"
+            >
 
-        <div className="flex flex-col gap-8">
-            <div className="flex justify-end gap-4">
-                {
-                    formData.label !== "" &&
-                    <Message
-                        className="text-sm"
-                        content={submitButtonFlavorMessage()}
-                        severity="info"
-                    />
-                }
-                <Button
-                    label="Enregistrer"
-                    icon="pi pi-plus"
-                    onClick={() => submitForm()}
-                />
-            </div>
-            <div className="flex w-full gap-2">
-                <FloatLabel className="flex-1">
-                    <StockItemAutocomplete
-                        className="w-full"
-                        onChange={(value) => {
-                            setFormData({
-                                ...formData,
-                                label: value,
-                            });
-                        }}
-                        onSelect={onSelectStockItem}
-                    />
-                    <label htmlFor="label">Nom du produit</label>
-                </FloatLabel>
-            </div>
-            <div className="flex w-full gap-2">
+                <div className="flex flex-col gap-8">
+                    <div className="flex justify-end gap-4">
+                        {
+                            formData.label !== "" &&
+                            <Message
+                                className="text-sm"
+                                content={submitButtonFlavorMessage()}
+                                severity="info"
+                            />
+                        }
+                        <Button
+                            label="Enregistrer"
+                            icon="pi pi-plus"
+                            onClick={() => submitForm()}
+                        />
+                    </div>
+                    <div className="flex w-full gap-2">
+                        <FloatLabel className="flex-1">
+                            <StockItemAutocomplete
+                                className="w-full"
+                                onChange={(value) => {
+                                    setFormData({
+                                        ...formData,
+                                        label: value,
+                                    });
+                                }}
+                                onSelect={onSelectStockItem}
+                            />
+                            <label htmlFor="label">Nom du produit</label>
+                        </FloatLabel>
+                    </div>
+                    <div className="flex w-full gap-2">
 
-                <FloatLabel className="flex-1">
-                    <InputText
-                        id="barcode"
-                        className="w-full"
-                        value={formData.barcode ?? ""}
-                        onChange={(event) => {
-                            setFormData({
-                                ...formData,
-                                barcode: event.target.value,
-                            });
-                        }}
-                    />
-                    <label htmlFor="barcode">Code-barres</label>
-                </FloatLabel>
+                        <FloatLabel className="flex-1">
+                            <InputText
+                                id="barcode"
+                                className="w-full"
+                                value={formData.barcode ?? ""}
+                                onChange={(event) => {
+                                    setFormData({
+                                        ...formData,
+                                        barcode: event.target.value,
+                                    });
+                                }}
+                            />
+                            <label htmlFor="barcode">Code-barres</label>
+                        </FloatLabel>
 
-                <FloatLabel className="flex-1">
-                    <InputText
-                        id="defaultUnit"
-                        className="w-full"
-                        value={formData.defaultUnit}
-                        onChange={(event) => {
-                            setFormData({
-                                ...formData,
-                                defaultUnit: event.target.value,
-                            });
-                        }}
-                    />
-                    <label htmlFor="defaultUnit">Unité par défaut</label>
-                </FloatLabel>
-            </div>
-            <div className="flex w-full gap-2">
-                <FloatLabel className="flex-1">
-                    <InputText
-                        id="imageUrl"
-                        className="w-full"
-                        value={formData.imageUrl ?? ""}
-                        onChange={(event) => {
-                            setFormData({
-                                ...formData,
-                                imageUrl: event.target.value,
-                            });
-                        }}
-                    />
-                    <label htmlFor="imageUrl">URL de l'image</label>
-                </FloatLabel>
-            </div>
-
-        </div>
+                        <FloatLabel className="flex-1">
+                            <InputText
+                                id="defaultUnit"
+                                className="w-full"
+                                value={formData.defaultUnit}
+                                onChange={(event) => {
+                                    setFormData({
+                                        ...formData,
+                                        defaultUnit: event.target.value,
+                                    });
+                                }}
+                            />
+                            <label htmlFor="defaultUnit">Unité par défaut</label>
+                        </FloatLabel>
+                    </div>
+                    <div className="flex w-full gap-2">
+                        <FloatLabel className="flex-1">
+                            <InputText
+                                id="imageUrl"
+                                className="w-full"
+                                value={formData.imageUrl ?? ""}
+                                onChange={(event) => {
+                                    setFormData({
+                                        ...formData,
+                                        imageUrl: event.target.value,
+                                    });
+                                }}
+                            />
+                            <label htmlFor="imageUrl">URL de l'image</label>
+                        </FloatLabel>
+                    </div>
+                    <div className="flex w-full gap-2">
+                        <StockUnitEditableList
+                            stockUnits={formData.units}
+                            onChange={(newUnits) => {
+                                setFormData({
+                                    ...formData,
+                                    units: newUnits,
+                                });
+                            }}
+                        />
+                    </div>
+                </div>
+            </AppScrollPanel>
+        </FillRemainingHeight>
     );
 }
