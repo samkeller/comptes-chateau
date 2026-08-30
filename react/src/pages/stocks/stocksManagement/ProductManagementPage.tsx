@@ -87,7 +87,6 @@ export default function ProductManagementPage() {
                     quantity: unit.quantity,
                     unit: unit.unit,
                     expirationDate: unit.expirationDate ?? undefined,
-                    label: unit.label ?? undefined,
                 }
             })
             setFormData((prevFormData) => ({

@@ -108,7 +108,6 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
             locationId: stockUnit.locationId,
             quantity: stockUnit.quantity,
             unit: stockUnit.unit,
-            label: stockUnit.label ?? "",
             expirationDate: stockUnit.expirationDate?.getTime() ?? null,
         });
     };
@@ -150,7 +149,6 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     ],
                     quantity: stockUnit.quantity,
                     unit: stockUnit.unit,
-                    label: stockUnit.label,
                     expirationDate: stockUnit.expirationDate,
                     locationId: stockUnit.locationId,
                 });
@@ -170,7 +168,6 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                 locationId: 0,
                 quantity: 1,
                 unit: "",
-                label: "",
                 expirationDate: undefined,
             },
         ]);
@@ -188,9 +185,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
 
         onChange([
             ...stockUnits.slice(0, index + 1),
-            {
-                ...stockUnit,
-            },
+            { ...stockUnit, },
             ...stockUnits.slice(index + 1),
         ]);
     };
@@ -214,6 +209,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
             acceptClassName: "p-button-danger",
             accept: () => {
                 onChange(
+                    // TODO Suppression DB & update retour db
                     stockUnits.filter((_, currentIndex) => currentIndex !== index)
                 );
             },
@@ -228,6 +224,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
         updatedStockUnit: CreateStockUnitDto
     ) => {
         onChange(
+            // TODO Update DB & update retour db
             stockUnits.map((stockUnit, currentIndex) =>
                 currentIndex === index
                     ? updatedStockUnit

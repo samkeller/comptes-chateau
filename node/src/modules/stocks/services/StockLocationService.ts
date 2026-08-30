@@ -1,11 +1,8 @@
 import { AppDataSource } from "../../../db/dataSource";
-import { conflict, notFound } from "../../../utils/AppError";
+import { notFound } from "../../../utils/AppError";
 import { CreateStockLocationDto, UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
 import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
-import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
-import { StockMovement } from "../entities/StockMovement";
-import { StockUnit } from "../entities/StockUnit";
 
 export default class StockLocationService {
     private readonly stockLocationRepo = AppDataSource.getRepository(StockLocation);

@@ -41,9 +41,6 @@ export class StockUnit {
     @Column({ type: "date", nullable: true })
     expirationDate: string | null;
 
-    @Column({ type: "varchar", length: 255, nullable: true })
-    label: string | null;
-
     @OneToMany("StockMovement", (movement: StockMovement) => movement.unit)
     movements: StockMovement[];
 

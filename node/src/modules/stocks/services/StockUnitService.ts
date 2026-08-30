@@ -3,8 +3,6 @@ import { AppDataSource } from "../../../db/dataSource";
 import { conflict, notFound } from "../../../utils/AppError";
 import { StockUnitDto, toStockUnitDto } from "../dto/StockUnitDto";
 import { TakeStockUnitDto } from "../dto/TakeStockUnitDto";
-import { StockItem } from "../entities/StockItem";
-import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 
