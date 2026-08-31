@@ -67,7 +67,7 @@ export default class StockUnitService {
         }
 
         // Ajout XP utilisateur
-        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
+        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED"); 
 
         return toStockUnitDto(result);
     }
