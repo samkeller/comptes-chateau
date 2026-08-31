@@ -3,18 +3,23 @@ import { StockItem } from "../entities/StockItem";
 import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
 import { StockItemsQueryDto } from "../dto/StockUnitsQueryDto";
 import { StockItemCreateDto } from "../dto/StockItemCreateDto";
+import UserXpService from "../../core/services/UserXpService";
 
 export default class StockItemService {
     private readonly stockItemRepo = AppDataSource.getRepository(StockItem);
+    private readonly userXpService = new UserXpService();
 
     async getAll(query: StockItemsQueryDto): Promise<StockItemDto[]> {
         const { locationId } = query
 
-        const units: StockItem[] = await this.stockItemRepo.find({
+        const items = await this.stockItemRepo.find({
             where: {
-                ...(locationId && { units: { locationId } }),
+                ...(locationId && {
+                    units: {
+                        locationId,
+                    },
+                }),
             },
-            // Besoin de charger les ids units (arr).id
             relations: {
                 units: true,
             },
@@ -22,13 +27,28 @@ export default class StockItemService {
                 units: {
                     id: true,
                     locationId: true,
-                }
-            }
+                },
+            },
         });
-        return units.map(toStockItemDto);
+
+        return items.map(toStockItemDto);
     }
 
-    create(body: StockItemCreateDto): any {
-        throw new Error("Method not implemented.");
+    async create(body: StockItemCreateDto, connectedUserId: number): Promise<StockItemDto> {
+
+        console.log("Creating stock item with body:", body);    
+        const stockItem = this.stockItemRepo.create({
+            label: body.label,
+            barcode: body.barcode ?? null,
+            defaultUnit: body.defaultUnit,
+            imageUrl: body.imageUrl ?? null,
+        });
+
+        const savedStockItem = await this.stockItemRepo.save(stockItem);
+
+        // Ajout userXP
+        await this.userXpService.addXPForUser(connectedUserId, "STOCK_ITEM_CREATED");
+
+        return toStockItemDto(savedStockItem);
     }
 }

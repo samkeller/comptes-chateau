@@ -5,6 +5,7 @@ import StockItemsService from "@/services/stocks/StockItemsService";
 
 interface StockItemAutocompleteProps {
     className?: string;
+    refreshKey?: number;
     onChange: (value: string) => void;
     onSelect: (stockItem: StockItem) => void;
 }
@@ -13,6 +14,7 @@ const stockItemService = new StockItemsService();
 
 export default function StockItemAutocomplete({
     className,
+    refreshKey,
     onChange,
     onSelect,
 }: StockItemAutocompleteProps) {
@@ -24,7 +26,7 @@ export default function StockItemAutocomplete({
         stockItemService.getAllStockItems().then((data) => {
             setStockItems(data);
         });
-    }, []);
+    }, [refreshKey  ]);
 
     const completeMethod = (event: { query: string }) => {
         const query = event.query.toLowerCase();

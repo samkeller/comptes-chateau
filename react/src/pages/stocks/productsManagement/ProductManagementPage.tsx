@@ -6,41 +6,36 @@ import { CreateStockItemDto } from "@/services/stocks/dto/CreateStockItemDto";
 import StockItemAutocomplete from "../stocksManagement/atoms/StockItemAutocomplete";
 import { InputText } from "primereact/inputtext";
 import StockItem from "@/interfaces/stocks/StockItem";
+import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import StockUnitEditableList from "./molecules/StockUnitEditableList";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
+import Optional from "@/components/atoms/form/Optional";
+import RequiredMark from "@/components/atoms/form/RequiredMark";
+import { Dropdown } from "primereact/dropdown";
+import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 
-const stockUnitsService = new StockUnitsService()
+const stockItemsService = new StockItemsService();
+const stockUnitsService = new StockUnitsService();
+
+const EMPTY_FORM_DATA: CreateStockItemDto = {
+    label: "",
+    defaultUnit: "",
+    units: [],
+};
 
 export default function ProductManagementPage() {
-    const [formData, setFormData] = useState<CreateStockItemDto>({
-        id: 0,
-        label: "",
-        defaultUnit: "",
-        units: [],
-    });
+    const [formData, setFormData] = useState<CreateStockItemDto>(EMPTY_FORM_DATA);
 
     /**
-    * Message concernant l'état du formulaire stockUnit :
-    * 1. null : pas de message
-    * 2. stockUnit trouvée - on l'utilise telle quelle - champs disabled
-    * 3. stockUnit trouvée - on choisit de la modifier - le formulaire est un formulaire de modification
-    * 4. stockUnit non trouvée - le formulaire est un formulaire de création
-    */
+     * Indique si le stockItem sélectionné dans l'autocomplete est modifié par rapport à la DB.
+     * Recharge l'autocomplete. 
+     */
+    const [stockItemsRefreshKey, setStockItemsRefreshKey] = useState(0);
     const [selectedStockItem, setSelectedStockItem] = useState<StockItem | null>(null);
     const [savingForm, setSavingForm] = useState(false);
-    const submitButtonFlavorMessage = () => {
-        switch (stockUnitStatus) {
-            case "found":
-                return "Ce produit existe déjà, vous pouvez l'utiliser tel quel.";
-            case "found&edit":
-                return "Ce produit existe déjà, mais vous avez modifié ses informations.";
-            case "notFound":
-                return "Aucun produit ne correspond à ce nom. Il sera créé.";
-        }
-    }
 
     const isStockItemModified =
         selectedStockItem !== null &&
@@ -58,115 +53,208 @@ export default function ProductManagementPage() {
                 ? "found&edit"
                 : "found";
 
-    const submitForm = async () => {
-        setSavingForm(true);
-        throw new Error("Not implemented yet");
-    }
+    const submitButtonFlavorMessage = () => {
+        switch (stockUnitStatus) {
+            case "found":
+                return "Ce produit existe déjà, vous pouvez l'utiliser tel quel.";
+
+            case "found&edit":
+                return "Ce produit existe déjà, mais vous avez modifié ses informations.";
+
+            case "notFound":
+                return "Aucun produit ne correspond à ce nom. Il sera créé.";
+        }
+    };
 
     /**
-     * Séléction d'un stockItem via l'autocomplete.
-     * @param stockItem 
+     * Recharge les stockUnits du stockItem courant.
+     *
+     * On utilise cette fonction après chaque mutation d'une stockUnit
+     * afin que le formulaire reste synchronisé avec la DB.
      */
-    const onSelectStockItem = (stockItem: StockItem) => {
+    const reloadStockUnits = async (itemId: number) => {
+        const units = await stockUnitsService.getStockUnitsByItemId(itemId);
+
+        const transformedUnits: CreateStockUnitDto[] = units.map((unit) => ({
+            id: unit.id,
+            clientId: crypto.randomUUID(),
+            locationId: unit.locationId,
+            quantity: unit.quantity,
+            unit: unit.unit,
+            expirationDate: unit.expirationDate ?? undefined,
+        }));
+
+        setFormData((prevFormData) => ({
+            ...prevFormData,
+            units: transformedUnits,
+        }));
+    };
+
+    /**
+     * Enregistre le stockItem.
+     *
+     * La sauvegarde du stockItem est indépendante des stockUnits :
+     * celles-ci sont persistées individuellement par StockUnitEditableList.
+     */
+    const submitForm = async () => {
+        if (!formData.label.trim() || !formData.defaultUnit.trim()) {
+            return;
+        }
+
+        setSavingForm(true);
+
+        try {
+            const payload: CreateStockItemDto = {
+                ...formData,
+                label: formData.label.trim(),
+            };
+
+            let savedStockItem: StockItem;
+
+            if (selectedStockItem) {
+                savedStockItem = await stockItemsService.update(
+                    selectedStockItem.id,
+                    payload
+                );
+            } else {
+                savedStockItem = await stockItemsService.create(payload);
+            }
+
+            // Refraichit toujours l'autocomplete.
+            setStockItemsRefreshKey((value) => value + 1);
+
+            setSelectedStockItem(savedStockItem);
+
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                id: savedStockItem.id,
+                label: savedStockItem.label,
+                barcode: savedStockItem.barcode ?? undefined,
+                defaultUnit: savedStockItem.defaultUnit,
+                imageUrl: savedStockItem.imageUrl ?? undefined,
+            }));
+
+            await reloadStockUnits(savedStockItem.id);
+        } finally {
+            setSavingForm(false);
+        }
+    };
+
+    /**
+     * Sélection d'un stockItem via l'autocomplete.
+     */
+    const onSelectStockItem = async (stockItem: StockItem) => {
         setSelectedStockItem(stockItem);
-        setFormData({
-            ...formData,
+
+        setFormData((prevFormData) => ({
+            ...prevFormData,
             id: stockItem.id,
             label: stockItem.label,
             barcode: stockItem.barcode ?? undefined,
             defaultUnit: stockItem.defaultUnit,
             imageUrl: stockItem.imageUrl ?? undefined,
             units: [],
-        });
+        }));
 
-        // Charge les stocks units du stockItem sélectionné
-        stockUnitsService.getStockUnitsByItemId(stockItem.id).then((units) => {
-            const transformedUnits: CreateStockUnitDto[] = units.map((unit) => {
-                return {
-                    id: unit.id,
-                    clientId: unit.id.toString(),
-                    locationId: unit.locationId,
-                    quantity: unit.quantity,
-                    unit: unit.unit,
-                    expirationDate: unit.expirationDate ?? undefined,
-                }
-            })
-            setFormData((prevFormData) => ({
-                ...prevFormData,
-                units: transformedUnits,
-            }));
-        });
-    }
+        await reloadStockUnits(stockItem.id);
+    };
 
     return (
         <FillRemainingHeight>
-            <AppScrollPanel
-                direction="vertical"
-            >
-
+            <AppScrollPanel direction="vertical">
                 <div className="flex flex-col gap-8">
                     <div className="flex justify-end gap-4">
-                        {
-                            formData.label !== "" &&
+                        {formData.label !== "" && (
                             <Message
                                 className="text-sm"
                                 content={submitButtonFlavorMessage()}
                                 severity="info"
                             />
-                        }
+                        )}
+
                         <Button
                             label="Enregistrer"
-                            icon="pi pi-plus"
-                            onClick={() => submitForm()}
+                            icon="pi pi-save"
+                            loading={savingForm}
+                            disabled={savingForm || (
+                                !formData.label.trim() &&
+                                !formData.defaultUnit.trim()
+                            )}
+                            onClick={submitForm}
                         />
                     </div>
+
                     <div className="flex w-full gap-2">
                         <FloatLabel className="flex-1">
                             <StockItemAutocomplete
                                 className="w-full"
+                                refreshKey={stockItemsRefreshKey}
                                 onChange={(value) => {
-                                    setFormData({
-                                        ...formData,
+                                    if (value.length === 0) {
+                                        setSelectedStockItem(null);
+                                        // Réinitialise l'objet sans perdre les valeurs déjà saisies dans le formulaire.
+                                        setFormData((prevFormData) => ({
+                                            ...EMPTY_FORM_DATA,
+                                            ...prevFormData,
+                                            id: undefined,
+                                        }));
+                                    }
+                                    setFormData((prevFormData) => ({
+                                        ...prevFormData,
                                         label: value,
-                                    });
+                                    }));
                                 }}
                                 onSelect={onSelectStockItem}
                             />
-                            <label htmlFor="label">Nom du produit</label>
+
+                            <label htmlFor="label">
+                                Nom du produit
+                                <RequiredMark />
+                            </label>
                         </FloatLabel>
                     </div>
-                    <div className="flex w-full gap-2">
 
+                    <div className="flex w-full gap-2">
                         <FloatLabel className="flex-1">
                             <InputText
                                 id="barcode"
                                 className="w-full"
                                 value={formData.barcode ?? ""}
                                 onChange={(event) => {
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prevFormData) => ({
+                                        ...prevFormData,
                                         barcode: event.target.value,
-                                    });
+                                    }));
                                 }}
                             />
-                            <label htmlFor="barcode">Code-barres</label>
+
+                            <label htmlFor="barcode">
+                                Code-barres
+                                <Optional />
+                            </label>
                         </FloatLabel>
 
                         <FloatLabel className="flex-1">
-                            <InputText
+                            <Dropdown
                                 id="defaultUnit"
                                 className="w-full"
                                 value={formData.defaultUnit}
+                                options={[...STOCK_UNIT_UNITS]}
                                 onChange={(event) => {
-                                    setFormData({
-                                        ...formData,
-                                        defaultUnit: event.target.value,
-                                    });
+                                    setFormData((prevFormData) => ({
+                                        ...prevFormData,
+                                        defaultUnit: event.value,
+                                    }));
                                 }}
                             />
-                            <label htmlFor="defaultUnit">Unité par défaut</label>
+
+                            <label htmlFor="defaultUnit">
+                                Unité par défaut
+                                <RequiredMark />
+                            </label>
                         </FloatLabel>
                     </div>
+
                     <div className="flex w-full gap-2">
                         <FloatLabel className="flex-1">
                             <InputText
@@ -174,29 +262,37 @@ export default function ProductManagementPage() {
                                 className="w-full"
                                 value={formData.imageUrl ?? ""}
                                 onChange={(event) => {
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prevFormData) => ({
+                                        ...prevFormData,
                                         imageUrl: event.target.value,
-                                    });
+                                    }));
                                 }}
                             />
-                            <label htmlFor="imageUrl">URL de l'image</label>
+
+                            <label htmlFor="imageUrl">
+                                URL de l'image
+                                <Optional />
+                            </label>
                         </FloatLabel>
                     </div>
-                    {
-                        formData.label.length > 0 &&
+
+                    {formData.label.length > 0 && (
                         <div className="flex w-full gap-2">
                             <StockUnitEditableList
+                                stockItemId={
+                                    selectedStockItem?.id ??
+                                    (formData.id ? formData.id : undefined)
+                                }
                                 stockUnits={formData.units}
                                 onChange={(newUnits) => {
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prevFormData) => ({
+                                        ...prevFormData,
                                         units: newUnits,
-                                    });
+                                    }));
                                 }}
                             />
                         </div>
-                    }
+                    )}
                 </div>
             </AppScrollPanel>
         </FillRemainingHeight>

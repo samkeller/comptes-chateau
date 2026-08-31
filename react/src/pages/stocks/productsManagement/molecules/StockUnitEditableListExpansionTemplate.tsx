@@ -1,38 +1,48 @@
 import { Column, ColumnEditorOptions } from "primereact/column";
 import { StockUnitGroup } from "./StockUnitEditableList";
 import { Button } from "primereact/button";
-import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
-import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import {
+    DataTable,
+    DataTableRowEditCompleteEvent,
+} from "primereact/datatable";
+import {
+    dateEditor,
+    dropdownEditor,
+    numberEditor,
+} from "@/components/atoms/primereact/datatable/DatatableEditors";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
-import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import { parseDateToDisplay } from "@/utils/DatesUtils";
+import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 
 interface StockUnitEditableListExpansionTemplateProps {
+    stockItemId?: number;
     stockUnitGroup: StockUnitGroup;
     stockLocations: StockLocation[];
-    updateStockUnit: (clientId: string, newData: CreateStockUnitDto) => void;
-    duplicateStockUnit: (clientId: string) => void;
+    updateStockUnit: (
+        clientId: string,
+        newData: CreateStockUnitDto
+    ) => Promise<void>;
+    duplicateStockUnit: (clientId: string) => Promise<unknown>;
     deleteStockUnit: (clientId: string) => void;
 }
-/**
-* Contenu affiché lorsqu'un groupe est déplié.
-* On affiche alors les stock units individuelles qui composent le groupe.
-*/
+
 export default function StockUnitEditableListExpansionTemplate({
     stockUnitGroup,
     stockLocations,
     updateStockUnit,
     duplicateStockUnit,
-    deleteStockUnit
+    deleteStockUnit,
 }: StockUnitEditableListExpansionTemplateProps) {
-
-    /**
-     * Valide l'édition d'une ligne individuelle.
-     */
-    const onRowEditComplete = (event: DataTableRowEditCompleteEvent) => {
+    const onRowEditComplete = async (
+        event: DataTableRowEditCompleteEvent
+    ) => {
         const newData = event.newData as CreateStockUnitDto;
-        updateStockUnit(newData.clientId, newData);
+
+        await updateStockUnit(
+            newData.clientId,
+            newData
+        );
     };
 
     return (
@@ -56,27 +66,51 @@ export default function StockUnitEditableListExpansionTemplate({
                     field="unit"
                     header="Unité"
                     body={(entry) => entry.unit}
-                    editor={(options: ColumnEditorOptions) => dropdownEditor(options, [...STOCK_UNIT_UNITS])}
+                    editor={(options: ColumnEditorOptions) =>
+                        dropdownEditor(
+                            options,
+                            [...STOCK_UNIT_UNITS]
+                        )
+                    }
                 />
+
                 <Column
                     field="expirationDate"
                     header="Expiration"
                     body={(entry) =>
                         entry.expirationDate
-                            ? parseDateToDisplay(entry.expirationDate)
+                            ? parseDateToDisplay(
+                                entry.expirationDate
+                            )
                             : "-"
                     }
                     editor={dateEditor}
                 />
+
                 <Column
                     field="locationId"
                     header="Emplacement"
                     body={(entry) => {
-                        const locationLabel = stockLocations.find((location) => location.id === entry.locationId)?.label;
-                        return locationLabel ?? entry.locationId;
+                        const locationLabel =
+                            stockLocations.find(
+                                (location) =>
+                                    location.id ===
+                                    entry.locationId
+                            )?.label;
+
+                        return (
+                            locationLabel ??
+                            entry.locationId
+                        );
                     }}
-                    editor={(options: ColumnEditorOptions) => dropdownEditor(options, stockLocations)}
+                    editor={(options: ColumnEditorOptions) =>
+                        dropdownEditor(
+                            options,
+                            stockLocations
+                        )
+                    }
                 />
+
                 <Column
                     rowEditor
                     headerStyle={{
@@ -97,7 +131,11 @@ export default function StockUnitEditableListExpansionTemplate({
                                 rounded
                                 severity="secondary"
                                 tooltip="Dupliquer"
-                                onClick={() => duplicateStockUnit(entry.clientId)}
+                                onClick={() =>
+                                    duplicateStockUnit(
+                                        entry.clientId
+                                    )
+                                }
                             />
 
                             <Button
@@ -106,7 +144,11 @@ export default function StockUnitEditableListExpansionTemplate({
                                 rounded
                                 severity="danger"
                                 tooltip="Supprimer"
-                                onClick={() => deleteStockUnit(entry.clientId)}
+                                onClick={() =>
+                                    deleteStockUnit(
+                                        entry.clientId
+                                    )
+                                }
                             />
                         </div>
                     )}
@@ -114,4 +156,4 @@ export default function StockUnitEditableListExpansionTemplate({
             </DataTable>
         </div>
     );
-};  
+}
