@@ -69,6 +69,7 @@ export default function StockUnitEditableListExpansionTemplate({
                 dataKey="index"
                 onRowEditComplete={onRowEditComplete}
                 size="small"
+                className="border-2 rounded border-surface p-2"
             >
                 <Column
                     field="stockUnit.quantity"

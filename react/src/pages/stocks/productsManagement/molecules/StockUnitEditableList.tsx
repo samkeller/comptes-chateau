@@ -8,7 +8,7 @@ import { Button } from "primereact/button";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import { dateEditor, dropdownEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 
 /**
@@ -364,14 +364,13 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                             </div>
                         );
                     }}
-                    editor={numberEditor}
-                    onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
 
                 <Column
                     field="unit"
                     header="Unité"
                     body={(group) => group.stockUnits[0].stockUnit.unit}
+                    className="cursor-pointer"
                     editor={opts => dropdownEditor(opts, [...STOCK_UNIT_UNITS])}
                     onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
@@ -383,6 +382,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                         const expirationDate = group.stockUnits[0].stockUnit.expirationDate;
                         return expirationDate ? expirationDate.toLocaleDateString("fr-FR") : "-";
                     }}
+                    className="cursor-pointer"
                     editor={dateEditor}
                     onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
@@ -394,6 +394,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                         const label = stockLocations.find((location) => location.id === group.stockUnits[0].stockUnit.locationId)?.label;
                         return label ?? group.stockUnits[0].stockUnit.locationId;
                     }}
+                    className="cursor-pointer"
                     editor={opts => dropdownEditor(opts, stockLocations)}
                     onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
                 />
