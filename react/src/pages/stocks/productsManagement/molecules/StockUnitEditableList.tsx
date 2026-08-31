@@ -17,20 +17,15 @@ import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
  * Une ligne de la DataTable représente une ou plusieurs `CreateStockUnitDto`
  * qui possèdent exactement les mêmes propriétés métier.
  *
- * `stockUnits` conserve les références vers les stock units originales ainsi
- * que leur index dans le tableau source. Cela permet, lors d'une édition,
- * de retrouver toutes les stock units appartenant au groupe et de propager
- * la modification à chacune d'entre elles.
- *
- * Les propriétés `quantity`, `unit`, `label`, `expirationDate` et `locationId`
+ * Les propriétés `quantity`, `unit`, `expirationDate` et `locationId`
  * sont volontairement dupliquées au niveau du groupe.
  */
 export interface StockUnitGroup {
+    /**
+     * Clé unique pour la DataTable (clef du groupe).
+     */
     key: string;
-    stockUnits: {
-        stockUnit: CreateStockUnitDto;
-        index: number;
-    }[];
+    stockUnits: CreateStockUnitDto[];
 
     /**
      * Quantité commune à toutes les stock units du groupe.
@@ -43,12 +38,6 @@ export interface StockUnitGroup {
      * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].unit"`.
      */
     unit: string;
-
-    /**
-     * Label commun à toutes les stock units du groupe.
-     * -> Pour primeReact, on ne peut pas utiliser `field="stockUnits[0].label"`.
-     */
-    label?: string;
 
     /**
      * Date d'expiration commune à toutes les stock units du groupe.
@@ -81,7 +70,7 @@ interface StockUnitEditableListProps {
  * Attention: Dans cet écran, nous allons "tricher".
  * Nous allons fusionner les stocks semblables (cad tous les champs sont identiques).
  * L'idée est de pouvoir par exemple facilement déclarer qu'on a mis N paquets de pates à tel endroit
- * surtout si ils sont identiques (même date d'expiration, même quantité, même unité, même label).
+ * surtout si ils sont identiques (même date d'expiration, même quantité, même unité, même emplacement).
  * 
  * Cela pose une question supplémentaire pour en "sortir un du lot", par exemple modifier une seule instance de stockUnit
  * quand elles sont affichées ensemble.
@@ -98,26 +87,11 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
     }, []);
 
     /**
-     * Génère une clé représentant l'identité visuelle d'une stock unit.
-     *
-     * Si tous les champs sont identiques, les stock units sont affichées
-     * dans le même groupe.
-     */
-    const getStockUnitGroupKey = (stockUnit: CreateStockUnitDto): string => {
-        return JSON.stringify({
-            locationId: stockUnit.locationId,
-            quantity: stockUnit.quantity,
-            unit: stockUnit.unit,
-            expirationDate: stockUnit.expirationDate?.getTime() ?? null,
-        });
-    };
-
-    /**
     * Regroupement des stock units identiques.
     *
     * Les stock units identiques sont regroupées en une seule ligne visuelle.
     * La première stock unit du groupe sert de référence pour exposer les
-    * propriétés communes (`quantity`, `unit`, `label`, etc.) directement
+    * propriétés communes (`quantity`, `unit`, `locationId`, etc.) directement
     * sur `StockUnitGroup`.
     *
     * Important :
@@ -129,24 +103,24 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
         const groups = new Map<string, StockUnitGroup>();
 
         stockUnits.forEach((stockUnit, index) => {
-            const key = getStockUnitGroupKey(stockUnit);
+            /**
+             * Clef custom pour identifier un groupe de stock units identiques.
+             */
+            const key = JSON.stringify({
+                locationId: stockUnit.locationId,
+                quantity: stockUnit.quantity,
+                unit: stockUnit.unit,
+                expirationDate: stockUnit.expirationDate?.getTime() ?? null,
+            });
 
             const existingGroup = groups.get(key);
 
             if (existingGroup) {
-                existingGroup.stockUnits.push({
-                    stockUnit,
-                    index,
-                });
+                existingGroup.stockUnits.push(stockUnit);
             } else {
                 groups.set(key, {
-                    key,
-                    stockUnits: [
-                        {
-                            stockUnit,
-                            index,
-                        },
-                    ],
+                    key: key,
+                    stockUnits: [stockUnit],
                     quantity: stockUnit.quantity,
                     unit: stockUnit.unit,
                     expirationDate: stockUnit.expirationDate,
@@ -165,6 +139,8 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
         onChange([
             ...stockUnits,
             {
+                id: undefined,
+                clientId: crypto.randomUUID(), // Utilisation d'un UUID comme ID temporaire.
                 locationId: 0,
                 quantity: 1,
                 unit: "",
@@ -176,25 +152,33 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
     /**
      * Duplique une stock unit.
      */
-    const duplicateStockUnit = (index: number) => {
-        const stockUnit = stockUnits[index];
+    const duplicateStockUnit = (clientId: string) => {
+        const stockUnit = stockUnits.find(
+            stockUnit => stockUnit.clientId === clientId
+        );
 
         if (!stockUnit) {
             return;
         }
 
         onChange([
-            ...stockUnits.slice(0, index + 1),
-            { ...stockUnit, },
-            ...stockUnits.slice(index + 1),
+            ...stockUnits.slice(0, stockUnits.indexOf(stockUnit) + 1),
+            {
+                ...stockUnit,
+                id: undefined, // Nouvelle stock unit, donc pas d'ID en base.
+                clientId: crypto.randomUUID(), // Utilisation d'un UUID comme ID temporaire.
+            },
+            ...stockUnits.slice(stockUnits.indexOf(stockUnit) + 1),
         ]);
     };
 
     /**
      * Supprime une stock unit.
      */
-    const deleteStockUnit = (index: number) => {
-        const stockUnit = stockUnits[index];
+    const deleteStockUnit = (clientId: string) => {
+        const stockUnit = stockUnits.find(
+            stockUnit => stockUnit.clientId === clientId
+        );
 
         if (!stockUnit) {
             return;
@@ -210,7 +194,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
             accept: () => {
                 onChange(
                     // TODO Suppression DB & update retour db
-                    stockUnits.filter((_, currentIndex) => currentIndex !== index)
+                    stockUnits.filter(stockUnit => stockUnit.clientId !== clientId)
                 );
             },
         });
@@ -220,14 +204,14 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
      * Met à jour une stock unit particulière.
      */
     const updateStockUnit = (
-        index: number,
+        clientId: string,
         updatedStockUnit: CreateStockUnitDto
     ) => {
         onChange(
             // TODO Update DB & update retour db
-            stockUnits.map((stockUnit, currentIndex) =>
-                currentIndex === index
-                    ? updatedStockUnit
+            stockUnits.map((stockUnit) =>
+                stockUnit.clientId === clientId
+                    ? { ...updatedStockUnit, clientId: clientId }
                     : stockUnit
             )
         );
@@ -242,9 +226,9 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
         const group = event.rowData as StockUnitGroup;
 
         onChange(
-            stockUnits.map((stockUnit, index) => {
+            stockUnits.map((stockUnit) => {
                 const belongsToGroup = group.stockUnits.some(
-                    (entry) => entry.index === index
+                    (entry) => entry.clientId === stockUnit.clientId
                 );
 
                 if (!belongsToGroup) {
@@ -278,7 +262,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     rounded
                     severity="secondary"
                     tooltip="Dupliquer"
-                    onClick={() => duplicateStockUnit(firstEntry.index)}
+                    onClick={() => duplicateStockUnit(firstEntry.clientId)}
                 />
 
                 <Button
@@ -287,7 +271,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     rounded
                     severity="danger"
                     tooltip="Supprimer"
-                    onClick={() => deleteStockUnit(firstEntry.index)}
+                    onClick={() => deleteStockUnit(firstEntry.clientId)}
                 />
             </div>
         );
@@ -317,7 +301,6 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                 rowExpansionTemplate={(group) => (
                     <StockUnitEditableListExpansionTemplate
                         stockUnitGroup={group}
-                        stockUnitGroups={stockUnitGroups}
                         stockLocations={stockLocations}
                         updateStockUnit={updateStockUnit}
                         duplicateStockUnit={duplicateStockUnit}
@@ -339,6 +322,8 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     field="quantity"
                     header="Quantité"
                     body={(group: StockUnitGroup) => {
+                        const firstStockUnit = group.stockUnits[0];
+
                         /**
                         * Affichage de la quantité dans la ligne principale.
                         *
@@ -347,10 +332,8 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                         * 2 stock units de quantité 5 => "2 × 5 kg"
                         */
                         if (group.stockUnits.length === 1) {
-                            return group.stockUnits[0].stockUnit.quantity;
+                            return firstStockUnit.quantity;
                         }
-
-                        const firstStockUnit = group.stockUnits[0].stockUnit;
 
                         return (
                             <div className="flex items-center gap-2">
@@ -369,7 +352,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                 <Column
                     field="unit"
                     header="Unité"
-                    body={(group) => group.stockUnits[0].stockUnit.unit}
+                    body={(group) => group.stockUnits[0].unit}
                     className="cursor-pointer"
                     editor={opts => dropdownEditor(opts, [...STOCK_UNIT_UNITS])}
                     onCellEditComplete={onGroupCellEditComplete} // Propagation à tout le groupe.
@@ -379,7 +362,7 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     field="expirationDate"
                     header="Expiration"
                     body={(group) => {
-                        const expirationDate = group.stockUnits[0].stockUnit.expirationDate;
+                        const expirationDate = group.stockUnits[0].expirationDate;
                         return expirationDate ? expirationDate.toLocaleDateString("fr-FR") : "-";
                     }}
                     className="cursor-pointer"
@@ -391,8 +374,8 @@ export default function StockUnitEditableList({ stockUnits, onChange }: StockUni
                     field="locationId"
                     header="Emplacement"
                     body={(group) => {
-                        const label = stockLocations.find((location) => location.id === group.stockUnits[0].stockUnit.locationId)?.label;
-                        return label ?? group.stockUnits[0].stockUnit.locationId;
+                        const locationLabel = stockLocations.find((location) => location.id === group.stockUnits[0].locationId)?.label;
+                        return locationLabel ?? group.stockUnits[0].locationId;
                     }}
                     className="cursor-pointer"
                     editor={opts => dropdownEditor(opts, stockLocations)}

@@ -83,6 +83,8 @@ export default function ProductManagementPage() {
         stockUnitsService.getStockUnitsByItemId(stockItem.id).then((units) => {
             const transformedUnits: CreateStockUnitDto[] = units.map((unit) => {
                 return {
+                    id: unit.id,
+                    clientId: unit.id.toString(),
                     locationId: unit.locationId,
                     quantity: unit.quantity,
                     unit: unit.unit,

@@ -11,7 +11,6 @@ export interface StockUnitDto {
     quantity: number;
     unit: string;
     expirationDate: string | null;
-    label: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -26,7 +25,6 @@ export function toStockUnitDto(unit: StockUnit): StockUnitDto {
         quantity: unit.quantity,
         unit: unit.unit,
         expirationDate: unit.expirationDate ?? null,
-        label: unit.label ?? null,
         createdAt: unit.createdAt.toISOString(),
         updatedAt: unit.updatedAt.toISOString(),
     };

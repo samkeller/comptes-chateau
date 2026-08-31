@@ -1,8 +1,8 @@
 import { Column, ColumnEditorOptions } from "primereact/column";
 import { StockUnitGroup } from "./StockUnitEditableList";
 import { Button } from "primereact/button";
-import { DataTable } from "primereact/datatable";
-import { dateEditor, dropdownEditor, numberEditor, textEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
+import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
@@ -10,11 +10,10 @@ import { parseDateToDisplay } from "@/utils/DatesUtils";
 
 interface StockUnitEditableListExpansionTemplateProps {
     stockUnitGroup: StockUnitGroup;
-    stockUnitGroups: StockUnitGroup[];
     stockLocations: StockLocation[];
-    updateStockUnit: (index: number, newData: CreateStockUnitDto) => void;
-    duplicateStockUnit: (index: number) => void;
-    deleteStockUnit: (index: number) => void;
+    updateStockUnit: (clientId: string, newData: CreateStockUnitDto) => void;
+    duplicateStockUnit: (clientId: string) => void;
+    deleteStockUnit: (clientId: string) => void;
 }
 /**
 * Contenu affiché lorsqu'un groupe est déplié.
@@ -22,7 +21,6 @@ interface StockUnitEditableListExpansionTemplateProps {
 */
 export default function StockUnitEditableListExpansionTemplate({
     stockUnitGroup,
-    stockUnitGroups,
     stockLocations,
     updateStockUnit,
     duplicateStockUnit,
@@ -32,74 +30,50 @@ export default function StockUnitEditableListExpansionTemplate({
     /**
      * Valide l'édition d'une ligne individuelle.
      */
-    const onRowEditComplete = (event: any) => {
-        const {
-            index,
-            newData,
-        }: {
-            index: number;
-            newData: CreateStockUnitDto;
-        } = event;
-
-        const group = stockUnitGroups.find((group) =>
-            group.stockUnits.some((entry) => entry.index === index)
-        );
-
-        if (!group) {
-            return;
-        }
-
-        const entry = group.stockUnits.find(
-            (stockUnitEntry) => stockUnitEntry.index === index
-        );
-
-        if (!entry) {
-            return;
-        }
-
-        updateStockUnit(entry.index, newData);
+    const onRowEditComplete = (event: DataTableRowEditCompleteEvent) => {
+        const newData = event.newData as CreateStockUnitDto;
+        updateStockUnit(newData.clientId, newData);
     };
-
 
     return (
         <div className="p-3">
             <DataTable
                 value={stockUnitGroup.stockUnits}
                 editMode="row"
-                dataKey="index"
+                dataKey="clientId"
                 onRowEditComplete={onRowEditComplete}
                 size="small"
                 className="border-2 rounded border-surface p-2"
             >
                 <Column
-                    field="stockUnit.quantity"
+                    field="quantity"
                     header="Quantité"
-                    body={(entry) => entry.stockUnit.quantity}
+                    body={(entry) => entry.quantity}
                     editor={numberEditor}
                 />
 
                 <Column
-                    field="stockUnit.unit"
+                    field="unit"
                     header="Unité"
-                    body={(entry) => entry.stockUnit.unit}
+                    body={(entry) => entry.unit}
                     editor={(options: ColumnEditorOptions) => dropdownEditor(options, [...STOCK_UNIT_UNITS])}
                 />
                 <Column
-                    field="stockUnit.expirationDate"
+                    field="expirationDate"
                     header="Expiration"
                     body={(entry) =>
-                        entry.stockUnit.expirationDate
-                            ? parseDateToDisplay(entry.stockUnit.expirationDate)
+                        entry.expirationDate
+                            ? parseDateToDisplay(entry.expirationDate)
                             : "-"
                     }
                     editor={dateEditor}
                 />
                 <Column
-                    field="stockUnit.locationId"
+                    field="locationId"
                     header="Emplacement"
                     body={(entry) => {
-                        const label = stockLocations.find((location) => location.id === entry.stockUnit.locationId)?.label;
-                        return label ?? entry.stockUnit.locationId;
+                        const locationLabel = stockLocations.find((location) => location.id === entry.locationId)?.label;
+                        return locationLabel ?? entry.locationId;
                     }}
                     editor={(options: ColumnEditorOptions) => dropdownEditor(options, stockLocations)}
                 />
@@ -123,9 +97,7 @@ export default function StockUnitEditableListExpansionTemplate({
                                 rounded
                                 severity="secondary"
                                 tooltip="Dupliquer"
-                                onClick={() =>
-                                    duplicateStockUnit(entry.index)
-                                }
+                                onClick={() => duplicateStockUnit(entry.clientId)}
                             />
 
                             <Button
@@ -134,9 +106,7 @@ export default function StockUnitEditableListExpansionTemplate({
                                 rounded
                                 severity="danger"
                                 tooltip="Supprimer"
-                                onClick={() =>
-                                    deleteStockUnit(entry.index)
-                                }
+                                onClick={() => deleteStockUnit(entry.clientId)}
                             />
                         </div>
                     )}
