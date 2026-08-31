@@ -22,7 +22,7 @@ const stockUnitsService = new StockUnitsService();
 
 const EMPTY_FORM_DATA: CreateStockItemDto = {
     label: "",
-    defaultUnit: "",
+    defaultUnit: STOCK_UNIT_UNITS[0],
     units: [],
 };
 
@@ -176,10 +176,10 @@ export default function ProductManagementPage() {
                             label="Enregistrer"
                             icon="pi pi-save"
                             loading={savingForm}
-                            disabled={savingForm || (
-                                !formData.label.trim() &&
-                                !formData.defaultUnit.trim()
-                            )}
+                            disabled={
+                                savingForm // Si on est en train de sauvegarder
+                                || (!formData.label.trim() || !formData.defaultUnit.trim()) // Ou si les champs obligatoires ne sont pas remplis.
+                            }
                             onClick={submitForm}
                         />
                     </div>
@@ -278,19 +278,26 @@ export default function ProductManagementPage() {
 
                     {formData.label.length > 0 && (
                         <div className="flex w-full gap-2">
-                            <StockUnitEditableList
-                                stockItemId={
-                                    selectedStockItem?.id ??
-                                    (formData.id ? formData.id : undefined)
-                                }
-                                stockUnits={formData.units}
-                                onChange={(newUnits) => {
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        units: newUnits,
-                                    }));
-                                }}
-                            />
+                            {
+                                (formData.id !== undefined) ? (
+                                    <StockUnitEditableList
+                                        stockItemId={formData.id}
+                                        stockItemLabel={formData.label}
+                                        stockUnits={formData.units}
+                                        onChange={(newUnits) => {
+                                            setFormData((prevFormData) => ({
+                                                ...prevFormData,
+                                                units: newUnits,
+                                            }));
+                                        }}
+                                    />
+                                ) : (
+                                    <Message
+                                        text="Enregistrez le produit est nécessaire pour pouvoir ajouter des unités."
+                                        severity="info"
+                                    />
+                                )
+                            }
                         </div>
                     )}
                 </div>

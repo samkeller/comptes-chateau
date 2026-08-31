@@ -1,3 +1,5 @@
+import { StockUnitUnits } from "@/interfaces/stocks/StockUnit";
+
 export interface CreateStockUnitDto {
     /**
      * Id tel qu'existant en base (opérations update). Donnée technique.
@@ -9,6 +11,6 @@ export interface CreateStockUnitDto {
     clientId: string;
     locationId: number;
     quantity: number;
-    unit: string;
+    unit: StockUnitUnits;
     expirationDate?: Date;
 }

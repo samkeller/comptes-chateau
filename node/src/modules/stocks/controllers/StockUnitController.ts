@@ -48,7 +48,6 @@ export default class StockUnitController {
         res.status(201).json(
             await this.stockUnitService.takeUnit(
                 stockUnitId,
-                req.body,
                 connectedUserId
             )
         );

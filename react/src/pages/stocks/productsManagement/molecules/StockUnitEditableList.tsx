@@ -8,7 +8,7 @@ import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { dateEditor, dropdownEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
-import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
+import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 
 const stockLocationService = new StockLocationService();
@@ -18,19 +18,23 @@ export interface StockUnitGroup {
     key: string;
     stockUnits: CreateStockUnitDto[];
     quantity: number;
-    unit: string;
+    unit: StockUnitUnits;
     expirationDate?: Date;
     locationId: number;
 }
 
 interface StockUnitEditableListProps {
-    stockItemId?: number;
+    stockItemId: number;
+    stockItemLabel: string;
+    stockItemUnit: StockUnitUnits;
     stockUnits: CreateStockUnitDto[];
     onChange: (updatedStockUnits: CreateStockUnitDto[]) => void;
 }
 
 export default function StockUnitEditableList({
     stockItemId,
+    stockItemLabel,
+    stockItemUnit,
     stockUnits,
     onChange,
 }: StockUnitEditableListProps) {
@@ -72,6 +76,22 @@ export default function StockUnitEditableList({
     }, [stockUnits]);
 
     /**
+     * Retournes un stockUnit vide.
+     * - ClientId unique
+     * - LocationId construit à partir du tableau de stockLocations (selec)
+     * - unit qui vient de stockUnit
+     * @returns 
+     */
+    const EMPTY_STOCK_UNIT = (): CreateStockUnitDto => {
+        return {
+            clientId: crypto.randomUUID(),
+            locationId: stockLocations[0].id,
+            quantity: 1,
+            unit: stockItemUnit,
+        };
+    };
+
+    /**
      * Recharge les stockUnits depuis la DB.
      *
      * Le tableau local n'est donc jamais considéré comme source de vérité
@@ -86,8 +106,8 @@ export default function StockUnitEditableList({
 
         onChange(
             units.map((unit) => ({
+                ...EMPTY_STOCK_UNIT(),
                 id: unit.id,
-                clientId: crypto.randomUUID(),
                 locationId: unit.locationId,
                 quantity: unit.quantity,
                 unit: unit.unit,
@@ -101,18 +121,8 @@ export default function StockUnitEditableList({
             return;
         }
 
-        const temporaryClientId = crypto.randomUUID();
 
-        const newUnit: CreateStockUnitDto = {
-            id: undefined,
-            clientId: temporaryClientId,
-            locationId: 0,
-            quantity: 1,
-            unit: "",
-            expirationDate: undefined,
-        };
-
-        onChange([...stockUnits, newUnit]);
+        onChange([...stockUnits, EMPTY_STOCK_UNIT()]);
     };
 
     const duplicateStockUnit = async (clientId: string) => {
@@ -294,7 +304,7 @@ export default function StockUnitEditableList({
 
             <div className="flex justify-end">
                 <Button
-                    label="Ajouter une stockUnit"
+                    label="Ajouter du stock"
                     icon="pi pi-plus"
                     disabled={!stockItemId}
                     onClick={addStockUnit}
@@ -312,7 +322,7 @@ export default function StockUnitEditableList({
                 }}
                 rowExpansionTemplate={(group) => (
                     <StockUnitEditableListExpansionTemplate
-                        stockItemId={stockItemId}
+                        stockItemLabel={stockItemLabel}
                         stockUnitGroup={group}
                         stockLocations={stockLocations}
                         updateStockUnit={updateStockUnit}
@@ -323,6 +333,7 @@ export default function StockUnitEditableList({
                 editMode="cell"
                 emptyMessage="Rien dans le stock :("
                 size="small"
+                loading={stockLocations.length === 0} // Nécessaire pour la col "Emplacement".
             >
                 <Column
                     expander={(group: StockUnitGroup) =>
@@ -360,7 +371,7 @@ export default function StockUnitEditableList({
                 <Column
                     field="unit"
                     header="Unité"
-                    body={(group) => group.stockUnits[0].unit}
+                    body={(group: StockUnitGroup) => group.stockUnits[0].unit}
                     className="cursor-pointer"
                     editor={(opts) =>
                         dropdownEditor(
@@ -390,18 +401,11 @@ export default function StockUnitEditableList({
                 <Column
                     field="locationId"
                     header="Emplacement"
-                    body={(group) => {
-                        const locationLabel =
-                            stockLocations.find(
-                                (location) =>
-                                    location.id ===
-                                    group.stockUnits[0].locationId
-                            )?.label;
-
-                        return (
-                            locationLabel ??
-                            group.stockUnits[0].locationId
-                        );
+                    body={(group: StockUnitGroup) => {
+                        const locationLabel = stockLocations.find(
+                            (location) => location.id === group.stockUnits[0].locationId
+                        )?.label;
+                        return locationLabel;
                     }}
                     className="cursor-pointer"
                     editor={(opts) =>

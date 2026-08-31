@@ -14,10 +14,11 @@ import StockLocation from "@/interfaces/stocks/StockLocation";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import { parseDateToDisplay } from "@/utils/DatesUtils";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
+import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 
 interface StockUnitEditableListExpansionTemplateProps {
-    stockItemId?: number;
     stockUnitGroup: StockUnitGroup;
+    stockItemLabel: string;
     stockLocations: StockLocation[];
     updateStockUnit: (
         clientId: string,
@@ -29,6 +30,7 @@ interface StockUnitEditableListExpansionTemplateProps {
 
 export default function StockUnitEditableListExpansionTemplate({
     stockUnitGroup,
+    stockItemLabel,
     stockLocations,
     updateStockUnit,
     duplicateStockUnit,
@@ -123,7 +125,7 @@ export default function StockUnitEditableListExpansionTemplate({
 
                 <Column
                     header="Actions"
-                    body={(entry) => (
+                    body={(entry: CreateStockUnitDto) => (
                         <div className="flex items-center gap-1">
                             <Button
                                 icon="pi pi-copy"
@@ -150,6 +152,14 @@ export default function StockUnitEditableListExpansionTemplate({
                                     )
                                 }
                             />
+                            {
+                                entry.id &&
+                                <TakeStockUnitButton
+                                    unitId={entry.id}
+                                    unitLabel={stockItemLabel + " - " + entry.quantity + " " + entry.unit}
+                                // afterTakeUnit={refresh()}
+                                />
+                            }
                         </div>
                     )}
                 />

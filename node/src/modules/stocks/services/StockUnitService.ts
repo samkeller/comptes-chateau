@@ -2,7 +2,6 @@ import { AppDataSource } from "../../../db/dataSource";
 import { notFound, conflict } from "../../../utils/AppError";
 import { StockUnitDto, toStockUnitDto } from "../dto/StockUnitDto";
 import { StockUnitCreateDto } from "../dto/StockUnitCreateDto";
-import { TakeStockUnitDto } from "../dto/TakeStockUnitDto";
 import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
@@ -148,7 +147,6 @@ export default class StockUnitService {
      */
     async takeUnit(
         unitId: number,
-        dto: TakeStockUnitDto,
         connectedUserId: number
     ): Promise<StockUnitDto> {
         let takenUnit: StockUnit | null = null;
@@ -195,8 +193,8 @@ export default class StockUnitService {
                     fromLocationId: unit.locationId,
                     type: "OUT",
                     quantity: unit.quantity,
-                    occurredAt: dto.occurredAt ?? new Date(),
-                    source: this.normalizeSource(dto.source),
+                    occurredAt: new Date(),
+                    source: "manual",
                 })
             );
 

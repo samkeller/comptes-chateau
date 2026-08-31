@@ -7,7 +7,6 @@ import {
 } from "../../core/middlewares/validate";
 import { ItemIdParamSchema } from "../dto/ItemIdDto";
 import StockUnitController from "../controllers/StockUnitController";
-import { TakeStockUnitSchema } from "../dto/TakeStockUnitDto";
 import { StockUnitCreateSchema } from "../dto/StockUnitCreateDto";
 
 const StockUnitRoutes = Router();
@@ -56,7 +55,6 @@ StockUnitRoutes.delete(
 StockUnitRoutes.post(
     "/:id/take",
     validateParams(IdParamSchema),
-    validateBody(TakeStockUnitSchema),
     stockUnitController.takeUnit
 );
 

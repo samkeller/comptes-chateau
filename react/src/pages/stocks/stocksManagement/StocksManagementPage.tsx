@@ -100,31 +100,6 @@ export default function StocksManagementPage() {
         await refreshStock();
     }
 
-      /**
-     * @deprecated TODO
-     * @param payload 
-     */
-    function requestTakeUnit(unit: StockUnit): void {
-        // confirmDialog({
-        //     group: STOCK_TAKE_GROUP,
-        //     header: "Prendre ce produit",
-        //     message: `Marquer "${unit.item.label}" comme pris ?`,
-        //     icon: "pi pi-check-circle",
-        //     acceptLabel: "Prendre",
-        //     rejectLabel: "Annuler",
-        //     accept: () => {
-        //         stockItemsService.takeUnit(unit.id, { occurredAt: new Date(), source: "manual" })
-        //             .then(() => {
-        //                 showToast({ severity: "success", summary: "Produit pris" });
-        //                 return loadUnits(selectedLocationId ?? undefined);
-        //             })
-        //             .catch(() => {
-        //                 showToast({ severity: "error", summary: "Action impossible" });
-        //             });
-        //     },
-        // });
-    }
-
     function requestDeleteLocation(location: StockLocation): void {
         confirmDialog({
             group: LOCATION_DELETE_GROUP,
