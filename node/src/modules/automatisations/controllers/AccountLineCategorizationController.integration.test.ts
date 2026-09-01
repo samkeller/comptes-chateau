@@ -1,60 +1,21 @@
 import express from "express";
 import request from "supertest";
-import { DataSource } from "typeorm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { IMemoryDb } from "pg-mem";
-import SetupTestDb from "../../../tests/SetupTests";
+import { beforeEach, describe, expect, it } from "vitest";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { Account } from "../../accounts/entities/Account";
-import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
-import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
-import { AccountLineRule } from "../entities/AccountLineRule";
 import { User } from "../../core/entities/User";
+import { testDataSource } from "../../../tests/testDbSetup";
 
-let testDataSource: DataSource;
-let db: IMemoryDb;
 let app: express.Express;
-let seededUser: User;
+let seededUserId: number;
 let seededNature: AccountLineNature;
 let seededNatureAlt: AccountLineNature;
 
-const mockUserRepo = {
-    findOne: vi.fn(async ({ where }: { where: { id: number } }) => {
-        if (!seededUser || where.id !== seededUser.id) {
-            return null;
-        }
-
-        return seededUser;
-    }),
-    increment: vi.fn(async ({ id }: { id: number }, field: string, value: number) => {
-        if (seededUser && id === seededUser.id && field === "totalXp") {
-            seededUser.totalXp += value;
-        }
-    }),
-    save: vi.fn(async (user: User) => {
-        if (seededUser && user.id === seededUser.id) {
-            seededUser = { ...seededUser, ...user };
-            return seededUser;
-        }
-    }),
-};
-
-vi.mock("../../../db/dataSource", () => ({
-    AppDataSource: {
-        getRepository: <T>(entity: new () => T) => {
-            if (entity === User) {
-                return mockUserRepo;
-            }
-
-            return testDataSource.getRepository(entity);
-        },
-    }
-}));
-
-async function seedBaseData(dataSource: DataSource): Promise<void> {
-    const accountRepo = dataSource.getRepository(Account);
-    const natureRepo = dataSource.getRepository(AccountLineNature);
+async function seedBaseData(): Promise<void> {
+    const accountRepo = testDataSource.getRepository(Account);
+    const natureRepo = testDataSource.getRepository(AccountLineNature);
+    const userRepo = testDataSource.getRepository(User);
 
     await accountRepo.save({
         id: 1,
@@ -75,45 +36,29 @@ async function seedBaseData(dataSource: DataSource): Promise<void> {
         isHorsCompte: false,
     });
 
-    seededUser = {
-        id: 11,
+    const seededUser = await userRepo.save({
         username: "dojo-user",
         avatar: "001-tiger.png",
         totalXp: 100,
         passwordHash: "hash",
-        kanbanAssignedTasks: [],
-    } as User;
+    });
+    seededUserId = seededUser.id;
 }
 
 describe("AccountLineCategorizationController integration", () => {
-    beforeAll(async () => {
-        db = SetupTestDb();
-
-        testDataSource = db.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste, AccountLineRule],
-            synchronize: true,
-        });
-
-        await testDataSource.initialize();
-        await seedBaseData(testDataSource);
+    beforeEach(async () => {
+        await seedBaseData();
 
         const { default: accountLineCategorizationRoutes } = await import("./AccountLineCategorizationController");
 
         app = express();
         app.use(express.json());
         app.use((req, _res, next) => {
-            (req as any).session = { userId: seededUser.id };
+            (req as any).session = { userId: seededUserId };
             next();
         });
         app.use("/categorization", accountLineCategorizationRoutes);
         app.use(errorMiddleware);
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("increments user XP by 10 when a rule is created", async () => {
@@ -133,8 +78,8 @@ describe("AccountLineCategorizationController integration", () => {
             natureId: seededNature.id,
         });
 
-        expect(mockUserRepo.findOne).toHaveBeenCalledWith({ where: { id: seededUser.id } });
-        expect(seededUser.totalXp).toBe(110);
+        const updatedUser = await testDataSource.getRepository(User).findOneByOrFail({ id: seededUserId });
+        expect(updatedUser.totalXp).toBe(110);
     });
 
     it("returns hydrated relations after updating a rule", async () => {
