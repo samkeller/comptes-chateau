@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { RunRecurringExpensesJobResponse, BackupDatabaseJobResponse } from "@chocosous/shared";
+import type { ApiErrorBody, RunRecurringExpensesJobResponse, BackupDatabaseJobResponse } from "@chocosous/shared";
 import { AppDataSource } from "../../../db/dataSource";
 import { processRecurringExpenses } from "../../../jobs/processRecurringExpenses";
 import customLog from "../../../jobs/customLog";
@@ -44,7 +44,11 @@ JobRoutes.post("/backup-db", async (req, res) => {
         res.json(response);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "An error occurred while running the backup-db job." });
+        const response: ApiErrorBody = {
+            code: "INTERNAL_ERROR",
+            message: "An error occurred while running the backup-db job.",
+        };
+        res.status(500).json(response);
     }
 });
 

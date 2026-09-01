@@ -11,9 +11,12 @@ function isXpRealtimeEvent(value: unknown): value is XpRealtimeEvent {
 
     const candidate = value as Partial<XpRealtimeEvent>;
     return typeof candidate.eventId === "string"
-        && typeof candidate.type === "string"
+        && candidate.type === "xp.updated"
         && typeof candidate.userId === "number"
-        && typeof candidate.occurredAt === "string";
+        && typeof candidate.occurredAt === "string"
+        && typeof candidate.gainedXp === "number"
+        && typeof candidate.previousTotalXp === "number"
+        && typeof candidate.newTotalXp === "number";
 }
 
 class XpEventStreamService extends BaseService {
