@@ -12,7 +12,7 @@ const entityModules = import.meta.glob("../modules/**/entities/*.ts", {
 }) as Record<string, Record<string, unknown>>;
 
 function collectEntities(): Function[] {
-    console.info("Collecting entities...");
+    console.info("[testDbSetup] Collecting entities...");
     const entities: Function[] = [];
     for (const mod of Object.values(entityModules)) {
         for (const exported of Object.values(mod)) {
@@ -23,7 +23,7 @@ function collectEntities(): Function[] {
             }
         }
     }
-    console.info(`Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
+    console.info(`[testDbSetup] Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
     return entities;
 }
 
@@ -56,7 +56,7 @@ vi.mock("../db/dataSource", () => ({
 let db: IMemoryDb
 
 beforeAll(async () => {
-    console.info("Initializing test database...");
+    console.info("[testDbSetup] Initializing test database...");
     db = newDb({ autoCreateForeignKeyIndices: true });
 
     // Stubs nécessaires pour que pg-mem simule un backend PostgreSQL.
@@ -85,7 +85,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-    console.info("Clearing test database...");
+    console.info("[testDbSetup] Clearing test database...");
     if (!testDataSource?.isInitialized) return;
 
     // Vide toutes les tables (dans l'ordre inverse pour limiter les soucis de FK).
@@ -95,7 +95,7 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-    console.info("Destroying test DataSource...");
+    console.info("[testDbSetup] Destroying test DataSource...");
     if (testDataSource?.isInitialized) {
         await testDataSource.destroy();
     }

@@ -1,29 +1,18 @@
-import express, { Request } from "express";
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 import { testDataSource } from "../../../tests/testDbSetup";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockUnit } from "../entities/StockUnit";
 import { User } from "../../core/entities/User";
+import { createTestApp } from "../../../tests/testApp";
 
 describe("StockUnitRoutes integration", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
 
     beforeAll(async () => {
-        const { default: stockRoutes } =
-            await import("../routes/StockRoutes");
-
-        app = express();
-
-        app.use(express.json());
-        app.use((req, _res, next) => {
-            (req as Request & { session: { userId: number } }).session = { userId: 1 };
-            next();
-        });
-        app.use("/stocks", stockRoutes);
-        app.use(errorMiddleware);
+        const { default: stockUnitRoutes } = await import("./StockUnitRoutes");
+        app = createTestApp("/stocks/units", stockUnitRoutes, 1);
     });
 
     it("GET /stocks/units retourne les stock units d'un item", async () => {

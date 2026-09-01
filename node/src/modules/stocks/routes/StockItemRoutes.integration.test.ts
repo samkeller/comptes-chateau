@@ -1,20 +1,15 @@
-import express from "express";
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
+import { createTestApp } from "../../../tests/testApp";
 
 describe("StockItemRoutes integration", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
 
     beforeAll(async () => {
         const { default: stockRoutes } =
             await import("../routes/StockRoutes");
 
-        app = express();
-
-        app.use(express.json());
-        app.use("/stocks", stockRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/stocks", stockRoutes);
     });
 
     it("GET /stocks/items retourne les stock items", async () => {

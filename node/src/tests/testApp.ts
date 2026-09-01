@@ -1,4 +1,3 @@
-// node/src/tests/testApp.ts
 import express, { Router } from "express";
 import { errorMiddleware } from "../modules/core/middlewares/errorMiddleware";
 

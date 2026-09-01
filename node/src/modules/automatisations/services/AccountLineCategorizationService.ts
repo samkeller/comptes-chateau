@@ -6,7 +6,7 @@ import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { normalizeAccountLineRuleLabel, normalizeForMatching } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
-import { Like } from "typeorm/find-options/operator/Like";
+import { Like } from "typeorm";
 import type { SaveAccountLineRuleRequest, UnmappedAccountLineRuleResponse } from "@chocosous/shared";
 
 interface PatternAggregation {
