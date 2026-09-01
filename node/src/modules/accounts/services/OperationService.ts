@@ -8,7 +8,7 @@ import TableQueryMapper from "./queryMappers/TableQueryMapper";
 import operationTableQueryConfig from "./queryMappers/operationTableQueryConfig";
 import TableQueryParser from "./queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
-import { OperationBatchCheckPayload, SaveOperationPayload } from "../dto/OperationDtos";
+import { OperationBatchCheckPayload, SaveOperationPayload } from "@chocosous/shared";
 import { badRequest, notFound } from "../../../utils/AppError";
 import { DeleteResult } from "typeorm/query-builder/result/DeleteResult";
 import { Like } from "typeorm/find-options/operator/Like";

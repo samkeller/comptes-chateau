@@ -5,12 +5,12 @@ import { InputText } from "primereact/inputtext";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useEffect, useState } from "react";
-import { BudgetItem, SaveBudgetItemPayload } from "../../interfaces/BudgetItem";
 import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
 import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { BooleanIcon } from "@/components/datatableBodys/BooleanIcon";
 import { useAccountId } from "../../hooks/useAccountId";
+import type { BudgetItemDto, SaveBudgetItemPayload } from "@chocosous/shared";
 
 interface BudgetDraft {
     label: string;
@@ -30,7 +30,7 @@ const emptyDraft: BudgetDraft = {
 
 export default function BudgetItemsTable() {
     const accountId = useAccountId();
-    const [lines, setLines] = useState<BudgetItem[]>([]);
+    const [lines, setLines] = useState<BudgetItemDto[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
     const [editingId, setEditingId] = useState<number | "new" | null>(null);
@@ -54,7 +54,7 @@ export default function BudgetItemsTable() {
         setDraft({ ...emptyDraft, sortOrder: nextSortOrder });
     };
 
-    const startEdit = (line: BudgetItem): void => {
+    const startEdit = (line: BudgetItemDto): void => {
         setEditingId(line.id);
         setDraft({
             label: line.label,
@@ -99,7 +99,7 @@ export default function BudgetItemsTable() {
         }
     };
 
-    const deleteLine = async (line: BudgetItem): Promise<void> => {
+    const deleteLine = async (line: BudgetItemDto): Promise<void> => {
         setSaving(true);
         try {
             await new BudgetService().deleteAccountBudgetItem(accountId, line.id);

@@ -4,7 +4,7 @@ import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import KanbanService from "../../../services/kanban/KanbanService";
 import MarkdownEditor from "../../../components/form/markdown/MarkdownEditor";
 import UserAvatar from "../../../components/atoms/UserAvatar";
-import { KanbanComment } from "../../../interfaces/kanban/KanbanComment";
+import type { KanbanCommentResponse } from "@chocosous/shared";
 import { useConnectedUser } from "../../../context/ConnectedUserContext";
 import { User } from "@/interfaces/User";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
@@ -29,7 +29,7 @@ const service = new KanbanService();
 export default function KanbanCommentSection({ taskId }: KanbanCommentSectionProps) {
     const { connectedUser } = useConnectedUser();
 
-    const [comments, setComments] = useState<KanbanComment[]>([]);
+    const [comments, setComments] = useState<KanbanCommentResponse[]>([]);
     const [newContent, setNewContent] = useState<string>("");
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);

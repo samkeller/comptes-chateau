@@ -5,7 +5,7 @@ import { Message } from "primereact/message"
 import { Tag } from "primereact/tag"
 import ChocoKarate from "@assets/images/chocokarate_flip.png"
 import ChocoKarateVsRobot from "@assets/images/chocokaratevsrobot.png"
-import { UnmappedAccountLineRuleItem } from "@/services/AccountLineCategorizationService"
+import type { UnmappedAccountLineRuleResponse } from "@chocosous/shared"
 import { getUserFullProgress } from "@/utils/levelProgress"
 import DojoXpLeaderboard from "./DojoXpLeaderboard"
 import { useConnectedUser } from "@/context/ConnectedUserContext"
@@ -13,7 +13,7 @@ import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { Skeleton } from "primereact/skeleton"
 
 interface CategorizationDojoProps {
-    unmapped: UnmappedAccountLineRuleItem[]
+    unmapped: UnmappedAccountLineRuleResponse[]
     onConfirm: (
         pattern: string,
         accountId: number,

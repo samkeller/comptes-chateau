@@ -1,12 +1,7 @@
 import axios from "axios";
 import { AccountLineNature } from "../interfaces/AccountLineNature";
 import BaseService from "./BaseService";
-
-export interface SaveNaturePayload {
-    label: string;
-    color: string;
-    isHorsCompte: boolean;
-}
+import type { SaveNaturePayload } from "@chocosous/shared";
 
 class AccountLineNatureService extends BaseService {
 

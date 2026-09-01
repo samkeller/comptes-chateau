@@ -8,7 +8,7 @@ import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { PageTemplate } from "../PageTemplate";
 import HomeGlobalActionsCard from "./components/HomeGlobalActionsCard";
 import HomeWelcomeCard from "./components/HomeWelcomeCard";
-import { DashboardOverview } from "@/interfaces/DashboardOverview";
+import type { DashboardOverview } from "@chocosous/shared";
 import Account from "@/interfaces/Account";
 import AccountOverview from "./components/molecules/AccountOverview";
 

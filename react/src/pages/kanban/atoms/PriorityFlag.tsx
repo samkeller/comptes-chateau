@@ -1,5 +1,5 @@
 import { useScreen } from "@/hooks/useScreen";
-import { KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
+import type { KanbanTaskPriority } from "@chocosous/shared";
 
 
 const PRIORITY_RANK: Record<KanbanTaskPriority, number> = {

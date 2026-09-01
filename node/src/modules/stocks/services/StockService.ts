@@ -1,11 +1,18 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { badRequest, conflict, notFound } from "../../../utils/AppError";
-import { CreateStockItemDto, UpdateStockItemDto } from "../dto/CreateStockItemDto";
-import { CreateStockLocationDto, UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
-import { RecordStockMovementDto } from "../dto/RecordStockMovementDto";
-import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
-import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
-import { StockMovementDto, toStockMovementDto } from "../dto/StockMovementDto";
+import type {
+    CreateStockItemDto,
+    CreateStockLocationDto,
+    RecordStockMovementDto,
+    StockItemDto,
+    StockLocationDto,
+    StockMovementDto,
+    UpdateStockItemDto,
+    UpdateStockLocationDto,
+} from "@chocosous/shared";
+import { toStockItemDto } from "../dto/StockItemDto";
+import { toStockLocationDto } from "../dto/StockLocationDto";
+import { toStockMovementDto } from "../dto/StockMovementDto";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";

@@ -1,5 +1,5 @@
 import { Button } from "primereact/button";
-import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
+import { KANBAN_TASK_PRIORITIES, type KanbanTaskPriority } from "@chocosous/shared";
 import { useRef, useState } from "react";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { ListBox } from "primereact/listbox";

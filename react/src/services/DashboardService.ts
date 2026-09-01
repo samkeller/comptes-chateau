@@ -1,9 +1,7 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { MonthlyAggregateByPoste } from "../interfaces/MonthlyAggregateByPoste";
-import { DashboardOverview } from "../interfaces/DashboardOverview";
+import type { MonthlyAggregateByPoste, DashboardOverview, BudgetByPoste } from "@chocosous/shared";
 import DashboardMonthlyByPosteQueryCodec from "./dashboardQuery/DashboardMonthlyByPosteQueryCodec";
-import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
 import QueryStringBuilder from "./QueryStringBuilder";
 
 class DashboardService extends BaseService {

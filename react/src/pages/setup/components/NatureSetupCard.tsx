@@ -11,7 +11,8 @@ import { BooleanIcon } from "../../../components/datatableBodys/BooleanIcon";
 import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLineNature } from "../../../interfaces/AccountLineNature";
 import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
-import AccountLineNatureService, { SaveNaturePayload } from "../../../services/AccountLineNatureService";
+import AccountLineNatureService from "../../../services/AccountLineNatureService";
+import type { SaveNaturePayload } from "@chocosous/shared";
 import TooltipInfoIcon from "../../../components/TooltipInfoIcon";
 
 const NEW_NATURE_ROW_ID = -1;

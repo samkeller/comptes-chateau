@@ -7,7 +7,8 @@ import AccountLineNatureDropdown from "../../../components/atoms/accountLine/Acc
 import AccountLinePosteDropdown from "../../../components/atoms/accountLine/AccountLinePosteDropdown";
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
-import RecurringExpense, { RecurringExpenseFrequency } from '../../../interfaces/RecurringExpense';
+import RecurringExpense from '../../../interfaces/RecurringExpense';
+import type { RecurringExpenseFrequency } from "@chocosous/shared";
 import RecurringExpenseService from '../../../services/RecurringExpenseService';
 import { FloatLabel } from 'primereact/floatlabel';
 import { Calendar } from 'primereact/calendar';

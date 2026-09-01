@@ -1,17 +1,12 @@
 import bcrypt from "bcrypt";
 import { Router } from "express";
-import { z } from "zod";
+import { LoginSchema, type LoginResponse } from "@chocosous/shared";
 import { COOKIE_NAME } from "../../../index";
 import rateLimit from "express-rate-limit";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 import { unauthorized } from "../../../utils/AppError";
 import { validateBody } from "../middlewares/validate";
-
-const LoginSchema = z.object({
-  username: z.string().min(1).transform(s => s.trim().toLowerCase()),
-  password: z.string().min(1),
-});
 
 const AuthRoutes = Router();
 
@@ -46,11 +41,13 @@ AuthRoutes.post("/login", validateBody(LoginSchema), async (req, res) => {
   req.session.userId = user.id;
   req.session.username = user.username;
 
-  res.json({
+  const response: LoginResponse = {
     id: user.id,
     username: user.username,
     avatar: user.avatar,
-  });
+  };
+
+  res.json(response);
 });
 
 

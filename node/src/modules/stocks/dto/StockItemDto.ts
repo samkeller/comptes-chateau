@@ -1,20 +1,8 @@
-import { StockLocationDto, toStockLocationDto } from "./StockLocationDto";
+import type { StockItemDto } from "@chocosous/shared";
+import { toStockLocationDto } from "./StockLocationDto";
 import { StockItem } from "../entities/StockItem";
 
-export interface StockItemDto {
-    id: number;
-    label: string;
-    barcode: string | null;
-    currentQuantity: number;
-    unit: string;
-    locationId: number;
-    location: StockLocationDto;
-    expirationDate: string | null;
-    imageUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
-}
-
+/** Convertit une entité StockItem en DTO exposé par l'API. */
 export function toStockItemDto(item: StockItem): StockItemDto {
     return {
         id: item.id,

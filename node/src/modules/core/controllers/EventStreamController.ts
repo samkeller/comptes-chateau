@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { xpEventBus } from "../events/XpEventBus";
-import { XpRealtimeEvent } from "../events/XpEvents";
+import type { XpRealtimeEvent } from "@chocosous/shared";
 import customLog from "../../../jobs/customLog";
 
 const EventStreamRoutes = Router();

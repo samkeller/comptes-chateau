@@ -1,11 +1,7 @@
 import axios from "axios";
 import { AccountLinePoste } from "../interfaces/AccountLinePoste";
 import BaseService from "./BaseService";
-
-export interface SavePostePayload {
-    label: string;
-    color: string;
-}
+import type { SavePostePayload } from "@chocosous/shared";
 
 class AccountLinePosteService extends BaseService {
 

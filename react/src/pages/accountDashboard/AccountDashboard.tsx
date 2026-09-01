@@ -2,13 +2,12 @@ import { PageTemplate } from "../PageTemplate";
 import { Card } from "primereact/card";
 import { useEffect, useMemo, useState } from "react";
 import DashboardService from "../../services/DashboardService";
-import { DashboardOverview } from "../../interfaces/DashboardOverview";
+import type { DashboardOverview, BudgetByPoste } from "@chocosous/shared";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import MonthlyDashboard from "./monthlyDashboard/MonthlyDashboard";
 import { useAccountId } from "../../hooks/useAccountId";
 import BudgetDetailsByPosteCard from "./BudgetDetailsByPosteCard";
 import { ProgressBar } from "primereact/progressbar";
-import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
 import { Button } from "primereact/button";
 import DashboardBalanceCard from "./molecules/DashboardBalanceCard";
 

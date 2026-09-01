@@ -1,10 +1,6 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { Account } from "../entities/Account";
-
-export interface AccountDto {
-    id: number;
-    label: string;
-}
+import type { AccountDto } from "@chocosous/shared";
 
 export default class AccountService {
     private accountRepo = AppDataSource.getRepository(Account);
