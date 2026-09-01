@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { User } from "../entities/User";
 import { UserXpActionsPoints, UserXpActionsPointsKeys } from "../utils/UserXPUtils";
 import { xpEventBus } from "../events/XpEventBus";
-import { XpUpdatedEvent } from "../events/XpEvents";
+import type { XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 
 export default class UserXpService {

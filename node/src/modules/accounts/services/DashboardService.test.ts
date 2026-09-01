@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import DashboardService, { BudgetVsActualByPoste, DashboardOverview } from "./DashboardService";
+import type { BudgetByPoste, DashboardOverview } from "@chocosous/shared";
+import DashboardService from "./DashboardService";
 
 type QueryResult = { value: string | number } | undefined;
 
@@ -169,7 +170,7 @@ describe("DashboardService.getOverview", () => {
     function buildService(options: {
         baseline: { amount: number | string; effectiveDate: Date } | null;
         deltaResults: QueryResult[];
-        budgetVsActual?: BudgetVsActualByPoste[];
+        budgetVsActual?: BudgetByPoste[];
         toCheckCounts: { inAccount: string | number | null; horsCompte: string | number | null };
         assignedKanbanTasksCount?: number;
     }): DashboardService {

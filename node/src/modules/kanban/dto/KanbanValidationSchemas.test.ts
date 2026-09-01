@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CreateKanbanTaskSchema } from "./CreateKanbanTaskDto";
-import { CreateKanbanCommentSchema } from "./CreateKanbanCommentDto";
+import { CreateKanbanTaskSchema, CreateKanbanCommentSchema } from "@chocosous/shared";
 
 describe("Kanban validation schemas", () => {
     it("rejects task title with only spaces", () => {

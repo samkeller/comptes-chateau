@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
+import { UpdateStockLocationDto } from "@chocosous/shared";
 import StockLocationService from "../services/StockLocationService";
 
 export default class StockLocationController {

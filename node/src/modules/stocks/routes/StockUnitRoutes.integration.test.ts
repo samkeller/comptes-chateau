@@ -1,90 +1,29 @@
 import express from "express";
 import request from "supertest";
-import { DataSource, EntityManager } from "typeorm";
-import {
-    afterAll,
-    beforeAll,
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from "vitest";
-import { IMemoryDb } from "pg-mem";
-import SetupTestDb from "../../../tests/SetupTests";
+import { beforeAll, describe, expect, it } from "vitest";
+import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
-import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
-
-let testDataSource: DataSource;
-
-vi.mock("../../../db/dataSource", () => ({
-    AppDataSource: {
-        getRepository: <T>(entity: new () => T) =>
-            testDataSource.getRepository(entity),
-
-        transaction: <T>(
-            runInTransaction: (
-                entityManager: EntityManager
-            ) => Promise<T>
-        ) => testDataSource.transaction(runInTransaction),
-    },
-}));
+import { User } from "../../core/entities/User";
 
 describe("StockUnitRoutes integration", () => {
     let app: express.Express;
-    let db: IMemoryDb;
 
     beforeAll(async () => {
-        db = SetupTestDb();
-
-        testDataSource = db.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [
-                StockLocation,
-                StockItem,
-                StockUnit,
-                StockMovement,
-            ],
-            synchronize: true,
-        });
-
-        await testDataSource.initialize();
-
         const { default: stockRoutes } =
             await import("../routes/StockRoutes");
 
         app = express();
 
         app.use(express.json());
+        app.use((req, _res, next) => {
+            (req as Request & { session: { userId: number } }).session = { userId: 1 };
+            next();
+        });
         app.use("/stocks", stockRoutes);
         app.use(errorMiddleware);
-    });
-
-    beforeEach(async () => {
-        await testDataSource.query(
-            `DELETE FROM "stock_movement"`
-        );
-
-        await testDataSource.query(
-            `DELETE FROM "stock_unit"`
-        );
-
-        await testDataSource.query(
-            `DELETE FROM "stock_item"`
-        );
-
-        await testDataSource.query(
-            `DELETE FROM "stock_location"`
-        );
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("GET /stocks/units retourne les stock units d'un item", async () => {
@@ -97,6 +36,14 @@ describe("StockUnitRoutes integration", () => {
     });
 
     it("POST /stocks/units crée une stock unit", async () => {
+        await testDataSource.getRepository(User).save({
+            id: 1,
+            username: "stock-user",
+            avatar: "001-tiger.png",
+            totalXp: 0,
+            passwordHash: "hash",
+        });
+
         const location = await testDataSource
             .getRepository(StockLocation)
             .save({

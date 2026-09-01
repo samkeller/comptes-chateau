@@ -1,7 +1,7 @@
 import { Dropdown } from "primereact/dropdown";
 import { FloatLabel } from "primereact/floatlabel";
 import KanbanColumn from "../../../interfaces/kanban/KanbanColumn";
-import { KanbanTaskPriority } from "../../../interfaces/kanban/KanbanTaskPriority";
+import type { KanbanTaskPriority, CreateKanbanTaskRequest } from "@chocosous/shared";
 import PriorityFlag, { getPriorityLabel } from "../atoms/PriorityFlag";
 import MarkdownEditor from "../../../components/form/markdown/MarkdownEditor";
 import { AutoComplete } from "primereact/autocomplete";
@@ -10,7 +10,6 @@ import { MultiSelect } from "primereact/multiselect";
 import { User } from "../../../interfaces/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
 import { SelectItem } from "primereact/selectitem";
-import { CreateKanbanTaskDto } from "@/services/kanban/dto/CreateKanbanTaskDto";
 import { useMemo, useState } from "react";
 import { InputText } from "primereact/inputtext";
 import { ScrollPanel } from "primereact/scrollpanel";
@@ -18,8 +17,8 @@ import { ScrollPanel } from "primereact/scrollpanel";
 
 
 interface KanbanTaskDialogFormProps {
-    taskData: CreateKanbanTaskDto,
-    setTaskData: (taskData: CreateKanbanTaskDto) => void,
+    taskData: CreateKanbanTaskRequest,
+    setTaskData: (taskData: CreateKanbanTaskRequest) => void,
     allTags: string[],
     columns: KanbanColumn[],
     allUsers: User[],

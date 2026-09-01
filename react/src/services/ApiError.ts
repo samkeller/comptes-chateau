@@ -1,12 +1,5 @@
 import axios from "axios";
-
-/**
- * Corps JSON d'erreur envoyé par le `errorMiddleware` backend.
- */
-export interface ApiErrorBody {
-    code: string;
-    message: string;
-}
+import { ApiErrorSchema, type ApiErrorBody } from "@chocosous/shared";
 
 /**
  * Type guard pour vérifier si un objet correspond à la structure d'un ApiErrorBody.
@@ -14,14 +7,7 @@ export interface ApiErrorBody {
  * @returns 
  */
 export function isApiErrorBody(data: unknown): data is ApiErrorBody {
-    return (
-        typeof data === "object" &&
-        data !== null &&
-        "code" in data &&
-        typeof (data as ApiErrorBody).code === "string" &&
-        "message" in data &&
-        typeof (data as ApiErrorBody).message === "string"
-    );
+    return ApiErrorSchema.safeParse(data).success;
 }
 
 /**

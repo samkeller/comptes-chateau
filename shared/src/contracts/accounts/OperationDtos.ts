@@ -1,0 +1,30 @@
+import { z } from "zod";
+
+/** Schéma de validation pour la création ou la modification d'une opération. */
+export const SaveOperationSchema = z.object({
+    id: z.number().int().nonnegative().optional(),
+    label: z.string().min(1),
+    dateOperation: z.string().min(1),
+    dateValeur: z.string().nullable().optional(),
+    debit: z.number().nonnegative().optional(),
+    credit: z.number().nonnegative().optional(),
+    isChecked: z.boolean().optional(),
+    targetAccount: z.object({ id: z.number().int().positive() }).nullable().optional(),
+    natureId: z.number().int().positive().nullable().optional(),
+    posteId: z.number().int().positive().nullable().optional(),
+});
+
+export type SaveOperationPayload = z.infer<typeof SaveOperationSchema>;
+
+/** Schéma de validation pour la validation en lot d'opérations. */
+export const OperationBatchCheckSchema = z.object({
+    checks: z.array(z.object({
+        id: z.number().int().positive(),
+        isChecked: z.boolean(),
+        dateValeur: z.string().min(1),
+    })).min(1),
+});
+
+export type OperationBatchCheckPayload = z.infer<typeof OperationBatchCheckSchema>;
+
+export type OperationBatchCheckInput = OperationBatchCheckPayload["checks"][number];

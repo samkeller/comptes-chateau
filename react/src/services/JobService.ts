@@ -1,15 +1,11 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-
-export interface ManualJobRunResponse {
-    triggeredAt: string;
-    processedCount: number;
-}
+import type { RunRecurringExpensesJobResponse } from "@chocosous/shared";
 
 export default class JobService extends BaseService {
-    runRecurringExpenses(): Promise<ManualJobRunResponse> {
+    runRecurringExpenses(): Promise<RunRecurringExpensesJobResponse> {
         return axios
-            .post<ManualJobRunResponse>(`${this.apiUrl}/jobs/run-recurring-expenses`)
+            .post<RunRecurringExpensesJobResponse>(`${this.apiUrl}/jobs/run-recurring-expenses`)
             .then((r) => r.data);
     }
 }

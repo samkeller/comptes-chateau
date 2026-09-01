@@ -64,6 +64,12 @@ export function validateQuery<T>(schema: ZodType<T>) {
             next(new AppError(400, "VALIDATION_ERROR", formatZodError(result.error)));
             return;
         }
+        // `req.query` n'a pas de setter natif sur cette version d'Express : on redéfinit la propriété sur l'instance.
+        Object.defineProperty(req, "query", {
+            value: result.data,
+            writable: true,
+            configurable: true,
+        });
         next();
     };
 }

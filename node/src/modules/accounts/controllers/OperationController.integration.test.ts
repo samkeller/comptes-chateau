@@ -1,66 +1,35 @@
 import express from "express";
 import request from "supertest";
-import { DataSource, EntityManager } from "typeorm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { User } from "../../core/entities/User";
-import { IMemoryDb } from "pg-mem";
-import SetupTestDb from "../../../tests/SetupTests";
+import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 
-let testDataSource: DataSource;
-let seededUser: User;
+let seededUserId: number;
 let natureChargesId: number;
 let natureRevenusId: number;
 let posteMaisonId: number;
 let posteLoisirsId: number;
 const accountId = 1;
-const mockUserRepo = {
-    findOne: vi.fn(async ({ where }: { where: { id: number } }) => {
-        if (!seededUser || where.id !== seededUser.id) {
-            return null;
-        }
 
-        return seededUser;
-    }),
-    increment: vi.fn(async ({ id }: { id: number }, field: string, value: number) => {
-        if (seededUser && id === seededUser.id && field === "totalXp") {
-            seededUser.totalXp += value;
-        }
-    })
-};
+async function seedAccountLines(): Promise<void> {
+    const accountRepo = testDataSource.getRepository(Account);
+    const natureRepo = testDataSource.getRepository(AccountLineNature);
+    const posteRepo = testDataSource.getRepository(AccountLinePoste);
+    const lineRepo = testDataSource.getRepository(AccountLine);
+    const userRepo = testDataSource.getRepository(User);
 
-vi.mock("../../../db/dataSource", () => ({
-    AppDataSource: {
-        getRepository: <T>(entity: new () => T) => {
-            if (entity === User) {
-                return mockUserRepo;
-            }
-
-            return testDataSource.getRepository(entity);
-        },
-        transaction: <T>(runInTransaction: (entityManager: EntityManager) => Promise<T>) =>
-            testDataSource.transaction(runInTransaction)
-    }
-}));
-
-
-async function seedAccountLines(dataSource: DataSource): Promise<void> {
-    const accountRepo = dataSource.getRepository(Account);
-    const natureRepo = dataSource.getRepository(AccountLineNature);
-    const posteRepo = dataSource.getRepository(AccountLinePoste);
-    const lineRepo = dataSource.getRepository(AccountLine);
-    seededUser = {
-        id: 11,
+    const seededUser = await userRepo.save({
         username: "dojo-user",
         avatar: "001-tiger.png",
         totalXp: 100,
-        passwordHash: "hash",
-        kanbanAssignedTasks: []
-    } as User;
+        passwordHash: "hash"
+    });
+    seededUserId = seededUser.id;
 
     const account = await accountRepo.save({
         id: accountId,
@@ -135,35 +104,19 @@ async function seedAccountLines(dataSource: DataSource): Promise<void> {
 
 describe("OperationControllers /lazy integration", () => {
     let app: express.Express;
-    let db: IMemoryDb;
 
-    beforeAll(async () => {
-        db = SetupTestDb();
-
-        testDataSource = db.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
-            synchronize: true
-        });
-
-        await testDataSource.initialize();
-        await seedAccountLines(testDataSource);
+    beforeEach(async () => {
+        await seedAccountLines();
 
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
         app = express();
         app.use(express.json());
         app.use((req, _res, next) => {
-            (req as any).session = { userId: seededUser.id };
+            (req as any).session = { userId: seededUserId };
             next();
         });
         app.use("/accounts/:accountId", accountScopedRoutes);
         app.use(errorMiddleware);
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("sorts by amount ASC using (credit - debit)", async () => {
@@ -541,7 +494,7 @@ describe("OperationControllers /lazy integration", () => {
         expect(uncheckedAfter.body.data).toEqual([]);
     });
 
-    it("POST creates a transfer: source gets debit line, target gets mirror credit line", async () => {
+    it("POST creates a transfer: source gets debit line, target gets mirror credit line, visible via /lazy on both accounts", async () => {
         const targetAccountId = 2;
         const lineRepo = testDataSource.getRepository(AccountLine);
         const accountRepo = testDataSource.getRepository(Account);
@@ -577,26 +530,6 @@ describe("OperationControllers /lazy integration", () => {
         expect(Number(mirror?.credit)).toBe(200);
         const mirrorWithAccount = await lineRepo.findOne({ where: { id: mirror!.id }, relations: { account: true } });
         expect(mirrorWithAccount?.account.id).toBe(targetAccountId);
-    });
-
-    it("POST rejects a transfer when source and target account are the same", async () => {
-        const response = await request(app)
-            .post(`/accounts/${accountId}/operations`)
-            .send({
-                label: "Virement invalide",
-                dateOperation: "2026-03-25",
-                debit: 50,
-                credit: 0,
-                isChecked: false,
-                targetAccount: { id: accountId }
-            });
-
-        expect(response.status).toBe(400);
-        expect(response.body.code).toBe("OPERATION_TRANSFER_SAME_ACCOUNT");
-    });
-
-    it("target account sees its mirror line in /lazy after a transfer is created", async () => {
-        const targetAccountId = 2;
 
         const lazySourceResponse = await request(app)
             .get(`/accounts/${accountId}/operations/lazy`)
@@ -618,5 +551,21 @@ describe("OperationControllers /lazy integration", () => {
         );
         expect(targetTransfers.length).toBe(1);
         expect(Number(targetTransfers[0].credit)).toBe(200);
+    });
+
+    it("POST rejects a transfer when source and target account are the same", async () => {
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations`)
+            .send({
+                label: "Virement invalide",
+                dateOperation: "2026-03-25",
+                debit: 50,
+                credit: 0,
+                isChecked: false,
+                targetAccount: { id: accountId }
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.code).toBe("OPERATION_TRANSFER_SAME_ACCOUNT");
     });
 });

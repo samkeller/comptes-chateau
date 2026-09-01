@@ -1,10 +1,11 @@
 import { parseApiDateTime } from "@/utils/DatesUtils";
+import type { StockUnitUnits } from "./StockUnit";
 
 export default class StockItem {
     id: number = 0;
     label: string = "";
     barcode: string | null = null;
-    defaultUnit: string = "";
+    defaultUnit: StockUnitUnits = "g";
     imageUrl: string | null = null;
 
     stockUnitsCount: number = 0;

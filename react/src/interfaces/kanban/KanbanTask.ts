@@ -1,5 +1,5 @@
 
-import { KanbanTaskPriority } from "./KanbanTaskPriority";
+import type { KanbanTaskPriority } from "@chocosous/shared";
 import { User } from "../User";
 
 export default class KanbanTask {

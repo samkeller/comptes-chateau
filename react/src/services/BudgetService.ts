@@ -1,6 +1,6 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { BudgetItem, SaveBudgetItemPayload, UnifiedBudgetLine } from "../interfaces/BudgetItem";
+import type { BudgetItemDto, SaveBudgetItemPayload, UnifiedBudgetLine } from "@chocosous/shared";
 import { showGlobalToast } from "./GlobalToast";
 
 class BudgetService extends BaseService {
@@ -8,15 +8,15 @@ class BudgetService extends BaseService {
      * Get budget items for a specific account.
      * @param accountId - The account ID
      */
-    getAccountBudgetItems(accountId: number): Promise<BudgetItem[]> {
+    getAccountBudgetItems(accountId: number): Promise<BudgetItemDto[]> {
         return axios.get(`${this.apiUrl}/accounts/${accountId}/budget`).then((response) => response.data);
     }
 
-    createAccountBudgetItem(accountId: number, payload: SaveBudgetItemPayload): Promise<BudgetItem> {
+    createAccountBudgetItem(accountId: number, payload: SaveBudgetItemPayload): Promise<BudgetItemDto> {
         return axios.post(`${this.apiUrl}/accounts/${accountId}/budget`, payload).then((response) => response.data);
     }
 
-    updateAccountBudgetItem(accountId: number, id: number, payload: SaveBudgetItemPayload): Promise<BudgetItem> {
+    updateAccountBudgetItem(accountId: number, id: number, payload: SaveBudgetItemPayload): Promise<BudgetItemDto> {
         return axios.put(`${this.apiUrl}/accounts/${accountId}/budget/${id}`, payload).then((response) => response.data);
     }
 

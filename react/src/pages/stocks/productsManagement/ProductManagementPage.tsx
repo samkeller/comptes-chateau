@@ -283,6 +283,7 @@ export default function ProductManagementPage() {
                                     <StockUnitEditableList
                                         stockItemId={formData.id}
                                         stockItemLabel={formData.label}
+                                        stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
                                         onChange={(newUnits) => {
                                             setFormData((prevFormData) => ({

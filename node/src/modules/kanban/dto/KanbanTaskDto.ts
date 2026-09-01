@@ -1,20 +1,9 @@
-import { KanbanTaskPriority } from "./KanbanTaskPriority";
-import { toUserDto, UserDto } from "../../core/dto/UserDto";
+import { toUserDto } from "../../core/dto/UserDto";
+import type { KanbanTaskResponse } from "@chocosous/shared";
 import { KanbanTask } from "../entities/KanbanTask";
 
-export interface KanbanTaskDto {
-    id: number;
-    title: string;
-    description: string | null;
-    columnId: number;
-    priority: KanbanTaskPriority;
-    tags?: string[];
-    assignees?: UserDto[];
-    isDone: boolean;
-    doneByUserId?: number | null;
-}
-
-export function toKanbanTaskDto(task: KanbanTask): KanbanTaskDto {
+/** Convertit une entité KanbanTask en DTO exposé par l'API. */
+export function toKanbanTaskDto(task: KanbanTask): KanbanTaskResponse {
         return {
             id: task.id,
             title: task.title,

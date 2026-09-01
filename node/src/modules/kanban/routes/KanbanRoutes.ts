@@ -1,8 +1,7 @@
 import { Router } from "express";
 import KanbanController from "../controllers/KanbanController";
 import { validateBody, validateParams, IdParamSchema, CommentIdParamSchema } from "../../core/middlewares/validate";
-import { CreateKanbanTaskSchema } from "../dto/CreateKanbanTaskDto";
-import { CreateKanbanCommentSchema } from "../dto/CreateKanbanCommentDto";
+import { CreateKanbanTaskSchema, CreateKanbanCommentSchema } from "@chocosous/shared";
 
 const KanbanRoutes = Router();
 const kanbanController = new KanbanController();

@@ -1,7 +1,23 @@
-import { isXpRealtimeEvent, XpRealtimeEvent } from "@/interfaces/XpEvents";
+import type { XpRealtimeEvent } from "@chocosous/shared";
 import BaseService from "./BaseService";
 
 type XpRealtimeListener = (event: XpRealtimeEvent) => void;
+
+/** Vérifie qu'une donnée SSE reçue correspond bien à la structure d'un événement XP temps réel. */
+function isXpRealtimeEvent(value: unknown): value is XpRealtimeEvent {
+    if (!value || typeof value !== "object") {
+        return false;
+    }
+
+    const candidate = value as Partial<XpRealtimeEvent>;
+    return typeof candidate.eventId === "string"
+        && candidate.type === "xp.updated"
+        && typeof candidate.userId === "number"
+        && typeof candidate.occurredAt === "string"
+        && typeof candidate.gainedXp === "number"
+        && typeof candidate.previousTotalXp === "number"
+        && typeof candidate.newTotalXp === "number";
+}
 
 class XpEventStreamService extends BaseService {
     private eventSource: EventSource | null = null;

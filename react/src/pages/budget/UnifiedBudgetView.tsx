@@ -1,6 +1,6 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useEffect, useMemo, useState } from "react";
-import { UnifiedBudgetLine } from "../../interfaces/BudgetItem";
+import type { UnifiedBudgetLine } from "@chocosous/shared";
 import BudgetService from "../../services/BudgetService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { Tag } from "primereact/tag";

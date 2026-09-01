@@ -6,7 +6,7 @@ import KanbanColumn from "../../interfaces/kanban/KanbanColumn"
 import KanbanTaskCard from "./KanbanTaskCard"
 import { InputText } from "primereact/inputtext"
 import { compareTaskPriority } from "./atoms/PriorityFlag"
-import { CreateKanbanTaskDto } from "../../services/kanban/dto/CreateKanbanTaskDto"
+import type { CreateKanbanTaskRequest } from "@chocosous/shared"
 import PriorityFlagSelect from "./atoms/PriorityFlagSelect"
 import { useDroppable } from "@dnd-kit/core"
 import { useScreen } from "@/hooks/useScreen"
@@ -22,7 +22,7 @@ interface KanbanColumnProps {
 
 export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, activeId, className }: KanbanColumnProps) {
     const { isDesktop } = useScreen();
-    const [newTask, setNewTask] = useState<CreateKanbanTaskDto>({
+    const [newTask, setNewTask] = useState<CreateKanbanTaskRequest>({
         title: "",
         columnId: column.id,
         priority: "normal",
@@ -92,7 +92,7 @@ export default function KanbanColumnDisplay({ column, tasks, setSelectedTask, ac
                     <div className="flex items-center">
                         <PriorityFlagSelect
                             btnClassName="w-6 h-6 p-4"
-                            priority={newTask.priority}
+                            priority={newTask.priority ?? "normal"}
                             onChange={(priority) => {
                                 setNewTask({ ...newTask, priority: priority })
                             }

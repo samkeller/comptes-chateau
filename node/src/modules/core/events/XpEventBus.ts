@@ -1,5 +1,5 @@
 import customLog from "../../../jobs/customLog";
-import { XpRealtimeEvent } from "./XpEvents";
+import type { XpRealtimeEvent } from "@chocosous/shared";
 
 type XpEventListener = (event: XpRealtimeEvent) => void | Promise<void>;
 

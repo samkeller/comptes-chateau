@@ -1,9 +1,9 @@
 import { EntityManager, LessThanOrEqual } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
-import { RecurringExpense } from "../entities/RecurringExpense";
+import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import UserXpService from "../../core/services/UserXpService";
-import { SaveRecurringExpensePayload } from "../dto/RecurringExpenseDtos";
+import { SaveRecurringExpensePayload } from "@chocosous/shared";
 
 export default class RecurringExpenseService {
 
@@ -57,6 +57,8 @@ export default class RecurringExpenseService {
         const savedExpense = await this.recurringExpenseRepo.save({
             ...expense,
             accountId,
+            // Le contrat partagé décrit la fréquence en union de chaînes ; les valeurs sont identiques à l'enum backend.
+            frequency: expense.frequency as unknown as RecurringExpenseFrequency,
             nextOccurrence: normalizeApiDateInput(expense.nextOccurrence) ?? undefined,
         });
 

@@ -6,10 +6,10 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from "typeorm";
+import { STOCK_MOVEMENT_TYPES, type StockMovementType } from "@chocosous/shared";
 import type { StockItem } from "./StockItem";
 import type { StockLocation } from "./StockLocation";
 import type { StockUnit } from "./StockUnit";
-import { STOCK_MOVEMENT_TYPES, StockMovementType } from "../dto/StockMovementType";
 
 @Entity("stock_movement")
 export class StockMovement {

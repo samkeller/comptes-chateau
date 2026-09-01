@@ -1,7 +1,7 @@
 import axios from "axios";
+import type { CreateStockLocationDto } from "@chocosous/shared";
 import BaseService from "../BaseService";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import { CreateStockLocationDto } from "./dto/CreateStockLocationDto";
 
 export default class StockLocationService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/locations`;

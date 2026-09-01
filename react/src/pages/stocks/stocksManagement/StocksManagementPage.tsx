@@ -4,7 +4,6 @@ import { generatePath, useNavigate, useParams } from "react-router-dom";
 import { routePaths } from "@/routes/routePaths";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockLocationDialog from "./StockLocationDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
@@ -24,11 +23,6 @@ export default function StocksManagementPage() {
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [editingLocation, setEditingLocation] = useState<StockLocation | null>(null);
     const [isLocationDialogVisible, setIsLocationDialogVisible] = useState(false);
-    /**
-     * Affiche la dialogue de création/modification de StockItem/StockUnit
-     */
-    const [isSaveDialogVisible, setIsSaveDialogVisible] = useState(true);
-
     const selectedLocation = useMemo(
         () => locations.find((location) => location.id === selectedLocationId) ?? null,
         [locations, selectedLocationId]

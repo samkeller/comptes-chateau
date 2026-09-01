@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { showGlobalToast } from "@/services/GlobalToast";
-import { formatDistanceToNow, parseDateToDisplay } from "@/utils/DatesUtils";
 import { Button } from "primereact/button";
 
 interface StockItemUnitsViewProps {
@@ -13,62 +12,23 @@ const stockUnitsService = new StockUnitsService()
 
 export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewProps) {
     const [units, setUnits] = useState<StockUnit[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         loadStockUnits(stockItemId);
     }, [stockItemId]);
 
     const loadStockUnits = async (itemId: number) => {
-        setLoading(true);
         stockUnitsService.getStockUnitsByItemId(itemId)
             .then((units) => {
                 setUnits(units);
             })
-            .catch((error) => {
+            .catch(() => {
                 showGlobalToast({
                     severity: "error",
                     summary: "Erreur",
                     detail: "Impossible de charger les unités du stock",
                 })
-            })
-            .finally(() => {
-                setLoading(false);
             });
-    }
-
-    /**
-     * TODO ONTAKE
-     * @param unit 
-     */
-    const onTake = (unit: StockUnit) => { }
-
-    const expirationDateBodyTemplate = (expirationDate: Date) => {
-        /**
-         * Severity :
-         * - Vert: La date est dans plus de deux semaines
-         * - Orange: La date est dans moins de deux semaines
-         * - Rouge: La date est dépassée
-         */
-        const severity = (() => {
-            const now = new Date();
-            const twoWeeksFromNow = new Date();
-            twoWeeksFromNow.setDate(now.getDate() + 14);
-
-            if (expirationDate > twoWeeksFromNow)
-                return "green";
-            else if (expirationDate > now)
-                return "orange";
-            else
-                return "red";
-        })();
-
-        return (
-            <div className="flex flex-col gap-1">
-                <span>{parseDateToDisplay(expirationDate)}</span>
-                <span className={`text-${severity}-500`}>{formatDistanceToNow(expirationDate)}</span>
-            </div>
-        )
     }
 
     /**
@@ -103,7 +63,7 @@ export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewPr
                                     {count === 1 ? "1 unité" : `${count} unités`}
                                 </span>
                             </div>
-                            <Button label="Prendre" icon="pi pi-check" size="small" onClick={() => onTake(groupedUnits[expirationDate][0])} />
+                            <Button label="Prendre" icon="pi pi-check" size="small" />
 
                         </div>
                     );

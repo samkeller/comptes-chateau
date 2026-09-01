@@ -1,4 +1,4 @@
-import { XpRealtimeEvent } from "@/interfaces/XpEvents";
+import type { XpRealtimeEvent } from "@chocosous/shared";
 import xpEventStreamService from "@/services/XpEventStreamService";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useConnectedUser } from "./ConnectedUserContext";

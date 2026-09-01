@@ -10,7 +10,8 @@ import { Dropdown } from "primereact/dropdown";
 import { useGlobalToast } from "../../../context/GlobalToastContext";
 import { AccountLinePoste } from "../../../interfaces/AccountLinePoste";
 import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerValue } from "../setupUtils";
-import AccountLinePosteService, { SavePostePayload } from "../../../services/AccountLinePosteService";
+import AccountLinePosteService from "../../../services/AccountLinePosteService";
+import type { SavePostePayload } from "@chocosous/shared";
 import AccountService from "../../../services/AccountService";
 import Account from "../../../interfaces/Account";
 

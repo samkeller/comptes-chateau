@@ -1,12 +1,7 @@
+import type { UserDto } from "@chocosous/shared";
 import { User } from "../entities/User";
 
-export interface UserDto {
-    id: number;
-    username: string;
-    avatar: string;
-    totalXp: number;
-}
-
+/** Convertit une entité User en DTO exposé par l'API. */
 export function toUserDto(user: User): UserDto {
     return {
         id: user.id,

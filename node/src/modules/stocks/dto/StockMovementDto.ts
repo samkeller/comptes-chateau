@@ -13,6 +13,7 @@ export interface StockMovementDto {
     createdAt: string;
 }
 
+/** Convertit une entité StockMovement en DTO exposé par l'API. */
 export function toStockMovementDto(movement: StockMovement): StockMovementDto {
     return {
         id: movement.id,

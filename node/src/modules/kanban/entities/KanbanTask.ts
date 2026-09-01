@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { KanbanColumn } from "./KanbanColumn";
-import { KANBAN_TASK_PRIORITIES, KanbanTaskPriority } from "../dto/KanbanTaskPriority";
+import { KANBAN_TASK_PRIORITIES, type KanbanTaskPriority } from "@chocosous/shared";
 import { User } from "../../core/entities/User";
 
 @Entity("kanban_task")

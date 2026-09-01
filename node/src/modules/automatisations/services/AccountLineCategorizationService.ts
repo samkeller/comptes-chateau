@@ -7,33 +7,7 @@ import { normalizeAccountLineRuleLabel, normalizeForMatching } from "../utils/Ac
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
 import { Like } from "typeorm/find-options/operator/Like";
-
-export interface SaveRuleDto {
-    label: string;
-    accountId: number;
-    posteId?: number | null;
-    natureId?: number | null;
-}
-
-export interface UnmappedPatternDto {
-    pattern: string;
-    label: string;
-    count: number;
-    account: {
-        id: number,
-        label: string
-    },
-    suggestedPoste: {
-        id: number,
-        label: string,
-        color: string
-    } | null
-    suggestedNature: {
-        id: number,
-        label: string,
-        color: string
-    } | null
-}
+import type { SaveAccountLineRuleRequest, UnmappedAccountLineRuleResponse } from "@chocosous/shared";
 
 interface PatternAggregation {
     pattern: string;
@@ -87,7 +61,7 @@ export default class AccountLineCategorizationService {
      * @param payload 
      * @returns 
      */
-    async create(payload: SaveRuleDto, creatorId: number): Promise<AccountLineRule> {
+    async create(payload: SaveAccountLineRuleRequest, creatorId: number): Promise<AccountLineRule> {
         const cleanPattern = normalizeForMatching(payload.label);
         if (!cleanPattern) {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
@@ -123,7 +97,7 @@ export default class AccountLineCategorizationService {
      * La fréquence est définie par le seuil FREQUENCY_THRESHOLD (3 occurrences minimum).
      * 
      */
-    async getUnmapped(): Promise<UnmappedPatternDto[]> {
+    async getUnmapped(): Promise<UnmappedAccountLineRuleResponse[]> {
         // 1. Charger les règles existantes pour exclure leurs patterns
         const existingRules = await this.ruleRepo.find({ select: ["pattern", "label", "accountId"] });
         const existingPatterns = new Set(
@@ -175,7 +149,7 @@ export default class AccountLineCategorizationService {
         }
 
         // 4. Formater et trier les candidats pour l'IHM
-        const result: UnmappedPatternDto[] = Array.from(aggregations.values())
+        const result: UnmappedAccountLineRuleResponse[] = Array.from(aggregations.values())
             .map((agg) => {
                 // Trouver le poste le plus fréquent
                 const topPosteEntry = Array.from(agg.posteFrequencies.values()).sort(
@@ -221,7 +195,7 @@ export default class AccountLineCategorizationService {
         return result;
     }
 
-    async updateById(id: number, body: SaveRuleDto): Promise<AccountLineRule> {
+    async updateById(id: number, body: SaveAccountLineRuleRequest): Promise<AccountLineRule> {
         const existing = await this.ruleRepo.findOne({ where: { id } })
 
         if (!existing) {

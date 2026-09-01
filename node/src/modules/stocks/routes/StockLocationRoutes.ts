@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateBody, validateParams, IdParamSchema } from "../../core/middlewares/validate";
-import { CreateStockLocationSchema, UpdateStockLocationSchema } from "../dto/CreateStockLocationDto";
+import { CreateStockLocationSchema, UpdateStockLocationSchema } from "@chocosous/shared";
 import StockLocationController from "../controllers/StockLocationController";
 
 const StockLocationRoutes = Router();

@@ -1,17 +1,25 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../../core/entities/User";
 import { toUserDto } from "../../core/dto/UserDto";
-import { CreateKanbanCommentDto } from "../dto/CreateKanbanCommentDto";
-import { CreateKanbanTaskDto } from "../dto/CreateKanbanTaskDto";
-import { KanbanBoardDto } from "../dto/KanbanBoardDto";
-import { KanbanCommentDto } from "../dto/KanbanCommentDto";
-import { KanbanTaskDto, toKanbanTaskDto } from "../dto/KanbanTaskDto";
+import type {
+    CreateKanbanTaskRequest,
+    KanbanBoardResponse,
+    KanbanCommentResponse,
+    KanbanTaskResponse,
+} from "@chocosous/shared";
+import { toKanbanTaskDto } from "../dto/KanbanTaskDto";
 import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
 import { In } from "typeorm";
 import { forbidden, notFound } from "../../../utils/AppError";
 import UserXpService from "../../core/services/UserXpService";
+
+/** Entrée interne (backend) pour la création d'un commentaire : taskId vient de l'URL, content du corps validé. */
+export interface CreateKanbanCommentInput {
+    taskId: number;
+    content: string;
+}
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
@@ -24,7 +32,7 @@ export default class KanbanBoardService {
         return this.kanbanColumnRepo.find();
     }
 
-    async getBoardData(): Promise<KanbanBoardDto> {
+    async getBoardData(): Promise<KanbanBoardResponse> {
         const [columns, tasks, users] = await Promise.all([
             this.kanbanColumnRepo.find(),
             this.kanbanTaskRepo.find({
@@ -55,7 +63,7 @@ export default class KanbanBoardService {
         return rows.map(row => row.tag);
     }
 
-    async createTask(body: CreateKanbanTaskDto, connectedUserId: number): Promise<KanbanTaskDto> {
+    async createTask(body: CreateKanbanTaskRequest, connectedUserId: number): Promise<KanbanTaskResponse> {
         const column = await this.kanbanColumnRepo.findOneBy({ id: body.columnId });
         const assignees = await this.resolveAssignees(body.assigneeIds);
 
@@ -77,7 +85,7 @@ export default class KanbanBoardService {
         return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
     }
 
-    async saveTask(task: CreateKanbanTaskDto, id: number): Promise<KanbanTaskDto> {
+    async saveTask(task: CreateKanbanTaskRequest, id: number): Promise<KanbanTaskResponse> {
         const existingTask = await this.kanbanTaskRepo.findOne({
             where: { id },
             relations: {
@@ -132,7 +140,7 @@ export default class KanbanBoardService {
         await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
     }
 
-    async getTaskComments(taskId: number): Promise<KanbanCommentDto[]> {
+    async getTaskComments(taskId: number): Promise<KanbanCommentResponse[]> {
         const comments = await this.kanbanCommentRepo.find({
             where: { taskId },
             relations: { author: true },
@@ -142,7 +150,7 @@ export default class KanbanBoardService {
         return comments.map(c => this.toCommentDto(c));
     }
 
-    async createComment(dto: CreateKanbanCommentDto, authorId: number): Promise<KanbanCommentDto> {
+    async createComment(dto: CreateKanbanCommentInput, authorId: number): Promise<KanbanCommentResponse> {
         const task = await this.kanbanTaskRepo.findOneBy({ id: dto.taskId });
         if (!task) throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
 
@@ -175,7 +183,7 @@ export default class KanbanBoardService {
         await this.kanbanCommentRepo.delete({ id: commentId });
     }
 
-    private toCommentDto(comment: KanbanComment): KanbanCommentDto {
+    private toCommentDto(comment: KanbanComment): KanbanCommentResponse {
         return {
             id: comment.id,
             taskId: comment.taskId,

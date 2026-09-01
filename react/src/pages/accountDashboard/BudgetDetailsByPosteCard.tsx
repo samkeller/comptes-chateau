@@ -1,5 +1,5 @@
 import { Card } from "primereact/card";
-import { BudgetByPoste } from "@/interfaces/BudgetByPoste";
+import type { BudgetByPoste } from "@chocosous/shared";
 import BudgetPosteRow from "./molecules/BudgetPosteRow";
 
 interface BudgetVsActualCardProps {

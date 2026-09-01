@@ -1,7 +1,11 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound } from "../../../utils/AppError";
-import { CreateStockLocationDto, UpdateStockLocationDto } from "../dto/CreateStockLocationDto";
-import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
+import type {
+    CreateStockLocationDto,
+    StockLocationDto,
+    UpdateStockLocationDto,
+} from "@chocosous/shared";
+import { toStockLocationDto } from "../dto/StockLocationDto";
 import { StockLocation } from "../entities/StockLocation";
 
 export default class StockLocationService {
