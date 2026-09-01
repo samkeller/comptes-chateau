@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DashboardMonthlyByPosteQuerySchema } from "../../../../../shared/src/contracts/accounts/DashboardDtos";
+import { DashboardMonthlyByPosteQuerySchema } from "@chocosous/shared";
 
 describe("DashboardMonthlyByPosteQuerySchema", () => {
     it("converts CSV poste IDs and date strings", () => {
