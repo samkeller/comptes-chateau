@@ -65,12 +65,12 @@ beforeAll(async () => {
     db.public.registerFunction({ name: "current_schema", returns: DataType.text, implementation: () => "public" });
 
     for (const column of getMetadataArgsStorage().columns) {
-        if (column.options.type === "date" && typeof column.options.default === "function") {
-            const defaultValue = column.options.default();
-            if (defaultValue === "CURRENT_DATE") {
-                originalDateDefaults.set(column, column.options.default);
-                column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
-            }
+        const defaultValue = column.options.default;
+        const isCurrentDate = defaultValue === "CURRENT_DATE"
+            || (typeof defaultValue === "function" && defaultValue() === "CURRENT_DATE");
+        if (column.options.type === "date" && isCurrentDate) {
+            originalDateDefaults.set(column, defaultValue);
+            column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
         }
     }
 
