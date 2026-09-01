@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import "reflect-metadata";
 import { DataType, IMemoryDb, newDb } from "pg-mem";
-import { DataSource } from "typeorm";
+import { DataSource, getMetadataArgsStorage } from "typeorm";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
 /**
@@ -33,8 +33,10 @@ function collectEntities(): Function[] {
 //    ait fini d'initialiser testDataSource (ordre garanti par Vitest).
 // -----------------------------------------------------------------------
 let testDataSource: DataSource;
+type ColumnMetadataArgs = ReturnType<typeof getMetadataArgsStorage>["columns"][number];
+const originalDateDefaults = new Map<ColumnMetadataArgs, ColumnMetadataArgs["options"]["default"]>();
 
-vi.mock("../../db/dataSource", () => ({
+vi.mock("../db/dataSource", () => ({
     AppDataSource: new Proxy({} as DataSource, {
         get(_target, prop) {
             if (!testDataSource) {
@@ -62,6 +64,16 @@ beforeAll(async () => {
     db.public.registerFunction({ name: "version", returns: DataType.text, implementation: () => "PostgreSQL 16.0" });
     db.public.registerFunction({ name: "current_schema", returns: DataType.text, implementation: () => "public" });
 
+    for (const column of getMetadataArgsStorage().columns) {
+        const defaultValue = column.options.default;
+        const isCurrentDate = defaultValue === "CURRENT_DATE"
+            || (typeof defaultValue === "function" && defaultValue() === "CURRENT_DATE");
+        if (column.options.type === "date" && isCurrentDate) {
+            originalDateDefaults.set(column, defaultValue);
+            column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
+        }
+    }
+
     testDataSource = db.adapters.createTypeormDataSource({
         type: "postgres",
         entities: collectEntities(),
@@ -87,6 +99,10 @@ afterAll(async () => {
     if (testDataSource?.isInitialized) {
         await testDataSource.destroy();
     }
+    for (const [column, defaultValue] of originalDateDefaults) {
+        column.options.default = defaultValue;
+    }
+    originalDateDefaults.clear();
 });
 
 export { testDataSource };

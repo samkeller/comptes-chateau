@@ -1,8 +1,7 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { KanbanTask } from "./KanbanTask";
 
 @Entity("kanban_column")
-@Unique(["order"])
 export class KanbanColumn {
     @PrimaryGeneratedColumn()
     id: number;
