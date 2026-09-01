@@ -1,43 +1,20 @@
 import express from "express";
 import request from "supertest";
-import { DataSource } from "typeorm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
-import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
-import SetupTestDb from "../../../tests/SetupTests";
+import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 
-let testDataSource: DataSource;
 let posteMaisonId: number;
 let posteVoyageId: number;
 const accountId = 1;
-const kanbanTaskRepoStub = {
-    createQueryBuilder: vi.fn(() => ({
-        innerJoin: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        getCount: vi.fn().mockResolvedValue(0),
-    }))
-};
 
-const emptyFindStub = { find: vi.fn().mockResolvedValue([]) };
-
-vi.mock("../../../db/dataSource", () => ({
-    AppDataSource: {
-        getRepository: <T>(entity: new () => T) => {
-            const name = (entity as { name?: string }).name;
-            if (name === "KanbanTask") return kanbanTaskRepoStub;
-            if (name === "BudgetItem" || name === "RecurringExpense") return emptyFindStub;
-            return testDataSource.getRepository(entity);
-        }
-    }
-}));
-
-async function seedDashboardLines(dataSource: DataSource): Promise<void> {
-    const accountRepo = dataSource.getRepository(Account);
-    const posteRepo = dataSource.getRepository(AccountLinePoste);
-    const lineRepo = dataSource.getRepository(AccountLine);
+async function seedDashboardLines(): Promise<void> {
+    const accountRepo = testDataSource.getRepository(Account);
+    const posteRepo = testDataSource.getRepository(AccountLinePoste);
+    const lineRepo = testDataSource.getRepository(AccountLine);
     const account = await accountRepo.save({
         id: accountId,
         label: "Compte principal",
@@ -114,17 +91,6 @@ describe("DashboardController /monthly-by-poste integration", () => {
     let app: express.Express;
 
     beforeAll(async () => {
-        const db = SetupTestDb();
-
-        testDataSource = db.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
-            synchronize: true
-        });
-
-        await testDataSource.initialize();
-        await seedDashboardLines(testDataSource);
-
         const { default: dashboardRoutes } = await import("./DashboardController");
         app = express();
         app.use(express.json());
@@ -132,10 +98,8 @@ describe("DashboardController /monthly-by-poste integration", () => {
         app.use(errorMiddleware);
     });
 
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
+    beforeEach(async () => {
+        await seedDashboardLines();
     });
 
     it("returns monthly aggregate filtered by date range and posteIds", async () => {
@@ -200,15 +164,14 @@ describe("DashboardController monthly-by-poste with incoming transfers", () => {
     let posteRevenuId: number;
 
     beforeAll(async () => {
-        // Reassign module-level testDataSource so the top-level vi.mock can pick it up
-        const transferDb = SetupTestDb();
-        testDataSource = transferDb.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [Account, AccountLine, AccountLineNature, AccountLinePoste],
-            synchronize: true
-        });
-        await testDataSource.initialize();
+        const { default: dashboardRoutes } = await import("./DashboardController");
+        app = express();
+        app.use(express.json());
+        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
+        app.use(errorMiddleware);
+    });
 
+    beforeEach(async () => {
         const accountRepo = testDataSource.getRepository(Account);
         const posteRepo = testDataSource.getRepository(AccountLinePoste);
         const lineRepo = testDataSource.getRepository(AccountLine);
@@ -258,18 +221,6 @@ describe("DashboardController monthly-by-poste with incoming transfers", () => {
                 isChecked: false
             }
         ]);
-
-        const { default: dashboardRoutes } = await import("./DashboardController");
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
-        app.use(errorMiddleware);
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("target account aggregate includes incoming transfer mirror line", async () => {

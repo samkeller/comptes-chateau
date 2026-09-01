@@ -30,7 +30,8 @@
     "src/db/migrations/**",
     "src/db/scripts/**",
     "node_modules",
-    "dist"
+    "dist",
+    "src/tests"
   ],
   "ts-node": {
     "swc": true,
