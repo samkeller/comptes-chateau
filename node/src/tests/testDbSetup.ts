@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import "reflect-metadata";
 import { DataType, IMemoryDb, newDb } from "pg-mem";
-import { DataSource } from "typeorm";
+import { DataSource, getMetadataArgsStorage } from "typeorm";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
 /**
@@ -34,7 +34,7 @@ function collectEntities(): Function[] {
 // -----------------------------------------------------------------------
 let testDataSource: DataSource;
 
-vi.mock("../../db/dataSource", () => ({
+vi.mock("../db/dataSource", () => ({
     AppDataSource: new Proxy({} as DataSource, {
         get(_target, prop) {
             if (!testDataSource) {
@@ -61,6 +61,15 @@ beforeAll(async () => {
     db.public.registerFunction({ name: "current_database", returns: DataType.text, implementation: () => "pgmem" });
     db.public.registerFunction({ name: "version", returns: DataType.text, implementation: () => "PostgreSQL 16.0" });
     db.public.registerFunction({ name: "current_schema", returns: DataType.text, implementation: () => "public" });
+
+    for (const column of getMetadataArgsStorage().columns) {
+        if (column.options.type === "date" && typeof column.options.default === "function") {
+            const defaultValue = column.options.default();
+            if (defaultValue === "CURRENT_DATE") {
+                column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
+            }
+        }
+    }
 
     testDataSource = db.adapters.createTypeormDataSource({
         type: "postgres",
