@@ -59,7 +59,7 @@ beforeAll(async () => {
     console.info("Initializing test database...");
     db = newDb({ autoCreateForeignKeyIndices: true });
 
-    // Les mêmes stubs que ton SetupTests.ts actuel.
+    // Stubs nécessaires pour que pg-mem simule un backend PostgreSQL.
     db.public.registerFunction({ name: "current_database", returns: DataType.text, implementation: () => "pgmem" });
     db.public.registerFunction({ name: "version", returns: DataType.text, implementation: () => "PostgreSQL 16.0" });
     db.public.registerFunction({ name: "current_schema", returns: DataType.text, implementation: () => "public" });
