@@ -1,7 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { DataSource } from "typeorm";
-import { afterAll,beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { Account } from "../entities/Account";
@@ -14,6 +13,15 @@ describe("BudgetController integration", () => {
     let posteId: number;
 
     beforeAll(async () => {
+        const { default: budgetRoutes } = await import("./BudgetController");
+
+        app = express();
+        app.use(express.json());
+        app.use("/accounts/:accountId/budget", budgetRoutes);
+        app.use(errorMiddleware);
+    });
+
+    beforeEach(async () => {
         const accountRepo = testDataSource.getRepository(Account);
         const posteRepo = testDataSource.getRepository(AccountLinePoste);
 
@@ -23,7 +31,6 @@ describe("BudgetController integration", () => {
             baseLineAmount: 0,
             baseLineEffectiveDate: new Date("2026-01-01"),
         });
-
         accountId = account.id;
 
         const poste = await posteRepo.save({
@@ -31,21 +38,7 @@ describe("BudgetController integration", () => {
             color: "#445566",
             account,
         });
-
         posteId = poste.id;
-
-        const { default: budgetRoutes } = await import("./BudgetController");
-
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/budget", budgetRoutes);
-        app.use(errorMiddleware);
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("creates, updates and reads an active budget item", async () => {
@@ -59,7 +52,6 @@ describe("BudgetController integration", () => {
             });
 
         expect(createResponse.status).toBe(201);
-
         expect(createResponse.body).toMatchObject({
             label: "Loyer",
             amount: 800,
@@ -84,7 +76,6 @@ describe("BudgetController integration", () => {
             });
 
         expect(updateResponse.status).toBe(200);
-
         expect(updateResponse.body).toMatchObject({
             id,
             label: "Loyer principal",
@@ -94,12 +85,9 @@ describe("BudgetController integration", () => {
             poste: null,
         });
 
-        const listResponse = await request(app)
-            .get(`/accounts/${accountId}/budget`);
-
+        const listResponse = await request(app).get(`/accounts/${accountId}/budget`);
         expect(listResponse.status).toBe(200);
         expect(listResponse.body).toHaveLength(1);
-
         expect(listResponse.body[0]).toMatchObject({
             id,
             label: "Loyer principal",
@@ -132,23 +120,14 @@ describe("BudgetController integration", () => {
             });
 
         expect(updateResponse.status).toBe(200);
-
         expect(updateResponse.body).toMatchObject({
             id,
             isActive: false,
         });
 
-        const listResponse = await request(app)
-            .get(`/accounts/${accountId}/budget`);
-
+        const listResponse = await request(app).get(`/accounts/${accountId}/budget`);
         expect(listResponse.status).toBe(200);
-
-        expect(
-            listResponse.body.some(
-                (item: { id: number; isActive: boolean }) =>
-                    item.id === id && item.isActive === false
-            )
-        ).toBe(true);
+        expect(listResponse.body.some((item: { id: number; isActive: boolean }) => item.id === id && item.isActive === false)).toBe(true);
     });
 
     it("hard deletes an item from the budget list", async () => {
@@ -163,26 +142,15 @@ describe("BudgetController integration", () => {
 
         const id = Number(createResponse.body.id);
 
-        const deleteResponse = await request(app)
-            .delete(`/accounts/${accountId}/budget/${id}`);
-
+        const deleteResponse = await request(app).delete(`/accounts/${accountId}/budget/${id}`);
         expect(deleteResponse.status).toBe(204);
 
-        const listResponse = await request(app)
-            .get(`/accounts/${accountId}/budget`);
-
+        const listResponse = await request(app).get(`/accounts/${accountId}/budget`);
         expect(listResponse.status).toBe(200);
-
-        expect(
-            listResponse.body.some(
-                (item: { id: number }) => item.id === id
-            )
-        ).toBe(false);
+        expect(listResponse.body.some((item: { id: number }) => item.id === id)).toBe(false);
 
         const repo = testDataSource.getRepository(BudgetItem);
-
         const deletedItem = await repo.findOneBy({ id });
-
         expect(deletedItem).toBeNull();
     });
 

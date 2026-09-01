@@ -1,4 +1,4 @@
-import { EntityManager, LessThanOrEqual, Repository } from "typeorm";
+import { EntityManager, LessThanOrEqual } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
@@ -7,13 +7,14 @@ import { SaveRecurringExpensePayload } from "@chocosous/shared";
 
 export default class RecurringExpenseService {
 
-    private recurringExpenseRepo: Repository<RecurringExpense>;
+    private recurringExpenseRepo;
 
-    private userXpService: UserXpService;
+    private userXpService = new UserXpService();
 
-    constructor(em: EntityManager = AppDataSource.manager) {
-        this.recurringExpenseRepo = em.getRepository(RecurringExpense);
-        this.userXpService = new UserXpService(em);
+    constructor(manager?: EntityManager) {
+        this.recurringExpenseRepo = manager ?
+            manager.getRepository(RecurringExpense) :
+            AppDataSource.getRepository(RecurringExpense);
 
     }
     async getAllRecurringExpenses(accountId: number) {

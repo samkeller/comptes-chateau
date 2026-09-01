@@ -47,6 +47,9 @@ export class StockUnit {
     @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn() 
+    @UpdateDateColumn()
     updatedAt: Date;
+
+    @DeleteDateColumn()
+    deletedAt: Date | null;
 }

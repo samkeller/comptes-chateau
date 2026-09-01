@@ -9,8 +9,10 @@ import { isUniqueViolation } from "../../../utils/dbErrors";
 export default class NatureService {
     private readonly natureRepo: Repository<AccountLineNature>;
 
-    constructor(em: EntityManager = AppDataSource.manager) {
-        this.natureRepo = em.getRepository(AccountLineNature);
+    constructor(manager?: EntityManager) {
+        this.natureRepo = manager
+            ? manager.getRepository(AccountLineNature)
+            : AppDataSource.getRepository(AccountLineNature);
     }
 
     async getAll(): Promise<AccountLineNatureDto[]> {

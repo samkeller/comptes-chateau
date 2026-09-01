@@ -1,13 +1,16 @@
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { JobExecutionLog, JobExecutionStatus } from "../entities/JobExecutionLog";
 import customLog from "../../../jobs/customLog";
 
 export default class JobExecutionLogService {
-    private jobExecutionLogRepo: Repository<JobExecutionLog>;
+    private jobExecutionLogRepo;
 
-    constructor(em: EntityManager = AppDataSource.manager) {
-        this.jobExecutionLogRepo = em.getRepository(JobExecutionLog);
+    constructor(manager?: EntityManager) {
+        this.jobExecutionLogRepo = manager ?
+            manager.getRepository(JobExecutionLog) :
+            AppDataSource.getRepository(JobExecutionLog);
+
     }
 
     async logSuccess(jobName: string, message: string, details?: Record<string, any>) {
