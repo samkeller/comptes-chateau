@@ -1,20 +1,11 @@
 import express from "express";
 import request from "supertest";
-import { DataSource } from "typeorm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import SetupTestDb from "../../../tests/SetupTests";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { Account } from "../entities/Account";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { BudgetItem } from "../entities/BudgetItem";
-
-let testDataSource: DataSource;
-
-vi.mock("../../../db/dataSource", () => ({
-    AppDataSource: {
-        getRepository: <T>(entity: new () => T) => testDataSource.getRepository(entity),
-    }
-}));
 
 describe("BudgetController integration", () => {
     let app: express.Express;
@@ -22,16 +13,15 @@ describe("BudgetController integration", () => {
     let posteId: number;
 
     beforeAll(async () => {
-        const db = SetupTestDb();
+        const { default: budgetRoutes } = await import("./BudgetController");
 
-        testDataSource = db.adapters.createTypeormDataSource({
-            type: "postgres",
-            entities: [Account, AccountLinePoste, BudgetItem],
-            synchronize: true,
-        });
+        app = express();
+        app.use(express.json());
+        app.use("/accounts/:accountId/budget", budgetRoutes);
+        app.use(errorMiddleware);
+    });
 
-        await testDataSource.initialize();
-
+    beforeEach(async () => {
         const accountRepo = testDataSource.getRepository(Account);
         const posteRepo = testDataSource.getRepository(AccountLinePoste);
 
@@ -49,19 +39,6 @@ describe("BudgetController integration", () => {
             account,
         });
         posteId = poste.id;
-
-        const { default: budgetRoutes } = await import("./BudgetController");
-
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/budget", budgetRoutes);
-        app.use(errorMiddleware);
-    });
-
-    afterAll(async () => {
-        if (testDataSource?.isInitialized) {
-            await testDataSource.destroy();
-        }
     });
 
     it("creates, updates and reads an active budget item", async () => {
