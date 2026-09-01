@@ -4,12 +4,15 @@ import type {
     CreateStockItemDto,
     CreateStockLocationDto,
     RecordStockMovementDto,
+    StockItemDto,
+    StockLocationDto,
+    StockMovementDto,
     UpdateStockItemDto,
     UpdateStockLocationDto,
 } from "@chocosous/shared";
-import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
-import { StockLocationDto, toStockLocationDto } from "../dto/StockLocationDto";
-import { StockMovementDto, toStockMovementDto } from "../dto/StockMovementDto";
+import { toStockItemDto } from "../dto/StockItemDto";
+import { toStockLocationDto } from "../dto/StockLocationDto";
+import { toStockMovementDto } from "../dto/StockMovementDto";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";

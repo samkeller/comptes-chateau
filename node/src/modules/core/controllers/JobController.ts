@@ -33,14 +33,19 @@ JobRoutes.post("/backup-db", async (req, res) => {
     const currentDate = new Date();
     customLog("WARN", `Manual trigger of backup-db job by userId=${req.session.userId}`);
 
-    await backupDb(currentDate);
+    try {
+        await backupDb(currentDate);
 
-    const response: BackupDatabaseJobResponse = {
-        triggeredAt: currentDate.toISOString(),
-        message: "Backup job completed successfully.",
-    };
+        const response: BackupDatabaseJobResponse = {
+            triggeredAt: currentDate.toISOString(),
+            message: "Backup job completed successfully.",
+        };
 
-    res.json(response);
+        res.json(response);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "An error occurred while running the backup-db job." });
+    }
 });
 
 export default JobRoutes;

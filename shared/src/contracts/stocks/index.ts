@@ -29,3 +29,9 @@ export type {
     StockMovementType,
     RecordStockMovementDto,
 } from "./RecordStockMovementDto";
+
+export type {
+    StockLocationDto,
+    StockItemDto,
+    StockMovementDto,
+} from "./StockDtos";
