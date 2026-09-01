@@ -6,14 +6,20 @@ import { UserXpActionsPoints, UserXpActionsPointsKeys } from "../utils/UserXPUti
 import { xpEventBus } from "../events/XpEventBus";
 import type { XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
+import { EntityManager } from "typeorm/entity-manager/EntityManager";
+import { Repository } from "typeorm";
 
 export default class UserXpService {
 
-    private userRepo = AppDataSource.getRepository(User);
+    private userRepo: Repository<User>;
+
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.userRepo = em.getRepository(User);
+    }
 
     async addXPForUser(userId: number, action: UserXpActionsPointsKeys, multiplicator: number = 1): Promise<User> {
         const user = await this.userRepo.findOne({ where: { id: userId } });
- 
+
         if (!userId || !user) throw new UserNotFoundError(`User with id ${userId} not found`);
 
         const previousTotalXp = user.totalXp;

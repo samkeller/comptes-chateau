@@ -1,4 +1,4 @@
-import { EntityManager, In } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
@@ -7,13 +7,10 @@ import { badRequest } from "../../../utils/AppError";
 
 export default class AccountLineService {
 
-    private accountLineRepo;
+    private accountLineRepo: Repository<AccountLine>;
 
-    constructor(manager?: EntityManager) {
-        this.accountLineRepo = manager ?
-            manager.getRepository(AccountLine) :
-            AppDataSource.getRepository(AccountLine);
-
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.accountLineRepo = em.getRepository(AccountLine);
     }
 
     private async resolveExistingLinesById(accountLines: Partial<AccountLine>[]): Promise<Map<number, AccountLine>> {

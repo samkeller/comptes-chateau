@@ -2,63 +2,98 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    JoinColumn,
-    ManyToOne,
+    Index,
     PrimaryGeneratedColumn,
 } from "typeorm";
 import { STOCK_MOVEMENT_TYPES, type StockMovementType } from "@chocosous/shared";
-import type { StockItem } from "./StockItem";
-import type { StockLocation } from "./StockLocation";
-import type { StockUnit } from "./StockUnit";
 
+/**
+ * Journal immuable des mouvements de stock.
+ *
+ * Un mouvement représente une variation historique du stock :
+ * - IN     : entrée d'une quantité en stock ;
+ * - OUT    : consommation d'une quantité du stock ;
+ * - DELETE : suppression d'une quantité du stock, assimilée à une perte/gaspillage.
+ *
+ * Les identifiants (`itemId`, `unitId`, `locationId`) sont conservés comme
+ * références historiques uniquement. Ils ne dépendent pas de l'existence
+ * actuelle des entités correspondantes.
+ *
+ * Les informations métier nécessaires à la compréhension du mouvement
+ * (`itemLabel`, `quantity`, `unit`, `locationLabel`) sont stockées directement
+ * dans le mouvement afin que l'historique reste exploitable après suppression
+ * ou modification des entités d'origine.
+ *
+ * Le mouvement doit être considéré comme immuable une fois créé.
+ */
+@Index(
+    "UQ_stock_movement_unit_type",
+    ["unitId", "type"],
+    { unique: true }
+)
 @Entity("stock_movement")
 export class StockMovement {
     @PrimaryGeneratedColumn()
     id: number;
 
+    /**
+     * Identifiant historique du stock item concerné.
+     *
+     * Pas une foreign key -> le mouvement survit à la suppression du stock item.
+     */
     @Column({ type: "int" })
     itemId: number;
 
-    @ManyToOne("StockItem", (item: StockItem) => item.movements, { nullable: false, onDelete: "CASCADE" })
-    @JoinColumn({ name: "itemId" })
-    item: StockItem;
+    /**
+     * Nom du stock item au moment du mouvement.
+     */
+    @Column({ type: "varchar", length: 255 })
+    itemLabel: string;
 
-    @Column({ type: "int", nullable: true })
-    unitId: number | null;
+    /**
+     * Identifiant historique de la stock unit concernée.
+     * Pas une foreign key -> le mouvement survit à la suppression de l'unité de stock.
+     */
+    @Column({ type: "int" })
+    unitId: number;
 
-    @ManyToOne("StockUnit", (unit: StockUnit) => unit.movements, { nullable: true, onDelete: "SET NULL" })
-    @JoinColumn({ name: "unitId" })
-    unit: StockUnit | null;
+    /**
+     * Quantité concernée par le mouvement.
+     */
+    @Column({ type: "double precision" })
+    quantity: number;
 
-    @Column({ type: "int", nullable: true })
-    fromLocationId: number | null;
+    /**
+     * Unité de mesure de la quantité au moment du mouvement.
+     */
+    @Column({ type: "varchar", length: 64 })
+    unit: string;
 
-    @ManyToOne("StockLocation", { nullable: true, onDelete: "SET NULL" })
-    @JoinColumn({ name: "fromLocationId" })
-    fromLocation: StockLocation | null;
+    /**
+     * Identifiant historique de l'emplacement concerné.
+     * Pas une foreign key -> le mouvement survit à la suppression de l'emplacement.
+     */
+    @Column({ type: "int" })
+    locationId: number;
 
-    @Column({ type: "int", nullable: true })
-    toLocationId: number | null;
+    /**
+     * Nom de l'emplacement au moment du mouvement.
+     */
+    @Column({ type: "varchar", length: 255 })
+    locationLabel: string;
 
-    @ManyToOne("StockLocation", { nullable: true, onDelete: "SET NULL" })
-    @JoinColumn({ name: "toLocationId" })
-    toLocation: StockLocation | null;
-
+    /**
+     * Type du mouvement.
+     */
     @Column({
         type: "enum",
         enum: STOCK_MOVEMENT_TYPES,
     })
     type: StockMovementType;
 
-    @Column({ type: "double precision" })
-    quantity: number;
-
-    @Column({ type: "timestamp" })
-    occurredAt: Date;
-
-    @Column({ type: "varchar", length: 50, default: "manual" })
-    source: string;
-
+    /**
+     * Date et heure auxquelles le mouvement a été enregistré en base.
+     */
     @CreateDateColumn()
     createdAt: Date;
 }

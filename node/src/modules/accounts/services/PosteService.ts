@@ -9,10 +9,8 @@ import { isUniqueViolation } from "../../../utils/dbErrors";
 export default class PosteService {
     private readonly posteRepo: Repository<AccountLinePoste>;
 
-    constructor(manager?: EntityManager) {
-        this.posteRepo = manager
-            ? manager.getRepository(AccountLinePoste)
-            : AppDataSource.getRepository(AccountLinePoste);
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.posteRepo = em.getRepository(AccountLinePoste);
     }
 
     async getAll(accountId: number): Promise<AccountLinePosteDto[]> {

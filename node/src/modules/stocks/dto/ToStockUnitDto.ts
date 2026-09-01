@@ -1,4 +1,4 @@
-import { StockItemDto, toStockItemDto } from "./StockItemDto";
+import { StockItemDto, toStockItemDto } from "./ToStockItemDto";
 import type { StockLocationDto } from "@chocosous/shared";
 import { toStockLocationDto } from "./StockLocationDto";
 import { StockUnit } from "../entities/StockUnit";
