@@ -33,6 +33,8 @@ function collectEntities(): Function[] {
 //    ait fini d'initialiser testDataSource (ordre garanti par Vitest).
 // -----------------------------------------------------------------------
 let testDataSource: DataSource;
+type ColumnMetadataArgs = ReturnType<typeof getMetadataArgsStorage>["columns"][number];
+const originalDateDefaults = new Map<ColumnMetadataArgs, ColumnMetadataArgs["options"]["default"]>();
 
 vi.mock("../db/dataSource", () => ({
     AppDataSource: new Proxy({} as DataSource, {
@@ -66,6 +68,7 @@ beforeAll(async () => {
         if (column.options.type === "date" && typeof column.options.default === "function") {
             const defaultValue = column.options.default();
             if (defaultValue === "CURRENT_DATE") {
+                originalDateDefaults.set(column, column.options.default);
                 column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
             }
         }
@@ -96,6 +99,10 @@ afterAll(async () => {
     if (testDataSource?.isInitialized) {
         await testDataSource.destroy();
     }
+    for (const [column, defaultValue] of originalDateDefaults) {
+        column.options.default = defaultValue;
+    }
+    originalDateDefaults.clear();
 });
 
 export { testDataSource };
