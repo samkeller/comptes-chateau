@@ -15,6 +15,9 @@ export type {
     UpdateStockLocationDto,
     StockMovementType,
     RecordStockMovementDto,
+    StockLocationDto,
+    StockItemDto,
+    StockMovementDto,
 } from "./stocks";
 
 export {

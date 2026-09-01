@@ -94,6 +94,7 @@ export default defineConfig({
     exclude: ["@chocosous/shared"]
   },
   resolve: {
+    preserveSymlinks: true,
     alias: {
       "@": path.resolve(__dirname, "src"),
       "@assets": path.resolve(__dirname, "src/assets")
