@@ -5,7 +5,7 @@ import type {
     StockLocationDto,
     UpdateStockLocationDto,
 } from "@chocosous/shared";
-import { toStockLocationDto } from "../dto/StockLocationDto";
+import { toStockLocationDto } from "../mappers/StockLocationMapper";
 import { StockLocation } from "../entities/StockLocation";
 
 export default class StockLocationService {

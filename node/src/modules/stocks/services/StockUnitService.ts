@@ -1,7 +1,7 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound, conflict } from "../../../utils/AppError";
-import { StockUnitDto, toStockUnitDto } from "../dto/StockUnitDto";
-import { StockUnitCreateDto } from "../dto/StockUnitCreateDto";
+import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
+import { toStockUnitDto } from "../mappers/StockUnitMapper";
 import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";

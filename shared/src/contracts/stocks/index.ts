@@ -1,13 +1,15 @@
 export {
     CreateStockItemSchema,
-    UpdateStockItemSchema,
     StockItemsQuerySchema,
+    StockUnitCreateSchema,
+    StockUnitsQuerySchema,
 } from "./CreateStockItemDto";
 
 export type {
     CreateStockItemDto,
-    UpdateStockItemDto,
     StockItemsQueryDto,
+    StockUnitCreateDto,
+    StockUnitsQueryDto,
 } from "./CreateStockItemDto";
 
 export {
@@ -33,5 +35,6 @@ export type {
 export type {
     StockLocationDto,
     StockItemDto,
+    StockUnitDto,
     StockMovementDto,
 } from "./StockDtos";

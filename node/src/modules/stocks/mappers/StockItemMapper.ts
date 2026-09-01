@@ -1,18 +1,5 @@
+import type { StockItemDto } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
-
-export interface StockItemDto {
-    id: number;
-    label: string;
-    barcode: string | null;
-    defaultUnit: string;
-    imageUrl: string | null;
-
-    stockUnitsCount: number
-
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-}
 
 export function toStockItemDto(item: StockItem): StockItemDto {
     return {

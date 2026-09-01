@@ -13,12 +13,24 @@ export interface StockItemDto {
     id: number;
     label: string;
     barcode: string | null;
-    currentQuantity: number;
-    unit: string;
+    defaultUnit: string;
+    imageUrl: string | null;
+    stockUnitsCount: number;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+}
+
+/** Unité de produit en stock telle que renvoyée par l'API. */
+export interface StockUnitDto {
+    id: number;
+    itemId: number;
+    item: StockItemDto;
     locationId: number;
     location: StockLocationDto;
+    quantity: number;
+    unit: string;
     expirationDate: string | null;
-    imageUrl: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -27,6 +39,9 @@ export interface StockItemDto {
 export interface StockMovementDto {
     id: number;
     itemId: number;
+    unitId: number | null;
+    fromLocationId: number | null;
+    toLocationId: number | null;
     type: StockMovementType;
     quantity: number;
     occurredAt: string;

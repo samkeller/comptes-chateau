@@ -1,8 +1,7 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { StockItem } from "../entities/StockItem";
-import { StockItemDto, toStockItemDto } from "../dto/StockItemDto";
-import { StockItemsQueryDto } from "../dto/StockUnitsQueryDto";
-import { StockItemCreateDto } from "../dto/StockItemCreateDto";
+import type { CreateStockItemDto, StockItemDto, StockItemsQueryDto } from "@chocosous/shared";
+import { toStockItemDto } from "../mappers/StockItemMapper";
 import UserXpService from "../../core/services/UserXpService";
 
 export default class StockItemService {
@@ -34,7 +33,7 @@ export default class StockItemService {
         return items.map(toStockItemDto);
     }
 
-    async create(body: StockItemCreateDto, connectedUserId: number): Promise<StockItemDto> {
+    async create(body: CreateStockItemDto, connectedUserId: number): Promise<StockItemDto> {
 
         console.log("Creating stock item with body:", body);    
         const stockItem = this.stockItemRepo.create({

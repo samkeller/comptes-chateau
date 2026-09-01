@@ -4,7 +4,7 @@ import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { BudgetItem } from "../entities/BudgetItem";
 import { RecurringExpense } from "../entities/RecurringExpense";
 import type { BudgetItemDto, SaveBudgetItemPayload, UnifiedBudgetLine } from "@chocosous/shared";
-import { toBudgetItemDto } from "../dto/BudgetDtos";
+import { toBudgetItemDto } from "../mappers/BudgetItemMapper";
 
 export default class BudgetService {
     private budgetItemRepo = AppDataSource.getRepository(BudgetItem);

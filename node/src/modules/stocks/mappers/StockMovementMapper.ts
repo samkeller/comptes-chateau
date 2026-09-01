@@ -1,17 +1,5 @@
+import type { StockMovementDto } from "@chocosous/shared";
 import { StockMovement } from "../entities/StockMovement";
-
-export interface StockMovementDto {
-    id: number;
-    itemId: number;
-    unitId: number | null;
-    fromLocationId: number | null;
-    toLocationId: number | null;
-    type: StockMovement["type"];
-    quantity: number;
-    occurredAt: string;
-    source: string;
-    createdAt: string;
-}
 
 /** Convertit une entité StockMovement en DTO exposé par l'API. */
 export function toStockMovementDto(movement: StockMovement): StockMovementDto {

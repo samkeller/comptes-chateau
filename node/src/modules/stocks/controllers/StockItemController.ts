@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
+import type { CreateStockItemDto } from "@chocosous/shared";
 import StockItemService from "../services/StockItemService";
-import { StockItemCreateDto } from "../dto/StockItemCreateDto";
 import requireUserId from "../../accounts/utils/requireUserId";
 
 export default class StockItemController {
@@ -13,7 +13,7 @@ export default class StockItemController {
     };
 
     create = async (req: Request, res: Response) => {
-        const body = req.body as StockItemCreateDto;
+        const body = req.body as CreateStockItemDto;
         const connectedUserId = requireUserId(req);
 
         res.status(201).json(

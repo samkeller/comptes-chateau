@@ -5,9 +5,8 @@ import {
     validateBody,
     validateQuery,
 } from "../../core/middlewares/validate";
-import { ItemIdParamSchema } from "../dto/ItemIdDto";
+import { StockUnitCreateSchema, StockUnitsQuerySchema } from "@chocosous/shared";
 import StockUnitController from "../controllers/StockUnitController";
-import { StockUnitCreateSchema } from "../dto/StockUnitCreateDto";
 
 const StockUnitRoutes = Router();
 const stockUnitController = new StockUnitController();
@@ -17,7 +16,7 @@ const stockUnitController = new StockUnitController();
  */
 StockUnitRoutes.get(
     "/",
-    validateQuery(ItemIdParamSchema),
+    validateQuery(StockUnitsQuerySchema),
     stockUnitController.getAll
 );
 

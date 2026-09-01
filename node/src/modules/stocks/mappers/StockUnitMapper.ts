@@ -1,20 +1,7 @@
-import { StockItemDto, toStockItemDto } from "./StockItemDto";
-import type { StockLocationDto } from "@chocosous/shared";
-import { toStockLocationDto } from "./StockLocationDto";
+import type { StockUnitDto } from "@chocosous/shared";
+import { toStockItemDto } from "./StockItemMapper";
+import { toStockLocationDto } from "./StockLocationMapper";
 import { StockUnit } from "../entities/StockUnit";
-
-export interface StockUnitDto {
-    id: number;
-    itemId: number;
-    item: StockItemDto;
-    locationId: number;
-    location: StockLocationDto;
-    quantity: number;
-    unit: string;
-    expirationDate: string | null;
-    createdAt: string;
-    updatedAt: string;
-}
 
 export function toStockUnitDto(unit: StockUnit): StockUnitDto {
     return {
