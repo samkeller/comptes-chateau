@@ -23,14 +23,20 @@ export type {
 } from "./CreateStockLocationDto";
 
 export {
+    CreateStockMovementSchema,
+} from "./CreateMovementDto";
+
+export type {
+    CreateStockMovementDto,
+} from "./CreateMovementDto";
+
+export {
     STOCK_MOVEMENT_TYPES,
-    RecordStockMovementSchema,
-} from "./RecordStockMovementDto";
+} from "./StockMovementTypes";
 
 export type {
     StockMovementType,
-    RecordStockMovementDto,
-} from "./RecordStockMovementDto";
+} from "./StockMovementTypes";
 
 export type {
     StockLocationDto,

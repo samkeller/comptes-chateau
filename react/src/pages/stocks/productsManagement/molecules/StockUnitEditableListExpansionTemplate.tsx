@@ -157,7 +157,7 @@ export default function StockUnitEditableListExpansionTemplate({
                                 <TakeStockUnitButton
                                     unitId={entry.id}
                                     unitLabel={stockItemLabel + " - " + entry.quantity + " " + entry.unit}
-                                // afterTakeUnit={refresh()}
+                                    afterTakeUnit={() => deleteStockUnit(entry.clientId)}
                                 />
                             }
                         </div>

@@ -1,17 +1,25 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound, conflict } from "../../../utils/AppError";
+import type { EntityManager, Repository } from "typeorm";
 import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
 import { toStockUnitDto } from "../mappers/StockUnitMapper";
 import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
+import StockMovementService from "./StockMovementService";
 
 const DEFAULT_MOVEMENT_SOURCE = "manual";
 
 export default class StockUnitService {
-    private readonly stockUnitRepo = AppDataSource.getRepository(StockUnit);
-    private readonly userXpService = new UserXpService();
+    private readonly stockUnitRepo: Repository<StockUnit>;
+    private readonly userXpService: UserXpService;
+    private readonly stockMovementService: StockMovementService;
 
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.stockUnitRepo = em.getRepository(StockUnit);
+        this.userXpService = new UserXpService(em);
+        this.stockMovementService = new StockMovementService(em);
+    }
     /**
      * Récupère toutes les unités de stock d'un stock item.
      * @param itemId L'identifiant du stock item.
@@ -48,27 +56,10 @@ export default class StockUnitService {
 
         const savedStockUnit = await this.stockUnitRepo.save(stockUnit);
 
-        const result = await this.stockUnitRepo.findOne({
-            where: {
-                id: savedStockUnit.id,
-            },
-            relations: {
-                item: true,
-                location: true,
-            },
-        });
-
-        if (!result) {
-            throw notFound(
-                "STOCK_UNIT_NOT_FOUND",
-                "Unite de stock introuvable"
-            );
-        }
-
         // Ajout XP utilisateur
-        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED"); 
+        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
 
-        return toStockUnitDto(result);
+        return toStockUnitDto(savedStockUnit);
     }
 
     /**
@@ -99,24 +90,9 @@ export default class StockUnitService {
 
         await this.stockUnitRepo.save(stockUnit);
 
-        const updatedStockUnit = await this.stockUnitRepo.findOne({
-            where: {
-                id: unitId,
-            },
-            relations: {
-                item: true,
-                location: true,
-            },
-        });
+        await this.stockMovementService.updateMovement(stockUnit);
 
-        if (!updatedStockUnit) {
-            throw notFound(
-                "STOCK_UNIT_NOT_FOUND",
-                "Unite de stock introuvable"
-            );
-        }
-
-        return toStockUnitDto(updatedStockUnit);
+        return toStockUnitDto(stockUnit);
     }
 
     /**
@@ -138,7 +114,7 @@ export default class StockUnitService {
             );
         }
 
-        await this.stockUnitRepo.softRemove(stockUnit);
+        await this.stockUnitRepo.remove(stockUnit);
     }
 
     /**
@@ -148,14 +124,11 @@ export default class StockUnitService {
     async takeUnit(
         unitId: number,
         connectedUserId: number
-    ): Promise<StockUnitDto> {
-        let takenUnit: StockUnit | null = null;
-
+    ) {
         await AppDataSource.transaction(async (entityManager) => {
-            const unitRepo = entityManager.getRepository(StockUnit);
-            const movementRepo = entityManager.getRepository(StockMovement);
+            const transactionService = new StockUnitService(entityManager);
 
-            const unit = await unitRepo.findOne({
+            const unit = await transactionService.stockUnitRepo.findOne({
                 where: {
                     id: unitId,
                 },
@@ -165,52 +138,29 @@ export default class StockUnitService {
                 },
             });
 
-            if (!unit) {
+            if(!unit) {
                 throw notFound(
                     "STOCK_UNIT_NOT_FOUND",
                     "Unite de stock introuvable"
                 );
             }
 
-            const alreadyTaken = await movementRepo.exists({
-                where: {
-                    unitId: unit.id,
-                    type: "OUT",
-                },
+            await transactionService.stockMovementService.createMovement({
+                itemLabel: unit.item.label,
+                locationLabel: unit.location.label,
+                locationId: unit.locationId,
+                unit: unit.unit,
+                itemId: unit.itemId,
+                unitId: unit.id,
+                type: "OUT",
+                quantity: unit.quantity,
             });
+            
+            await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
 
-            if (alreadyTaken) {
-                throw conflict(
-                    "STOCK_UNIT_ALREADY_TAKEN",
-                    "Cette unite n'est plus disponible en stock"
-                );
-            }
-
-            await movementRepo.save(
-                movementRepo.create({
-                    itemId: unit.itemId,
-                    unitId: unit.id,
-                    fromLocationId: unit.locationId,
-                    type: "OUT",
-                    quantity: unit.quantity,
-                    occurredAt: new Date(),
-                    source: "manual",
-                })
-            );
-
-            takenUnit = unit;
+            await this.stockUnitRepo.delete(unit.id);
         });
 
-        if (!takenUnit) {
-            throw notFound(
-                "STOCK_UNIT_NOT_FOUND",
-                "Unite de stock introuvable"
-            );
-        }
-
-        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
-
-        return toStockUnitDto(takenUnit);
     }
 
     private normalizeOptionalString(value: string | null | undefined): string | null {

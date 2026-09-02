@@ -5,14 +5,14 @@ import { StockMovement } from "../entities/StockMovement";
 export function toStockMovementDto(movement: StockMovement): StockMovementDto {
     return {
         id: movement.id,
+        itemLabel: movement.itemLabel,
+        locationId: movement.locationId,
+        locationLabel: movement.locationLabel,
+        unit: movement.unit,
         itemId: movement.itemId,
         unitId: movement.unitId,
-        fromLocationId: movement.fromLocationId,
-        toLocationId: movement.toLocationId,
         type: movement.type,
         quantity: movement.quantity,
-        occurredAt: movement.occurredAt.toISOString(),
-        source: movement.source,
         createdAt: movement.createdAt.toISOString(),
     };
 }

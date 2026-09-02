@@ -6,7 +6,7 @@ export {
     CreateStockLocationSchema,
     UpdateStockLocationSchema,
     STOCK_MOVEMENT_TYPES,
-    RecordStockMovementSchema,
+    CreateStockMovementSchema,
 } from "./stocks";
 export type {
     CreateStockItemDto,
@@ -16,7 +16,7 @@ export type {
     CreateStockLocationDto,
     UpdateStockLocationDto,
     StockMovementType,
-    RecordStockMovementDto,
+    CreateStockMovementDto,
     StockLocationDto,
     StockItemDto,
     StockUnitDto,

@@ -1,4 +1,4 @@
-import type { StockMovementType } from "./RecordStockMovementDto";
+import type { StockMovementType } from "./StockMovementTypes";
 
 /** Lieu de stockage tel que renvoyé par l'API. */
 export interface StockLocationDto {
@@ -39,12 +39,12 @@ export interface StockUnitDto {
 export interface StockMovementDto {
     id: number;
     itemId: number;
-    unitId: number | null;
-    fromLocationId: number | null;
-    toLocationId: number | null;
-    type: StockMovementType;
+    itemLabel: string;
+    unitId: number;
     quantity: number;
-    occurredAt: string;
-    source: string;
+    unit: string;
+    locationId: number;
+    locationLabel: string;
+    type: StockMovementType;
     createdAt: string;
 }

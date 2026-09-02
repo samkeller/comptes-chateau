@@ -10,6 +10,7 @@ import StockLocation from "@/interfaces/stocks/StockLocation";
 import { dateEditor, dropdownEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
+import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 
 const stockLocationService = new StockLocationService();
 const stockUnitsService = new StockUnitsService();
@@ -157,7 +158,38 @@ export default function StockUnitEditableList({
         return createdUnit;
     };
 
-    const deleteStockUnit = (clientId: string) => {
+    /**
+     * Retirer une stockUnit des tableaux.
+     * Optimistic rendering
+     * @param clientId 
+     * @returns 
+     */
+    const deleteStockUnit = async (clientId: string) => {
+        // 1. Vérifie qu'elle existe
+        const stockUnit = stockUnits.find(
+            (unit) => unit.clientId === clientId
+        );
+
+        if (!stockUnit) {
+            return;
+        }
+
+        // 2. Si existe -> rm (optimistic rendering)
+        onChange(
+            stockUnits.filter(
+                (unit) => unit.clientId !== clientId
+            )
+        );
+
+        // 3. Reloading state
+        await reloadStockUnits();
+    };
+    /**
+     * @deprecated Lié à l'affichage d'une dialog de suprresion, pas à la suppression directement !
+     * @param clientId 
+     * @returns 
+     */
+    const deleteStockUnitOld = (clientId: string) => {
         const stockUnit = stockUnits.find(
             (unit) => unit.clientId === clientId
         );
@@ -291,9 +323,20 @@ export default function StockUnitEditableList({
                     severity="danger"
                     tooltip="Supprimer"
                     onClick={() =>
-                        deleteStockUnit(firstEntry.clientId)
+                        deleteStockUnitOld(firstEntry.clientId)
                     }
                 />
+                {
+                    // N'affiche le "take" que si l'unité a un ID défini (pas en mode création)
+                    firstEntry.id &&
+                    // Et que le groupe ne contient qu'une seule unité
+                    group.stockUnits.length === 1 &&
+                    <TakeStockUnitButton
+                        unitId={firstEntry.id}
+                        unitLabel={stockItemLabel}
+                        afterTakeUnit={() => deleteStockUnit(firstEntry.clientId)}
+                    />
+                }
             </div>
         );
     };
