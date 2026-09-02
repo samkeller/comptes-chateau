@@ -164,6 +164,8 @@ export default class StockUnitService {
                 );
             }
 
+            unit.quantity -= 1;
+
             await transactionService.stockMovementService.createMovement({
                 itemLabel: unit.item.label,
                 locationLabel: unit.location.label,
@@ -177,7 +179,11 @@ export default class StockUnitService {
 
             await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
 
-            await transactionService.stockUnitRepo.delete(unit.id);
+            if(unit?.quantity > 0) {
+                await transactionService.stockUnitRepo.save(unit);
+            } else {
+                await transactionService.stockUnitRepo.delete(unit.id);
+            }
         });
 
     }
