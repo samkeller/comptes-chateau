@@ -26,9 +26,6 @@ export default function TakeStockUnitButton({ unitId, unitLabel, afterTakeUnit }
                         showGlobalToast({ severity: "success", summary: "C'est juste coché en fait" });
                         afterTakeUnit?.();
                     })
-                    .catch(() => {
-                        showGlobalToast({ severity: "error", summary: "Action impossible" });
-                    });
             },
         });
     }

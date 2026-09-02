@@ -11,6 +11,7 @@ import { dateEditor, dropdownEditor } from "@/components/atoms/primereact/datata
 import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
+import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 
 const stockLocationService = new StockLocationService();
 const stockUnitsService = new StockUnitsService();
@@ -164,7 +165,7 @@ export default function StockUnitEditableList({
      * @param clientId 
      * @returns 
      */
-    const deleteStockUnit = async (clientId: string) => {
+    const deleteStockUnitOptimistic = async (clientId: string) => {
         // 1. Vérifie qu'elle existe
         const stockUnit = stockUnits.find(
             (unit) => unit.clientId === clientId
@@ -180,50 +181,6 @@ export default function StockUnitEditableList({
                 (unit) => unit.clientId !== clientId
             )
         );
-
-        // 3. Reloading state
-        await reloadStockUnits();
-    };
-    /**
-     * @deprecated Lié à l'affichage d'une dialog de suprresion, pas à la suppression directement !
-     * @param clientId 
-     * @returns 
-     */
-    const deleteStockUnitOld = (clientId: string) => {
-        const stockUnit = stockUnits.find(
-            (unit) => unit.clientId === clientId
-        );
-
-        if (!stockUnit) {
-            return;
-        }
-
-        confirmDialog({
-            message: "Voulez-vous vraiment supprimer cette stockUnit ?",
-            header: "Supprimer la stockUnit",
-            icon: "pi pi-exclamation-triangle",
-            acceptLabel: "Supprimer",
-            rejectLabel: "Annuler",
-            acceptClassName: "p-button-danger",
-
-            accept: async () => {
-                /**
-                 * Une nouvelle ligne n'existe pas encore en DB :
-                 * il suffit donc de la retirer localement.
-                 */
-                if (stockUnit.id === undefined) {
-                    onChange(
-                        stockUnits.filter(
-                            (unit) => unit.clientId !== clientId
-                        )
-                    );
-                    return;
-                }
-
-                await stockUnitsService.delete(stockUnit.id);
-                await reloadStockUnits();
-            },
-        });
     };
 
     const updateStockUnit = async (
@@ -316,26 +273,22 @@ export default function StockUnitEditableList({
                     }
                 />
 
-                <Button
-                    icon="pi pi-trash"
-                    text
-                    rounded
-                    severity="danger"
-                    tooltip="Supprimer"
-                    onClick={() =>
-                        deleteStockUnitOld(firstEntry.clientId)
-                    }
-                />
                 {
                     // N'affiche le "take" que si l'unité a un ID défini (pas en mode création)
                     firstEntry.id &&
                     // Et que le groupe ne contient qu'une seule unité
-                    group.stockUnits.length === 1 &&
-                    <TakeStockUnitButton
-                        unitId={firstEntry.id}
-                        unitLabel={stockItemLabel}
-                        afterTakeUnit={() => deleteStockUnit(firstEntry.clientId)}
-                    />
+                    group.stockUnits.length === 1 && <>
+                        <DeleteStockUnitButton
+                            unitId={firstEntry.id}
+                            unitLabel={stockItemLabel}
+                            afterDeleteUnit={() => deleteStockUnitOptimistic(firstEntry.clientId)}
+                        />
+                        <TakeStockUnitButton
+                            unitId={firstEntry.id}
+                            unitLabel={stockItemLabel}
+                            afterTakeUnit={() => deleteStockUnitOptimistic(firstEntry.clientId)}
+                        />
+                    </>
                 }
             </div>
         );
@@ -370,7 +323,7 @@ export default function StockUnitEditableList({
                         stockLocations={stockLocations}
                         updateStockUnit={updateStockUnit}
                         duplicateStockUnit={duplicateStockUnit}
-                        deleteStockUnit={deleteStockUnit}
+                        afterDeleteStockUnit={deleteStockUnitOptimistic}
                     />
                 )}
                 editMode="cell"

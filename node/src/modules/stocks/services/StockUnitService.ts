@@ -101,20 +101,39 @@ export default class StockUnitService {
      * Suppression logique grâce à @DeleteDateColumn.
      */
     async delete(unitId: number): Promise<void> {
-        const stockUnit = await this.stockUnitRepo.findOne({
-            where: {
-                id: unitId,
-            },
+        await AppDataSource.transaction(async (entityManager) => {
+            const transactionService = new StockUnitService(entityManager);
+
+            const stockUnit = await transactionService.stockUnitRepo.findOne({
+                where: {
+                    id: unitId,
+                },
+                relations: { // Chargement pour stockMovementService
+                    item: true,
+                    location: true,
+                },
+            });
+
+            if (!stockUnit) {
+                throw notFound(
+                    "STOCK_UNIT_NOT_FOUND",
+                    "Unite de stock introuvable"
+                );
+            }
+
+            await transactionService.stockMovementService.createMovement({
+                itemLabel: stockUnit.item.label,
+                locationLabel: stockUnit.location.label,
+                locationId: stockUnit.locationId,
+                unit: stockUnit.unit,
+                itemId: stockUnit.itemId,
+                unitId: stockUnit.id,
+                type: "OUT",
+                quantity: stockUnit.quantity,
+            });
+
+            await transactionService.stockUnitRepo.remove(stockUnit);
         });
-
-        if (!stockUnit) {
-            throw notFound(
-                "STOCK_UNIT_NOT_FOUND",
-                "Unite de stock introuvable"
-            );
-        }
-
-        await this.stockUnitRepo.remove(stockUnit);
     }
 
     /**
@@ -138,7 +157,7 @@ export default class StockUnitService {
                 },
             });
 
-            if(!unit) {
+            if (!unit) {
                 throw notFound(
                     "STOCK_UNIT_NOT_FOUND",
                     "Unite de stock introuvable"
@@ -155,10 +174,10 @@ export default class StockUnitService {
                 type: "OUT",
                 quantity: unit.quantity,
             });
-            
-            await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
 
-            await this.stockUnitRepo.delete(unit.id);
+            await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
+
+            await transactionService.stockUnitRepo.delete(unit.id);
         });
 
     }

@@ -15,6 +15,8 @@ import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import { parseDateToDisplay } from "@/utils/DatesUtils";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
+import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
+import { ConfirmDialog } from "primereact/confirmdialog";
 
 interface StockUnitEditableListExpansionTemplateProps {
     stockUnitGroup: StockUnitGroup;
@@ -25,7 +27,7 @@ interface StockUnitEditableListExpansionTemplateProps {
         newData: CreateStockUnitDto
     ) => Promise<void>;
     duplicateStockUnit: (clientId: string) => Promise<unknown>;
-    deleteStockUnit: (clientId: string) => void;
+    afterDeleteStockUnit: (clientId: string) => void;
 }
 
 export default function StockUnitEditableListExpansionTemplate({
@@ -34,7 +36,7 @@ export default function StockUnitEditableListExpansionTemplate({
     stockLocations,
     updateStockUnit,
     duplicateStockUnit,
-    deleteStockUnit,
+    afterDeleteStockUnit: afterDeleteStockUnit,
 }: StockUnitEditableListExpansionTemplateProps) {
     const onRowEditComplete = async (
         event: DataTableRowEditCompleteEvent
@@ -139,26 +141,19 @@ export default function StockUnitEditableListExpansionTemplate({
                                     )
                                 }
                             />
-
-                            <Button
-                                icon="pi pi-trash"
-                                text
-                                rounded
-                                severity="danger"
-                                tooltip="Supprimer"
-                                onClick={() =>
-                                    deleteStockUnit(
-                                        entry.clientId
-                                    )
-                                }
-                            />
                             {
-                                entry.id &&
-                                <TakeStockUnitButton
-                                    unitId={entry.id}
-                                    unitLabel={stockItemLabel + " - " + entry.quantity + " " + entry.unit}
-                                    afterTakeUnit={() => deleteStockUnit(entry.clientId)}
-                                />
+                                entry.id && <>
+                                    <DeleteStockUnitButton
+                                        unitId={entry.id}
+                                        unitLabel={stockItemLabel + " - " + entry.quantity + " " + entry.unit}
+                                        afterDeleteUnit={() => afterDeleteStockUnit(entry.clientId)}
+                                    />
+                                    <TakeStockUnitButton
+                                        unitId={entry.id}
+                                        unitLabel={stockItemLabel + " - " + entry.quantity + " " + entry.unit}
+                                        afterTakeUnit={() => afterDeleteStockUnit(entry.clientId)}
+                                    />
+                                </>
                             }
                         </div>
                     )}
