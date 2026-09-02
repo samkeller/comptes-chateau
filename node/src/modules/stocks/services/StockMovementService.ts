@@ -58,7 +58,16 @@ export default class StockMovementService {
         });
 
         if (!movement) {
-            throw new Error("Stock movement not found");
+            return this.createMovement({
+                itemId: stockUnit.itemId,
+                itemLabel: stockUnit.item.label,
+                unitId: stockUnit.id,
+                unit: stockUnit.unit,
+                locationId: stockUnit.locationId,
+                locationLabel: stockUnit.location.label,
+                type: "IN",
+                quantity: stockUnit.quantity,
+            });
         }
 
         movement.unit = stockUnit.unit ?? movement.unit;

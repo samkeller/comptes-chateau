@@ -2,7 +2,7 @@ import { CreateStockUnitDto } from "../../../../services/stocks/dto/CreateStockU
 import { DataTable } from "primereact/datatable";
 import { Column, ColumnEvent } from "primereact/column";
 import { useEffect, useMemo, useState } from "react";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";

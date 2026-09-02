@@ -113,7 +113,7 @@ describe("StockUnitRoutes integration", () => {
         expect(response.body.unit).toBe("kg");
     });
 
-    it("DELETE /stocks/units/:id supprime logiquement une stock unit", async () => {
+    it("DELETE /stocks/units/:id supprime une stock unit", async () => {
         const location = await testDataSource
             .getRepository(StockLocation)
             .save({
@@ -153,8 +153,7 @@ describe("StockUnitRoutes integration", () => {
                 withDeleted: true,
             });
 
-        expect(deletedUnit).not.toBeNull();
-        expect(deletedUnit?.deletedAt).not.toBeNull();
+        expect(deletedUnit).toBeNull();
     });
 
     it("DELETE /stocks/units/:id retourne 404 si la stock unit n'existe pas", async () => {

@@ -55,11 +55,25 @@ export default class StockUnitService {
         });
 
         const savedStockUnit = await this.stockUnitRepo.save(stockUnit);
+        const createdStockUnit = await this.stockUnitRepo.findOne({
+            where: { id: savedStockUnit.id },
+            relations: {
+                item: true,
+                location: true,
+            },
+        });
+
+        if (!createdStockUnit) {
+            throw notFound(
+                "STOCK_UNIT_NOT_FOUND",
+                "Unite de stock introuvable"
+            );
+        }
 
         // Ajout XP utilisateur
         await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
 
-        return toStockUnitDto(savedStockUnit);
+        return toStockUnitDto(createdStockUnit);
     }
 
     /**
@@ -72,6 +86,10 @@ export default class StockUnitService {
         const stockUnit = await this.stockUnitRepo.findOne({
             where: {
                 id: unitId,
+            },
+            relations: {
+                item: true,
+                location: true,
             },
         });
 

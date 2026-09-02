@@ -16,7 +16,6 @@ import { parseDateToDisplay } from "@/utils/DatesUtils";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
-import { ConfirmDialog } from "primereact/confirmdialog";
 
 interface StockUnitEditableListExpansionTemplateProps {
     stockUnitGroup: StockUnitGroup;
