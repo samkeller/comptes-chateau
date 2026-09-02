@@ -97,7 +97,8 @@ export default defineConfig({
     preserveSymlinks: true,
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@assets": path.resolve(__dirname, "src/assets")
+      "@assets": path.resolve(__dirname, "src/assets"),
+      "@chocosous/shared": path.resolve(__dirname, "../shared/src/index.ts"),
     }
   },
   server: {
