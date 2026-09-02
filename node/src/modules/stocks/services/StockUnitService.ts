@@ -93,6 +93,10 @@ export default class StockUnitService {
             where: {
                 id: unitId,
             },
+            relations: {
+                item: true,
+                location: true,
+            },
         });
 
         if (!stockUnit) {

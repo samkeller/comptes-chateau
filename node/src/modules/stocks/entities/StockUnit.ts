@@ -11,7 +11,6 @@ import {
 } from "typeorm";
 import type { StockItem } from "./StockItem";
 import { StockLocation } from "./StockLocation";
-import type { StockMovement } from "./StockMovement";
 
 @Entity("stock_unit")
 export class StockUnit {
@@ -41,6 +40,6 @@ export class StockUnit {
     @Column({ type: "date", nullable: true })
     expirationDate: string | null;
 
-    @OneToMany("StockMovement", (movement: StockMovement) => movement.unit)
-    movements: StockMovement[];
+    @CreateDateColumn()
+    createdAt: Date;
 }
