@@ -5,7 +5,6 @@ export interface StockLocationDto {
     id: number;
     label: string;
     createdAt: string;
-    updatedAt: string;
 }
 
 /** Produit en stock tel que renvoyé par l'API. */
@@ -17,8 +16,6 @@ export interface StockItemDto {
     imageUrl: string | null;
     stockUnitsCount: number;
     createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
 }
 
 /** Unité de produit en stock telle que renvoyée par l'API. */
@@ -31,8 +28,6 @@ export interface StockUnitDto {
     quantity: number;
     unit: string;
     expirationDate: string | null;
-    createdAt: string;
-    updatedAt: string;
 }
 
 /** Mouvement de stock tel que renvoyé par l'API. */
@@ -46,5 +41,4 @@ export interface StockMovementDto {
     locationId: number;
     locationLabel: string;
     type: StockMovementType;
-    createdAt: string;
 }

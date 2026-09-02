@@ -43,13 +43,4 @@ export class StockUnit {
 
     @OneToMany("StockMovement", (movement: StockMovement) => movement.unit)
     movements: StockMovement[];
-
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
-
-    @DeleteDateColumn()
-    deletedAt: Date | null;
 }

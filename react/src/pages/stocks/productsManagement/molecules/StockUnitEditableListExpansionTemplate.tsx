@@ -1,6 +1,5 @@
 import { Column, ColumnEditorOptions } from "primereact/column";
 import { StockUnitGroup } from "./StockUnitEditableList";
-import { Button } from "primereact/button";
 import {
     DataTable,
     DataTableRowEditCompleteEvent,
@@ -16,27 +15,30 @@ import { parseDateToDisplay } from "@/utils/DatesUtils";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
-import { ConfirmDialog } from "primereact/confirmdialog";
+import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
+import { Uuid } from "@chocosous/shared";
 
 interface StockUnitEditableListExpansionTemplateProps {
+    stockItemId: number;
     stockUnitGroup: StockUnitGroup;
     stockItemLabel: string;
     stockLocations: StockLocation[];
     updateStockUnit: (
-        clientId: string,
+        clientId: Uuid,
         newData: CreateStockUnitDto
     ) => Promise<void>;
-    duplicateStockUnit: (clientId: string) => Promise<unknown>;
-    afterDeleteStockUnit: (clientId: string) => void;
+    afterDuplicateStockUnit: (newUnit: CreateStockUnitDto) => void;
+    afterDeleteStockUnit: (clientId: Uuid) => void;
 }
 
 export default function StockUnitEditableListExpansionTemplate({
+    stockItemId,
     stockUnitGroup,
     stockItemLabel,
     stockLocations,
     updateStockUnit,
-    duplicateStockUnit,
-    afterDeleteStockUnit: afterDeleteStockUnit,
+    afterDuplicateStockUnit,
+    afterDeleteStockUnit,
 }: StockUnitEditableListExpansionTemplateProps) {
     const onRowEditComplete = async (
         event: DataTableRowEditCompleteEvent
@@ -129,17 +131,10 @@ export default function StockUnitEditableListExpansionTemplate({
                     header="Actions"
                     body={(entry: CreateStockUnitDto) => (
                         <div className="flex items-center gap-1">
-                            <Button
-                                icon="pi pi-copy"
-                                text
-                                rounded
-                                severity="secondary"
-                                tooltip="Dupliquer"
-                                onClick={() =>
-                                    duplicateStockUnit(
-                                        entry.clientId
-                                    )
-                                }
+                            <DuplicateStockUnitButton
+                                stockItemId={stockItemId}
+                                stockUnit={entry}
+                                afterDuplicateUnit={afterDuplicateStockUnit}
                             />
                             {
                                 entry.id && <>

@@ -1,4 +1,5 @@
 import { StockUnitUnits } from "@/interfaces/stocks/StockUnit";
+import { Uuid } from "@chocosous/shared";
 
 export interface CreateStockUnitDto {
     /**
@@ -8,7 +9,7 @@ export interface CreateStockUnitDto {
     /**
      * Id/clef unique pour l'affichage et les opérations front
      */
-    clientId: string;
+    clientId: Uuid;
     locationId: number;
     quantity: number;
     unit: StockUnitUnits;

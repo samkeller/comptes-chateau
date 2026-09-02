@@ -2,7 +2,7 @@ import { CreateStockUnitDto } from "../../../../services/stocks/dto/CreateStockU
 import { DataTable } from "primereact/datatable";
 import { Column, ColumnEvent } from "primereact/column";
 import { useEffect, useMemo, useState } from "react";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
@@ -12,6 +12,10 @@ import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit"
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
+import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
+import StockUnit from "@/interfaces/stocks/StockUnit";
+import { showGlobalToast } from "@/services/GlobalToast";
+import { Uuid } from "@chocosous/shared";
 
 const stockLocationService = new StockLocationService();
 const stockUnitsService = new StockUnitsService();
@@ -93,79 +97,19 @@ export default function StockUnitEditableList({
         };
     };
 
-    /**
-     * Recharge les stockUnits depuis la DB.
-     *
-     * Le tableau local n'est donc jamais considéré comme source de vérité
-     * après une mutation persistée.
-     */
-    const reloadStockUnits = async () => {
-        if (!stockItemId) {
-            return;
-        }
-
-        const units = await stockUnitsService.getStockUnitsByItemId(stockItemId);
-
-        onChange(
-            units.map((unit) => ({
-                ...EMPTY_STOCK_UNIT(),
-                id: unit.id,
-                locationId: unit.locationId,
-                quantity: unit.quantity,
-                unit: unit.unit,
-                expirationDate: unit.expirationDate ?? undefined,
-            }))
-        );
-    };
-
     const addStockUnit = async () => {
         if (!stockItemId) {
             return;
         }
 
-
         onChange([...stockUnits, EMPTY_STOCK_UNIT()]);
-    };
-
-    const duplicateStockUnit = async (clientId: string) => {
-        if (!stockItemId) {
-            return;
-        }
-
-        const stockUnit = stockUnits.find(
-            (unit) => unit.clientId === clientId
-        );
-
-        if (!stockUnit) {
-            return;
-        }
-
-        /**
-         * La duplication est une vraie création DB.
-         * On ne donne donc jamais l'id de la ligne originale au backend.
-         */
-        const createdUnit = await stockUnitsService.create(
-            stockItemId,
-            stockUnit
-        );
-
-        /**
-         * On recharge plutôt que de bricoler le tableau local.
-         * Cela garantit que l'ID DB retourné et les données persistées
-         * deviennent immédiatement la source de vérité.
-         */
-        await reloadStockUnits();
-
-        return createdUnit;
     };
 
     /**
      * Retirer une stockUnit des tableaux.
      * Optimistic rendering
-     * @param clientId 
-     * @returns 
      */
-    const deleteStockUnitOptimistic = async (clientId: string) => {
+    const deleteStockUnitOptimistic = async (clientId: Uuid) => {
         // 1. Vérifie qu'elle existe
         const stockUnit = stockUnits.find(
             (unit) => unit.clientId === clientId
@@ -184,7 +128,7 @@ export default function StockUnitEditableList({
     };
 
     const updateStockUnit = async (
-        clientId: string,
+        clientId: Uuid,
         updatedStockUnit: CreateStockUnitDto
     ) => {
         if (!stockItemId) {
@@ -199,23 +143,38 @@ export default function StockUnitEditableList({
             return;
         }
 
-        /**
-         * Une ligne sans ID DB est une création.
-         */
+        let savedUnit: StockUnit;
+
+        // Si pas d'ID -> Création
         if (currentStockUnit.id === undefined) {
-            await stockUnitsService.create(
+            savedUnit = await stockUnitsService.create(
                 stockItemId,
                 updatedStockUnit
             );
-        } else {
-            await stockUnitsService.update(
+        }
+        // Si un ID -> Mis à jour
+        else {
+            savedUnit = await stockUnitsService.update(
                 currentStockUnit.id,
                 stockItemId,
                 updatedStockUnit
             );
         }
 
-        await reloadStockUnits();
+        const savedDto: CreateStockUnitDto = {
+            id: savedUnit.id,
+            clientId: currentStockUnit.clientId ?? crypto.randomUUID(),
+            locationId: savedUnit.locationId,
+            quantity: savedUnit.quantity,
+            unit: savedUnit.unit,
+            expirationDate: savedUnit.expirationDate ?? undefined,
+        };
+
+        onChange(
+            stockUnits.map((unit) =>
+                unit.clientId === clientId ? savedDto : unit
+            )
+        );
     };
 
     /**
@@ -229,27 +188,48 @@ export default function StockUnitEditableList({
 
         const group = event.rowData as StockUnitGroup;
 
-        const updatedUnits = group.stockUnits.map((stockUnit) => ({
+        const updatedUnits: CreateStockUnitDto[] = group.stockUnits.map((stockUnit) => ({
             ...stockUnit,
             [event.field]: event.newValue,
         }));
 
-        for (const stockUnit of updatedUnits) {
-            if (stockUnit.id === undefined) {
-                await stockUnitsService.create(
-                    stockItemId,
-                    stockUnit
-                );
-            } else {
-                await stockUnitsService.update(
-                    stockUnit.id,
-                    stockItemId,
-                    stockUnit
-                );
-            }
-        }
+        const savedDtos: CreateStockUnitDto[] = await Promise.all(
+            updatedUnits.map(async (stockUnit) => {
+                let savedUnit: StockUnit;
 
-        await reloadStockUnits();
+                if (stockUnit.id === undefined) {
+                    savedUnit = await stockUnitsService.create(
+                        stockItemId,
+                        stockUnit
+                    );
+                } else {
+                    savedUnit = await stockUnitsService.update(
+                        stockUnit.id,
+                        stockItemId,
+                        stockUnit
+                    );
+                }
+
+                return {
+                    id: savedUnit.id,
+                    clientId: stockUnit.clientId ?? crypto.randomUUID(), // On ne génère un clientId qu'en modification
+                    locationId: savedUnit.locationId,
+                    quantity: savedUnit.quantity,
+                    unit: savedUnit.unit,
+                    expirationDate: savedUnit.expirationDate ?? undefined,
+                };
+            })
+        );
+
+        /**
+         * Map chaque DTO en utilisant son clientId comme clé.
+         */
+        const dtoMap = new Map(savedDtos.map((dto) => [dto.clientId, dto]));
+
+        onChange(
+            stockUnits.map((unit) => dtoMap.get(unit.clientId) ?? unit)
+        );
+
     };
 
     const groupActionsTemplate = (group: StockUnitGroup) => {
@@ -261,22 +241,18 @@ export default function StockUnitEditableList({
 
         return (
             <div className="flex items-center gap-1">
-                <Button
-                    icon="pi pi-copy"
-                    text
-                    rounded
-                    severity="secondary"
-                    tooltip="Dupliquer"
-                    disabled={!stockItemId}
-                    onClick={() =>
-                        duplicateStockUnit(firstEntry.clientId)
-                    }
-                />
+                {group.stockUnits.length === 1 && (
+                    <DuplicateStockUnitButton
+                        stockItemId={stockItemId}
+                        stockUnit={firstEntry}
+                        afterDuplicateUnit={(newUnit) => {
+                            onChange([...stockUnits, newUnit]);
+                        }}
+                    />
+                )}
 
                 {
-                    // N'affiche le "take" que si l'unité a un ID défini (pas en mode création)
                     firstEntry.id &&
-                    // Et que le groupe ne contient qu'une seule unité
                     group.stockUnits.length === 1 && <>
                         <DeleteStockUnitButton
                             unitId={firstEntry.id}
@@ -318,11 +294,14 @@ export default function StockUnitEditableList({
                 }}
                 rowExpansionTemplate={(group) => (
                     <StockUnitEditableListExpansionTemplate
+                        stockItemId={stockItemId}
                         stockItemLabel={stockItemLabel}
                         stockUnitGroup={group}
                         stockLocations={stockLocations}
                         updateStockUnit={updateStockUnit}
-                        duplicateStockUnit={duplicateStockUnit}
+                        afterDuplicateStockUnit={(newUnit) => {
+                            onChange([...stockUnits, newUnit]);
+                        }}
                         afterDeleteStockUnit={deleteStockUnitOptimistic}
                     />
                 )}

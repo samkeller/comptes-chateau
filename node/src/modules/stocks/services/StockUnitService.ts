@@ -1,9 +1,8 @@
 import { AppDataSource } from "../../../db/dataSource";
-import { notFound, conflict } from "../../../utils/AppError";
+import { notFound, internalServerError } from "../../../utils/AppError";
 import type { EntityManager, Repository } from "typeorm";
 import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
 import { toStockUnitDto } from "../mappers/StockUnitMapper";
-import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
 import StockMovementService from "./StockMovementService";
@@ -35,7 +34,6 @@ export default class StockUnitService {
             },
             order: {
                 expirationDate: "ASC",
-                createdAt: "ASC",
             }
         });
         return result.map(toStockUnitDto);
@@ -43,23 +41,45 @@ export default class StockUnitService {
 
     /**
      * Crée une nouvelle stock unit.
-     * L'id est généré par la base de données.
      */
     async create(body: StockUnitCreateDto, connectedUserId: number): Promise<StockUnitDto> {
-        const stockUnit = this.stockUnitRepo.create({
-            itemId: body.itemId,
-            locationId: body.locationId,
-            quantity: body.quantity,
-            unit: body.unit,
-            expirationDate: body.expirationDate ?? null,
-        });
+        try {
+            return await AppDataSource.transaction(async (entityManager) => {
+                const transactionService = new StockUnitService(entityManager);
+                const stockUnit = transactionService.stockUnitRepo.create({
+                    itemId: body.itemId,
+                    locationId: body.locationId,
+                    quantity: body.quantity,
+                    unit: body.unit,
+                    expirationDate: body.expirationDate ?? null,
+                });
 
-        const savedStockUnit = await this.stockUnitRepo.save(stockUnit);
+                const createdStockUnit: StockUnit = await transactionService.stockUnitRepo.save(stockUnit);
+                
+                // Ajout XP utilisateur
+                await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
+                
+                // Charge les dépendances
+                const completedCreatedStockUnit = await transactionService.findOneWithRelationsOrThrow(createdStockUnit.id);
 
-        // Ajout XP utilisateur
-        await this.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
+                // Création du movement
+                await transactionService.stockMovementService.createMovement({
+                    itemLabel: completedCreatedStockUnit.item.label,
+                    locationLabel: completedCreatedStockUnit.location.label,
+                    locationId: completedCreatedStockUnit.locationId,
+                    unit: completedCreatedStockUnit.unit,
+                    itemId: completedCreatedStockUnit.itemId,
+                    unitId: completedCreatedStockUnit.id,
+                    type: "IN",
+                    quantity: completedCreatedStockUnit.quantity,
+                });
 
-        return toStockUnitDto(savedStockUnit);
+                return toStockUnitDto(completedCreatedStockUnit);
+            })
+        }
+        catch (error) {
+            throw error;
+        }
     }
 
     /**
@@ -92,7 +112,9 @@ export default class StockUnitService {
 
         await this.stockMovementService.updateMovement(stockUnit);
 
-        return toStockUnitDto(stockUnit);
+        const updatedStockUnit = await this.findOneWithRelationsOrThrow(unitId);
+
+        return toStockUnitDto(updatedStockUnit);
     }
 
     /**
@@ -104,22 +126,7 @@ export default class StockUnitService {
         await AppDataSource.transaction(async (entityManager) => {
             const transactionService = new StockUnitService(entityManager);
 
-            const stockUnit = await transactionService.stockUnitRepo.findOne({
-                where: {
-                    id: unitId,
-                },
-                relations: { // Chargement pour stockMovementService
-                    item: true,
-                    location: true,
-                },
-            });
-
-            if (!stockUnit) {
-                throw notFound(
-                    "STOCK_UNIT_NOT_FOUND",
-                    "Unite de stock introuvable"
-                );
-            }
+            const stockUnit = await transactionService.findOneWithRelationsOrThrow(unitId);
 
             await transactionService.stockMovementService.createMovement({
                 itemLabel: stockUnit.item.label,
@@ -147,22 +154,7 @@ export default class StockUnitService {
         await AppDataSource.transaction(async (entityManager) => {
             const transactionService = new StockUnitService(entityManager);
 
-            const unit = await transactionService.stockUnitRepo.findOne({
-                where: {
-                    id: unitId,
-                },
-                relations: {
-                    item: true,
-                    location: true,
-                },
-            });
-
-            if (!unit) {
-                throw notFound(
-                    "STOCK_UNIT_NOT_FOUND",
-                    "Unite de stock introuvable"
-                );
-            }
+            const unit = await transactionService.findOneWithRelationsOrThrow(unitId);
 
             unit.quantity -= 1;
 
@@ -179,7 +171,7 @@ export default class StockUnitService {
 
             await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
 
-            if(unit?.quantity > 0) {
+            if (unit?.quantity > 0) {
                 await transactionService.stockUnitRepo.save(unit);
             } else {
                 await transactionService.stockUnitRepo.delete(unit.id);
@@ -188,16 +180,24 @@ export default class StockUnitService {
 
     }
 
-    private normalizeOptionalString(value: string | null | undefined): string | null {
-        if (typeof value !== "string") {
-            return null;
+    private async findOneWithRelationsOrThrow(unitId: number) {
+        const unit = await this.stockUnitRepo.findOne({
+            where: {
+                id: unitId,
+            },
+            relations: {
+                item: true,
+                location: true,
+            },
+        });
+
+        if (!unit) {
+            throw internalServerError(
+                "STOCK_UNIT_NOT_FOUND",
+                "Unite de stock introuvable"
+            );
         }
 
-        const trimmed = value.trim();
-        return trimmed.length > 0 ? trimmed : null;
-    }
-
-    private normalizeSource(value: string | null | undefined): string {
-        return this.normalizeOptionalString(value)?.toLowerCase() ?? DEFAULT_MOVEMENT_SOURCE;
+        return unit;
     }
 }

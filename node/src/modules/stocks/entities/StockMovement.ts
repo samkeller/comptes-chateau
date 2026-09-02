@@ -2,8 +2,6 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    JoinColumn,
-    ManyToOne,
     PrimaryGeneratedColumn,
 } from "typeorm";
 import { STOCK_MOVEMENT_TYPES, type StockMovementType } from "@chocosous/shared";

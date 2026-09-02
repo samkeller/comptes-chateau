@@ -10,7 +10,5 @@ export function toStockItemDto(item: StockItem): StockItemDto {
         imageUrl: item.imageUrl ?? null,
         stockUnitsCount: item.units ? item.units.length : 0,
         createdAt: item.createdAt.toISOString(),
-        updatedAt: item.updatedAt.toISOString(),
-        deletedAt: item.deletedAt ? item.deletedAt.toISOString() : null,
     };
 }

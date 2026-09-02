@@ -1,10 +1,8 @@
 import {
     CreateDateColumn,
-    DeleteDateColumn,
     Entity,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn,
     Column,
 } from "typeorm";
 import type { StockUnit } from "./StockUnit";
@@ -23,9 +21,4 @@ export class StockLocation {
     @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
-
-    @DeleteDateColumn()
-    deletedAt: Date | null;
 }

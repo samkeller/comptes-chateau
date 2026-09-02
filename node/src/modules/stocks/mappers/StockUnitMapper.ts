@@ -7,13 +7,11 @@ export function toStockUnitDto(unit: StockUnit): StockUnitDto {
     return {
         id: unit.id,
         itemId: unit.itemId,
-        item: toStockItemDto(unit.item),
+        ...(unit.item && { item: toStockItemDto(unit.item) }),
         locationId: unit.locationId,
-        location: toStockLocationDto(unit.location),
+        ...(unit.location && { location: toStockLocationDto(unit.location) }),
         quantity: unit.quantity,
         unit: unit.unit,
         expirationDate: unit.expirationDate ?? null,
-        createdAt: unit.createdAt.toISOString(),
-        updatedAt: unit.updatedAt.toISOString(),
     };
 }

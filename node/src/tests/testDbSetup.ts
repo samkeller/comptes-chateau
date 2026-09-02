@@ -2,7 +2,10 @@
 import "reflect-metadata";
 import { DataType, IMemoryDb, newDb } from "pg-mem";
 import { DataSource, getMetadataArgsStorage } from "typeorm";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
+import { User } from "../modules/core/entities/User";
+
+export const TEST_USER_ID = 1;
 
 /**
  * Découverte automatique de TOUTES les entités du projet.
@@ -82,6 +85,20 @@ beforeAll(async () => {
 
 
     await testDataSource.initialize();
+
+});
+
+beforeEach(async () => {
+    // Créé un user de test
+    await testDataSource.getRepository(User).save({
+        id: TEST_USER_ID,
+        username: "testuser",
+        avatar: "default-avatar.png",
+        kanbanAssignedTasks: [],
+        passwordHash: "testpasswordhash",
+        totalXp: 100
+    });
+    console.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
 });
 
 afterEach(async () => {

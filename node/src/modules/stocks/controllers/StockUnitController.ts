@@ -18,18 +18,14 @@ export default class StockUnitController {
         const body = req.body as StockUnitCreateDto;
         const connectedUserId = requireUserId(req);
 
-        res.status(201).json(
-            await this.stockUnitService.create(body, connectedUserId)
-        );
+        res.status(201).json(await this.stockUnitService.create(body, connectedUserId));
     };
 
     update = async (req: Request, res: Response) => {
         const stockUnitId = Number(req.params.id);
         const body = req.body as StockUnitCreateDto;
 
-        res.status(200).json(
-            await this.stockUnitService.update(stockUnitId, body)
-        );
+        res.status(200).json(await this.stockUnitService.update(stockUnitId, body));
     };
 
     delete = async (req: Request, res: Response) => {

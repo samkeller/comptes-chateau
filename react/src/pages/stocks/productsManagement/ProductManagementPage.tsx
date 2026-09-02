@@ -20,14 +20,14 @@ import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 const stockItemsService = new StockItemsService();
 const stockUnitsService = new StockUnitsService();
 
-const EMPTY_FORM_DATA: CreateStockItemDto = {
+const EMPTY_STOCK_ITEM_DTO: CreateStockItemDto = {
     label: "",
     defaultUnit: STOCK_UNIT_UNITS[0],
     units: [],
 };
 
 export default function ProductManagementPage() {
-    const [formData, setFormData] = useState<CreateStockItemDto>(EMPTY_FORM_DATA);
+    const [formData, setFormData] = useState<CreateStockItemDto>(EMPTY_STOCK_ITEM_DTO);
 
     /**
      * Indique si le stockItem sélectionné dans l'autocomplete est modifié par rapport à la DB.
@@ -193,9 +193,8 @@ export default function ProductManagementPage() {
                                     if (value.length === 0) {
                                         setSelectedStockItem(null);
                                         // Réinitialise l'objet sans perdre les valeurs déjà saisies dans le formulaire.
-                                        setFormData((prevFormData) => ({
-                                            ...EMPTY_FORM_DATA,
-                                            ...prevFormData,
+                                        setFormData(() => ({
+                                            ...EMPTY_STOCK_ITEM_DTO,
                                             id: undefined,
                                         }));
                                     }
