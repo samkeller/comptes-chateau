@@ -4,8 +4,6 @@ export class RmStockunitLabel1788118064523 implements MigrationInterface {
     name = 'RmStockunitLabel1788118064523'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "stock_unit" DROP COLUMN "status"`);
-        await queryRunner.query(`DROP TYPE "comptes_chateau"."stock_unit_status_enum"`);
         await queryRunner.query(`ALTER TABLE "stock_unit" DROP COLUMN "label"`);
         await queryRunner.query(`ALTER TYPE "comptes_chateau"."stock_movement_type_enum" RENAME TO "stock_movement_type_enum_old"`);
         await queryRunner.query(`CREATE TYPE "comptes_chateau"."stock_movement_type_enum" AS ENUM('IN', 'OUT')`);
@@ -19,8 +17,6 @@ export class RmStockunitLabel1788118064523 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "comptes_chateau"."stock_movement_type_enum"`);
         await queryRunner.query(`ALTER TYPE "comptes_chateau"."stock_movement_type_enum_old" RENAME TO "stock_movement_type_enum"`);
         await queryRunner.query(`ALTER TABLE "stock_unit" ADD "label" character varying(255)`);
-        await queryRunner.query(`CREATE TYPE "comptes_chateau"."stock_unit_status_enum" AS ENUM('AVAILABLE', 'CONSUMED', 'DISCARDED')`);
-        await queryRunner.query(`ALTER TABLE "stock_unit" ADD "status" "comptes_chateau"."stock_unit_status_enum" NOT NULL DEFAULT 'AVAILABLE'`);
     }
 
 }
