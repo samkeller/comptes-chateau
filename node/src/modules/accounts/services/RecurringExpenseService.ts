@@ -3,8 +3,7 @@ import { AppDataSource } from "../../../db/dataSource";
 import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import UserXpService from "../../core/services/UserXpService";
-import { RecurringExpenseDto, SaveRecurringExpensePayload } from "@chocosous/shared";
-import { toRecurringExpenseDto } from "../mappers/RecurringExpenseMapper";
+import { SaveRecurringExpensePayload } from "@chocosous/shared";
 
 export default class RecurringExpenseService {
 

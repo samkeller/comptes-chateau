@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { accountDtoSchema } from "./AccountDto";
+import { AccountDtoSchema } from "./AccountDto";
 
 export const RECURRING_EXPENSE_FREQUENCIES = ["weekly", "monthly", "quarterly", "yearly"] as const;
 
@@ -32,7 +32,7 @@ export const RecurringExpenseDtoSchema = z.object({
     natureId: z.number().int().positive().nullable(),
     posteId: z.number().int().positive().nullable(),
     accountId: z.number().int().positive(),
-    account: accountDtoSchema
+    account: AccountDtoSchema,
 });
 
 export type RecurringExpenseDto = z.infer<typeof RecurringExpenseDtoSchema>;

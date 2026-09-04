@@ -3,7 +3,7 @@ import AccountLineService from "../modules/accounts/services/AccountLineService"
 import RecurringExpenseService from "../modules/accounts/services/RecurringExpenseService";
 import JobExecutionLogService from "../modules/core/services/JobExecutionLogService";
 import { EntityManager } from "typeorm";
-import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { addWeeks, addMonths, addYears } from "date-fns";
 
 export async function processRecurringExpenses(
     manager: EntityManager,
@@ -37,6 +37,8 @@ export async function processRecurringExpenses(
         label: expense.label,
         debit: expense.solde < 0 ? Math.abs(expense.solde) : 0,
         credit: expense.solde > 0 ? expense.solde : 0,
+        nature: expense.nature,
+        poste: expense.poste,
         source: AccountLineSource.SYSTEM,
         dateOperation: currentDate,
         dateValeur: null,

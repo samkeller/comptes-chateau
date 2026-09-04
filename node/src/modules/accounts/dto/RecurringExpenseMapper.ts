@@ -1,6 +1,7 @@
 import { RecurringExpense } from "../entities/RecurringExpense";
 import type { RecurringExpenseDto } from "@chocosous/shared";
 import toAccountDto from "./AccountMapper";
+import { formatApiDate } from "../../../utils/DateUtils";
 
 /** Convertit une entité RecurringExpense en DTO exposé par l'API. */
 export function toRecurringExpenseDto(line: RecurringExpense): RecurringExpenseDto {
@@ -9,7 +10,7 @@ export function toRecurringExpenseDto(line: RecurringExpense): RecurringExpenseD
         label: line.label,
         solde: line.solde,
         isActive: line.isActive,
-        nextOccurrence: line.nextOccurrence.toISOString(),
+        nextOccurrence: formatApiDate(line.nextOccurrence),
         frequency: line.frequency,
         natureId: line.natureId ?? null,
         posteId: line.posteId ?? null,
