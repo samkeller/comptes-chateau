@@ -1,6 +1,5 @@
 import { AppDataSource } from "../../../db/dataSource";
 import customLog from "../../../jobs/customLog";
-import type { Repository } from "typeorm";
 import { randomUUID } from "crypto";
 import { User } from "../entities/User";
 import { UserXpActionsPoints, UserXpActionsPointsKeys } from "../utils/UserXPUtils";
@@ -10,11 +9,7 @@ import { UserNotFoundError } from "./errors/UserNotFoundError";
 
 export default class UserXpService {
 
-    private userRepo: Repository<User>;
-
-    constructor(private readonly em = AppDataSource.manager) {
-        this.userRepo = em.getRepository(User);
-    }
+    private userRepo = AppDataSource.getRepository(User);
 
     async addXPForUser(userId: number, action: UserXpActionsPointsKeys, multiplicator: number = 1): Promise<User> {
         const user = await this.userRepo.findOne({ where: { id: userId } });
