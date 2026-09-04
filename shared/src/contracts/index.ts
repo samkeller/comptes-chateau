@@ -29,7 +29,8 @@ export {
     RECURRING_EXPENSE_FREQUENCIES,
     SaveRecurringExpenseSchema,
     DashboardMonthlyByPosteQuerySchema,
-} from "./accounts";
+    } from "./accounts";
+
 export type {
     AccountDto,
     SaveNaturePayload,
@@ -49,6 +50,7 @@ export type {
     MonthlyAggregateByPoste,
     BudgetByPoste,
     DashboardMonthlyByPosteQuery,
+    RecurringExpenseDto
 } from "./accounts";
 
 export {

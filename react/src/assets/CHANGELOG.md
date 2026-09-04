@@ -73,3 +73,7 @@
 ### Added
 - Chocostocks module
 - Adding fine history tracking for future data analytics
+
+## [1.2.1 - 03/09/2026]
+### Fixes
+- Fix cron /recurring-expenses qui ne calculait pas correctement les prochaines occurrences des dépenses récurrentes (le 31 septembre n'est pas une date 🤓 )
