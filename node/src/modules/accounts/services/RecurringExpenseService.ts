@@ -3,7 +3,8 @@ import { AppDataSource } from "../../../db/dataSource";
 import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import UserXpService from "../../core/services/UserXpService";
-import { SaveRecurringExpensePayload } from "@chocosous/shared";
+import { RecurringExpenseDto, SaveRecurringExpensePayload } from "@chocosous/shared";
+import { toRecurringExpenseDto } from "../mappers/RecurringExpenseMapper";
 
 export default class RecurringExpenseService {
 
@@ -33,13 +34,13 @@ export default class RecurringExpenseService {
     }
 
     async getAllRecurringExpensesBefore(date: Date) {
-        return this.recurringExpenseRepo.find({
+        return await this.recurringExpenseRepo.find({
             where: {
                 nextOccurrence: LessThanOrEqual(date),
                 isActive: true
             },
             relations: ['nature', 'poste', 'account']
-        })
+        });
     }
 
     async saveAll(expensesToProcess: RecurringExpense[]) {

@@ -2,7 +2,12 @@
 import "reflect-metadata";
 import { DataType, IMemoryDb, newDb } from "pg-mem";
 import { DataSource, getMetadataArgsStorage } from "typeorm";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
+import { User } from "../modules/core/entities/User";
+import { Account } from "../modules/accounts/entities/Account";
+
+export const TEST_USER_ID = 1;
+export const TEST_ACCOUNT_ID = 1;
 
 /**
  * Découverte automatique de TOUTES les entités du projet.
@@ -12,7 +17,7 @@ const entityModules = import.meta.glob("../modules/**/entities/*.ts", {
 }) as Record<string, Record<string, unknown>>;
 
 function collectEntities(): Function[] {
-    console.info("Collecting entities...");
+    console.info("[testDbSetup] Collecting entities...");
     const entities: Function[] = [];
     for (const mod of Object.values(entityModules)) {
         for (const exported of Object.values(mod)) {
@@ -23,7 +28,7 @@ function collectEntities(): Function[] {
             }
         }
     }
-    console.info(`Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
+    console.info(`[testDbSetup] Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
     return entities;
 }
 
@@ -56,7 +61,7 @@ vi.mock("../db/dataSource", () => ({
 let db: IMemoryDb
 
 beforeAll(async () => {
-    console.info("Initializing test database...");
+    console.info("[testDbSetup] Initializing test database...");
     db = newDb({ autoCreateForeignKeyIndices: true });
 
     // Stubs nécessaires pour que pg-mem simule un backend PostgreSQL.
@@ -82,12 +87,38 @@ beforeAll(async () => {
 
 
     await testDataSource.initialize();
+
+});
+
+beforeEach(async () => {
+    // Créé un user de test
+    await testDataSource.getRepository(User).save({
+        id: TEST_USER_ID,
+        username: "testuser",
+        avatar: "default-avatar.png",
+        kanbanAssignedTasks: [],
+        passwordHash: "testpasswordhash",
+        totalXp: 100
+    });
+    console.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
+
+    
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    await testDataSource.getRepository(Account).save({
+        id: TEST_ACCOUNT_ID,
+        label: "testaccount0",
+        baseLineAmount: 0,
+        baseLineEffectiveDate: oneYearAgo
+    })
+    console.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
 });
 
 afterEach(async () => {
-    console.info("Clearing test database...");
+    console.info("[testDbSetup] Clearing test database...");
     if (!testDataSource?.isInitialized) return;
 
+    // TODO: Remplacer par un truncate bien propre (= redémarrer les id)
     // Vide toutes les tables (dans l'ordre inverse pour limiter les soucis de FK).
     for (const entity of [...testDataSource.entityMetadatas].reverse()) {
         await testDataSource.query(`DELETE FROM "${entity.tableName}"`);
@@ -95,7 +126,7 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-    console.info("Destroying test DataSource...");
+    console.info("[testDbSetup] Destroying test DataSource...");
     if (testDataSource?.isInitialized) {
         await testDataSource.destroy();
     }

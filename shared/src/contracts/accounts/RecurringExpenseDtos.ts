@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { accountDtoSchema } from "./AccountDto";
 
 export const RECURRING_EXPENSE_FREQUENCIES = ["weekly", "monthly", "quarterly", "yearly"] as const;
 
@@ -17,3 +18,21 @@ export const SaveRecurringExpenseSchema = z.object({
 });
 
 export type SaveRecurringExpensePayload = z.infer<typeof SaveRecurringExpenseSchema>;
+
+/**
+ * DTO exposé par l'API.
+ */
+export const RecurringExpenseDtoSchema = z.object({
+    id: z.number().int().nonnegative(),
+    label: z.string(),
+    solde: z.number(),
+    isActive: z.boolean(),
+    nextOccurrence: z.string(),
+    frequency: z.enum(RECURRING_EXPENSE_FREQUENCIES),
+    natureId: z.number().int().positive().nullable(),
+    posteId: z.number().int().positive().nullable(),
+    accountId: z.number().int().positive(),
+    account: accountDtoSchema
+});
+
+export type RecurringExpenseDto = z.infer<typeof RecurringExpenseDtoSchema>;
