@@ -5,6 +5,7 @@ export interface StockLocationDto {
     id: number;
     label: string;
     createdAt: string;
+    stockUnitCount: number;
 }
 
 /** Produit en stock tel que renvoyé par l'API. */

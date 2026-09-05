@@ -8,15 +8,15 @@ import StockItemUnitsView from "./StockItemUnitsView";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
-    // onTake: (unit: StockItem) => void; TODO ?
+    afterRemoveStockUnitOptimistic?(unitId: number, locationId: number): void;
 }
 
 const stockService = new StockItemsService();
 
-export default function StockItemsDatatable({ locationId }: StockItemsDatatableProps) {
+export default function StockItemsDatatable({ locationId, afterRemoveStockUnitOptimistic }: StockItemsDatatableProps) {
 
     const [stockItems, setStockItems] = useState<StockItem[]>([]);
-    const [expandedRows, setExpandedRows] = useState<StockItem[]>([]);
+    const [expandedRows, setExpandedRows] = useState<StockItem[]>();
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
@@ -27,11 +27,9 @@ export default function StockItemsDatatable({ locationId }: StockItemsDatatableP
         setLoading(true);
         const data = await stockService.getAllStockItems(locationId ?? undefined);
         setStockItems(data);
+        // Expand la première row
+        setExpandedRows(data.length > 0 ? [data[0]] : []);
         setLoading(false);
-    }
-
-    const stockUnitExpansionTemplate = (unit: StockItem) => {
-        return <StockItemUnitsView stockItemId={unit.id} />
     }
 
     return (
@@ -42,8 +40,12 @@ export default function StockItemsDatatable({ locationId }: StockItemsDatatableP
                 // Expanded rows
                 expandedRows={expandedRows}
                 onRowToggle={(event) => setExpandedRows(event.data as StockItem[])}
-                // onRowExpand={(event) => loadHistory(event.data as StockUnit)}
-                rowExpansionTemplate={stockUnitExpansionTemplate}
+                rowExpansionTemplate={(stockItem: StockItem) => (
+                    <StockItemUnitsView
+                        stockItemId={stockItem.id}
+                        afterRemoveStockUnitOptimistic={(unitId, locationId) => locationId && afterRemoveStockUnitOptimistic?.(unitId, locationId)}
+                    />
+                )}
 
                 // Scroll
                 scrollable

@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { CreateStockLocationDto } from "@chocosous/shared";
+import type { CreateStockLocationDto, StockLocationDto } from "@chocosous/shared";
 import BaseService from "../BaseService";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 
@@ -8,7 +8,7 @@ export default class StockLocationService extends BaseService {
 
     listLocations(): Promise<StockLocation[]> {
         return axios.get(`${this.stocksApiUrl}`).then((res) =>
-            res.data.map((location: Partial<StockLocation>) => new StockLocation(location))
+            res.data.map((location: StockLocationDto) => new StockLocation(location))
         );
     }
 

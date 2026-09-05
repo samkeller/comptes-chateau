@@ -6,6 +6,7 @@ export function toStockLocationDto(location: StockLocation): StockLocationDto {
     return {
         id: location.id,
         label: location.label,
+        stockUnitCount: location.stockUnitCount,
         createdAt: location.createdAt.toISOString(),
     };
 }

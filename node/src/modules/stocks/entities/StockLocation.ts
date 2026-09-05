@@ -4,6 +4,7 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
     Column,
+    VirtualColumn,
 } from "typeorm";
 import type { StockUnit } from "./StockUnit";
 
@@ -17,6 +18,12 @@ export class StockLocation {
 
     @OneToMany("StockUnit", (unit: StockUnit) => unit.location)
     units: StockUnit[];
+
+    @VirtualColumn({
+        query: (alias) => `(SELECT COUNT(*) FROM stock_unit unit WHERE unit."locationId" = ${alias}.id)`,
+        // (SELECT COUNT(*) FROM stock_unit unit WHERE unit."locationId"  = 1)
+    })
+    stockUnitCount: number;
 
     @CreateDateColumn()
     createdAt: Date;

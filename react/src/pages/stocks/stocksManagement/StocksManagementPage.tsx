@@ -138,8 +138,10 @@ export default function StocksManagementPage() {
 
             <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
                 <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-6">
+                    {/* Confirm dialog for takeUnit */}
+                    <ConfirmDialog />
                     <StockLocationsPanel
-                        className="lg:h-full lg:min-h-0 lg:w-72 lg:shrink-0"
+                        className="lg:h-full lg:min-h-0 lg:w-72 xl:w-130 lg:shrink-0"
                         locations={locations}
                         selectedLocation={selectedLocation}
                         loading={loadingLocations}
@@ -172,7 +174,16 @@ export default function StocksManagementPage() {
                         </div>
                         <StockItemsDatatable
                             locationId={selectedLocationId}
-                        // onTake={() => void} TODO?
+                            afterRemoveStockUnitOptimistic={(unitId, locationId) => {
+                                setLocations(l => l.map(
+                                    location => location.id === locationId
+                                        ? {
+                                            ...location,
+                                            stockUnitCount: location.stockUnitCount - 1,
+                                        }
+                                        : location
+                                ))
+                            }}
                         />
                     </div>
                 </div>

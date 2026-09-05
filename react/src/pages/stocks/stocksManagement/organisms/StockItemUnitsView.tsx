@@ -2,15 +2,16 @@ import { useState, useEffect } from "react";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { showGlobalToast } from "@/services/GlobalToast";
-import { Button } from "primereact/button";
+import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 
 interface StockItemUnitsViewProps {
     stockItemId: number;
+    afterRemoveStockUnitOptimistic?(unitId: number, locationId: number): void;
 }
 
 const stockUnitsService = new StockUnitsService()
 
-export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewProps) {
+export default function StockItemUnitsView({ stockItemId, afterRemoveStockUnitOptimistic }: StockItemUnitsViewProps) {
     const [units, setUnits] = useState<StockUnit[]>([]);
 
     useEffect(() => {
@@ -29,6 +30,15 @@ export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewPr
                     detail: "Impossible de charger les unités du stock",
                 })
             });
+    }
+
+    /**
+     * Supprime de manière optimiste une unité de stock de la liste locale et notifie le parent si nécessaire.
+     * @param unitId 
+     */
+    const removeStockUnitOptimistic = (unitId: number, locationId: number) => {
+        setUnits((prevUnits) => prevUnits.filter((unit) => unit.id !== unitId));
+        afterRemoveStockUnitOptimistic?.(unitId, locationId);
     }
 
     /**
@@ -51,6 +61,7 @@ export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewPr
             {
                 groupedUnits && Object.keys(groupedUnits).map((expirationDate) => {
                     const count = groupedUnits[expirationDate].length;
+                    const firstUnit = groupedUnits[expirationDate][0];
                     return (
                         <div
                             key={expirationDate}
@@ -63,8 +74,12 @@ export default function StockItemUnitsView({ stockItemId }: StockItemUnitsViewPr
                                     {count === 1 ? "1 unité" : `${count} unités`}
                                 </span>
                             </div>
-                            <Button label="Prendre" icon="pi pi-check" size="small" />
-
+                            
+                            <TakeStockUnitButton
+                                unitId={firstUnit.id}
+                                unitLabel={firstUnit.item.label}
+                                afterTakeUnit={() => removeStockUnitOptimistic(firstUnit.id, firstUnit.locationId)}
+                            />
                         </div>
                     );
                 })}
