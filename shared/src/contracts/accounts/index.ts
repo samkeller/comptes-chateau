@@ -12,8 +12,8 @@ export type { SaveBudgetItemPayload, BudgetPosteDto, BudgetItemDto, UnifiedBudge
 export { SaveOperationSchema, OperationBatchCheckSchema } from "./OperationDtos";
 export type { SaveOperationPayload, OperationBatchCheckPayload, OperationBatchCheckInput } from "./OperationDtos";
 
-export { RECURRING_EXPENSE_FREQUENCIES, SaveRecurringExpenseSchema } from "./RecurringExpenseDtos";
-export type { RecurringExpenseFrequency, SaveRecurringExpensePayload } from "./RecurringExpenseDtos";
+export { RECURRING_EXPENSE_FREQUENCIES, SaveRecurringExpenseSchema, RecurringExpenseDtoSchema } from "./RecurringExpenseDtos";
+export type { RecurringExpenseFrequency, SaveRecurringExpensePayload, RecurringExpenseDto } from "./RecurringExpenseDtos";
 
 export { DashboardMonthlyByPosteQuerySchema } from "./DashboardDtos";
 export type {

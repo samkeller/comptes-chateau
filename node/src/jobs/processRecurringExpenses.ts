@@ -3,6 +3,7 @@ import AccountLineService from "../modules/accounts/services/AccountLineService"
 import RecurringExpenseService from "../modules/accounts/services/RecurringExpenseService";
 import JobExecutionLogService from "../modules/core/services/JobExecutionLogService";
 import { EntityManager } from "typeorm";
+import { addWeeks, addMonths, addYears } from "date-fns";
 
 export async function processRecurringExpenses(
     manager: EntityManager,
@@ -41,34 +42,35 @@ export async function processRecurringExpenses(
         source: AccountLineSource.SYSTEM,
         dateOperation: currentDate,
         dateValeur: null,
-        account: expense.account,
+        accountId: expense.accountId,
+        account: expense.account
     }));
 
     const createdLines = await accountLineService.saveAll(accountLinesToCreate);
 
     // 3 - Modifier les recurring_expense pour mettre à jour la prochaine occurrence
     for (const expense of expensesToProcess) {
-        const [day, month, year] = [
-            expense.nextOccurrence.getDate(),
-            expense.nextOccurrence.getMonth(),
-            expense.nextOccurrence.getFullYear()
-        ];
+        const safeNextOccurrenceDate = new Date(expense.nextOccurrence);
 
+        /**
+         * Attention, on utilise addDays/addWeeks/addMonths/addYears pour calculer la prochaine occurrence
+         * -> Evite les problèmes de safe (month+1 qui créé le 31 septembre qui n'existe pas)
+         */
         switch (expense.frequency) {
             case 'weekly':
-                expense.nextOccurrence = new Date(year, month, day + 7);
+                expense.nextOccurrence = addWeeks(safeNextOccurrenceDate, 1);
                 break;
             case 'monthly':
-                expense.nextOccurrence = new Date(year, month + 1, day);
+                expense.nextOccurrence = addMonths(safeNextOccurrenceDate, 1);
                 break;
             case 'quarterly':
-                expense.nextOccurrence = new Date(year, month + 3, day);
+                expense.nextOccurrence = addMonths(safeNextOccurrenceDate, 3);
                 break;
             case 'yearly':
-                expense.nextOccurrence = new Date(year + 1, month, day);
+                expense.nextOccurrence = addYears(safeNextOccurrenceDate, 1);
                 break;
             default:
-                throw new Error (`Unknown frequency: ${expense.frequency}`);
+                throw new Error(`Unknown frequency: ${expense.frequency}`);
         }
     }
 

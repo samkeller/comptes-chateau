@@ -7,6 +7,7 @@ import { User } from "../modules/core/entities/User";
 import "reflect-metadata";
 
 export const TEST_USER_ID = 1;
+export const TEST_ACCOUNT_ID = 1;
 
 /**
  * Découverte automatique de TOUTES les entités du projet.
@@ -100,12 +101,23 @@ beforeEach(async () => {
         totalXp: 100
     });
     console.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
+    
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    await testDataSource.getRepository(Account).save({
+        id: TEST_ACCOUNT_ID,
+        label: "testaccount0",
+        baseLineAmount: 0,
+        baseLineEffectiveDate: oneYearAgo
+    })
+    console.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
 });
 
 afterEach(async () => {
     console.info("[testDbSetup] Clearing test database...");
     if (!testDataSource?.isInitialized) return;
 
+    // TODO: Remplacer par un truncate bien propre (= redémarrer les id)
     // Vide toutes les tables (dans l'ordre inverse pour limiter les soucis de FK).
     for (const entity of [...testDataSource.entityMetadatas].reverse()) {
         await testDataSource.query(`DELETE FROM "${entity.tableName}"`);
