@@ -10,7 +10,7 @@ export default class StockItemService {
     private readonly stockItemRepo: Repository<StockItem>;
     private readonly userXpService: UserXpService;
 
-    constructor(em: EntityManager) {
+    constructor(em: EntityManager = AppDataSource.manager) {
         this.stockItemRepo = em.getRepository(StockItem);
         this.userXpService = new UserXpService(em);
     }

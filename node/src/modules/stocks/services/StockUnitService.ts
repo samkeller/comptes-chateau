@@ -55,10 +55,10 @@ export default class StockUnitService {
                 });
 
                 const createdStockUnit: StockUnit = await transactionService.stockUnitRepo.save(stockUnit);
-                
+
                 // Ajout XP utilisateur
                 await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_CREATED");
-                
+
                 // Charge les dépendances
                 const completedCreatedStockUnit = await transactionService.findOneWithRelationsOrThrow(createdStockUnit.id);
 
@@ -160,8 +160,6 @@ export default class StockUnitService {
 
             const unit = await transactionService.findOneWithRelationsOrThrow(unitId);
 
-            unit.quantity -= 1;
-
             await transactionService.stockMovementService.createMovement({
                 itemLabel: unit.item.label,
                 locationLabel: unit.location.label,
@@ -175,11 +173,7 @@ export default class StockUnitService {
 
             await transactionService.userXpService.addXPForUser(connectedUserId, "STOCK_UNIT_TAKE");
 
-            if (unit?.quantity > 0) {
-                await transactionService.stockUnitRepo.save(unit);
-            } else {
-                await transactionService.stockUnitRepo.delete(unit.id);
-            }
+            await transactionService.stockUnitRepo.remove(unit);
         });
 
     }
