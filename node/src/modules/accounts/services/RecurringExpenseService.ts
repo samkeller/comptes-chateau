@@ -33,13 +33,13 @@ export default class RecurringExpenseService {
     }
 
     async getAllRecurringExpensesBefore(date: Date) {
-        return this.recurringExpenseRepo.find({
+        return await this.recurringExpenseRepo.find({
             where: {
                 nextOccurrence: LessThanOrEqual(date),
                 isActive: true
             },
             relations: ['nature', 'poste', 'account']
-        })
+        });
     }
 
     async saveAll(expensesToProcess: RecurringExpense[]) {
