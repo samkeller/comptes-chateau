@@ -1,5 +1,5 @@
 import { AppDataSource } from "../../../db/dataSource";
-import { notFound, internalServerError } from "../../../utils/AppError";
+import { notFound } from "../../../utils/AppError";
 import type { EntityManager, Repository } from "typeorm";
 import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
 import { toStockUnitDto } from "../mappers/StockUnitMapper";
@@ -106,25 +106,26 @@ export default class StockUnitService {
             );
         }
 
-        stockUnit.itemId = body.itemId;
-        stockUnit.locationId = body.locationId;
-        stockUnit.quantity = body.quantity;
-        stockUnit.unit = body.unit;
-        stockUnit.expirationDate = body.expirationDate ?? null;
-
-        await this.stockUnitRepo.save(stockUnit);
-
-        await this.stockMovementService.updateMovement(stockUnit);
+        // Update ciblé plutôt que save() : l'entité chargée porte les anciennes
+        // relations item/location, dont TypeORM dériverait les FK au save()
+        // et écraserait les nouveaux ids.
+        await this.stockUnitRepo.update(unitId, {
+            itemId: body.itemId,
+            locationId: body.locationId,
+            quantity: body.quantity,
+            unit: body.unit,
+            expirationDate: body.expirationDate ?? null,
+        });
 
         const updatedStockUnit = await this.findOneWithRelationsOrThrow(unitId);
+
+        await this.stockMovementService.updateMovement(updatedStockUnit);
 
         return toStockUnitDto(updatedStockUnit);
     }
 
     /**
      * Supprime une stock unit.
-     *
-     * Suppression logique grâce à @DeleteDateColumn.
      */
     async delete(unitId: number): Promise<void> {
         await AppDataSource.transaction(async (entityManager) => {
@@ -178,7 +179,7 @@ export default class StockUnitService {
 
     }
 
-    private async findOneWithRelationsOrThrow(unitId: number) {
+    private async findOneWithRelationsOrThrow(unitId: number): Promise<StockUnit> {
         const unit = await this.stockUnitRepo.findOne({
             where: {
                 id: unitId,
@@ -190,7 +191,7 @@ export default class StockUnitService {
         });
 
         if (!unit) {
-            throw internalServerError(
+            throw notFound(
                 "STOCK_UNIT_NOT_FOUND",
                 "Unite de stock introuvable"
             );

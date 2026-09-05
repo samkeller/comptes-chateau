@@ -42,4 +42,5 @@ export interface StockMovementDto {
     locationId: number;
     locationLabel: string;
     type: StockMovementType;
+    createdAt: string;
 }

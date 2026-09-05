@@ -12,6 +12,7 @@ Project Description
 - [ ] Ajouter dans les formulaires des indications claires sur les données étant obligatoires/facultatives (mettre en valeur les lignes obligatoires). Cf FloatLabel. Harmonisation partout
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines)
 - [ ] Fixtures back (https://github.com/RobinCK/typeorm-fixtures) - Peu urgent
+- [ ] Sécuriser ++++ les opérations "miroirs" entre plusieurs comptes. (test unitaires CRUD, impacts modifications, suppression, etc, Ajouter confirm spécifique quand impacts cascade)
 
 ### In Progress
 ### Done ✓

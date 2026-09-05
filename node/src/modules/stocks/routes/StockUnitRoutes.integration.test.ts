@@ -3,8 +3,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { testDataSource } from "../../../tests/testDbSetup";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
+import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
-import { User } from "../../core/entities/User";
 import { createTestApp } from "../../../tests/testApp";
 
 describe("StockUnitRoutes integration", () => {
@@ -12,7 +12,7 @@ describe("StockUnitRoutes integration", () => {
 
     beforeAll(async () => {
         const { default: stockUnitRoutes } = await import("./StockUnitRoutes");
-        app = createTestApp("/stocks/units", stockUnitRoutes, 1);
+        app = createTestApp("/stocks/units", stockUnitRoutes);
     });
 
     it("GET /stocks/units retourne les stock units d'un item", async () => {
@@ -25,14 +25,6 @@ describe("StockUnitRoutes integration", () => {
     });
 
     it("POST /stocks/units crée une stock unit", async () => {
-        await testDataSource.getRepository(User).save({
-            id: 1,
-            username: "stock-user",
-            avatar: "001-tiger.png",
-            totalXp: 0,
-            passwordHash: "hash",
-        });
-
         const location = await testDataSource
             .getRepository(StockLocation)
             .save({
@@ -61,6 +53,7 @@ describe("StockUnitRoutes integration", () => {
         expect(response.body.id).toBeTypeOf("number");
         expect(response.body.itemId).toBe(item.id);
         expect(response.body.locationId).toBe(location.id);
+        expect(response.body.location.stockUnitCount).toBe(1);
         expect(response.body.quantity).toBe(2);
         expect(response.body.unit).toBe("paquet");
     });
@@ -97,6 +90,17 @@ describe("StockUnitRoutes integration", () => {
                 expirationDate: null,
             });
 
+        await testDataSource.getRepository(StockMovement).save({
+            itemId: item.id,
+            itemLabel: item.label,
+            unitId: unit.id,
+            quantity: unit.quantity,
+            unit: unit.unit,
+            locationId: location.id,
+            locationLabel: location.label,
+            type: "IN",
+        });
+
         const response = await request(app)
             .patch(`/stocks/units/${unit.id}`)
             .send({
@@ -111,6 +115,15 @@ describe("StockUnitRoutes integration", () => {
         expect(response.body.locationId).toBe(secondLocation.id);
         expect(response.body.quantity).toBe(5);
         expect(response.body.unit).toBe("kg");
+
+        const updatedMovement = await testDataSource.getRepository(StockMovement).findOneByOrFail({
+            unitId: unit.id,
+            type: "IN",
+        });
+        expect(updatedMovement.locationId).toBe(secondLocation.id);
+        expect(updatedMovement.locationLabel).toBe(secondLocation.label);
+        expect(updatedMovement.quantity).toBe(5);
+        expect(updatedMovement.unit).toBe("kg");
     });
 
     it("DELETE /stocks/units/:id supprime une stock unit", async () => {

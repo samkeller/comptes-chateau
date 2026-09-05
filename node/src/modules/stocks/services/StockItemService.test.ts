@@ -41,13 +41,13 @@ describe("StockItemService.create", () => {
     });
 
     it("should give the user XP", async () => {
-        const userXPBefore = (await userRepo.findOne({
+        const userBefore = await userRepo.findOne({
             where: {
                 id: TEST_USER_ID,
             },
-        }))?.totalXp;
+        });
 
-        await stockItemService.create({
+        const createdItem = await stockItemService.create({
             label: "Test Item",
             units: [],
             defaultUnit: "pcs",
@@ -61,9 +61,10 @@ describe("StockItemService.create", () => {
             },
         }))?.totalXp;
 
-        expect(userXPBefore).toBeDefined();
+        expect(userBefore?.id).toBe(1);
+        expect(createdItem.id).toBe(1);
         expect(userXPAfter).toBeDefined();
-        expect(userXPAfter).toEqual(userXPBefore! + UserXpActionsPoints.STOCK_ITEM_CREATED);
+        expect(userXPAfter).toEqual(userBefore!.totalXp + UserXpActionsPoints.STOCK_ITEM_CREATED);
     });
 
 });
