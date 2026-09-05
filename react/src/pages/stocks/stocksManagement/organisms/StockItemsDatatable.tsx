@@ -8,34 +8,43 @@ import StockItemUnitsView from "./StockItemUnitsView";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
+    searchQuery: string;
     afterRemoveStockUnitOptimistic?(unitId: number, locationId: number): void;
 }
 
 const stockService = new StockItemsService();
 
-export default function StockItemsDatatable({ locationId, afterRemoveStockUnitOptimistic }: StockItemsDatatableProps) {
+export default function StockItemsDatatable({ locationId, searchQuery, afterRemoveStockUnitOptimistic }: StockItemsDatatableProps) {
 
     const [stockItems, setStockItems] = useState<StockItem[]>([]);
+    const [filteredStockItems, setFilteredStockItems] = useState<StockItem[]>([]);
     const [expandedRows, setExpandedRows] = useState<StockItem[]>();
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         loadData()
-    }, [locationId]);
+    }, [locationId,]);
+
+    useEffect(() => {
+        if (searchQuery !== "") {
+            setFilteredStockItems(stockItems.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase())));
+        } else {
+            setFilteredStockItems(stockItems);
+        }
+    }, [searchQuery, stockItems]);
 
     const loadData = async () => {
         setLoading(true);
         const data = await stockService.getAllStockItems(locationId ?? undefined);
         setStockItems(data);
-        // Expand la première row
-        setExpandedRows(data.length > 0 ? [data[0]] : []);
+        setFilteredStockItems(data);
         setLoading(false);
     }
 
     return (
         <FillRemainingHeight>
             <DataTable
-                value={stockItems}
+                value={filteredStockItems}
                 size="small"
                 // Expanded rows
                 expandedRows={expandedRows}
@@ -67,7 +76,6 @@ export default function StockItemsDatatable({ locationId, afterRemoveStockUnitOp
                 <Column
                     header="Stock"
                     field="stockUnitsCount"
-
                 />
             </DataTable>
         </FillRemainingHeight>

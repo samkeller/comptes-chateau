@@ -14,7 +14,6 @@ import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import StockUnit from "@/interfaces/stocks/StockUnit";
-import { showGlobalToast } from "@/services/GlobalToast";
 import { Uuid } from "@chocosous/shared";
 
 const stockLocationService = new StockLocationService();
@@ -269,7 +268,7 @@ export default function StockUnitEditableList({
                 {
                     !firstEntry.id && (
                         // Boutton sauvegarder quand on vient de le créer.
-                        <Button 
+                        <Button
                             label="Ajouter"
                             icon="pi pi-plus"
                             onClick={() => updateStockUnit(firstEntry.clientId, firstEntry)}

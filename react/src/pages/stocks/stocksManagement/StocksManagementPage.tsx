@@ -8,6 +8,7 @@ import StockLocationService from "@/services/stocks/StockLocationService";
 import StockLocationDialog from "./StockLocationDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockItemsDatatable from "./organisms/StockItemsDatatable";
+import { InputText } from "primereact/inputtext";
 
 const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
@@ -18,6 +19,7 @@ export default function StocksManagementPage() {
     const navigate = useNavigate();
     const { locationId: locationIdParam } = useParams<{ locationId: string }>();
     const selectedLocationId = locationIdParam ? Number(locationIdParam) : null;
+    const [searchQuery, setSearchQuery] = useState("");
 
     const [loadingLocations, setLoadingLocations] = useState(true);
     const [locations, setLocations] = useState<StockLocation[]>([]);
@@ -165,15 +167,15 @@ export default function StocksManagementPage() {
                             <h2 className="m-0 text-lg font-semibold">
                                 {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
-                            {/* <Button
-                                label={"Ajouter au stock"}
-                                icon="pi pi-plus"
-                                size="small"
-                                onClick={() => setIsSaveDialogVisible(true)}
-                            /> */}
+                            <InputText
+                                placeholder="Recherche rapide"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                         <StockItemsDatatable
                             locationId={selectedLocationId}
+                            searchQuery={searchQuery}
                             afterRemoveStockUnitOptimistic={(unitId, locationId) => {
                                 setLocations(l => l.map(
                                     location => location.id === locationId

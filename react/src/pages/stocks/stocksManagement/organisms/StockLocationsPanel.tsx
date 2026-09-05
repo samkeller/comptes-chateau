@@ -100,7 +100,7 @@ export default function StockLocationsPanel({
                     <div className="flex shrink-0 justify-end mb-4">
                         <Button
                             label="Ajouter"
-                            icon="pi pi-plus"
+                            icon="pi pi-map-marker"
                             size="small"
                             onClick={onAddLocation}
                         />

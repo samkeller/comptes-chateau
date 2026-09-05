@@ -83,39 +83,6 @@ export default function StockItemUnitsView({ stockItemId, afterRemoveStockUnitOp
                         </div>
                     );
                 })}
-            {/* <DataTable
-                value={units}
-                size="small"
-                scrollable
-                scrollHeight="flex"
-                className="pb-4 w-full"
-                loading={loading}
-                emptyMessage="Aucun produit disponible"
-            >
-                <Column
-                    header="Résumé"
-                    body={(unit: StockUnit) => (
-                        <div className="flex flex-col gap-1 text-sm">
-                            {unit.createdAt && <span>{`Créé le ${parseDateToDisplay(unit.createdAt)}`}</span>}
-                            {unit.updatedAt && <span>{`Mis à jour le ${parseDateToDisplay(unit.updatedAt)}`}</span>}
-                        </div>
-                    )}
-                />
-                <Column
-                    header="Expiration"
-                    field="expirationDate"
-                    body={(unit: StockUnit) => (
-                        unit.expirationDate
-                            ? expirationDateBodyTemplate(unit.expirationDate)
-                            : "-"
-                    )}
-                />
-                <Column
-                    header="Actions"
-                    body={(unit: StockUnit) => (
-                    )}
-                />
-            </DataTable> */}
         </div>
     );
 }
