@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
     { label: "Gestion des stocks", path: "stocksManagement" },
+    { label: "Gestion des produits", path: "productManagement" },
 ];
 
 export default function Stocks() {

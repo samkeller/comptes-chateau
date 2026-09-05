@@ -1,8 +1,7 @@
 export default class StockLocation {
     id: number = 0;
     label: string = "";
-    createdAt: string = "";
-    updatedAt: string = "";
+    stockUnitCount: number = 0;
 
     constructor(partial: Partial<StockLocation>) {
         Object.assign(this, partial);

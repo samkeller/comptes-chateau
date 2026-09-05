@@ -1,13 +1,15 @@
 export {
     CreateStockItemSchema,
-    UpdateStockItemSchema,
     StockItemsQuerySchema,
+    StockUnitCreateSchema,
+    StockUnitsQuerySchema,
 } from "./CreateStockItemDto";
 
 export type {
     CreateStockItemDto,
-    UpdateStockItemDto,
     StockItemsQueryDto,
+    StockUnitCreateDto,
+    StockUnitsQueryDto,
 } from "./CreateStockItemDto";
 
 export {
@@ -21,17 +23,24 @@ export type {
 } from "./CreateStockLocationDto";
 
 export {
+    CreateStockMovementSchema,
+} from "./CreateMovementDto";
+
+export type {
+    CreateStockMovementDto,
+} from "./CreateMovementDto";
+
+export {
     STOCK_MOVEMENT_TYPES,
-    RecordStockMovementSchema,
-} from "./RecordStockMovementDto";
+} from "./StockMovementTypes";
 
 export type {
     StockMovementType,
-    RecordStockMovementDto,
-} from "./RecordStockMovementDto";
+} from "./StockMovementTypes";
 
 export type {
     StockLocationDto,
     StockItemDto,
+    StockUnitDto,
     StockMovementDto,
 } from "./StockDtos";

@@ -1,11 +1,10 @@
-import express from "express";
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { testDataSource } from "../../../tests/testDbSetup";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
+import { createTestApp } from "../../../tests/testApp";
 
 let posteMaisonId: number;
 let posteVoyageId: number;
@@ -88,14 +87,11 @@ async function seedDashboardLines(): Promise<void> {
 }
 
 describe("DashboardController /monthly-by-poste integration", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
 
     beforeAll(async () => {
         const { default: dashboardRoutes } = await import("./DashboardController");
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/accounts/:accountId/dashboard", dashboardRoutes);
     });
 
     beforeEach(async () => {
@@ -158,17 +154,14 @@ describe("DashboardController /monthly-by-poste integration", () => {
 });
 
 describe("DashboardController monthly-by-poste with incoming transfers", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
     const sourceAccountId = 10;
     const targetAccountId = 11;
     let posteRevenuId: number;
 
     beforeAll(async () => {
         const { default: dashboardRoutes } = await import("./DashboardController");
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/dashboard", dashboardRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/accounts/:accountId/dashboard", dashboardRoutes);
     });
 
     beforeEach(async () => {

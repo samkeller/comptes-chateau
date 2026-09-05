@@ -1,13 +1,12 @@
-import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { Account } from "../../accounts/entities/Account";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { User } from "../../core/entities/User";
 import { testDataSource } from "../../../tests/testDbSetup";
+import { createTestApp } from "../../../tests/testApp";
 
-let app: express.Express;
+let app: ReturnType<typeof createTestApp>;
 let seededUserId: number;
 let seededNature: AccountLineNature;
 let seededNatureAlt: AccountLineNature;
@@ -51,14 +50,7 @@ describe("AccountLineCategorizationController integration", () => {
 
         const { default: accountLineCategorizationRoutes } = await import("./AccountLineCategorizationController");
 
-        app = express();
-        app.use(express.json());
-        app.use((req, _res, next) => {
-            (req as any).session = { userId: seededUserId };
-            next();
-        });
-        app.use("/categorization", accountLineCategorizationRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/categorization", accountLineCategorizationRoutes, seededUserId);
     });
 
     it("increments user XP by 10 when a rule is created", async () => {

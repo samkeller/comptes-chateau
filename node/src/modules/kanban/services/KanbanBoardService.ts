@@ -1,13 +1,14 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../../core/entities/User";
-import { toUserDto } from "../../core/dto/UserDto";
+import { toUserDto } from "../../core/mappers/UserMapper";
 import type {
     CreateKanbanTaskRequest,
+    CreateKanbanCommentRequest,
     KanbanBoardResponse,
     KanbanCommentResponse,
     KanbanTaskResponse,
 } from "@chocosous/shared";
-import { toKanbanTaskDto } from "../dto/KanbanTaskDto";
+import { toKanbanTaskDto } from "../mappers/KanbanTaskMapper";
 import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
@@ -16,10 +17,9 @@ import { forbidden, notFound } from "../../../utils/AppError";
 import UserXpService from "../../core/services/UserXpService";
 
 /** Entrée interne (backend) pour la création d'un commentaire : taskId vient de l'URL, content du corps validé. */
-export interface CreateKanbanCommentInput {
+type CreateKanbanCommentInput = CreateKanbanCommentRequest & {
     taskId: number;
-    content: string;
-}
+};
 
 export default class KanbanBoardService {
     private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);

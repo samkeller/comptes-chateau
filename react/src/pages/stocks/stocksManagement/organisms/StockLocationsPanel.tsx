@@ -26,6 +26,7 @@ export default function StockLocationsPanel({
     onDeleteLocation,
     className,
 }: StockLocationsPanelProps) {
+
     const StockLocationListItem = (
         { location, className }: {
             location: StockLocation,
@@ -34,15 +35,23 @@ export default function StockLocationsPanel({
     ) => {
         const isSelected = location.id === selectedLocation?.id;
         return (
-            <div className={`flex ${className ?? ""}`}>
+            <div className={`flex gap-1 ${className ?? ""}`}>
                 <Button
                     outlined={!isSelected}
                     className={`grow`}
                     onClick={() => onSelect(location)}
-                    label={location.label}
-                />
+                    rounded
+                >
+                    <div className="flex flex-col gap-1">
+
+                        <h3 className="text-lg font-semibold">{location.label}</h3>
+                        <span className="text-sm text-left">
+                            {location.stockUnitCount} stock{location.stockUnitCount > 1 ? "s" : ""}
+                        </span>
+                    </div>
+                </Button>
                 {isSelected && (
-                    <>
+                    <div className="flex gap-1 flex-col">
                         <Button
                             icon="pi pi-pencil"
                             outlined
@@ -62,7 +71,7 @@ export default function StockLocationsPanel({
                             tooltip="Supprimer"
                             tooltipOptions={{ position: "top" }}
                         />
-                    </>
+                    </div>
                 )}
             </div>
         );
@@ -91,7 +100,7 @@ export default function StockLocationsPanel({
                     <div className="flex shrink-0 justify-end mb-4">
                         <Button
                             label="Ajouter"
-                            icon="pi pi-plus"
+                            icon="pi pi-map-marker"
                             size="small"
                             onClick={onAddLocation}
                         />

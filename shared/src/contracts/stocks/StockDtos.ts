@@ -1,11 +1,11 @@
-import type { StockMovementType } from "./RecordStockMovementDto";
+import type { StockMovementType } from "./StockMovementTypes";
 
 /** Lieu de stockage tel que renvoyé par l'API. */
 export interface StockLocationDto {
     id: number;
     label: string;
     createdAt: string;
-    updatedAt: string;
+    stockUnitCount: number;
 }
 
 /** Produit en stock tel que renvoyé par l'API. */
@@ -13,23 +13,34 @@ export interface StockItemDto {
     id: number;
     label: string;
     barcode: string | null;
-    currentQuantity: number;
-    unit: string;
+    defaultUnit: string;
+    imageUrl: string | null;
+    stockUnitsCount: number;
+    createdAt: string;
+}
+
+/** Unité de produit en stock telle que renvoyée par l'API. */
+export interface StockUnitDto {
+    id: number;
+    itemId: number;
+    item: StockItemDto;
     locationId: number;
     location: StockLocationDto;
+    quantity: number;
+    unit: string;
     expirationDate: string | null;
-    imageUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
 }
 
 /** Mouvement de stock tel que renvoyé par l'API. */
 export interface StockMovementDto {
     id: number;
     itemId: number;
-    type: StockMovementType;
+    itemLabel: string;
+    unitId: number;
     quantity: number;
-    occurredAt: string;
-    source: string;
+    unit: string;
+    locationId: number;
+    locationLabel: string;
+    type: StockMovementType;
     createdAt: string;
 }

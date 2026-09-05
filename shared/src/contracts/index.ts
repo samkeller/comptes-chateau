@@ -1,22 +1,25 @@
 export {
     CreateStockItemSchema,
-    UpdateStockItemSchema,
     StockItemsQuerySchema,
+    StockUnitCreateSchema,
+    StockUnitsQuerySchema,
     CreateStockLocationSchema,
     UpdateStockLocationSchema,
     STOCK_MOVEMENT_TYPES,
-    RecordStockMovementSchema,
+    CreateStockMovementSchema,
 } from "./stocks";
 export type {
     CreateStockItemDto,
-    UpdateStockItemDto,
     StockItemsQueryDto,
+    StockUnitCreateDto,
+    StockUnitsQueryDto,
     CreateStockLocationDto,
     UpdateStockLocationDto,
     StockMovementType,
-    RecordStockMovementDto,
+    CreateStockMovementDto,
     StockLocationDto,
     StockItemDto,
+    StockUnitDto,
     StockMovementDto,
 } from "./stocks";
 
