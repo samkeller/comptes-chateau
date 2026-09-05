@@ -1,13 +1,5 @@
 - Quand unit nouvelle créé -> Option "sauvegarder"
 
--> Unit - modifier la quantité créé N instances ?
--> UnitGroup - Modifier la quantité créé N instances ?
-
-=> Questionnement global sur la notion de quantité ?
--> TakeUnit d'un paquet de 5kg = takeUnit du paquet de 5 kg
-
-
-
 Gestion des stocks :
 - Mieux distinguer bouton ajouter & lieu séléctionné
 -> Bouton "prendre" KO

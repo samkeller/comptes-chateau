@@ -266,6 +266,16 @@ export default function StockUnitEditableList({
                         />
                     </>
                 }
+                {
+                    !firstEntry.id && (
+                        // Boutton sauvegarder quand on vient de le créer.
+                        <Button 
+                            label="Ajouter"
+                            icon="pi pi-plus"
+                            onClick={() => updateStockUnit(firstEntry.clientId, firstEntry)}
+                        />
+                    )
+                }
             </div>
         );
     };
