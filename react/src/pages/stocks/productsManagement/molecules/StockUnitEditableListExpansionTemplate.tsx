@@ -63,9 +63,11 @@ export default function StockUnitEditableListExpansionTemplate({
             >
                 <Column
                     field="quantity"
-                    header="Quantité"
+                    header="Stock"
                     body={(entry) => entry.quantity}
-                    editor={numberEditor}
+                    editor={(options: ColumnEditorOptions) => numberEditor(options, {
+                        showButtons: true
+                    })}
                 />
 
                 <Column

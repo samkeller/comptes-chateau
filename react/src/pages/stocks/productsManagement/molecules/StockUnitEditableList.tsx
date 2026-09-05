@@ -321,26 +321,10 @@ export default function StockUnitEditableList({
 
                 <Column
                     field="quantity"
-                    header="Quantité"
-                    body={(group: StockUnitGroup) => {
-                        const firstStockUnit = group.stockUnits[0];
-
-                        if (group.stockUnits.length === 1) {
-                            return firstStockUnit.quantity;
-                        }
-
-                        return (
-                            <div className="flex items-center gap-2">
-                                <span className="font-semibold">
-                                    {group.stockUnits.length} ×
-                                </span>
-
-                                <span>
-                                    {firstStockUnit.quantity}
-                                </span>
-                            </div>
-                        );
-                    }}
+                    header="Stock"
+                    body={(group: StockUnitGroup) => (
+                        <span className="font-semibold">{group.stockUnits.reduce((total, unit) => total + (unit.quantity), 0)}</span>
+                    )}
                 />
 
                 <Column

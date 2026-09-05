@@ -1,6 +1,6 @@
 import type { ColumnEditorOptions } from "primereact/column";
 import { InputText } from "primereact/inputtext";
-import { InputNumber } from "primereact/inputnumber";
+import { InputNumber, InputNumberProps } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 
@@ -11,10 +11,11 @@ export const textEditor = (options: ColumnEditorOptions) => (
     />
 );
 
-export const numberEditor = (options: ColumnEditorOptions) => (
+export const numberEditor = (options: ColumnEditorOptions, InputProps?: Omit<InputNumberProps, "value" | "onValueChange">) => (
     <InputNumber
         value={options.value ?? 0}
         onValueChange={(event) => options.editorCallback?.(event.value)}
+        {...InputProps}
     />
 );
 

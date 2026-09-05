@@ -65,7 +65,7 @@ export default function StockItemsDatatable({ locationId, afterRemoveStockUnitOp
                     )}
                 />
                 <Column
-                    header="Compte"
+                    header="Stock"
                     field="stockUnitsCount"
 
                 />
