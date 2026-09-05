@@ -29,7 +29,21 @@ const VIRTUAL_COLUMN_OVERRIDES: VirtualColumnOverride[] = [
  * @param db 
  */
 export function registerTestFunctions(db: IMemoryDb): void {
-
+    db.public.registerFunction({
+        name: "current_database",
+        returns: DataType.text,
+        implementation: () => "pgmem",
+    });
+    db.public.registerFunction({
+        name: "version",
+        returns: DataType.text,
+        implementation: () => "PostgreSQL 16.0",
+    });
+    db.public.registerFunction({
+        name: "current_schema",
+        returns: DataType.text,
+        implementation: () => "public",
+    });
     db.public.registerFunction({
         name: "stock_unit_count",
         args: [DataType.integer],
