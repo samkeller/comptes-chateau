@@ -4,6 +4,7 @@ import { DataType, IMemoryDb, newDb } from "pg-mem";
 import { DataSource, getMetadataArgsStorage } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 import { User } from "../modules/core/entities/User";
+import "reflect-metadata";
 
 export const TEST_USER_ID = 1;
 

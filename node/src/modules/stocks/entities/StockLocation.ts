@@ -20,8 +20,8 @@ export class StockLocation {
     units: StockUnit[];
 
     @VirtualColumn({
+        type: "integer",
         query: (alias) => `(SELECT COUNT(*) FROM stock_unit unit WHERE unit."locationId" = ${alias}.id)`,
-        // (SELECT COUNT(*) FROM stock_unit unit WHERE unit."locationId"  = 1)
     })
     stockUnitCount: number;
 
