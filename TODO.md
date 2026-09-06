@@ -13,6 +13,7 @@ Project Description
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines)
 - [ ] Fixtures back (https://github.com/RobinCK/typeorm-fixtures) - Peu urgent
 - [ ] Sécuriser ++++ les opérations "miroirs" entre plusieurs comptes. (test unitaires CRUD, impacts modifications, suppression, etc, Ajouter confirm spécifique quand impacts cascade)
+- [ ] Gestion d'erreurs centralisés (AppError back -> catchés par Interceptors.ts -> Supprimer tous les catchs() front inutiles - le back envoie les messages d'erreurs)
 
 ### In Progress
 ### Done ✓

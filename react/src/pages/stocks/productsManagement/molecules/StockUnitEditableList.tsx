@@ -81,6 +81,13 @@ export default function StockUnitEditableList({
     }, [stockUnits]);
 
     /**
+     * L'affichage et les actions sont différents si le groupe contient plusieurs unités.
+     * @param group 
+     * @returns 
+     */
+    const isMultipleUnits = (group: StockUnitGroup) => group.stockUnits.length > 1;
+
+    /**
      * Retournes un stockUnit vide.
      * - ClientId unique
      * - LocationId construit à partir du tableau de stockLocations (selec)
@@ -240,7 +247,7 @@ export default function StockUnitEditableList({
 
         return (
             <div className="flex items-center gap-1">
-                {group.stockUnits.length === 1 && (
+                {!isMultipleUnits(group) && (
                     <DuplicateStockUnitButton
                         stockItemId={stockItemId}
                         stockUnit={firstEntry}
@@ -252,7 +259,7 @@ export default function StockUnitEditableList({
 
                 {
                     firstEntry.id &&
-                    group.stockUnits.length === 1 && <>
+                    !isMultipleUnits(group) && <>
                         <DeleteStockUnitButton
                             unitId={firstEntry.id}
                             unitLabel={stockItemLabel}
@@ -321,7 +328,7 @@ export default function StockUnitEditableList({
             >
                 <Column
                     expander={(group: StockUnitGroup) =>
-                        group.stockUnits.length > 1
+                        isMultipleUnits(group)
                     }
                     style={{
                         width: "3rem",
@@ -332,7 +339,13 @@ export default function StockUnitEditableList({
                     field="quantity"
                     header="Stock"
                     body={(group: StockUnitGroup) => (
-                        <span className="font-semibold">{group.stockUnits.reduce((total, unit) => total + (unit.quantity), 0)}</span>
+                        <span className="font-semibold">
+                            {
+                                isMultipleUnits(group)
+                                ? `${group.stockUnits.length} x ${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
+                                : `${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
+                            }
+                        </span>
                     )}
                 />
 

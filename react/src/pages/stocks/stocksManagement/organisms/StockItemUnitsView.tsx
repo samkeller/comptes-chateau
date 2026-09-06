@@ -58,7 +58,6 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
 
     return (
         <div>
-
             {
                 groupedUnits && Object.keys(groupedUnits).map((expirationDate) => {
                     const count = groupedUnits[expirationDate].length;
@@ -71,9 +70,7 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
                             <div className="flex flex-col">
 
                                 <h3>{expirationDate}</h3>
-                                <span>
-                                    {count === 1 ? "1 unité" : `${count} unités`}
-                                </span>
+                                <span>{firstUnit.quantity} {firstUnit.unit} - {count === 1 ? "1 unité" : `${count} unités`}</span>
                             </div>
                             
                             <TakeStockUnitButton
