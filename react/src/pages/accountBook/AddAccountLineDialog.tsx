@@ -6,6 +6,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { FloatLabel } from "primereact/floatlabel";
 import { ToggleButton } from "primereact/togglebutton";
+import { Message } from "primereact/message";
 import AccountLine from "../../interfaces/AccountLine";
 import Account from "../../interfaces/Account";
 import AccountLineNatureDropdown from "../../components/atoms/accountLine/AccountLineNatureDropdown";
@@ -177,6 +178,13 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
             onHide={hideDialog}
         >
             <div className="flex flex-col gap-12 pt-12">
+                {isEditing && targetAccount && (
+                    <Message
+                        severity="info"
+                        className="w-full"
+                        text={`Virement lié au compte « ${targetAccount.label} » : les montants, dates et le statut de vérification seront répercutés sur l'opération miroir de ce compte. Retirer le compte lié supprimera l'opération miroir.`}
+                    />
+                )}
                 <div className="flex gap-1">
                     <FloatLabel className="flex-1">
                         <Calendar
