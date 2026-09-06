@@ -8,6 +8,7 @@ import type {
 } from "@chocosous/shared";
 import { toStockLocationDto } from "../mappers/StockLocationMapper";
 import { StockLocation } from "../entities/StockLocation";
+import { StockLocationNotEmptyError } from "./errors/StockLocationNotEmptyError";
 
 export default class StockLocationService {
     private readonly stockLocationRepo = AppDataSource.getRepository(StockLocation);
@@ -52,7 +53,7 @@ export default class StockLocationService {
         const linkedStockUnits = await this.stockUnitService.getStockUnitsByLocationId(id);
 
         if (linkedStockUnits.length > 0) {
-            throw new Error("STOCK_LOCATION_NOT_EMPTY: Impossible de supprimer un lieu contenant encore des produits liés");
+            throw new StockLocationNotEmptyError("Impossible de supprimer un lieu contenant encore des produits liés");
         }
 
         await this.stockLocationRepo.remove(location);

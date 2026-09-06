@@ -106,16 +106,9 @@ export default function StocksManagementPage() {
             accept: () => {
                 stockLocationService.deleteLocation(location.id)
                     .then(() => {
-                        showToast({ severity: "success", summary: "Lieu supprime" });
+                        showToast({ severity: "success", summary: "Lieu supprimé" });
                         return refreshStock();
                     })
-                    .catch(() => {
-                        showToast({
-                            severity: "error",
-                            summary: "Suppression impossible",
-                            detail: "Retirez d'abord les produits disponibles dans ce lieu.",
-                        });
-                    });
             },
         });
     }
