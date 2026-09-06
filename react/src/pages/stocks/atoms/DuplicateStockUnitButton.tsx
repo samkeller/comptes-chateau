@@ -1,7 +1,6 @@
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import { Button } from "primereact/button";
-import { showGlobalToast } from "@/services/GlobalToast";
 
 interface DuplicateStockUnitButtonProps {
     stockItemId: number;
