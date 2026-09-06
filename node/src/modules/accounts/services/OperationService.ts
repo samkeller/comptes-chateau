@@ -10,8 +10,7 @@ import TableQueryParser from "./queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { OperationBatchCheckPayload, SaveOperationPayload } from "@chocosous/shared";
 import { badRequest, notFound } from "../../../utils/AppError";
-import { DeleteResult } from "typeorm/query-builder/result/DeleteResult";
-import { Like } from "typeorm/find-options/operator/Like";
+import { DeleteResult, Like } from "typeorm";
 import UserXpService from "../../core/services/UserXpService";
 
 const lazyTableQueryParserOptions = {

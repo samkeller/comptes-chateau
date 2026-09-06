@@ -33,3 +33,6 @@ export const unauthorized = (code: string, message: string): AppError =>
 
 export const forbidden = (code: string, message: string): AppError =>
     new AppError(403, code, message);
+
+export const internalServerError = (code: string, message: string): AppError =>
+    new AppError(500, code, message);

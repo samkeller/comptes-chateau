@@ -1,4 +1,3 @@
-import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
@@ -7,7 +6,7 @@ import { AccountLineNature } from "../entities/AccountLineNature";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { User } from "../../core/entities/User";
 import { testDataSource } from "../../../tests/testDbSetup";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
+import { createTestApp } from "../../../tests/testApp";
 
 let seededUserId: number;
 let natureChargesId: number;
@@ -103,20 +102,13 @@ async function seedAccountLines(): Promise<void> {
 }
 
 describe("OperationControllers /lazy integration", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
 
     beforeEach(async () => {
         await seedAccountLines();
 
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
-        app = express();
-        app.use(express.json());
-        app.use((req, _res, next) => {
-            (req as any).session = { userId: seededUserId };
-            next();
-        });
-        app.use("/accounts/:accountId", accountScopedRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/accounts/:accountId", accountScopedRoutes, seededUserId);
     });
 
     it("sorts by amount ASC using (credit - debit)", async () => {

@@ -77,3 +77,7 @@
 ## [1.2.1 - 03/09/2026]
 ### Fixes
 - Fix cron /recurring-expenses qui ne calculait pas correctement les prochaines occurrences des dépenses récurrentes (le 31 septembre n'est pas une date 🤓 )
+
+## [1.2.2 - 06/09/2026]
+### Added
+- Chocostocks v2 o/ - Le module est fonctionnel

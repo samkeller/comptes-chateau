@@ -1,10 +1,12 @@
 /// <reference types="vite/client" />
 import "reflect-metadata";
-import { DataType, IMemoryDb, newDb } from "pg-mem";
+import { IMemoryDb, newDb } from "pg-mem";
 import { DataSource, getMetadataArgsStorage } from "typeorm";
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, vi } from "vitest";
 import { User } from "../modules/core/entities/User";
 import { Account } from "../modules/accounts/entities/Account";
+import { applyVirtualColumnOverrides, registerTestFunctions } from "./testsFunctions";
+import "reflect-metadata";
 
 export const TEST_USER_ID = 1;
 export const TEST_ACCOUNT_ID = 1;
@@ -40,6 +42,7 @@ function collectEntities(): Function[] {
 let testDataSource: DataSource;
 type ColumnMetadataArgs = ReturnType<typeof getMetadataArgsStorage>["columns"][number];
 const originalDateDefaults = new Map<ColumnMetadataArgs, ColumnMetadataArgs["options"]["default"]>();
+let restoreVirtualColumnQueries: () => void;
 
 vi.mock("../db/dataSource", () => ({
     AppDataSource: new Proxy({} as DataSource, {
@@ -56,18 +59,18 @@ vi.mock("../db/dataSource", () => ({
 }));
 
 // -----------------------------------------------------------------------
-// 3. Cycle de vie : une DB par fichier de test, tables vidées entre chaque test.
+// 3. Cycle de vie : une DB par fichier de test, restaurée à son état initial
+//    avant chaque test (données et générateurs d'identifiants inclus).
 // -----------------------------------------------------------------------
-let db: IMemoryDb
+let db: IMemoryDb;
+let cleanDatabase: ReturnType<IMemoryDb["backup"]>;
 
 beforeAll(async () => {
     console.info("[testDbSetup] Initializing test database...");
     db = newDb({ autoCreateForeignKeyIndices: true });
 
-    // Stubs nécessaires pour que pg-mem simule un backend PostgreSQL.
-    db.public.registerFunction({ name: "current_database", returns: DataType.text, implementation: () => "pgmem" });
-    db.public.registerFunction({ name: "version", returns: DataType.text, implementation: () => "PostgreSQL 16.0" });
-    db.public.registerFunction({ name: "current_schema", returns: DataType.text, implementation: () => "public" });
+    registerTestFunctions(db);
+    restoreVirtualColumnQueries = applyVirtualColumnOverrides();
 
     for (const column of getMetadataArgsStorage().columns) {
         const defaultValue = column.options.default;
@@ -77,6 +80,7 @@ beforeAll(async () => {
             originalDateDefaults.set(column, defaultValue);
             column.options.default = () => "CURRENT_DATE + INTERVAL '0 days'";
         }
+
     }
 
     testDataSource = db.adapters.createTypeormDataSource({
@@ -87,21 +91,23 @@ beforeAll(async () => {
 
 
     await testDataSource.initialize();
-
+    cleanDatabase = db.backup();
 });
 
 beforeEach(async () => {
-    // Créé un user de test
-    await testDataSource.getRepository(User).save({
-        id: TEST_USER_ID,
+    cleanDatabase.restore();
+
+    const seededUser = await testDataSource.getRepository(User).save({
         username: "testuser",
         avatar: "default-avatar.png",
         kanbanAssignedTasks: [],
         passwordHash: "testpasswordhash",
         totalXp: 100
     });
+    if (seededUser.id !== TEST_USER_ID) {
+        throw new Error(`Expected test user id ${TEST_USER_ID}, received ${seededUser.id}`);
+    }
     console.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
-
     
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
@@ -114,17 +120,6 @@ beforeEach(async () => {
     console.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
 });
 
-afterEach(async () => {
-    console.info("[testDbSetup] Clearing test database...");
-    if (!testDataSource?.isInitialized) return;
-
-    // TODO: Remplacer par un truncate bien propre (= redémarrer les id)
-    // Vide toutes les tables (dans l'ordre inverse pour limiter les soucis de FK).
-    for (const entity of [...testDataSource.entityMetadatas].reverse()) {
-        await testDataSource.query(`DELETE FROM "${entity.tableName}"`);
-    }
-});
-
 afterAll(async () => {
     console.info("[testDbSetup] Destroying test DataSource...");
     if (testDataSource?.isInitialized) {
@@ -133,6 +128,7 @@ afterAll(async () => {
     for (const [column, defaultValue] of originalDateDefaults) {
         column.options.default = defaultValue;
     }
+    restoreVirtualColumnQueries();
     originalDateDefaults.clear();
 });
 

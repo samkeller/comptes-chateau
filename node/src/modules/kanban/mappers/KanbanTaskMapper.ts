@@ -1,4 +1,4 @@
-import { toUserDto } from "../../core/dto/UserDto";
+import { toUserDto } from "../../core/mappers/UserMapper";
 import type { KanbanTaskResponse } from "@chocosous/shared";
 import { KanbanTask } from "../entities/KanbanTask";
 

@@ -8,7 +8,10 @@ const { getRepositoryMock } = vi.hoisted(() => ({
 
 vi.mock("../../../db/dataSource", () => ({
     AppDataSource: {
-        getRepository: getRepositoryMock
+        getRepository: getRepositoryMock,
+        manager: {
+            getRepository: getRepositoryMock
+        }
     }
 }));
 
