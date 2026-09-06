@@ -22,10 +22,11 @@ export default class StockItemController {
     };
 
     patch = async (req: Request, res: Response) => {
-        const body = req.body as Partial<CreateStockItemDto>;
+        const stockItemId = Number(req.params.id);
+        const body = req.body as CreateStockItemDto;
 
         res.status(200).json(
-            await this.stockItemService.update(body)
+            await this.stockItemService.update(stockItemId, body)
         );
     };
 }
