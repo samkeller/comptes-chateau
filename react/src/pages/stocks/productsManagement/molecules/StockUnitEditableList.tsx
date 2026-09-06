@@ -287,7 +287,7 @@ export default function StockUnitEditableList({
                 <Button
                     label="Ajouter du stock"
                     icon="pi pi-plus"
-                    disabled={!stockItemId}
+                    disabled={!stockItemId || stockLocations.length === 0}
                     onClick={addStockUnit}
                 />
             </div>
