@@ -2,7 +2,7 @@ import { Router } from "express";
 import { AvatarSchema } from "@chocosous/shared";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
-import { toUserDto } from "../dto/UserDto";
+import { toUserDto } from "../mappers/UserMapper";
 import { unauthorized } from "../../../utils/AppError";
 import { validateBody } from "../middlewares/validate";
 

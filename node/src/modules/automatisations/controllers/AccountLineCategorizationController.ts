@@ -22,9 +22,9 @@ AccountLineCategorizationRoutes.get('/unmapped', async (_req: Request, res: Resp
 });
 
 AccountLineCategorizationRoutes.post('/', validateBody(SaveAccountLineRuleSchema), async (req: Request, res: Response) => {
-    const connectedUser = requireUserId(req);
+    const connectedUserId = requireUserId(req);
 
-    const created = await accountLineCategorizationService.create(req.body, connectedUser);
+    const created = await accountLineCategorizationService.create(req.body, connectedUserId);
 
     res.status(201).json(created);
 });

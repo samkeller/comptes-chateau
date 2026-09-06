@@ -6,7 +6,10 @@ type UserXpActionsPointsKeys =
     "ACCOUNT_LINE_OPERATION_VALIDATED" |
     "ACCOUNT_RECURRING_EXPENSE_CREATED" |
     "KANBAN_TASK_COMPLETED" |
-    "KANBAN_TASK_CREATED";
+    "KANBAN_TASK_CREATED" |
+    "STOCK_ITEM_CREATED" |
+    "STOCK_UNIT_CREATED" |
+    "STOCK_UNIT_TAKE";
 
 const UserXpActionsPoints: { [key in UserXpActionsPointsKeys]: number } = {
     ACCOUNT_LINE_RULE_CREATED: 10,
@@ -15,6 +18,9 @@ const UserXpActionsPoints: { [key in UserXpActionsPointsKeys]: number } = {
     ACCOUNT_RECURRING_EXPENSE_CREATED: 100,
     KANBAN_TASK_COMPLETED: 40,
     KANBAN_TASK_CREATED: 10,
+    STOCK_ITEM_CREATED: 40,
+    STOCK_UNIT_CREATED: 20,
+    STOCK_UNIT_TAKE: 10,
 };
 
 export { UserXpActionsPoints, UserXpActionsPointsKeys };

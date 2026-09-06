@@ -1,24 +1,20 @@
-import express from "express";
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { testDataSource } from "../../../tests/testDbSetup";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
 import { Account } from "../entities/Account";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { BudgetItem } from "../entities/BudgetItem";
+import { createTestApp } from "../../../tests/testApp";
 
 describe("BudgetController integration", () => {
-    let app: express.Express;
+    let app: ReturnType<typeof createTestApp>;
     let accountId: number;
     let posteId: number;
 
     beforeAll(async () => {
         const { default: budgetRoutes } = await import("./BudgetController");
 
-        app = express();
-        app.use(express.json());
-        app.use("/accounts/:accountId/budget", budgetRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/accounts/:accountId/budget", budgetRoutes);
     });
 
     beforeEach(async () => {

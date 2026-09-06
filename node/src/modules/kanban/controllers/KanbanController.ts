@@ -16,8 +16,8 @@ export default class KanbanController {
     };
 
     createTask = async (req: Request, res: Response) => {
-        const connectedUser = requireUserId(req);
-        const task = await this.boardService.createTask(req.body, connectedUser);
+        const connectedUserId = requireUserId(req);
+        const task = await this.boardService.createTask(req.body, connectedUserId);
         res.status(201).json(task);
     };
 
@@ -32,8 +32,8 @@ export default class KanbanController {
     };
 
     markTaskAsDone = async (req: Request, res: Response) => {
-        const connectedUser = requireUserId(req);
-        await this.boardService.markTaskAsDone(Number(req.params.id), connectedUser);
+        const connectedUserId = requireUserId(req);
+        await this.boardService.markTaskAsDone(Number(req.params.id), connectedUserId);
         res.status(200).json("ok");
     };
 
@@ -43,17 +43,17 @@ export default class KanbanController {
     };
 
     createComment = async (req: Request, res: Response) => {
-        const connectedUser = requireUserId(req);
+        const connectedUserId = requireUserId(req);
         const comment = await this.boardService.createComment(
             { taskId: Number(req.params.id), content: req.body.content },
-            connectedUser
+            connectedUserId
         );
         res.status(201).json(comment);
     };
 
     deleteComment = async (req: Request, res: Response) => {
-        const connectedUser = requireUserId(req);
-        await this.boardService.deleteComment(Number(req.params.commentId), connectedUser);
+        const connectedUserId = requireUserId(req);
+        await this.boardService.deleteComment(Number(req.params.commentId), connectedUserId);
         res.status(204).send();
     };
 }
