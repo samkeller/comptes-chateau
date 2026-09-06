@@ -56,4 +56,21 @@ export default class StockItemService {
 
         return toStockItemDto(savedStockItem);
     }
+
+    async update(body: Partial<CreateStockItemDto>): Promise<StockItemDto> {
+        const stockItem = await this.stockItemRepo.findOne({
+            where: { id: body.id },
+        });
+
+        if (!stockItem) {
+            throw new Error("Stock item not found");
+        }
+
+        const savedStockItem = await this.stockItemRepo.save({
+            ...stockItem,
+            ...body,
+        });
+
+        return toStockItemDto(savedStockItem);
+    }
 }

@@ -20,4 +20,12 @@ export default class StockItemController {
             await this.stockItemService.create(body, connectedUserId)
         );
     };
+
+    patch = async (req: Request, res: Response) => {
+        const body = req.body as Partial<CreateStockItemDto>;
+
+        res.status(200).json(
+            await this.stockItemService.update(body)
+        );
+    };
 }
