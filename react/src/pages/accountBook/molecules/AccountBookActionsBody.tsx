@@ -23,10 +23,21 @@ export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: 
     
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+    const isTransfer = Boolean(data.transferGroupId);
+
     const duplicateLine = () => {
         accountService
             .duplicateLine(accountId, data.id)
-            .then(() => onDuplicate?.(data.id));
+            .then(() => {
+                showGlobalToast({
+                    severity: 'success',
+                    summary: 'Duplication effectuée',
+                    detail: isTransfer
+                        ? `Le virement a été dupliqué, y compris l'opération liée sur « ${data.targetAccount?.label} ».`
+                        : "L'opération a été dupliquée."
+                });
+                onDuplicate?.(data.id);
+            });
     }
 
     const confirmLineDeletion = () => {
@@ -52,8 +63,12 @@ export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: 
             <ConfirmDialog
                 visible={showConfirmDialog}
                 onHide={() => setShowConfirmDialog(false)}
-                message='Voulez-vous vraiment supprimer cette ligne ?'
-                header='Confirmation'
+                message={
+                    isTransfer
+                        ? `Cette opération est un virement lié au compte « ${data.targetAccount?.label} ». La suppression supprimera aussi l'opération miroir dans ce compte. Confirmer ?`
+                        : 'Voulez-vous vraiment supprimer cette ligne ?'
+                }
+                header={isTransfer ? 'Supprimer un virement lié' : 'Confirmation'}
                 icon='pi pi-info-circle'
                 defaultFocus='reject'
                 acceptClassName='p-button-danger'

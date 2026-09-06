@@ -5,6 +5,17 @@ import { AccountLine } from "../entities/AccountLine";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { badRequest } from "../../../utils/AppError";
 
+/**
+ * Service de persistance des lignes de compte (`account_line`).
+ *
+ * Point d'entrée unique pour les écritures unitaires ou en lot : il centralise
+ * la normalisation des dates et les invariants métier/DB :
+ * - une ligne vérifiée (`isChecked = true`) doit avoir une `dateValeur` ;
+ * - une ligne non vérifiée ne doit pas avoir de `dateValeur`.
+ *
+ * La logique de virement (lignes miroir entre comptes) est orchestrée par
+ * {@link OperationService}, qui délègue ici la persistance de chaque ligne.
+ */
 export default class AccountLineService {
 
     private accountLineRepo;
@@ -16,6 +27,10 @@ export default class AccountLineService {
 
     }
 
+    /**
+     * Charge en une requête les lignes existantes correspondant aux identifiants fournis.
+     * @returns Une map id -> ligne persistée (les lignes absentes sont simplement omises).
+     */
     private async resolveExistingLinesById(accountLines: Partial<AccountLine>[]): Promise<Map<number, AccountLine>> {
         const ids = accountLines
             .map((line) => line.id)
@@ -29,6 +44,17 @@ export default class AccountLineService {
         return new Map(existingLines.map((line) => [line.id, line]));
     }
 
+    /**
+     * Normalise les dates d'une ligne et valide le couple isChecked/dateValeur.
+     *
+     * Les champs absents de la charge utile sont complétés avec l'état persisté
+     * (ligne existante) afin de valider l'état effectif après sauvegarde.
+     *
+     * @param accountLine - Ligne partielle à sauvegarder.
+     * @param existingLine - État persisté de la ligne (si connue), utilisé pour la validation.
+     * @param context - Contexte métier utilisé dans les messages d'erreur.
+     * @throws 400 OPERATION_VALIDATION si l'état isChecked/dateValeur est incohérent.
+     */
     private normalizeAndValidateLine(
         accountLine: Partial<AccountLine>,
         existingLine: AccountLine | undefined,
@@ -66,6 +92,11 @@ export default class AccountLineService {
         };
     }
 
+    /**
+     * Sauvegarde (création ou mise à jour) une ligne de compte après normalisation
+     * et validation du couple isChecked/dateValeur.
+     * @param accountLine - Ligne partielle à persister (avec `id` pour une mise à jour).
+     */
     async save(accountLine: Partial<AccountLine>) {
         // TODO add validation (https://github.com/typestack/class-validator)
         const existingLine = typeof accountLine.id === "number" && accountLine.id > 0 ?
@@ -81,6 +112,11 @@ export default class AccountLineService {
         return this.accountLineRepo.save(normalizedLine);
     }
 
+    /**
+     * Sauvegarde en lot une liste de lignes de compte, avec la même normalisation
+     * et validation que {@link save}.
+     * @param accountLines - Lignes partielles à persister.
+     */
     async saveAll(accountLines: Partial<AccountLine>[]) {
         // TODO add validation (https://github.com/typestack/class-validator)
         const existingLinesById = await this.resolveExistingLinesById(accountLines);
