@@ -32,6 +32,16 @@ describe("StockUnitsService", () => {
             expect(result[0].id).toBe(1);
             expect(result[1].id).toBe(2);
         });
+
+        it("includes locationId when filtering units by location", async () => {
+            vi.mocked(axios.get).mockResolvedValueOnce({ data: [] });
+
+            await service.getStockUnitsByItemId(10, 3);
+
+            expect(axios.get).toHaveBeenCalledWith("/api/stocks/units/", {
+                params: { itemId: 10, locationId: 3 },
+            });
+        });
     });
 
     describe("create", () => {

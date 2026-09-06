@@ -22,11 +22,13 @@ export default class StockUnitService {
     /**
      * Récupère toutes les unités de stock d'un stock item.
      * @param itemId L'identifiant du stock item.
+     * @param locationId L'identifiant du stock location.
      */
-    async getStockUnitsByItemId(itemId?: number): Promise<StockUnitDto[]> {
+    async getStockUnitsByItemId(itemId?: number, locationId?: number): Promise<StockUnitDto[]> {
         const result = await this.stockUnitRepo.find({
             where: {
                 ...(itemId ? { itemId } : {}),
+                ...(locationId ? { locationId } : {}),
             },
             relations: {
                 item: true,

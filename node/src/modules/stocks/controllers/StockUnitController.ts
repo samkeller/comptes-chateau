@@ -7,10 +7,10 @@ export default class StockUnitController {
     private readonly stockUnitService = new StockUnitService();
 
     getAll = async (req: Request, res: Response) => {
-        const { itemId } = req.query as StockUnitsQueryDto;
+        const { itemId, locationId } = req.query as StockUnitsQueryDto;
 
         res.status(200).json(
-            await this.stockUnitService.getStockUnitsByItemId(itemId)
+            await this.stockUnitService.getStockUnitsByItemId(itemId, locationId)
         );
     };
 

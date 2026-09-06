@@ -52,6 +52,7 @@ export default function StockItemsDatatable({ locationId, searchQuery, afterRemo
                 rowExpansionTemplate={(stockItem: StockItem) => (
                     <StockItemUnitsView
                         stockItemId={stockItem.id}
+                        locationId={locationId}
                         afterRemoveStockUnitOptimistic={(unitId, locationId) => locationId && afterRemoveStockUnitOptimistic?.(unitId, locationId)}
                     />
                 )}

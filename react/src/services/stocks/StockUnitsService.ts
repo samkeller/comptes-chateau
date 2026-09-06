@@ -12,9 +12,9 @@ export default class StockUnitsService extends BaseService {
      * @param itemId 
      * @returns
      */
-    getStockUnitsByItemId(itemId: number): Promise<StockUnit[]> {
+    getStockUnitsByItemId(itemId: number, locationId?: number): Promise<StockUnit[]> {
         return axios.get(`${this.stocksApiUrl}/`, {
-            params: { itemId },
+            params: { itemId, ...(locationId ? { locationId } : {}) },
         }).then((res) =>
             res.data.map((unit: Partial<StockUnit>) => new StockUnit(unit))
         );

@@ -29,6 +29,7 @@ export type StockItemsQueryDto = z.infer<typeof StockItemsQuerySchema>;
 
 export const StockUnitsQuerySchema = z.object({
     itemId: z.coerce.number().int().positive().optional(),
+    locationId: z.coerce.number().int().positive().optional(),
 });
 
 export type StockUnitsQueryDto = z.infer<typeof StockUnitsQuerySchema>;

@@ -6,20 +6,21 @@ import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 
 interface StockItemUnitsViewProps {
     stockItemId: number;
+    locationId: number | null;
     afterRemoveStockUnitOptimistic?(unitId: number, locationId: number): void;
 }
 
 const stockUnitsService = new StockUnitsService()
 
-export default function StockItemUnitsView({ stockItemId, afterRemoveStockUnitOptimistic }: StockItemUnitsViewProps) {
+export default function StockItemUnitsView({ stockItemId, locationId, afterRemoveStockUnitOptimistic }: StockItemUnitsViewProps) {
     const [units, setUnits] = useState<StockUnit[]>([]);
 
     useEffect(() => {
-        loadStockUnits(stockItemId);
-    }, [stockItemId]);
+        loadStockUnits(stockItemId, locationId ?? undefined);
+    }, [stockItemId, locationId]);
 
-    const loadStockUnits = async (itemId: number) => {
-        stockUnitsService.getStockUnitsByItemId(itemId)
+    const loadStockUnits = async (itemId: number, selectedLocationId?: number) => {
+        stockUnitsService.getStockUnitsByItemId(itemId, selectedLocationId)
             .then((units) => {
                 setUnits(units);
             })
