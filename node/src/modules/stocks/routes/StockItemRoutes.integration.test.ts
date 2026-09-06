@@ -36,4 +36,29 @@ describe("StockItemRoutes integration", () => {
             stockUnitsCount: 0,
         });
     });
+
+    it("PATCH /stocks/items/:id met à jour un stock item", async () => {
+        const created = await request(app)
+            .post("/stocks/items")
+            .send({
+                label: "Pâtes",
+                defaultUnit: "paquet",
+                units: [],
+            });
+
+        const response = await request(app)
+            .patch(`/stocks/items/${created.body.id}`)
+            .send({
+                label: "Riz",
+                defaultUnit: "sachet",
+                units: [],
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({
+            id: created.body.id,
+            label: "Riz",
+            defaultUnit: "sachet",
+        });
+    });
 });

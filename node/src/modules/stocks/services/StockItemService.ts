@@ -57,9 +57,9 @@ export default class StockItemService {
         return toStockItemDto(savedStockItem);
     }
 
-    async update(body: Partial<CreateStockItemDto>): Promise<StockItemDto> {
+    async update(id: number, body: CreateStockItemDto): Promise<StockItemDto> {
         const stockItem = await this.stockItemRepo.findOne({
-            where: { id: body.id },
+            where: { id },
         });
 
         if (!stockItem) {
