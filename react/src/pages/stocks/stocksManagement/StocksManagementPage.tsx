@@ -169,7 +169,7 @@ export default function StocksManagementPage() {
                         <StockItemsDatatable
                             locationId={selectedLocationId}
                             searchQuery={searchQuery}
-                            afterRemoveStockUnitOptimistic={(unitId, locationId) => {
+                            afterRemoveStockUnitOptimistic={(_unitId, locationId) => {
                                 setLocations(l => l.map(
                                     location => location.id === locationId
                                         ? {
