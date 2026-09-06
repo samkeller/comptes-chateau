@@ -140,7 +140,7 @@ export default class StockUnitService {
                 unit: stockUnit.unit,
                 itemId: stockUnit.itemId,
                 unitId: stockUnit.id,
-                type: "OUT",
+                type: "DELETE",
                 quantity: stockUnit.quantity,
             });
 
