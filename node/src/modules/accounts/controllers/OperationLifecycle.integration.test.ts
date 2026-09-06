@@ -203,6 +203,64 @@ describe("Operation lifecycle - transfers (integration)", () => {
         expect(remainingLines).toHaveLength(0);
     });
 
+    it("the two mirror lines are retrievable by transferGroupId with both accounts identified", async () => {
+        const { id, transferGroupId } = await createTransfer(100);
+
+        // Traçabilité admin DB : transfer_group_id retrouve exactement les 2 lignes de la paire,
+        // chacune pointant vers le compte de l'autre via target_account_id.
+        const lines = await findGroupLines(transferGroupId);
+        expect(lines).toHaveLength(2);
+
+        const source = lines.find((line) => line.id === id)!;
+        const mirror = lines.find((line) => line.id !== id)!;
+
+        expect(source.account.id).toBe(accountId);
+        expect(source.targetAccount?.id).toBe(targetAccountId);
+        expect(mirror.account.id).toBe(targetAccountId);
+        expect(mirror.targetAccount?.id).toBe(accountId);
+
+        // Les deux champs sont toujours remplis ensemble sur une opération liée
+        for (const line of lines) {
+            expect(line.transferGroupId).toBe(transferGroupId);
+            expect(line.targetAccount).toBeTruthy();
+        }
+    });
+
+    it("the database rejects a line with transferGroupId but no targetAccount (pair consistency)", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const account = await testDataSource.getRepository(Account).findOneByOrFail({ id: accountId });
+
+        await expect(lineRepo.save({
+            label: "Incohérente",
+            dateOperation: new Date("2026-03-10"),
+            dateValeur: null,
+            debit: 10,
+            credit: 0,
+            isChecked: false,
+            account,
+            transferGroupId: "11111111-2222-3333-4444-555555555555",
+            targetAccount: null
+        })).rejects.toThrow();
+    });
+
+    it("the database rejects a line with targetAccount but no transferGroupId (pair consistency)", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const account = await testDataSource.getRepository(Account).findOneByOrFail({ id: accountId });
+        const target = await testDataSource.getRepository(Account).findOneByOrFail({ id: targetAccountId });
+
+        await expect(lineRepo.save({
+            label: "Incohérente",
+            dateOperation: new Date("2026-03-10"),
+            dateValeur: null,
+            debit: 10,
+            credit: 0,
+            isChecked: false,
+            account,
+            transferGroupId: null,
+            targetAccount: target
+        })).rejects.toThrow();
+    });
+
     it("editing the mirror line from the target account keeps the source line in sync", async () => {
         const { id, transferGroupId } = await createTransfer();
         const mirror = (await findGroupLines(transferGroupId)).find((line) => line.id !== id)!;

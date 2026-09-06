@@ -64,12 +64,22 @@ export default class OperationService {
     }
 
     /**
-     * Vérifie qu'un virement porte un montant strictement positif.
-     * @throws 400 OPERATION_TRANSFER_VALIDATION si débit ET crédit sont nuls.
+     * Vérifie qu'un virement porte un montant strictement positif dans UN SEUL sens.
+     *
+     * Le miroir est construit par simple inversion débit ↔ crédit : un virement ne
+     * peut donc pas être à la fois débiteur ET créditeur, sinon la paire ne serait
+     * pas strictement miroir (montants opposés sur les deux comptes).
+     *
+     * @throws 400 OPERATION_TRANSFER_VALIDATION si débit ET crédit sont nuls,
+     *         ou si les deux sont renseignés en même temps.
      */
     private validateTransferAmounts(line: SaveOperationPayload): void {
         const debit = Number(line.debit ?? 0);
         const credit = Number(line.credit ?? 0);
+
+        if (debit > 0 && credit > 0) {
+            throw badRequest("OPERATION_TRANSFER_VALIDATION", "Un virement doit etre dans un seul sens (debit OU credit, pas les deux).");
+        }
 
         if (debit <= 0 && credit <= 0) {
             throw badRequest("OPERATION_TRANSFER_VALIDATION", "Un virement doit avoir un montant strictement positif.");

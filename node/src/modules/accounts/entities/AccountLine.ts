@@ -23,6 +23,9 @@ export enum AccountLineSource {
 @Check(`"credit" >= 0`)
 @Check(`NOT ("debit" > 0 AND "credit" > 0)`)
 @Check(`(("isChecked" = true AND "dateValeur" IS NOT NULL) OR ("isChecked" = false AND "dateValeur" IS NULL))`)
+// Une opération liée (virement inter-comptes) a TOUJOURS transfer_group_id ET target_account_id
+// renseignés ; une opération simple n'a NI l'un NI l'autre. Jamais un seul des deux.
+@Check(`(("transfer_group_id" IS NOT NULL AND "target_account_id" IS NOT NULL) OR ("transfer_group_id" IS NULL AND "target_account_id" IS NULL))`)
 export class AccountLine {
 
     @PrimaryGeneratedColumn()
@@ -53,10 +56,25 @@ export class AccountLine {
      @Column({ type: "int", name: "account_id", nullable: false })
     accountId: number;
 
+    /**
+     * Compte de l'opération miroir, pour un virement inter-comptes.
+     * NULL ⟺ opération simple. Toujours cohérent avec {@link transferGroupId}
+     * (les deux champs sont soit tous deux remplis, soit tous deux nuls).
+     *
+     * Traçabilité admin DB : pour retrouver la paire complète d'un virement,
+     * utiliser `transfer_group_id` (2 lignes) ; `target_account_id` indique le
+     * compte de l'autre ligne.
+     */
     @ManyToOne(() => Account, { nullable: true })
     @JoinColumn({ name: "target_account_id" })
     targetAccount?: Account | null;
 
+    /**
+     * UUID liant les deux opérations miroir d'un virement inter-comptes
+     * (la ligne de ce compte et la ligne de {@link targetAccount}).
+     * Partagé par exactement 2 lignes : `SELECT * FROM account_line WHERE transfer_group_id = ...`.
+     * NULL ⟺ opération simple. Toujours cohérent avec {@link targetAccount}.
+     */
     @Column({ type: "varchar", length: 36, nullable: true, name: "transfer_group_id" })
     transferGroupId?: string | null;
 

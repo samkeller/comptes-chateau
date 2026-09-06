@@ -134,6 +134,72 @@ describe("AccountLineService", () => {
             // L'état persisté n'est pas altéré par une mise à jour partielle
             expect(saved.isChecked).toBe(true);
         });
+
+        it("rejects a transferGroupId without a targetAccount", async () => {
+            const service = new AccountLineService(manager as never);
+
+            await expect(service.save({
+                label: "Incohérente",
+                dateOperation: "2026-03-18" as unknown as Date,
+                isChecked: false,
+                dateValeur: null,
+                transferGroupId: "group-1",
+                targetAccount: null
+            })).rejects.toMatchObject({ code: "OPERATION_VALIDATION", statusCode: 400 });
+
+            expect(storedLines).toHaveLength(0);
+        });
+
+        it("rejects a targetAccount without a transferGroupId", async () => {
+            const service = new AccountLineService(manager as never);
+
+            await expect(service.save({
+                label: "Incohérente",
+                dateOperation: "2026-03-18" as unknown as Date,
+                isChecked: false,
+                dateValeur: null,
+                transferGroupId: null,
+                targetAccount: { id: 2 } as never
+            })).rejects.toMatchObject({ code: "OPERATION_VALIDATION", statusCode: 400 });
+
+            expect(storedLines).toHaveLength(0);
+        });
+
+        it("accepts a consistent linked operation (transferGroupId + targetAccount)", async () => {
+            const service = new AccountLineService(manager as never);
+
+            const saved = await service.save({
+                label: "Virement cohérent",
+                dateOperation: "2026-03-18" as unknown as Date,
+                isChecked: false,
+                dateValeur: null,
+                transferGroupId: "group-1",
+                targetAccount: { id: 2 } as never
+            }) as StoredLine;
+
+            expect(saved.id).toBe(1);
+            expect(saved.transferGroupId).toBe("group-1");
+        });
+
+        it("ignores the transfer pair invariant when neither field is provided (partial update)", async () => {
+            storedLines = [
+                {
+                    id: 7,
+                    label: "Ligne liée",
+                    dateOperation: new Date("2026-03-01"),
+                    isChecked: false,
+                    dateValeur: null,
+                    transferGroupId: "group-9",
+                    targetAccount: { id: 2 } as never
+                }
+            ];
+
+            const service = new AccountLineService(manager as never);
+
+            // Mise à jour partielle qui ne touche ni transferGroupId ni targetAccount.
+            const saved = await service.save({ id: 7, label: "Renommée" }) as StoredLine;
+            expect(saved.label).toBe("Renommée");
+        });
     });
 
     describe("saveAll", () => {

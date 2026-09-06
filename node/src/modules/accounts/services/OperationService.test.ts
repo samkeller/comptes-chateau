@@ -299,6 +299,38 @@ describe("OperationService.save - transfer groups", () => {
         expect(sibling?.posteId ?? null).toBeNull();
     });
 
+    it("rejects a transfer with both debit and credit set (amounts must be strictly mirrored)", async () => {
+        const service = new OperationService();
+
+        await expect(service.save({
+            label: "Virement ambigu",
+            dateOperation: "2026-03-18",
+            debit: 100,
+            credit: 40,
+            isChecked: false,
+            targetAccount: { id: 2 },
+            dateValeur: null,
+            natureId: null,
+            posteId: null
+        }, 1, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_VALIDATION", statusCode: 400 });
+    });
+
+    it("rejects a transfer without any amount", async () => {
+        const service = new OperationService();
+
+        await expect(service.save({
+            label: "Virement vide",
+            dateOperation: "2026-03-18",
+            debit: 0,
+            credit: 0,
+            isChecked: false,
+            targetAccount: { id: 2 },
+            dateValeur: null,
+            natureId: null,
+            posteId: null
+        }, 1, 1)).rejects.toMatchObject({ code: "OPERATION_TRANSFER_VALIDATION", statusCode: 400 });
+    });
+
     it("rejects a transfer to the same account", async () => {
         const service = new OperationService();
 

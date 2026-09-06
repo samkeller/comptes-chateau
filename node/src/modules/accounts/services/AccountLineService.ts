@@ -11,7 +11,10 @@ import { badRequest } from "../../../utils/AppError";
  * Point d'entrée unique pour les écritures unitaires ou en lot : il centralise
  * la normalisation des dates et les invariants métier/DB :
  * - une ligne vérifiée (`isChecked = true`) doit avoir une `dateValeur` ;
- * - une ligne non vérifiée ne doit pas avoir de `dateValeur`.
+ * - une ligne non vérifiée ne doit pas avoir de `dateValeur` ;
+ * - `transferGroupId` et `targetAccount` sont soit tous deux renseignés
+ *   (opération liée / virement inter-comptes), soit tous deux nuls (opération
+ *   simple) — jamais un seul des deux.
  *
  * La logique de virement (lignes miroir entre comptes) est orchestrée par
  * {@link OperationService}, qui délègue ici la persistance de chaque ligne.
@@ -62,6 +65,8 @@ export default class AccountLineService {
     ): Partial<AccountLine> {
         const hasIsChecked = "isChecked" in accountLine;
         const hasDateValeur = "dateValeur" in accountLine;
+        const hasTransferGroupId = "transferGroupId" in accountLine;
+        const hasTargetAccount = "targetAccount" in accountLine;
 
         const normalizedDateOperation = normalizeApiDateInput(accountLine.dateOperation) ?? undefined;
         const normalizedDateValeur = normalizeApiDateInput(accountLine.dateValeur);
@@ -75,6 +80,38 @@ export default class AccountLineService {
 
         if (!effectiveIsChecked && effectiveDateValeur) {
             throw badRequest("OPERATION_VALIDATION", `${context}: unchecked operation cannot have a dateValeur.`);
+        }
+
+        // transferGroupId et targetAccount doivent etre soit tous deux renseignes
+        // (operation liee), soit tous deux nuls (operation simple) : jamais un seul.
+        // Un champ ABSENT de la charge utile signifie "ne pas modifier" (contrairement
+        // a isChecked/dateValeur, il n'est pas resolu depuis l'etat persiste car il ne
+        // sert pas a la validation du couple coche/date) : on valide donc chaque champ
+        // uniquement lorsqu'il est explicitement fourni.
+        const resolveAccountId = (value: Account | number | null | undefined): number | null => {
+            if (value === null || value === undefined) return null;
+            if (typeof value === "number") return value > 0 ? value : null;
+            return typeof value.id === "number" && value.id > 0 ? value.id : null;
+        };
+
+        if (hasTransferGroupId && hasTargetAccount) {
+            const hasGroup = Boolean(accountLine.transferGroupId);
+            const hasTarget = resolveAccountId(accountLine.targetAccount) !== null;
+            if (hasGroup !== hasTarget) {
+                throw badRequest("OPERATION_VALIDATION", `${context}: transferGroupId and targetAccount must both be set (linked operation) or both be null (simple operation).`);
+            }
+        } else if (hasTransferGroupId) {
+            const currentTargetId = resolveAccountId(existingLine?.targetAccount);
+            const becomesLinked = Boolean(accountLine.transferGroupId);
+            if (becomesLinked !== (currentTargetId !== null)) {
+                throw badRequest("OPERATION_VALIDATION", `${context}: transferGroupId and targetAccount must both be set (linked operation) or both be null (simple operation).`);
+            }
+        } else if (hasTargetAccount) {
+            const newTargetId = resolveAccountId(accountLine.targetAccount);
+            const becomesLinked = newTargetId !== null;
+            if (becomesLinked !== Boolean(existingLine?.transferGroupId)) {
+                throw badRequest("OPERATION_VALIDATION", `${context}: transferGroupId and targetAccount must both be set (linked operation) or both be null (simple operation).`);
+            }
         }
 
         if (!hasIsChecked && !hasDateValeur) {
