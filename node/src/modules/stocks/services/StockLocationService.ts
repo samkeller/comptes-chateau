@@ -1,5 +1,6 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound } from "../../../utils/AppError";
+import StockUnitService from "./StockUnitService";
 import type {
     CreateStockLocationDto,
     StockLocationDto,
@@ -10,6 +11,8 @@ import { StockLocation } from "../entities/StockLocation";
 
 export default class StockLocationService {
     private readonly stockLocationRepo = AppDataSource.getRepository(StockLocation);
+    private readonly stockUnitService: StockUnitService = new StockUnitService();
+
     
     async listLocations(): Promise<StockLocationDto[]> {
         const locations = await this.stockLocationRepo.find({
@@ -45,18 +48,13 @@ export default class StockLocationService {
             throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");
         }
 
-        // TODO :
-        // 1. Vérifier qu'aucun StockItem n'est lié
-        // 2. Vérifier qu'aucun StockUnit n'est lié
-        // const availableUnits = await AppDataSource.getRepository(StockUnit).find({
-        //     where: {
-        //         locationId: id,
-        //     },
-        // });
-        // if (availableUnits.length > 0) {
-        //     throw conflict("STOCK_LOCATION_NOT_EMPTY", "Impossible de supprimer un lieu contenant encore des produits disponibles");
-        // }
+        // Vérifier qu'aucun StockUnit n'est lié
+        const linkedStockUnits = await this.stockUnitService.getStockUnitsByLocationId(id);
 
-        await this.stockLocationRepo.softDelete({ id });
+        if (linkedStockUnits.length > 0) {
+            throw new Error("STOCK_LOCATION_NOT_EMPTY: Impossible de supprimer un lieu contenant encore des produits liés");
+        }
+
+        await this.stockLocationRepo.remove(location);
     }
 }

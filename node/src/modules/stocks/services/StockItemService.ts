@@ -73,4 +73,5 @@ export default class StockItemService {
 
         return toStockItemDto(savedStockItem);
     }
+
 }

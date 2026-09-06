@@ -199,4 +199,12 @@ export default class StockUnitService {
 
         return unit;
     }
+
+    async getStockUnitsByLocationId(id: number): Promise<StockUnit[]> {
+        return this.stockUnitRepo.find({
+            where: {
+                locationId: id,
+            },
+        });
+    }
 }

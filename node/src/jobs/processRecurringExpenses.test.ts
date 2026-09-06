@@ -248,18 +248,6 @@ describe("processRecurringExpenses", () => {
         expect(lastLog?.message).toBe(`Successfully created 4 accounting lines from recurring expenses`);
 
         const savedRecurringExpenses = await entityManager.getRepository(RecurringExpense).find();
-        console.log("========== SAVED RECURRING EXPENSES ==========");
-        console.log(
-            savedRecurringExpenses.map(expense => ({
-                id: expense.id,
-                idType: typeof expense.id,
-                label: expense.label,
-                nextOccurrence: expense.nextOccurrence,
-                nextOccurrenceType: typeof expense.nextOccurrence,
-            }))
-        );
-        console.log("===============================================");
-
 
         expect(savedRecurringExpenses).toHaveLength(4);
 
