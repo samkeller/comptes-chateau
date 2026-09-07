@@ -11,7 +11,7 @@ import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import BanquePostaleCsvImport from "./BanquePostaleCsvImport";
 import { BooleanIcon } from "../../components/datatableBodys/BooleanIcon";
-import { BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
+import { BanquePostaleCsvData } from "@chocosous/shared";
 import { buildBanquePostalePrefillResult, BanquePostaleImportReport } from "./banquePostaleImportMatching";
 import BanquePostaleImportReportPanel from "./BanquePostaleImportReportPanel";
 import { useAccountId } from "../../hooks/useAccountId";

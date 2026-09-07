@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { FileUpload, FileUploadHandlerEvent } from "primereact/fileupload";
-import { parseBanquePostaleCsv, BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
+import { BanquePostaleCsvData } from "@chocosous/shared";
+import { parseBanquePostaleCsv } from "../../utils/banquePostaleCsvParser";
 
 interface BanquePostaleCsvImportProps {
     disabled?: boolean;

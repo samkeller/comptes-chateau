@@ -1,5 +1,5 @@
+import { BanquePostaleCsvData } from "@chocosous/shared";
 import AccountLine from "../../interfaces/AccountLine";
-import { BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
 
 export interface BanquePostaleImportAppliedMatch {
     amount: number;

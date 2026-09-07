@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import AccountLine from "../../interfaces/AccountLine";
-import { BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
+import { BanquePostaleCsvData } from "@chocosous/shared";
 import { buildBanquePostalePrefillResult } from "./banquePostaleImportMatching";
 
 function buildLine(input: Partial<AccountLine>): AccountLine {

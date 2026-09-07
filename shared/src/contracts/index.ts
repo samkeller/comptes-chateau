@@ -89,6 +89,7 @@ export {
     CreateKanbanTaskSchema,
     CreateKanbanCommentSchema,
 } from "./kanban";
+
 export type {
     KanbanTaskPriority,
     CreateKanbanTaskRequest,
@@ -98,3 +99,8 @@ export type {
     KanbanTaskResponse,
     KanbanBoardResponse,
 } from "./kanban";
+
+export type {
+    BanquePostaleCsvData,
+    BanquePostaleCsvOperation,
+} from "./externals"
