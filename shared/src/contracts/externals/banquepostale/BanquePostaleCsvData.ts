@@ -37,6 +37,4 @@ export const BanquePostaleCsvDataMetadataSchema = BanquePostaleCsvDataSchema
 
 export type BanquePostaleCsvDataMetadata = z.infer<typeof BanquePostaleCsvDataMetadataSchema>;
 
-export type BanquePostaleCsvData = z.infer<
-    typeof BanquePostaleCsvDataSchema
->;
+export type BanquePostaleCsvData = z.infer<typeof BanquePostaleCsvDataSchema>;

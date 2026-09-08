@@ -106,7 +106,10 @@ export type {
     BanquePostaleCsvDataMetadata,
     BanquePostaleImportPayload,
     BanquePostaleImportResultPayload,
-} from "./externals"
+    BanquePostaleOperationImportDto,
+    BanquePostaleMatchedResultPayload,
+    BanquePostaleAmbiguousResultPayload,
+} from "./externals";
 
 export {
     BanquePostaleCsvDataSchema,
@@ -114,4 +117,7 @@ export {
     BanquePostaleCsvDataMetadataSchema,
     BanquePostaleImportSchema,
     BanquePostaleImportResultSchema,
+    BanquePostaleMatchedResultSchema,
+    BanquePostaleAmbiguousResultSchema,
+    BanquePostaleOperationImportDtoSchema,
 } from "./externals";

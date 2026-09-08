@@ -1,6 +1,6 @@
 import { ParsedQs } from "qs";
 import { randomUUID } from "crypto";
-import { EntityManager, In } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
@@ -40,9 +40,13 @@ const lazyTableQueryParserOptions = {
  */
 export default class OperationService {
 
-    private accountLineRepo = AppDataSource.getRepository(AccountLine);
+    private accountLineRepo: Repository<AccountLine>;
+    private userXpService: UserXpService;
 
-    private userXpService = new UserXpService()
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.accountLineRepo = em.getRepository(AccountLine);
+        this.userXpService = new UserXpService(em);
+    }
 
     /**
      * Récupère une ligne de compte spécifique pour un compte donné.
