@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { KanbanTask } from "./KanbanTask";
 
 @Entity("kanban_column")
@@ -13,5 +13,5 @@ export class KanbanColumn {
     order: number;
 
     @OneToMany(() => KanbanTask, task => task.column)
-    kanbanTasks: KanbanTask[];
+    kanbanTasks: Relation<KanbanTask>[];
 }
