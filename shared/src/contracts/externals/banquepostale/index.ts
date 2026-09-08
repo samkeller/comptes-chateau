@@ -1,13 +1,11 @@
 export {
     BanquePostaleCsvDataSchema,
     BanquePostaleCsvOperationSchema,
-    BanquePostaleCsvDataMetadataSchema,
 } from "./BanquePostaleCsvData";
 
 export type {
     BanquePostaleCsvData,
     BanquePostaleCsvOperation,
-    BanquePostaleCsvDataMetadata,
 } from "./BanquePostaleCsvData";
 
 export {
@@ -26,9 +24,10 @@ export type {
 
 export {
     BanquePostaleOperationImportDtoSchema,
-    
-} from "./BanquePostaleDto";
+    BanquePostaleCsvDataMetadataSchema,
+} from "./BanquePostaleOperationImportDto";
 
 export type {
     BanquePostaleOperationImportDto,
-} from "./BanquePostaleDto";
+    BanquePostaleCsvDataMetadata,
+} from "./BanquePostaleOperationImportDto";

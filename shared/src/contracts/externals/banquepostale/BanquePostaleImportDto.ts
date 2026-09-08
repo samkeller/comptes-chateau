@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 import { BanquePostaleCsvDataSchema, BanquePostaleCsvOperationSchema } from "./BanquePostaleCsvData";
-import { BanquePostaleOperationImportDtoSchema } from "../..";
+import { BanquePostaleOperationImportDtoSchema } from "./BanquePostaleOperationImportDto";
 
 export const BanquePostaleImportSchema = BanquePostaleCsvDataSchema
     .omit({

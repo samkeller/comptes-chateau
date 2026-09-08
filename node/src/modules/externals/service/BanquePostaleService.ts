@@ -35,14 +35,12 @@ export default class BanquePostaleService {
              * Parcours toutes les opérations
              */
             for (const operation of data.operations) {
-
                 const compositeExternalId = transactionService.buildCompositeExternalId(
                     accountId,
                     operation.dateOperation,
                     operation.label,
                     operation.amount
                 );
-
                 const existingOperation = await transactionService.findByCompositeExternalId(compositeExternalId);
 
                 // Si elle n'existe pas: l'ajoute
@@ -99,7 +97,8 @@ export default class BanquePostaleService {
                     return candidate.accountId === accountId &&
                         parsedCandidateDate >= checkMinDate &&
                         parsedCandidateDate <= checkMaxDate &&
-                        candidate.amount === line.debit - line.credit;
+                        // Obligé d'inverser le calcul car les imports BanquePostale sont déjà signés (-10/+10)
+                        candidate.amount === line.credit - line.debit
                 });
 
                 // Si un seul candidat correspond, on le considère comme un match

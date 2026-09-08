@@ -25,16 +25,6 @@ export const BanquePostaleCsvDataSchema = z.object({
     operations: z.array(BanquePostaleCsvOperationSchema),
 });
 
-export const BanquePostaleCsvDataMetadataSchema = BanquePostaleCsvDataSchema
-    .omit({
-        operations: true,
-        exportDate: true,
-    })
-    .extend({
-        exportDate: z.string() // DB - stocke la date d'export sous forme de chaîne
-    })
-    ;
 
-export type BanquePostaleCsvDataMetadata = z.infer<typeof BanquePostaleCsvDataMetadataSchema>;
 
 export type BanquePostaleCsvData = z.infer<typeof BanquePostaleCsvDataSchema>;

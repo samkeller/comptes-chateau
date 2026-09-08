@@ -117,7 +117,7 @@ export {
     BanquePostaleCsvDataMetadataSchema,
     BanquePostaleImportSchema,
     BanquePostaleImportResultSchema,
-    BanquePostaleMatchedResultSchema,
     BanquePostaleAmbiguousResultSchema,
+    BanquePostaleMatchedResultSchema,
     BanquePostaleOperationImportDtoSchema,
 } from "./externals";

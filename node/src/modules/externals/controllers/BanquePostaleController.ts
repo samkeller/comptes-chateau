@@ -1,17 +1,19 @@
 
-import type { BanquePostaleImportPayload } from "@chocosous/shared";
-import type { Request, Response } from "express";
+import { BanquePostaleImportSchema, type BanquePostaleImportPayload } from "@chocosous/shared";
+import { Router, type Request, type Response } from "express";
 import BanquePostaleService from "../service/BanquePostaleService";
+import { validateBody } from "../../core/middlewares/validate";
 
+const BanquePostaleRoutes = Router();
 
-export default class BanquePostaleController {
-    private readonly banquePostaleService = new BanquePostaleService();
+const banquePostaleService = new BanquePostaleService();
 
-    import = async (req: Request, res: Response) => {
-        const body: BanquePostaleImportPayload = req.body;
+BanquePostaleRoutes.post("/import", validateBody(BanquePostaleImportSchema), async (req: Request, res: Response) => {
+    const body: BanquePostaleImportPayload = req.body;
 
-        const result = await this.banquePostaleService.import(body);
+    const result = await banquePostaleService.import(body);
 
-        res.status(200).send(result);
-    }
-}
+    res.status(200).send(result);
+});
+
+export default BanquePostaleRoutes;

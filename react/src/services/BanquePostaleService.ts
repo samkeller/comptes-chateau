@@ -1,12 +1,13 @@
-import { BanquePostaleCsvData, BanquePostaleImportPayload, BanquePostaleImportResultPayload } from "@chocosous/shared";
+import { BanquePostaleCsvData, BanquePostaleImportPayload } from "@chocosous/shared";
 import BaseService from "./BaseService";
 import axios from "axios";
 import { formatApiDate } from "@/utils/DatesUtils";
+import BanquePostaleImportResult from "@/interfaces/Externals/BanquePostaleImportResult";
 
 
 export default class BanquePostaleService extends BaseService {
 
-    import(accountId: number, data: BanquePostaleCsvData): Promise<BanquePostaleImportResultPayload> {
+    import(accountId: number, data: BanquePostaleCsvData): Promise<BanquePostaleImportResult> {
         
         const body: BanquePostaleImportPayload = {
             accountId,
@@ -20,6 +21,6 @@ export default class BanquePostaleService extends BaseService {
             })
         };
 
-        return axios.post(this.apiUrl + "/externals/banque-postale/import", body).then(response => response.data);
+        return axios.post(this.apiUrl + "/externals/banque-postale/import", body).then(response => new BanquePostaleImportResult(response.data));
     }
 }

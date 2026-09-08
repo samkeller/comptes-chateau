@@ -9,7 +9,7 @@ import UserRoutes from "./modules/core/controllers/UserController";
 import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
 import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
-import BanquePostaleRoutes from "./modules/externals/routes/BanquePostaleRoutes";
+import BanquePostaleRoutes from "./modules/externals/controllers/BanquePostaleController";
 
 const ApiRouter = Router()
 

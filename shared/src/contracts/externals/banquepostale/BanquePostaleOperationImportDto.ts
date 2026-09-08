@@ -1,5 +1,17 @@
 import { z } from "zod";
-import { BanquePostaleCsvDataMetadataSchema } from "./BanquePostaleCsvData";
+import { BanquePostaleCsvDataSchema } from "./BanquePostaleCsvData";
+
+export const BanquePostaleCsvDataMetadataSchema = BanquePostaleCsvDataSchema
+    .omit({
+        operations: true,
+        exportDate: true,
+    })
+    .extend({
+        exportDate: z.string() // DB - stocke la date d'export sous forme de chaîne
+    })
+    ;
+
+export type BanquePostaleCsvDataMetadata = z.infer<typeof BanquePostaleCsvDataMetadataSchema>;
 
 export const BanquePostaleOperationImportDtoSchema = z.object({
     id: z.number().int().nonnegative(),

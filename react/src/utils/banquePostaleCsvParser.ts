@@ -60,9 +60,9 @@ export function parseBanquePostaleCsv(csvBuffer: ArrayBuffer): BanquePostaleCsvD
 
     for (let index = headerIndex + 1; index < parsedRows.length; index += 1) {
         const row = parsedRows[index];
-        const rawDate = row[0] ?? "";
-        const rawLabel = row[1] ?? "";
-        const rawAmount = row[2] ?? "";
+        const rawDate = row[0] ?? ""; // DATE
+        const rawLabel = row[1] ?? ""; // Libellé
+        const rawAmount = row[2] ?? ""; // Montant(EUROS)
 
         if (!rawDate || !rawAmount) {
             continue;
