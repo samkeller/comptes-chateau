@@ -2,36 +2,45 @@ import { useRef } from "react";
 import { FileUpload, FileUploadHandlerEvent } from "primereact/fileupload";
 import { BanquePostaleCsvData } from "@chocosous/shared";
 import { parseBanquePostaleCsv } from "../../utils/banquePostaleCsvParser";
+import BanquePostaleService from "@/services/BanquePostaleService";
+import LocalStorageUtils from "@/utils/LocalStorageUtils";
 
 interface BanquePostaleCsvImportProps {
     disabled?: boolean;
     onImport: (csvData: BanquePostaleCsvData) => void;
-    onError: (message: string) => void;
     onImportStart?: () => void;
 }
 
-export default function BanquePostaleCsvImport({ disabled = false, onImport, onError, onImportStart }: BanquePostaleCsvImportProps) {
+const banquePostaleService = new BanquePostaleService();
+const localStorageUtils = new LocalStorageUtils()
+
+export default function BanquePostaleCsvImport({ disabled = false, onImport, onImportStart }: BanquePostaleCsvImportProps) {
     const fileUploadRef = useRef<FileUpload>(null);
 
     const customUploader = async (event: FileUploadHandlerEvent) => {
+        
         onImportStart?.();
+        
+        try {   
+        const fileCandidate = event.files?.[0];
+        if (!fileCandidate) {
+            fileUploadRef.current?.clear();
+            throw new Error("Aucun fichier CSV selectionne.");
+        }
+        const csvBuffer = await fileCandidate.arrayBuffer();
 
-        try {
-            const fileCandidate = event.files?.[0];
-            if (!fileCandidate) {
-                onError("Aucun fichier CSV selectionne.");
-                fileUploadRef.current?.clear();
-                return;
-            }
+        const parsedCsv = parseBanquePostaleCsv(csvBuffer);
+        const storedId = localStorageUtils.getActiveAccountId();
 
-            const csvBuffer = await fileCandidate.arrayBuffer();
-            const parsedCsv = parseBanquePostaleCsv(csvBuffer);
-            onImport(parsedCsv);
+        if (!storedId) {
+            fileUploadRef.current?.clear();
+            throw new Error("Aucun compte actif n'est selectionne.");
+        }
+
+        await banquePostaleService.import(storedId, parsedCsv);
+
+        onImport(parsedCsv);
         } catch (error) {
-            console.error("Erreur pendant l'import CSV Banque Postale", error);
-            onError("Le fichier CSV est invalide ou non conforme au format Banque Postale.");
-        } finally {
-            // Reset selection so re-importing the same file triggers the upload flow again.
             fileUploadRef.current?.clear();
         }
     };

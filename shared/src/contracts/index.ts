@@ -103,4 +103,15 @@ export type {
 export type {
     BanquePostaleCsvData,
     BanquePostaleCsvOperation,
+    BanquePostaleCsvDataMetadata,
+    BanquePostaleImportPayload,
+    BanquePostaleImportResultPayload,
 } from "./externals"
+
+export {
+    BanquePostaleCsvDataSchema,
+    BanquePostaleCsvOperationSchema,
+    BanquePostaleCsvDataMetadataSchema,
+    BanquePostaleImportSchema,
+    BanquePostaleImportResultSchema,
+} from "./externals";

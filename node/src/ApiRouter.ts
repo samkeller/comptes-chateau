@@ -9,6 +9,7 @@ import UserRoutes from "./modules/core/controllers/UserController";
 import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
 import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
+import BanquePostaleRoutes from "./modules/externals/routes/BanquePostaleRoutes";
 
 const ApiRouter = Router()
 
@@ -25,5 +26,6 @@ ApiRouter.use('/users', UserRoutes)
 ApiRouter.use('/jobs', JobRoutes)
 ApiRouter.use('/categorization', AccountLineCategorizationRoutes)
 ApiRouter.use('/events', EventStreamRoutes)
+ApiRouter.use('/externals/banque-postale', BanquePostaleRoutes);
 
 export default ApiRouter
