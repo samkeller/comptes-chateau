@@ -1,63 +1,59 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { FileUpload, FileUploadHandlerEvent } from "primereact/fileupload";
-import { BanquePostaleCsvData } from "@chocosous/shared";
+import { Button } from "primereact/button";
 import { parseBanquePostaleCsv } from "../../utils/banquePostaleCsvParser";
 import BanquePostaleService from "@/services/BanquePostaleService";
-import LocalStorageUtils from "@/utils/LocalStorageUtils";
+import BanquePostaleImportResult from "@/interfaces/Externals/BanquePostaleImportResult";
 
 interface BanquePostaleCsvImportProps {
+    accountId: number;
     disabled?: boolean;
-    onImport: (csvData: BanquePostaleCsvData) => void;
-    onImportStart?: () => void;
+    afterImportResults?: (results: BanquePostaleImportResult) => void;
 }
 
 const banquePostaleService = new BanquePostaleService();
-const localStorageUtils = new LocalStorageUtils()
 
-export default function BanquePostaleCsvImport({ disabled = false, onImport, onImportStart }: BanquePostaleCsvImportProps) {
+export default function BanquePostaleCsvImport({ accountId, afterImportResults, disabled }: BanquePostaleCsvImportProps) {
+    const [loading, setLoading] = useState(false);
     const fileUploadRef = useRef<FileUpload>(null);
 
     const customUploader = async (event: FileUploadHandlerEvent) => {
-        
-        onImportStart?.();
-        
-        try {   
-        const fileCandidate = event.files?.[0];
-        if (!fileCandidate) {
+        try {
+            setLoading(true);
+            const fileCandidate = event.files?.[0];
+            if (!fileCandidate) {
+                fileUploadRef.current?.clear();
+                throw new Error("Aucun fichier CSV selectionne.");
+            }
+            const csvBuffer = await fileCandidate.arrayBuffer();
+
+            const parsedCsv = parseBanquePostaleCsv(csvBuffer);
+            const results = await banquePostaleService.import(accountId, parsedCsv);
+
+            afterImportResults?.(results);
+        } finally {
             fileUploadRef.current?.clear();
-            throw new Error("Aucun fichier CSV selectionne.");
-        }
-        const csvBuffer = await fileCandidate.arrayBuffer();
-
-        const parsedCsv = parseBanquePostaleCsv(csvBuffer);
-        const storedId = localStorageUtils.getActiveAccountId();
-
-        if (!storedId) {
-            fileUploadRef.current?.clear();
-            throw new Error("Aucun compte actif n'est selectionne.");
-        }
-
-        await banquePostaleService.import(storedId, parsedCsv);
-
-        onImport(parsedCsv);
-        } catch (error) {
-            fileUploadRef.current?.clear();
+            setLoading(false);
         }
     };
 
-    return (
-        <div className="flex flex-col gap-2">
-            <FileUpload
-                ref={fileUploadRef}
-                mode="basic"
-                accept=".csv,text/csv"
-                maxFileSize={2_000_000}
-                customUpload
-                auto
-                uploadHandler={customUploader}
-                disabled={disabled}
-                chooseLabel="Importer un releve Banque Postale (CSV)"
-            />
-        </div>
-    );
+    if (loading) {
+        return <Button label="Import en cours" icon="pi pi-spin pi-spinner" disabled outlined />;
+    }
+
+    return <FileUpload
+        ref={fileUploadRef}
+        mode="basic"
+        accept=".csv,text/csv"
+        maxFileSize={2_000_000}
+        customUpload
+        auto
+        disabled={disabled}
+        uploadHandler={customUploader}
+        chooseOptions={{
+            label: "Importer un relevé",
+            icon: "pi pi-file-import",
+            className: "p-button-outlined p-button-secondary"
+        }}
+    />;
 }

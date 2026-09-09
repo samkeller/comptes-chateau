@@ -133,7 +133,7 @@ describe("BanquePostaleService.import", () => {
                     {
                         dateOperation: "2026-09-08",
                         label: "CARREFOUR",
-                        amount: 25.5,
+                        amount: -25.5,
                         rowNumber: 1,
                     },
                 ],
@@ -149,7 +149,7 @@ describe("BanquePostaleService.import", () => {
             candidate: {
                 accountId: 1,
                 label: "CARREFOUR",
-                amount: 25.5,
+                amount: -25.5,
                 dateOperation: "2026-09-08",
             },
         });
@@ -168,13 +168,13 @@ describe("BanquePostaleService.import", () => {
                     {
                         dateOperation: "2026-09-08",
                         label: "CARREFOUR 1",
-                        amount: 25.5,
+                        amount: -25.5,
                         rowNumber: 1,
                     },
                     {
                         dateOperation: "2026-09-08",
                         label: "CARREFOUR 2",
-                        amount: 25.5,
+                        amount: -25.5,
                         rowNumber: 2,
                     },
                 ],
@@ -195,11 +195,11 @@ describe("BanquePostaleService.import", () => {
             expect.arrayContaining([
                 expect.objectContaining({
                     label: "CARREFOUR 1",
-                    amount: 25.5,
+                    amount: -25.5,
                 }),
                 expect.objectContaining({
                     label: "CARREFOUR 2",
-                    amount: 25.5,
+                    amount: -25.5,
                 }),
             ])
         );
@@ -266,7 +266,7 @@ describe("BanquePostaleService.import", () => {
                     {
                         dateOperation: "2026-09-06",
                         label: "CARREFOUR",
-                        amount: 25.5,
+                        amount: -25.5,
                         rowNumber: 1,
                     },
                 ],
@@ -290,7 +290,7 @@ describe("BanquePostaleService.import", () => {
                     {
                         dateOperation: "2026-09-08",
                         label: "CARREFOUR",
-                        amount: 25.5,
+                        amount: -25.5,
                         rowNumber: 1,
                     },
                 ],

@@ -3,9 +3,13 @@ import { useEffect, useRef, useState } from "react";
 interface FillRemainingHeightProps {
     children: React.ReactNode;
     className?: string;
+    /**
+     * Dans certains cas, on a de la marge en bas.
+     */
+    offset?: number
 }
 
-export default function FillRemainingHeight({ children, className }: FillRemainingHeightProps) {
+export default function FillRemainingHeight({ children, className, offset = 0 }: FillRemainingHeightProps) {
     const ref = useRef<HTMLDivElement>(null);
     const [height, setHeight] = useState<number | undefined>(undefined);
 
@@ -13,7 +17,7 @@ export default function FillRemainingHeight({ children, className }: FillRemaini
         const update = () => {
             if (ref.current) {
                 const top = ref.current.getBoundingClientRect().top;
-                setHeight(window.innerHeight - top);
+                setHeight(window.innerHeight - top - offset);
             }
         };
 
@@ -27,7 +31,7 @@ export default function FillRemainingHeight({ children, className }: FillRemaini
             observer.disconnect();
             window.removeEventListener("resize", update);
         };
-    }, []);
+    }, [offset]);
 
     return (
         <div

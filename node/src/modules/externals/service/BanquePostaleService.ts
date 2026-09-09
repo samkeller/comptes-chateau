@@ -30,6 +30,7 @@ export default class BanquePostaleService {
             const { accountId, accountNumber, type, balance, exportDate } = data;
 
             const newBanquePostaleOperations: Omit<BanquePostaleOperationImport, "id" | "createdAt" | "account">[] = [];
+            const otherImportedOperations: BanquePostaleOperationImportDto[] = [];
 
             /**
              * Parcours toutes les opérations
@@ -59,74 +60,94 @@ export default class BanquePostaleService {
                             exportDate,
                         }
                     });
+                } else {
+                    otherImportedOperations.push(toBanquePostaleOperationDto(existingOperation));
                 }
             }
 
-            const newlyCreatedOperationsRaw: BanquePostaleOperationImport[] = await transactionService.banquePostaleImportRepository.save(newBanquePostaleOperations);
-            const newlyCreatedOperations: BanquePostaleOperationImportDto[] = newlyCreatedOperationsRaw.map(op => toBanquePostaleOperationDto(op));
+            const newlyCreatedOperationsDto: BanquePostaleOperationImportDto[] = await transactionService.banquePostaleImportRepository
+                .save(newBanquePostaleOperations)
+                .then(v => v.map(op => toBanquePostaleOperationDto(op)));
+
+            const mergedOperations: BanquePostaleOperationImportDto[] = [
+                ...newlyCreatedOperationsDto,
+                ...otherImportedOperations
+            ]
 
             // Matching aux opérations non-checkées
-
-            const uncheckedLines = await transactionService.operationService.getAllUncheckedLines(accountId);
-            const ambiguousCandidates: BanquePostaleAmbiguousResultPayload[] = [];
-            const matchedCandidates: BanquePostaleMatchedResultPayload[] = [];
-
-            for (const line of uncheckedLines) {
-
-                /**
-                 * Date minimale pour le matching : date de l'opération - deux jours
-                 */
-                const checkMinDate = new Date(line.dateOperation);
-                checkMinDate.setDate(checkMinDate.getDate() - 2);
-                /**
-                 * Date maximale pour le matching : date de l'opération + deux jours
-                 */
-                const checkMaxDate = new Date(line.dateOperation);
-                checkMaxDate.setDate(checkMaxDate.getDate() + 2);
-
-                /**
-                 * Un match =
-                 *      - Même montant
-                 *      - Dans la même date à deux jours prêts
-                 *      - Même compte
-                 *      - /!\ On ne peut pour l'instant pas se baser sur le label. 
-                 */
-                const matchingCandidates = newlyCreatedOperations.filter(candidate => {
-                    const parsedCandidateDate = new Date(candidate.dateOperation);
-
-                    return candidate.accountId === accountId &&
-                        parsedCandidateDate >= checkMinDate &&
-                        parsedCandidateDate <= checkMaxDate &&
-                        // Obligé d'inverser le calcul car les imports BanquePostale sont déjà signés (-10/+10)
-                        candidate.amount === line.credit - line.debit
-                });
-
-                // Si un seul candidat correspond, on le considère comme un match
-                if (matchingCandidates.length === 1) {
-                    matchedCandidates.push({
-                        type: "matched",
-                        accountLineId: line.id,
-                        candidate: matchingCandidates[0]
-                    });
-                }
-                // Si plusieurs candidats correspondent, on les considère comme ambigus
-                else if (matchingCandidates.length > 1) {
-                    ambiguousCandidates.push({
-                        type: "ambiguous",
-                        accountLineId: line.id,
-                        candidates: matchingCandidates
-                    });
-                }
-            }
+            const { matchedCandidates, ambiguousCandidates } = await this.matchCandidates(transactionService, accountId, mergedOperations);
 
             return {
                 linesProcessed: data.operations.length,
-                linesCreated: newlyCreatedOperations.length,
-                linesSkipped: data.operations.length - newlyCreatedOperations.length,
+                linesCreated: newlyCreatedOperationsDto.length,
+                linesSkipped: otherImportedOperations.length,
                 matched: matchedCandidates,
                 ambiguous: ambiguousCandidates,
             };
         });
+    }
+
+    /**
+     * Calcules les matchs entre des importDto & les lignes unchecked en base. 
+     * @param that 
+     * @param accountId 
+     * @param mergedOperations 
+     * @returns 
+     */
+    private async matchCandidates(that: BanquePostaleService, accountId: number, mergedOperations: BanquePostaleOperationImportDto[]): Promise<{ matchedCandidates: BanquePostaleMatchedResultPayload[]; ambiguousCandidates: BanquePostaleAmbiguousResultPayload[]; }> {
+        const uncheckedLines = await that.operationService.getAllUncheckedLines(accountId);
+        const ambiguousCandidates: BanquePostaleAmbiguousResultPayload[] = [];
+        const matchedCandidates: BanquePostaleMatchedResultPayload[] = [];
+
+        for (const line of uncheckedLines) {
+
+            /**
+             * Date minimale pour le matching : date de l'opération - deux jours
+             */
+            const checkMinDate = new Date(line.dateOperation);
+            checkMinDate.setDate(checkMinDate.getDate() - 2);
+            /**
+             * Date maximale pour le matching : date de l'opération + deux jours
+             */
+            const checkMaxDate = new Date(line.dateOperation);
+            checkMaxDate.setDate(checkMaxDate.getDate() + 2);
+
+            /**
+             * Un match =
+             *      - Même montant
+             *      - Dans la même date à deux jours prêts
+             *      - Même compte
+             *      - /!\ On ne peut pour l'instant pas se baser sur le label.
+             */
+            const matchingCandidates = mergedOperations.filter(candidate => {
+                const parsedCandidateDate = new Date(candidate.dateOperation);
+
+                return candidate.accountId === accountId &&
+                    parsedCandidateDate >= checkMinDate &&
+                    parsedCandidateDate <= checkMaxDate &&
+                    // Obligé d'inverser le calcul car les imports BanquePostale sont déjà signés (-10/+10)
+                    candidate.amount === line.credit - line.debit;
+            });
+
+            // Si un seul candidat correspond, on le considère comme un match
+            if (matchingCandidates.length === 1) {
+                matchedCandidates.push({
+                    type: "matched",
+                    accountLineId: line.id,
+                    candidate: matchingCandidates[0]
+                });
+            }
+
+            // Si plusieurs candidats correspondent, on les considère comme ambigus
+            else if (matchingCandidates.length > 1) {
+                ambiguousCandidates.push({
+                    type: "ambiguous",
+                    accountLineId: line.id,
+                    candidates: matchingCandidates
+                });
+            }
+        }
+        return { matchedCandidates, ambiguousCandidates };
     }
 
     /**
