@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
 import OperationService from "./OperationService";
+import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 
 const { getRepositoryMock, transactionMock } = vi.hoisted(() => ({
     getRepositoryMock: vi.fn(),
@@ -23,6 +24,13 @@ type StoredLine = Partial<AccountLine> & { id: number };
 describe("OperationService.save - transfer groups", () => {
     let nextId: number;
     let storedLines: StoredLine[];
+    let storedImportedOperations: Array<{
+        id: number;
+        accountId: number;
+        accountLineId: number | null;
+        amount: number;
+        dateOperation: string;
+    }>;
 
     const accounts: Account[] = [
         { id: 1, label: "Compte principal" } as Account,
@@ -125,6 +133,32 @@ describe("OperationService.save - transfer groups", () => {
         })
     };
 
+    const banquePostaleImportRepo = {
+        findOne: vi.fn(async ({ where }: { where: { accountLineId?: number } }) => {
+            if (where.accountLineId === undefined) return null;
+            return storedImportedOperations.find((entry) => entry.accountLineId === where.accountLineId) ?? null;
+        }),
+        find: vi.fn(async ({ where }: {
+            where: { accountId: number; amount: number; dateOperation: Date | string; accountLineId: { _type: string } }
+        }) => {
+            const whereDate = where.dateOperation instanceof Date
+                ? where.dateOperation.toISOString().slice(0, 10)
+                : where.dateOperation;
+            return storedImportedOperations.filter((entry) =>
+                entry.accountId === where.accountId
+                && entry.amount === where.amount
+                && entry.dateOperation === whereDate
+                && entry.accountLineId === null
+            );
+        }),
+        save: vi.fn(async (payload: { id: number; accountLineId: number | null }) => {
+            storedImportedOperations = storedImportedOperations.map((entry) =>
+                entry.id === payload.id ? { ...entry, accountLineId: payload.accountLineId } : entry
+            );
+            return storedImportedOperations.find((entry) => entry.id === payload.id);
+        })
+    };
+
     const userRepo = {
         findOneBy: vi.fn(async ({ id }: { id: number }) => ({ id })),
         findOne: vi.fn(async ({ where }: { where: { id: number } }) => ({ id: where.id })),
@@ -138,6 +172,7 @@ describe("OperationService.save - transfer groups", () => {
             if (entity.name === "Account") return accountRepo;
             if (entity.name === "AccountLine") return accountLineRepo;
             if (entity.name === "User") return userRepo;
+            if (entity.name === "BanquePostaleOperationImport") return banquePostaleImportRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         })
     };
@@ -145,12 +180,14 @@ describe("OperationService.save - transfer groups", () => {
     beforeEach(() => {
         nextId = 1;
         storedLines = [];
+        storedImportedOperations = [];
         vi.clearAllMocks();
 
         getRepositoryMock.mockImplementation((entity: { name: string }) => {
             if (entity.name === "AccountLine") return accountLineRepo;
             if (entity.name === "Account") return accountRepo;
             if (entity.name === "User") return userRepo;
+            if (entity.name === "BanquePostaleOperationImport") return banquePostaleImportRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         });
 
@@ -590,6 +627,49 @@ describe("OperationService.save - transfer groups", () => {
         expect(Number(mirror?.credit)).toBe(70);
         expect(mirror?.transferGroupId).toBe("group-6");
     });
+
+    it("links one import line when saving a validated operation with exact dateValeur", async () => {
+        storedImportedOperations = [
+            { id: 1, accountId: 1, amount: -100, dateOperation: "2026-03-21", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        const saved = await service.save({
+            label: "Facture",
+            dateOperation: "2026-03-20",
+            dateValeur: "2026-03-21",
+            source: "manual",
+            debit: 100,
+            credit: 0,
+            isChecked: true,
+            natureId: null,
+            posteId: null
+        }, 1, 1);
+
+        expect(saved.id).toBeGreaterThan(0);
+        expect(storedImportedOperations[0].accountLineId).toBe(saved.id);
+    });
+
+    it("does not link import line when saving a validated operation with different dateValeur", async () => {
+        storedImportedOperations = [
+            { id: 1, accountId: 1, amount: -100, dateOperation: "2026-03-22", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        await service.save({
+            label: "Facture",
+            dateOperation: "2026-03-20",
+            dateValeur: "2026-03-21",
+            source: "manual",
+            debit: 100,
+            credit: 0,
+            isChecked: true,
+            natureId: null,
+            posteId: null
+        }, 1, 1);
+
+        expect(storedImportedOperations[0].accountLineId).toBeNull();
+    });
 });
 
 describe("OperationService.delete - transfer groups", () => {
@@ -818,6 +898,13 @@ describe("OperationService.duplicateLine - transfer groups", () => {
 
 describe("OperationService.checkBatch - transfer groups", () => {
     let storedLines: StoredLine[];
+    let storedImportedOperations: Array<{
+        id: number;
+        accountId: number;
+        accountLineId: number | null;
+        amount: number;
+        dateOperation: string;
+    }>;
 
     const accounts: Account[] = [
         { id: 1, label: "Compte principal" } as Account,
@@ -880,23 +967,52 @@ describe("OperationService.checkBatch - transfer groups", () => {
         increment: vi.fn(async () => ({ raw: [], affected: 1 })),
     };
 
+    const banquePostaleImportRepo = {
+        findOne: vi.fn(async ({ where }: { where: { accountLineId?: number } }) => {
+            if (where.accountLineId === undefined) return null;
+            return storedImportedOperations.find((entry) => entry.accountLineId === where.accountLineId) ?? null;
+        }),
+        find: vi.fn(async ({ where }: {
+            where: { accountId: number; amount: number; dateOperation: Date | string; accountLineId: { _type: string } }
+        }) => {
+            const whereDate = where.dateOperation instanceof Date
+                ? where.dateOperation.toISOString().slice(0, 10)
+                : where.dateOperation;
+            return storedImportedOperations.filter((entry) =>
+                entry.accountId === where.accountId
+                && entry.amount === where.amount
+                && entry.dateOperation === whereDate
+                && entry.accountLineId === null
+            );
+        }),
+        save: vi.fn(async (payload: { id: number; accountLineId: number | null }) => {
+            storedImportedOperations = storedImportedOperations.map((entry) =>
+                entry.id === payload.id ? { ...entry, accountLineId: payload.accountLineId } : entry
+            );
+            return storedImportedOperations.find((entry) => entry.id === payload.id);
+        })
+    };
+
     const manager = {
         getRepository: vi.fn((entity: { name: string }) => {
             if (entity.name === "Account") return accountRepo;
             if (entity.name === "AccountLine") return accountLineRepo;
             if (entity.name === "User") return userRepo;
+            if (entity.name === "BanquePostaleOperationImport") return banquePostaleImportRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         })
     };
 
     beforeEach(() => {
         storedLines = [];
+        storedImportedOperations = [];
         vi.clearAllMocks();
 
         getRepositoryMock.mockImplementation((entity: { name: string }) => {
             if (entity.name === "AccountLine") return accountLineRepo;
             if (entity.name === "Account") return accountRepo;
             if (entity.name === "User") return userRepo;
+            if (entity.name === "BanquePostaleOperationImport") return banquePostaleImportRepo;
             throw new Error(`Repository non mocke: ${entity.name}`);
         });
 
@@ -940,5 +1056,74 @@ describe("OperationService.checkBatch - transfer groups", () => {
         const mirror = storedLines.find((line) => line.id === 3);
         expect(mirror?.isChecked).toBe(false);
         expect(mirror?.dateValeur).toBeNull();
+    });
+
+    it("links one import line when exactly one strict candidate exists", async () => {
+        storedLines = [
+            { id: 1, label: "Simple", debit: 100, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false }
+        ];
+        storedImportedOperations = [
+            { id: 10, accountId: 1, amount: -100, dateOperation: "2026-03-05", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        await service.checkBatch({
+            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
+        }, 1, 1);
+
+        expect(storedImportedOperations[0].accountLineId).toBe(1);
+    });
+
+    it("does not link when strict matching date differs", async () => {
+        storedLines = [
+            { id: 1, label: "Simple", debit: 100, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false }
+        ];
+        storedImportedOperations = [
+            { id: 10, accountId: 1, amount: -100, dateOperation: "2026-03-06", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        await service.checkBatch({
+            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
+        }, 1, 1);
+
+        expect(storedImportedOperations[0].accountLineId).toBeNull();
+    });
+
+    it("does not link when multiple strict candidates exist", async () => {
+        storedLines = [
+            { id: 1, label: "Simple", debit: 100, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false }
+        ];
+        storedImportedOperations = [
+            { id: 10, accountId: 1, amount: -100, dateOperation: "2026-03-05", accountLineId: null },
+            { id: 11, accountId: 1, amount: -100, dateOperation: "2026-03-05", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        await service.checkBatch({
+            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
+        }, 1, 1);
+
+        expect(storedImportedOperations.every((entry) => entry.accountLineId === null)).toBe(true);
+    });
+
+    it("does not double-link one import candidate to multiple account lines", async () => {
+        storedLines = [
+            { id: 1, label: "Simple 1", debit: 100, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false },
+            { id: 2, label: "Simple 2", debit: 100, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-02"), dateValeur: null, isChecked: false }
+        ];
+        storedImportedOperations = [
+            { id: 10, accountId: 1, amount: -100, dateOperation: "2026-03-05", accountLineId: null }
+        ];
+
+        const service = new OperationService();
+        await service.checkBatch({
+            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
+        }, 1, 1);
+        await service.checkBatch({
+            checks: [{ id: 2, isChecked: true, dateValeur: "2026-03-05" }]
+        }, 1, 1);
+
+        expect(storedImportedOperations[0].accountLineId).toBe(1);
     });
 });

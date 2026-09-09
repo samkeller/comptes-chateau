@@ -11,8 +11,9 @@ import TableQueryParser from "./queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { OperationBatchCheckPayload, SaveOperationPayload } from "@chocosous/shared";
 import { badRequest, notFound } from "../../../utils/AppError";
-import { DeleteResult, Like } from "typeorm";
+import { DeleteResult, IsNull, Like } from "typeorm";
 import UserXpService from "../../core/services/UserXpService";
+import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -263,6 +264,7 @@ export default class OperationService {
                 });
 
                 await this.applySaveXp(userId, existingLine, savedPrimaryLine);
+                await this.tryLinkImportedOperationForValidatedLine(savedPrimaryLine, manager);
 
                 return savedPrimaryLine;
             }
@@ -308,6 +310,7 @@ export default class OperationService {
             });
 
             await this.applySaveXp(userId, existingLine, savedPrimaryLine);
+            await this.tryLinkImportedOperationForValidatedLine(savedPrimaryLine, manager);
 
             return savedPrimaryLine;
         });
@@ -325,6 +328,58 @@ export default class OperationService {
         } else if (!existingLine.dateValeur && savedPrimaryLine.dateValeur) {
             await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_VALIDATED");
         }
+    }
+
+    /**
+     * Tente de relier automatiquement une ligne validée à une ligne d'import Banque Postale.
+     * Règle stricte:
+     *  - même compte
+     *  - même montant signé (credit - debit)
+     *  - dateValeur exactement égale à la date d'opération importée
+     *  - 1 seul candidat import non déjà lié
+     */
+    private async tryLinkImportedOperationForValidatedLine(line: AccountLine, manager: EntityManager): Promise<void> {
+        if (!line.isChecked || !line.dateValeur) {
+            return;
+        }
+
+        const banquePostaleImportRepo = manager.getRepository(BanquePostaleOperationImport);
+
+        const alreadyLinked = await banquePostaleImportRepo.findOne({
+            where: { accountLineId: line.id }
+        });
+        if (alreadyLinked) {
+            return;
+        }
+
+        const normalizedDateValeur = normalizeApiDateInput(line.dateValeur);
+        if (!normalizedDateValeur) {
+            return;
+        }
+        const normalizedDateValeurString = `${normalizedDateValeur.getFullYear()}-${String(normalizedDateValeur.getMonth() + 1).padStart(2, "0")}-${String(normalizedDateValeur.getDate()).padStart(2, "0")}`;
+
+        const lineAccountId = line.accountId ?? line.account?.id;
+        if (!lineAccountId) {
+            return;
+        }
+
+        const signedAmount = Number(line.credit) - Number(line.debit);
+        const candidates = await banquePostaleImportRepo.find({
+            where: {
+                accountId: lineAccountId,
+                amount: signedAmount,
+                dateOperation: normalizedDateValeurString,
+                accountLineId: IsNull()
+            }
+        });
+
+        if (candidates.length !== 1) {
+            return;
+        }
+
+        const candidate = candidates[0];
+        candidate.accountLineId = line.id;
+        await banquePostaleImportRepo.save(candidate);
     }
 
     /**
@@ -395,6 +450,26 @@ export default class OperationService {
                 if (mirrorUpdates.length > 0) {
                     await service.saveAll(mirrorUpdates);
                 }
+            }
+
+            const existingLineById = new Map(existingLines.map((line) => [line.id, line]));
+            const checkedLinesToLink = normalizedChecks
+                .filter((check) => check.isChecked && check.dateValeur)
+                .map((check) => {
+                    const existingLine = existingLineById.get(check.id);
+                    if (!existingLine) {
+                        return null;
+                    }
+                    return {
+                        ...existingLine,
+                        isChecked: check.isChecked,
+                        dateValeur: check.dateValeur
+                    } as AccountLine;
+                })
+                .filter((line): line is AccountLine => line !== null);
+
+            for (const checkedLine of checkedLinesToLink) {
+                await this.tryLinkImportedOperationForValidatedLine(checkedLine, manager);
             }
 
             return savedLines;

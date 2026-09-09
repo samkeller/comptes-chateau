@@ -7,6 +7,7 @@ import { AccountLinePoste } from "../entities/AccountLinePoste";
 import { User } from "../../core/entities/User";
 import { testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
+import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 
 let seededUserId: number;
 let natureChargesId: number;
@@ -484,6 +485,130 @@ describe("OperationControllers /lazy integration", () => {
 
         expect(uncheckedAfter.status).toBe(200);
         expect(uncheckedAfter.body.data).toEqual([]);
+    });
+
+    it("links exactly one import line when validating an operation with matching dateValeur", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
+
+        const imported = await importRepo.save({
+            accountId,
+            compositeExternalId: "1|2026-03-21|L1|-100",
+            dateOperation: "2026-03-21",
+            label: "L1 importée",
+            amount: -100,
+            rowNumber: 1,
+            metadata: {
+                accountNumber: "2245945T038",
+                type: "CCP",
+                exportDate: "2026-03-21",
+                balance: 1000
+            }
+        });
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send({
+                checks: [
+                    {
+                        id: lineToCheck.id,
+                        isChecked: true,
+                        dateValeur: "2026-03-21"
+                    }
+                ]
+            });
+
+        expect(response.status).toBe(200);
+        const linkedImport = await importRepo.findOneByOrFail({ id: imported.id });
+        expect(linkedImport.accountLineId).toBe(lineToCheck.id);
+    });
+
+    it("does not link import line when dateValeur does not exactly match import date", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
+
+        const imported = await importRepo.save({
+            accountId,
+            compositeExternalId: "1|2026-03-22|L1|-100",
+            dateOperation: "2026-03-22",
+            label: "L1 importée",
+            amount: -100,
+            rowNumber: 1,
+            metadata: {
+                accountNumber: "2245945T038",
+                type: "CCP",
+                exportDate: "2026-03-22",
+                balance: 1000
+            }
+        });
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send({
+                checks: [
+                    {
+                        id: lineToCheck.id,
+                        isChecked: true,
+                        dateValeur: "2026-03-21"
+                    }
+                ]
+            });
+
+        expect(response.status).toBe(200);
+        const stillUnlinkedImport = await importRepo.findOneByOrFail({ id: imported.id });
+        expect(stillUnlinkedImport.accountLineId).toBeNull();
+    });
+
+    it("does not link when multiple strict candidates exist", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
+
+        const metadata = {
+            accountNumber: "2245945T038",
+            type: "CCP",
+            exportDate: "2026-03-21",
+            balance: 1000
+        };
+
+        await importRepo.save([
+            {
+                accountId,
+                compositeExternalId: "1|2026-03-21|L1a|-100",
+                dateOperation: "2026-03-21",
+                label: "L1 importée A",
+                amount: -100,
+                rowNumber: 1,
+                metadata
+            },
+            {
+                accountId,
+                compositeExternalId: "1|2026-03-21|L1b|-100",
+                dateOperation: "2026-03-21",
+                label: "L1 importée B",
+                amount: -100,
+                rowNumber: 2,
+                metadata
+            }
+        ]);
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send({
+                checks: [
+                    {
+                        id: lineToCheck.id,
+                        isChecked: true,
+                        dateValeur: "2026-03-21"
+                    }
+                ]
+            });
+
+        expect(response.status).toBe(200);
+        const candidates = await importRepo.find();
+        expect(candidates.every((candidate) => candidate.accountLineId === null)).toBe(true);
     });
 
     it("POST creates a transfer: source gets debit line, target gets mirror credit line, visible via /lazy on both accounts", async () => {
