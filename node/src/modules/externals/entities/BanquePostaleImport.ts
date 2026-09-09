@@ -37,7 +37,7 @@ export class BanquePostaleOperationImport {
     @Column({ type: "varchar", length: 255, unique: true })
     compositeExternalId: string;
 
-    @ManyToOne(() => AccountLine, { nullable: true })
+    @ManyToOne(() => AccountLine, { nullable: true, onDelete: "SET NULL" })
     @JoinColumn({ name: "accountLineId" })
     accountLine?: AccountLine | null;
 

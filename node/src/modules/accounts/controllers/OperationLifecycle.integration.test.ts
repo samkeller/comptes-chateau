@@ -3,6 +3,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
+import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 import { User } from "../../core/entities/User";
 import { testDataSource } from "../../../tests/testDbSetup";
 import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
@@ -88,6 +89,32 @@ describe("Operation lifecycle - transfers (integration)", () => {
 
         const remainingLines = await findGroupLines(transferGroupId);
         expect(remainingLines).toHaveLength(0);
+    });
+
+    it("delete keeps import row and sets its accountLineId to null", async () => {
+        const { id } = await createTransfer();
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const linkedImport = await importRepo.save({
+            accountId,
+            compositeExternalId: "1|2026-03-15|VIREMENT|-100",
+            dateOperation: "2026-03-15",
+            label: "Virement import",
+            amount: -100,
+            rowNumber: 1,
+            accountLineId: id,
+            metadata: {
+                accountNumber: "2245945T038",
+                type: "CCP",
+                exportDate: "2026-03-15",
+                balance: 500
+            }
+        });
+
+        const deleteResponse = await request(app).delete(`/accounts/${accountId}/operations/${id}`);
+        expect(deleteResponse.status).toBe(204);
+
+        const importAfterDelete = await importRepo.findOneByOrFail({ id: linkedImport.id });
+        expect(importAfterDelete.accountLineId).toBeNull();
     });
 
     it("delete returns 404 for an unknown operation and does not touch other lines", async () => {

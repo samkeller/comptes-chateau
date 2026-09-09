@@ -5,7 +5,7 @@ export class AddBanquepostaleImportAccountLineLink1788967020848 implements Migra
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "banque_postale_operation_import" ADD "accountLineId" integer`);
         await queryRunner.query(`ALTER TABLE "banque_postale_operation_import" ADD CONSTRAINT "UQ_banque_postale_operation_import_account_line_id" UNIQUE ("accountLineId")`);
-        await queryRunner.query(`ALTER TABLE "banque_postale_operation_import" ADD CONSTRAINT "FK_banque_postale_operation_import_account_line_id" FOREIGN KEY ("accountLineId") REFERENCES "account_line"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "banque_postale_operation_import" ADD CONSTRAINT "FK_banque_postale_operation_import_account_line_id" FOREIGN KEY ("accountLineId") REFERENCES "account_line"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

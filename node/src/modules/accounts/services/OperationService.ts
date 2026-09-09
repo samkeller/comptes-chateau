@@ -11,9 +11,9 @@ import TableQueryParser from "./queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { OperationBatchCheckPayload, SaveOperationPayload } from "@chocosous/shared";
 import { badRequest, notFound } from "../../../utils/AppError";
-import { DeleteResult, IsNull, Like } from "typeorm";
+import { DeleteResult, Like } from "typeorm";
 import UserXpService from "../../core/services/UserXpService";
-import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
+import BanquePostaleService from "../../externals/service/BanquePostaleService";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -206,6 +206,7 @@ export default class OperationService {
         return AppDataSource.transaction(async (manager) => {
             const repo = manager.getRepository(AccountLine);
             const accountLineService = new AccountLineService(manager);
+            const banquePostaleService = new BanquePostaleService(manager);
 
             const existingLine = typeof line.id === "number" && line.id > 0
                 ? await repo.findOne({
@@ -264,7 +265,7 @@ export default class OperationService {
                 });
 
                 await this.applySaveXp(userId, existingLine, savedPrimaryLine);
-                await this.tryLinkImportedOperationForValidatedLine(savedPrimaryLine, manager);
+                await banquePostaleService.tryLinkValidatedAccountLine(savedPrimaryLine);
 
                 return savedPrimaryLine;
             }
@@ -310,7 +311,7 @@ export default class OperationService {
             });
 
             await this.applySaveXp(userId, existingLine, savedPrimaryLine);
-            await this.tryLinkImportedOperationForValidatedLine(savedPrimaryLine, manager);
+            await banquePostaleService.tryLinkValidatedAccountLine(savedPrimaryLine);
 
             return savedPrimaryLine;
         });
@@ -328,58 +329,6 @@ export default class OperationService {
         } else if (!existingLine.dateValeur && savedPrimaryLine.dateValeur) {
             await this.userXpService.addXPForUser(userId, "ACCOUNT_LINE_OPERATION_VALIDATED");
         }
-    }
-
-    /**
-     * Tente de relier automatiquement une ligne validée à une ligne d'import Banque Postale.
-     * Règle stricte:
-     *  - même compte
-     *  - même montant signé (credit - debit)
-     *  - dateValeur exactement égale à la date d'opération importée
-     *  - 1 seul candidat import non déjà lié
-     */
-    private async tryLinkImportedOperationForValidatedLine(line: AccountLine, manager: EntityManager): Promise<void> {
-        if (!line.isChecked || !line.dateValeur) {
-            return;
-        }
-
-        const banquePostaleImportRepo = manager.getRepository(BanquePostaleOperationImport);
-
-        const alreadyLinked = await banquePostaleImportRepo.findOne({
-            where: { accountLineId: line.id }
-        });
-        if (alreadyLinked) {
-            return;
-        }
-
-        const normalizedDateValeur = normalizeApiDateInput(line.dateValeur);
-        if (!normalizedDateValeur) {
-            return;
-        }
-        const normalizedDateValeurString = `${normalizedDateValeur.getFullYear()}-${String(normalizedDateValeur.getMonth() + 1).padStart(2, "0")}-${String(normalizedDateValeur.getDate()).padStart(2, "0")}`;
-
-        const lineAccountId = line.accountId ?? line.account?.id;
-        if (!lineAccountId) {
-            return;
-        }
-
-        const signedAmount = Number(line.credit) - Number(line.debit);
-        const candidates = await banquePostaleImportRepo.find({
-            where: {
-                accountId: lineAccountId,
-                amount: signedAmount,
-                dateOperation: normalizedDateValeurString,
-                accountLineId: IsNull()
-            }
-        });
-
-        if (candidates.length !== 1) {
-            return;
-        }
-
-        const candidate = candidates[0];
-        candidate.accountLineId = line.id;
-        await banquePostaleImportRepo.save(candidate);
     }
 
     /**
@@ -408,6 +357,7 @@ export default class OperationService {
         const updatedLines = await AppDataSource.transaction(async (manager) => {
             const service = new AccountLineService(manager);
             const repo = manager.getRepository(AccountLine);
+            const banquePostaleService = new BanquePostaleService(manager);
 
             const ids = normalizedChecks.map((check) => check.id);
             const existingLines = await repo
@@ -469,7 +419,7 @@ export default class OperationService {
                 .filter((line): line is AccountLine => line !== null);
 
             for (const checkedLine of checkedLinesToLink) {
-                await this.tryLinkImportedOperationForValidatedLine(checkedLine, manager);
+                await banquePostaleService.tryLinkValidatedAccountLine(checkedLine);
             }
 
             return savedLines;

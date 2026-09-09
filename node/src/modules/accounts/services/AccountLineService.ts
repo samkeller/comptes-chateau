@@ -166,5 +166,18 @@ export default class AccountLineService {
 
         return this.accountLineRepo.save(normalizedLines);
     }
-}
 
+    async getAllUncheckedLines(accountId: number): Promise<AccountLine[]> {
+        return this.accountLineRepo
+            .createQueryBuilder("al")
+            .leftJoinAndSelect("al.account", "account")
+            .leftJoinAndSelect("al.targetAccount", "targetAccount")
+            .leftJoinAndSelect("al.nature", "nature")
+            .leftJoinAndSelect("al.poste", "poste")
+            .where("al.account_id = :accountId", { accountId })
+            .andWhere("al.isChecked = :isChecked", { isChecked: false })
+            .orderBy("al.dateOperation", "DESC")
+            .addOrderBy("al.id", "DESC")
+            .getMany();
+    }
+}
