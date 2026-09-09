@@ -1,5 +1,5 @@
 import { Router } from "express";
-import OperationRoutes from "./OperationController";
+import AccountLineRoutes from "./AccountLineController";
 import PosteRoutes from "./PosteController";
 import RecurringExpenseRoutes from "./RecurringExpenseController";
 import DashboardRoutes from "./DashboardController";
@@ -12,7 +12,7 @@ const AccountScopedRoutes = Router({ mergeParams: true });
 AccountScopedRoutes.use(validateParams(AccountIdParamSchema));
 AccountScopedRoutes.use(requireExistingAccount);
 
-AccountScopedRoutes.use("/operations", OperationRoutes);
+AccountScopedRoutes.use("/operations", AccountLineRoutes);
 AccountScopedRoutes.use("/postes", PosteRoutes);
 AccountScopedRoutes.use("/recurring-expenses", RecurringExpenseRoutes);
 AccountScopedRoutes.use("/dashboard", DashboardRoutes);

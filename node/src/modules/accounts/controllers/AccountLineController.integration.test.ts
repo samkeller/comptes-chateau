@@ -102,7 +102,7 @@ async function seedAccountLines(): Promise<void> {
     ]);
 }
 
-describe("OperationControllers /lazy integration", () => {
+describe("AccountLineController /lazy integration", () => {
     let app: ReturnType<typeof createTestApp>;
 
     beforeEach(async () => {
