@@ -16,16 +16,13 @@ import AccountService from "../../services/AccountService";
 import { parseDateToDDMMYYYY, parseDDMMYYYYToDate } from "../../utils/DatesUtils";
 import { useGlobalToast } from "../../context/GlobalToastContext";
 import { useScreen } from "@/hooks/useScreen";
-import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from "primereact/autocomplete";
-import AccountLineCategorizationService from "@/services/AccountLineCategorizationService";
-import { AccountLineRule } from "@/interfaces/AccountLineRule";
 import { useAccountId } from "@/hooks/useAccountId";
 import { generatePath, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { routePaths } from "@/routes/routePaths";
 import Optional from "@/components/atoms/form/Optional";
+import OperationLabelAutocomplete from "./atoms/OperationLabelAutocomplete";
 
 const accountService = new AccountService();
-const accountLineCategorizationService = new AccountLineCategorizationService();
 const accountLineService = new AccountLineService()
 
 export default function AddAccountLineDialog() {
@@ -43,11 +40,10 @@ export default function AddAccountLineDialog() {
         refresh: () => Promise<void>;
     }>();
 
-const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(new Date()));
+    const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(new Date()));
     const [isChecked, setIsChecked] = useState<boolean>(false);
     const [dateValeur, setDateValeur] = useState<string>("");
     const [operationLabel, setOperationLabel] = useState<string>("");
-    const [suggestedOperations, setSuggestedOperations] = useState<AccountLineRule[]>([]);
     const [natureId, setNatureId] = useState<number | null>(null);
     const [posteId, setPosteId] = useState<number | null>(null);
     const [amount, setAmount] = useState<number>(0);
@@ -122,32 +118,6 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
             })
     };
 
-    /**
-     *  Cherches les suggestions d'opérations correspondant au pattern fourni (LIKE).
-     * @param event 
-     */
-    async function searchOperationsSuggestions(event: AutoCompleteCompleteEvent): Promise<void> {
-        const query = event.query.trim().toLowerCase();
-        const results = await accountLineCategorizationService.search(query);
-
-        setSuggestedOperations(results);
-    }
-
-    /**
-     * Met à jour le label de l'opération et les informations de poste et nature associées à l'opération suggérée.
-     * @param event 
-     */
-    function changeOperationLabelAutocomplete(event: AutoCompleteChangeEvent<string>): void {
-        setOperationLabel(event.value ?? "");
-
-        // Récupères les informations de poste et nature associées à l'opération suggérée
-        const suggestedOperation = suggestedOperations.find((op) => op.pattern === event.value);
-
-        if (suggestedOperation) {
-            setNatureId(suggestedOperation.natureId ?? null);
-            setPosteId(suggestedOperation.posteId ?? null);
-        }
-    }
 
     /**
      *  Masque le dialogue d'ajout/modification d'une ligne de compte.
@@ -228,18 +198,19 @@ const [dateOperation, setDateOperation] = useState<string>(parseDateToDDMMYYYY(n
                         <label htmlFor="dateValeur">Date de valeur</label>
                     </FloatLabel>
                 </div>
-                <FloatLabel className="flex-1">
-                    <AutoComplete
-                        id="operation"
-                        value={operationLabel}
-                        onChange={changeOperationLabelAutocomplete}
-                        completeMethod={searchOperationsSuggestions} // Autocomplete search method
-                        suggestions={suggestedOperations.map(v => v.label)} // Suggestions autocomplete
-                        className="w-full"
-                        inputClassName="w-full"
-                    />
-                    <label htmlFor="operation">Opération</label>
-                </FloatLabel>
+                <OperationLabelAutocomplete
+                    operationLabel={operationLabel}
+                    changeLabel={setOperationLabel}
+                    selectOperation={(op) => {
+                        setOperationLabel(op.label);
+                        // Override the nature si non null
+                        if (op.natureId !== null)
+                            setNatureId(op.natureId!);
+                        // Override the poste si non null
+                        if (op.posteId !== null)
+                            setPosteId(op.posteId!);
+                    }}
+                />
                 <div className="flex gap-1">
                     <FloatLabel className="flex-1">
                         <AccountLineNatureDropdown

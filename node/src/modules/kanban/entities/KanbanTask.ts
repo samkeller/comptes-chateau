@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn, Relation } from "typeorm";
 import { KanbanColumn } from "./KanbanColumn";
 import { KANBAN_TASK_PRIORITIES, type KanbanTaskPriority } from "@chocosous/shared";
 import { User } from "../../core/entities/User";
@@ -31,7 +31,7 @@ export class KanbanTask {
     columnId: number;
 
     @ManyToOne(() => KanbanColumn, column => column.kanbanTasks, { nullable: false })
-    column: KanbanColumn;
+    column: Relation<KanbanColumn>;
 
     @ManyToMany(() => User, { nullable: true })
     @JoinTable({
