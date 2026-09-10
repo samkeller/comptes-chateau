@@ -3,7 +3,8 @@ import type {
     BanquePostaleImportPayload,
     BanquePostaleImportResultPayload,
     BanquePostaleMatchedResultPayload,
-    BanquePostaleOperationImportDto
+    BanquePostaleOperationImportDto,
+    OperationBatchCheckOutput
 } from "@chocosous/shared";
 import { EntityManager, IsNull, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
@@ -13,6 +14,7 @@ import AccountLineService from "../../accounts/services/AccountLineService";
 import UserXpService from "../../core/services/UserXpService";
 import { BanquePostaleOperationImport } from "../entities/BanquePostaleImport";
 import { toBanquePostaleOperationDto } from "../mappers/BanquePostaleOperationImportMapper";
+import { internalServerError, notFound } from "../../../utils/AppError";
 
 export default class BanquePostaleService {
     private banquePostaleImportRepository: Repository<BanquePostaleOperationImport>;
@@ -180,6 +182,34 @@ export default class BanquePostaleService {
             await this.userXpService.addXPForUser(userId, "BANQUE_POSTALE_OPERATION_LINKED", created.length);
             await this.banquePostaleImportRepository.save(created);
         }
+    }
+
+    /**
+     * Quand on a l'info, lie les lignes d'import aux opérations sures.
+     * @param lines 
+     * @returns 
+     */
+    async linkAccountLines(lines: OperationBatchCheckOutput, accountId: number): Promise<BanquePostaleOperationImport[]> {
+
+        const toSave = []
+        for (const line of lines) {
+
+            if (!line.banquePostaleExternalId)
+                throw internalServerError("BANQUE_POSTALE_EXTERNAL_ID_MISSING", "Banque Postale external ID is missing.");
+
+            const dbLine = await this.banquePostaleImportRepository.findOneBy({
+                compositeExternalId: line.banquePostaleExternalId,
+                accountLineId: IsNull(),
+                accountId
+            })
+
+            if (!dbLine) throw notFound("BANQUE_POSTALE_OPERATION_NOT_FOUND", "Banque Postale operation not found.");
+
+            dbLine.accountLineId = line.id;
+            toSave.push(dbLine);
+
+        }
+        return await this.banquePostaleImportRepository.save(toSave);
     }
 
     private findByCompositeExternalId(extId: string): Promise<BanquePostaleOperationImport | null> {

@@ -1085,9 +1085,11 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        const result = await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        const result = await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         expect(result.updatedCount).toBe(1);
 
@@ -1108,9 +1110,11 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         const mirror = storedLines.find((line) => line.id === 3);
         expect(mirror?.isChecked).toBe(false);
@@ -1126,9 +1130,11 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         expect(storedImportedOperations[0].accountLineId).toBe(1);
     });
@@ -1142,9 +1148,11 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         expect(storedImportedOperations[0].accountLineId).toBeNull();
     });
@@ -1159,9 +1167,11 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         expect(storedImportedOperations.every((entry) => entry.accountLineId === null)).toBe(true);
     });
@@ -1176,12 +1186,16 @@ describe("AccountLineService.checkBatch - transfer groups", () => {
         ];
 
         const service = new AccountLineService();
-        await service.checkBatch({
-            checks: [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
-        await service.checkBatch({
-            checks: [{ id: 2, isChecked: true, dateValeur: "2026-03-05" }]
-        }, 1, 1);
+        await service.checkBatch(
+            [{ id: 1, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
+        await service.checkBatch(
+            [{ id: 2, isChecked: true, dateValeur: "2026-03-05" }],
+            1,
+            1
+        );
 
         expect(storedImportedOperations[0].accountLineId).toBe(1);
     });

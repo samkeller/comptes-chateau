@@ -8,7 +8,7 @@ import TableQueryMapper from "./queryMappers/TableQueryMapper";
 import operationTableQueryConfig from "./queryMappers/operationTableQueryConfig";
 import TableQueryParser from "./queryMappers/parsers/TableQueryParser";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
-import { OperationBatchCheckPayload, SaveOperationPayload } from "@chocosous/shared";
+import { OperationBatchCheckInput, OperationBatchCheckOutput, OperationBatchCheckSchema, SaveOperationPayload } from "@chocosous/shared";
 import { badRequest, notFound } from "../../../utils/AppError";
 import { DeleteResult, Like } from "typeorm";
 import UserXpService from "../../core/services/UserXpService";
@@ -456,21 +456,15 @@ export default class AccountLineService {
      * @throws 400 OPERATION_VALIDATION si une dateValeur est invalide.
      * @throws 404 OPERATION_NOT_FOUND si une ligne n'appartient pas au compte.
      */
-    async checkBatch(payload: OperationBatchCheckPayload, accountId: number, creatorId: number): Promise<{ updatedCount: number }> {
-        const normalizedChecks = payload.checks.map((check) => {
-            const normalizedDateValeur = normalizeApiDateInput(check.dateValeur);
-            if (!normalizedDateValeur)
-                throw badRequest("OPERATION_VALIDATION", `dateValeur invalide : ${check.dateValeur}`);
-            return { id: check.id, isChecked: check.isChecked, dateValeur: normalizedDateValeur };
-        });
+    async checkBatch(payload: OperationBatchCheckInput, accountId: number, creatorId: number): Promise<{ updatedCount: number }> {
+        const normalized: OperationBatchCheckOutput = OperationBatchCheckSchema.parse(payload);
 
         const updatedLines = await AppDataSource.transaction(async (manager) => {
-            const service = new AccountLineService(manager);
-            const repo = manager.getRepository(AccountLine);
-            const banquePostaleService = new BanquePostaleService(manager);
+            const transactionService = new AccountLineService(manager);
+            const bpService = new BanquePostaleService(manager);
 
-            const ids = normalizedChecks.map((check) => check.id);
-            const existingLines = await repo
+            const ids = normalized.map((check) => check.id);
+            const existingLines = await transactionService.accountLineRepo
                 .createQueryBuilder("al")
                 .where("al.id IN (:...ids)", { ids })
                 .andWhere("al.account_id = :accountId", { accountId })
@@ -479,10 +473,10 @@ export default class AccountLineService {
             if (existingLines.length !== ids.length)
                 throw notFound("OPERATION_NOT_FOUND", "One or more operations were not found.");
 
-            const savedLines = await service.saveAll(normalizedChecks);
+            const savedLines = await transactionService.saveAll(normalized);
 
             // Propage le statut de verification aux lignes miroir des virements.
-            const mirrorChecks = normalizedChecks
+            const mirrorChecks = normalized
                 .map((check) => ({
                     check,
                     transferGroupId: existingLines.find((line) => line.id === check.id)?.transferGroupId
@@ -490,7 +484,7 @@ export default class AccountLineService {
                 .filter((entry): entry is typeof entry & { transferGroupId: string } => Boolean(entry.transferGroupId));
 
             if (mirrorChecks.length > 0) {
-                const mirrorLines = await repo.find({
+                const mirrorLines = await transactionService.accountLineRepo.find({
                     where: { transferGroupId: In(mirrorChecks.map((entry) => entry.transferGroupId)) }
                 });
                 const checkedIds = new Set(ids);
@@ -508,33 +502,29 @@ export default class AccountLineService {
                     });
 
                 if (mirrorUpdates.length > 0) {
-                    await service.saveAll(mirrorUpdates);
+                    await transactionService.saveAll(mirrorUpdates);
                 }
             }
 
-            const existingLineById = new Map(existingLines.map((line) => [line.id, line]));
-            const checkedLinesToLink = normalizedChecks
-                .filter((check) => check.isChecked && check.dateValeur)
-                .map((check) => {
-                    const existingLine = existingLineById.get(check.id);
-                    if (!existingLine) {
-                        return null;
-                    }
-                    return {
-                        ...existingLine,
-                        isChecked: check.isChecked,
-                        dateValeur: check.dateValeur
-                    } as AccountLine;
-                })
-                .filter((line): line is AccountLine => line !== null);
+            // Gère les matchs avec la Banque Postale
+            const alreadyLinked: OperationBatchCheckOutput = normalized.filter((check) => check.banquePostaleExternalId);
+            const toTryAndMatch: OperationBatchCheckOutput = normalized.filter((check) => !check.banquePostaleExternalId);
 
-            await banquePostaleService.tryAndValidateAccountLines(creatorId, checkedLinesToLink);
+            const checkedLineIdsToLink = toTryAndMatch.map((check) => check.id);
+            const checkedLinesToLink = checkedLineIdsToLink.length > 0
+                ? await transactionService.accountLineRepo.findBy({ id: In(checkedLineIdsToLink) })
+                : [];
 
+            // Lignes déjà matchées par l'utilisateur
+            await bpService.linkAccountLines(alreadyLinked, accountId);
+            // Lignes à matcher.
+            await bpService.tryAndValidateAccountLines(creatorId, checkedLinesToLink);
+
+            // Ajout xp utilisateur.
+            await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_OPERATION_VALIDATED", savedLines.length);
             return savedLines;
-        });
 
-        // Ajout xp utilisateur.
-        await this.userXpService.addXPForUser(creatorId, "ACCOUNT_LINE_OPERATION_VALIDATED", updatedLines.length);
+        });
 
         return { updatedCount: updatedLines.length };
     }

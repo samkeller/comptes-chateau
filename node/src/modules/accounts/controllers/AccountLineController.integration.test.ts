@@ -455,13 +455,11 @@ describe("AccountLineController /lazy integration", () => {
 
         const batchResponse = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
-            .send({
-                checks: idsToCheck.map((id: number) => ({
-                    id,
-                    isChecked: true,
-                    dateValeur: "2026-03-21"
-                }))
-            });
+            .send(idsToCheck.map((id: number) => ({
+                id,
+                isChecked: true,
+                dateValeur: "2026-03-21"
+            })));
 
         expect(batchResponse.status).toBe(200);
         expect(batchResponse.body.updatedCount).toBe(idsToCheck.length);
@@ -509,15 +507,11 @@ describe("AccountLineController /lazy integration", () => {
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
-            .send({
-                checks: [
-                    {
-                        id: lineToCheck.id,
-                        isChecked: true,
-                        dateValeur: "2026-03-21"
-                    }
-                ]
-            });
+            .send([{
+                id: lineToCheck.id,
+                isChecked: true,
+                dateValeur: "2026-03-21"
+            }]);
 
         expect(response.status).toBe(200);
         const linkedImport = await importRepo.findOneByOrFail({ id: imported.id });
@@ -546,15 +540,11 @@ describe("AccountLineController /lazy integration", () => {
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
-            .send({
-                checks: [
-                    {
-                        id: lineToCheck.id,
-                        isChecked: true,
-                        dateValeur: "2026-03-21"
-                    }
-                ]
-            });
+            .send([{
+                id: lineToCheck.id,
+                isChecked: true,
+                dateValeur: "2026-03-21"
+            }]);
 
         expect(response.status).toBe(200);
         const stillUnlinkedImport = await importRepo.findOneByOrFail({ id: imported.id });
@@ -596,19 +586,67 @@ describe("AccountLineController /lazy integration", () => {
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
-            .send({
-                checks: [
-                    {
-                        id: lineToCheck.id,
-                        isChecked: true,
-                        dateValeur: "2026-03-21"
-                    }
-                ]
-            });
+            .send([{
+                id: lineToCheck.id,
+                isChecked: true,
+                dateValeur: "2026-03-21"
+            }]);
 
         expect(response.status).toBe(200);
         const candidates = await importRepo.find();
         expect(candidates.every((candidate) => candidate.accountLineId === null)).toBe(true);
+    });
+
+    it("links the explicitly selected import when strict candidates are ambiguous", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
+
+        const imports = await importRepo.save([
+            {
+                accountId,
+                compositeExternalId: "1|2026-03-21|L1a|-100",
+                dateOperation: "2026-03-21",
+                label: "L1 importée A",
+                amount: -100,
+                rowNumber: 1,
+                metadata: {
+                    accountNumber: "2245945T038",
+                    type: "CCP",
+                    exportDate: "2026-03-21",
+                    balance: 1000
+                }
+            },
+            {
+                accountId,
+                compositeExternalId: "1|2026-03-21|L1b|-100",
+                dateOperation: "2026-03-21",
+                label: "L1 importée B",
+                amount: -100,
+                rowNumber: 2,
+                metadata: {
+                    accountNumber: "2245945T038",
+                    type: "CCP",
+                    exportDate: "2026-03-21",
+                    balance: 1000
+                }
+            }
+        ]);
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send([{
+                id: lineToCheck.id,
+                isChecked: true,
+                dateValeur: "2026-03-21",
+                banquePostaleExternalId: imports[1].compositeExternalId
+            }]);
+
+        expect(response.status).toBe(200);
+        const linkedImport = await importRepo.findOneByOrFail({ id: imports[1].id });
+        const unlinkedImport = await importRepo.findOneByOrFail({ id: imports[0].id });
+        expect(linkedImport.accountLineId).toBe(lineToCheck.id);
+        expect(unlinkedImport.accountLineId).toBeNull();
     });
 
     it("POST creates a transfer: source gets debit line, target gets mirror credit line, visible via /lazy on both accounts", async () => {

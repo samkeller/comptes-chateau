@@ -3,18 +3,12 @@ import AccountLine from "../interfaces/AccountLine"
 import { formatApiDate } from "../utils/DatesUtils"
 import BaseService from "./BaseService"
 import DataTableQueryCodec, { DataTableLazyState } from "./tableQuery/DataTableQueryCodec"
+import { OperationBatchCheckInput, OperationBatchCheckSchema } from "@chocosous/shared"
 
 export interface LazyLoadResponse {
     data: AccountLine[];
     totalRecords: number;
 }
-
-export interface CheckBatchInput {
-    id: number;
-    isChecked: boolean;
-    dateValeur: Date;
-}
-
 class AccountLineService extends BaseService {
 
     /**
@@ -65,14 +59,9 @@ class AccountLineService extends BaseService {
      * @param accountId - The account ID
      * @param checks - Array of checks to perform
      */
-    checkBatch(accountId: number, checks: CheckBatchInput[]): Promise<number> {
-        const payload = {
-            checks: checks.map((check) => ({
-                id: check.id,
-                isChecked: check.isChecked,
-                dateValeur: formatApiDate(check.dateValeur)
-            }))
-        };
+    checkBatch(accountId: number, checks: OperationBatchCheckInput): Promise<number> {
+        // Zod valide ET transforme automatiquement tes Dates en strings
+        const payload = OperationBatchCheckSchema.parse(checks);
 
         return axios.post(`${this.apiUrl}/accounts/${accountId}/operations/check-batch`, payload).then((response) => response.data.updatedCount);
     }

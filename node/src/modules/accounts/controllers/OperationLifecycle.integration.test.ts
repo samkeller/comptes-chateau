@@ -165,9 +165,7 @@ describe("Operation lifecycle - transfers (integration)", () => {
 
         const checkResponse = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
-            .send({
-                checks: [{ id, isChecked: true, dateValeur: "2026-03-15" }]
-            });
+            .send([{ id, isChecked: true, dateValeur: "2026-03-15" }]);
 
         expect(checkResponse.status).toBe(200);
         expect(checkResponse.body.updatedCount).toBe(1);

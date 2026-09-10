@@ -193,7 +193,8 @@ export default function AccountChecks() {
                 selectedLines.map((line) => ({
                     id: line.accountLine.id,
                     isChecked: true,
-                    dateValeur: line.accountLine.dateValeur ?? new Date()
+                    dateValeur: line.accountLine.dateValeur ?? new Date(),
+                    ...(line.importResult?.selectedCandidate?.compositeExternalId ? { banquePostaleExternalId: line.importResult?.selectedCandidate?.compositeExternalId } : {})
                 }))
             )
             .then(async () => {
