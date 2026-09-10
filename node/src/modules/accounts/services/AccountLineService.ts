@@ -375,7 +375,7 @@ export default class AccountLineService {
                 });
 
                 await this.applySaveXp(userId, existingLine, savedPrimaryLine);
-                await banquePostaleService.tryLinkValidatedAccountLine(savedPrimaryLine);
+                await banquePostaleService.tryAndValidateAccountLines(userId, [savedPrimaryLine]);
 
                 return savedPrimaryLine;
             }
@@ -421,7 +421,7 @@ export default class AccountLineService {
             });
 
             await this.applySaveXp(userId, existingLine, savedPrimaryLine);
-            await banquePostaleService.tryLinkValidatedAccountLine(savedPrimaryLine);
+            await banquePostaleService.tryAndValidateAccountLines(userId, [savedPrimaryLine]);
 
             return savedPrimaryLine;
         });
@@ -528,9 +528,7 @@ export default class AccountLineService {
                 })
                 .filter((line): line is AccountLine => line !== null);
 
-            for (const checkedLine of checkedLinesToLink) {
-                await banquePostaleService.tryLinkValidatedAccountLine(checkedLine);
-            }
+            await banquePostaleService.tryAndValidateAccountLines(creatorId, checkedLinesToLink);
 
             return savedLines;
         });

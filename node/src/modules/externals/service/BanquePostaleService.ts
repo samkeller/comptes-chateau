@@ -10,16 +10,19 @@ import { AppDataSource } from "../../../db/dataSource";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import AccountLineService from "../../accounts/services/AccountLineService";
+import UserXpService from "../../core/services/UserXpService";
 import { BanquePostaleOperationImport } from "../entities/BanquePostaleImport";
 import { toBanquePostaleOperationDto } from "../mappers/BanquePostaleOperationImportMapper";
 
 export default class BanquePostaleService {
     private banquePostaleImportRepository: Repository<BanquePostaleOperationImport>;
     private accountLineService: AccountLineService;
+    private userXpService: UserXpService;
 
     constructor(em: EntityManager = AppDataSource.manager) {
         this.banquePostaleImportRepository = em.getRepository(BanquePostaleOperationImport);
         this.accountLineService = new AccountLineService(em);
+        this.userXpService = new UserXpService(em);
     }
 
     async import(data: BanquePostaleImportPayload): Promise<BanquePostaleImportResultPayload> {
@@ -101,7 +104,12 @@ export default class BanquePostaleService {
         });
     }
 
-    async tryLinkValidatedAccountLine(line: AccountLine): Promise<void> {
+    /**
+     * Essaie de lier une ligne de compte validée avec une opération Banque Postale correspondante.
+     * @param line 
+     * @returns 
+     */
+    private async tryLinkValidatedAccountLine(userId: number, line: AccountLine): Promise<BanquePostaleOperationImport | undefined> {
         if (!line.isChecked || !line.dateValeur) {
             return;
         }
@@ -137,7 +145,8 @@ export default class BanquePostaleService {
             return;
         }
 
-        await this.banquePostaleImportRepository.save({
+
+        return await this.banquePostaleImportRepository.save({
             ...candidates[0],
             accountLineId: line.id
         });
@@ -149,6 +158,25 @@ export default class BanquePostaleService {
                 compositeExternalId: extId
             }
         });
+    }
+
+    /**
+     * Loop through the account lines and attempt to link and validate each one.
+     * @param accountId The ID of the account to which the lines belong.
+     * @param line An array of account lines to be linked and validated.
+     */
+    async tryAndValidateAccountLines(userId: number, line: AccountLine[]): Promise<void> {
+        const created: BanquePostaleOperationImport[] = []
+        for (const singleLine of line) {
+            const createdLine = await this.tryLinkValidatedAccountLine(userId, singleLine);
+            if (createdLine) {
+                created.push(createdLine);
+            }
+        }
+        if (created.length > 0) {
+            await this.userXpService.addXPForUser(userId, "BANQUE_POSTALE_OPERATION_LINKED", created.length);
+            await this.banquePostaleImportRepository.save(created);
+        }
     }
 
     private buildCompositeExternalId(accountId: number, dateOperation: string, label: string, montant: number): string {

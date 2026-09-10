@@ -699,7 +699,6 @@ describe("AccountLineService.save - transfer groups", () => {
             label: "Facture",
             dateOperation: "2026-03-20",
             dateValeur: "2026-03-21",
-            source: "manual",
             debit: 100,
             credit: 0,
             isChecked: true,
@@ -721,7 +720,6 @@ describe("AccountLineService.save - transfer groups", () => {
             label: "Facture",
             dateOperation: "2026-03-20",
             dateValeur: "2026-03-21",
-            source: "manual",
             debit: 100,
             credit: 0,
             isChecked: true,
@@ -904,8 +902,8 @@ describe("AccountLineService.duplicateLine - transfer groups", () => {
 
     it("duplicates a transfer as a complete new pair with its own transferGroupId", async () => {
         storedLines = [
-            { id: 1, label: "Virement", debit: 150, credit: 0, account: accounts[0], targetAccount: accounts[1], transferGroupId: "group-orig", dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false, source: "manual" },
-            { id: 2, label: "Virement", debit: 0, credit: 150, account: accounts[1], targetAccount: accounts[0], transferGroupId: "group-orig", dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false, source: "manual" }
+            { id: 1, label: "Virement", debit: 150, credit: 0, account: accounts[0], targetAccount: accounts[1], transferGroupId: "group-orig", dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false },
+            { id: 2, label: "Virement", debit: 0, credit: 150, account: accounts[1], targetAccount: accounts[0], transferGroupId: "group-orig", dateOperation: new Date("2026-03-01"), dateValeur: null, isChecked: false }
         ];
 
         const service = new AccountLineService();
@@ -933,7 +931,7 @@ describe("AccountLineService.duplicateLine - transfer groups", () => {
 
     it("resets the check state on duplication", async () => {
         storedLines = [
-            { id: 1, label: "Dépense", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: new Date("2026-03-02"), isChecked: true, source: "manual" }
+            { id: 1, label: "Dépense", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date("2026-03-01"), dateValeur: new Date("2026-03-02"), isChecked: true }
         ];
 
         const service = new AccountLineService();
@@ -946,8 +944,8 @@ describe("AccountLineService.duplicateLine - transfer groups", () => {
 
     it("increments the label suffix based on existing copies", async () => {
         storedLines = [
-            { id: 1, label: "Dépense", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date(), dateValeur: null, isChecked: false, source: "manual" },
-            { id: 2, label: "Dépense (1)", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date(), dateValeur: null, isChecked: false, source: "manual" }
+            { id: 1, label: "Dépense", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date(), dateValeur: null, isChecked: false },
+            { id: 2, label: "Dépense (1)", debit: 40, credit: 0, account: accounts[0], targetAccount: null, transferGroupId: null, dateOperation: new Date(), dateValeur: null, isChecked: false }
         ];
 
         const service = new AccountLineService();
