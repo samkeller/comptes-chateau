@@ -125,22 +125,38 @@ export default function AccountChecks() {
         });
     };
 
+    /**
+     * Réserve un candidat à une seule ligne du formulaire. Si ce candidat avait été
+     * choisi ailleurs, l'ancien choix est libéré et cette ligne est décochée afin
+     * qu'elle ne soit pas validée sans rapprochement explicite.
+     */
     const selectImportCandidate = (
         lineId: number,
         candidate: BanquePostaleImportMatchingCandidate
     ): void => {
-        setImportResultMap((previous) => ({
-            ...previous,
-            [lineId]: {
-                ...previous[lineId],
-                selectedCandidate: candidate
-            }
-        }));
-        setAccountLines((previousLines) => previousLines.map((line) =>
-            line.id === lineId
-                ? new AccountLine({ ...line, isChecked: true, dateValeur: candidate.dateOperation })
-                : line
+        setImportResultMap((previous) => Object.fromEntries(
+            Object.entries(previous).map(([entryLineId, entry]) => [
+                entryLineId,
+                {
+                    ...entry,
+                    selectedCandidate: Number(entryLineId) === lineId
+                        ? candidate
+                        : entry.selectedCandidate?.id === candidate.id
+                            ? null
+                            : entry.selectedCandidate
+                }
+            ])
         ));
+        setAccountLines((previousLines) => previousLines.map((line) => {
+            if (line.id === lineId) {
+                return new AccountLine({ ...line, isChecked: true, dateValeur: candidate.dateOperation });
+            }
+
+            const previousSelection = importResultMap[line.id]?.selectedCandidate;
+            return previousSelection?.id === candidate.id
+                ? new AccountLine({ ...line, isChecked: false })
+                : line;
+        }));
     };
 
     const onSelectionChange = (event: DataTableSelectionMultipleChangeEvent<AccountCheckRow[]>) => {

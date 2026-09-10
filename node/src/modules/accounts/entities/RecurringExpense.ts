@@ -2,6 +2,7 @@ import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 import { Account } from "./Account";
+import { decimalNumberTransformer } from "../../../utils/DecimalNumberTransformer";
 
 export enum RecurringExpenseFrequency {
     WEEKLY = 'weekly',
@@ -18,7 +19,7 @@ export class RecurringExpense {
     @Column({ type: 'text' })
     label: string;
 
-    @Column({ type: "decimal", precision: 10, scale: 2 })
+    @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalNumberTransformer })
     solde: number
 
     @Column({ type: "boolean", default: true })

@@ -14,7 +14,7 @@ import AccountLineService from "../../accounts/services/AccountLineService";
 import UserXpService from "../../core/services/UserXpService";
 import { BanquePostaleOperationImport } from "../entities/BanquePostaleImport";
 import { toBanquePostaleOperationDto } from "../mappers/BanquePostaleOperationImportMapper";
-import { internalServerError, notFound } from "../../../utils/AppError";
+import { badRequest, internalServerError, notFound } from "../../../utils/AppError";
 
 export default class BanquePostaleService {
     private banquePostaleImportRepository: Repository<BanquePostaleOperationImport>;
@@ -33,13 +33,24 @@ export default class BanquePostaleService {
             const { accountId, accountNumber, type, balance, exportDate } = data;
             const newBanquePostaleOperations: Omit<BanquePostaleOperationImport, "id" | "createdAt" | "account">[] = [];
             const otherImportedOperations: BanquePostaleOperationImportDto[] = [];
+            const availableExistingOperations: BanquePostaleOperationImportDto[] = [];
+            const occurrenceByIdentity = new Map<string, number>();
 
             for (const operation of data.operations) {
-                const compositeExternalId = transactionService.buildCompositeExternalId(
+                // Deux opérations bancaires peuvent légitimement avoir les mêmes date,
+                // libellé et montant. Leur rang parmi les occurrences identiques permet
+                // de les distinguer tout en retrouvant les mêmes lignes au réimport.
+                const transactionIdentity = transactionService.buildTransactionIdentity(
                     accountId,
                     operation.dateOperation,
                     operation.label,
                     operation.amount
+                );
+                const occurrence = (occurrenceByIdentity.get(transactionIdentity) ?? 0) + 1;
+                occurrenceByIdentity.set(transactionIdentity, occurrence);
+                const compositeExternalId = transactionService.buildCompositeExternalId(
+                    transactionIdentity,
+                    occurrence
                 );
                 const existingOperation = await transactionService.findByCompositeExternalId(compositeExternalId);
                 if (!existingOperation) {
@@ -58,7 +69,13 @@ export default class BanquePostaleService {
                         }
                     });
                 } else {
-                    otherImportedOperations.push(toBanquePostaleOperationDto(existingOperation));
+                    const existingOperationDto = toBanquePostaleOperationDto(existingOperation);
+                    otherImportedOperations.push(existingOperationDto);
+                    // Une ligne déjà rapprochée compte comme réimportée, mais elle ne doit
+                    // jamais être reproposée comme candidate à une autre opération.
+                    if (existingOperation.accountLineId == null) {
+                        availableExistingOperations.push(existingOperationDto);
+                    }
                 }
             }
 
@@ -68,7 +85,7 @@ export default class BanquePostaleService {
 
             const mergedOperations: BanquePostaleOperationImportDto[] = [
                 ...newlyCreatedOperationsDto,
-                ...otherImportedOperations
+                ...availableExistingOperations
             ];
 
             const { matchedCandidates, ambiguousCandidates } = await transactionService.matchCandidates(
@@ -86,6 +103,14 @@ export default class BanquePostaleService {
         });
     }
 
+    /**
+     * Affecte les lignes d'import aux opérations de compte avec une cardinalité 1-1.
+     *
+     * Une affectation certaine consomme son candidat. Les ensembles restants sont
+     * recalculés jusqu'à stabilisation: retirer un candidat peut ainsi transformer
+     * une ambiguïté en correspondance certaine. Seuls les ensembles encore multiples
+     * sont ensuite renvoyés au formulaire pour un choix manuel.
+     */
     private async matchCandidates(accountId: number, mergedOperations: BanquePostaleOperationImportDto[]): Promise<{
         matchedCandidates: BanquePostaleMatchedResultPayload[];
         ambiguousCandidates: BanquePostaleAmbiguousResultPayload[];
@@ -93,15 +118,15 @@ export default class BanquePostaleService {
         const uncheckedLines = await this.accountLineService.getAllUncheckedLines(accountId);
         const ambiguousCandidates: BanquePostaleAmbiguousResultPayload[] = [];
         const matchedCandidates: BanquePostaleMatchedResultPayload[] = [];
-
-        for (const line of uncheckedLines) {
+        const availableCandidateIds = new Set(mergedOperations.map((candidate) => candidate.id));
+        const candidatesByLine = uncheckedLines.map((line) => {
             const checkMinDate = new Date(line.dateOperation);
             checkMinDate.setDate(checkMinDate.getDate() - 2);
 
             const checkMaxDate = new Date(line.dateOperation);
             checkMaxDate.setDate(checkMaxDate.getDate() + 2);
 
-            const matchingCandidates = mergedOperations.filter((candidate) => {
+            const candidates = mergedOperations.filter((candidate) => {
                 const parsedCandidateDate = new Date(candidate.dateOperation);
 
                 return candidate.accountId === accountId
@@ -110,17 +135,45 @@ export default class BanquePostaleService {
                     && candidate.amount === line.credit - line.debit;
             });
 
-            if (matchingCandidates.length === 1) {
-                matchedCandidates.push({
-                    type: "matched",
-                    accountLineId: line.id,
-                    candidate: matchingCandidates[0]
-                });
-            } else if (matchingCandidates.length > 1) {
+            return { line, candidates };
+        });
+        const unresolvedLineIds = new Set(uncheckedLines.map((line) => line.id));
+
+        // Propage les affectations certaines jusqu'à ce qu'aucune nouvelle ligne
+        // ne puisse réserver à elle seule un candidat encore disponible.
+        let assignmentCreated: boolean;
+        do {
+            assignmentCreated = false;
+            for (const { line, candidates } of candidatesByLine) {
+                if (!unresolvedLineIds.has(line.id)) {
+                    continue;
+                }
+
+                const availableCandidates = candidates.filter((candidate) => availableCandidateIds.has(candidate.id));
+                if (availableCandidates.length === 1) {
+                    availableCandidateIds.delete(availableCandidates[0].id);
+                    unresolvedLineIds.delete(line.id);
+                    matchedCandidates.push({
+                        type: "matched",
+                        accountLineId: line.id,
+                        candidate: availableCandidates[0]
+                    });
+                    assignmentCreated = true;
+                }
+            }
+        } while (assignmentCreated);
+
+        for (const { line, candidates } of candidatesByLine) {
+            if (!unresolvedLineIds.has(line.id)) {
+                continue;
+            }
+
+            const availableCandidates = candidates.filter((candidate) => availableCandidateIds.has(candidate.id));
+            if (availableCandidates.length > 0) {
                 ambiguousCandidates.push({
                     type: "ambiguous",
                     accountLineId: line.id,
-                    candidates: matchingCandidates
+                    candidates: availableCandidates
                 });
             }
         }
@@ -185,13 +238,17 @@ export default class BanquePostaleService {
     }
 
     /**
-     * Quand on a l'info, lie les lignes d'import aux opérations sures.
-     * @param lines 
-     * @returns 
+        * Persiste les choix explicites effectués dans le formulaire de rapprochement.
+        * Chaque identifiant doit appartenir au compte, être encore disponible et ne
+        * peut apparaître qu'une fois dans le lot.
      */
     async linkAccountLines(lines: OperationBatchCheckOutput, accountId: number): Promise<BanquePostaleOperationImport[]> {
+        const externalIds = lines.map((line) => line.banquePostaleExternalId);
+        if (new Set(externalIds).size !== externalIds.length) {
+            throw badRequest("BANQUE_POSTALE_OPERATION_ALREADY_SELECTED", "A Banque Postale operation cannot be linked to multiple account lines.");
+        }
 
-        const toSave = []
+        const toSave: BanquePostaleOperationImport[] = [];
         for (const line of lines) {
 
             if (!line.banquePostaleExternalId)
@@ -220,11 +277,17 @@ export default class BanquePostaleService {
         });
     }
 
-    private buildCompositeExternalId(accountId: number, dateOperation: string, label: string, montant: number): string {
+    /** Construit l'identité métier commune aux occurrences d'une même transaction. */
+    private buildTransactionIdentity(accountId: number, dateOperation: string, label: string, montant: number): string {
         const normalizedLabel = label
             .trim()
             .replace(/\s+/g, "_");
 
         return `${accountId}|${dateOperation}|${normalizedLabel}|${montant}`.toLocaleUpperCase("fr-FR");
+    }
+
+    /** Ajoute le rang stable dans le CSV pour distinguer les transactions identiques. */
+    private buildCompositeExternalId(transactionIdentity: string, occurrence: number): string {
+        return `${transactionIdentity}|${occurrence}`;
     }
 }

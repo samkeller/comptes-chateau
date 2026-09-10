@@ -473,6 +473,12 @@ export default class AccountLineService {
             if (existingLines.length !== ids.length)
                 throw notFound("OPERATION_NOT_FOUND", "One or more operations were not found.");
 
+            const explicitlyMatched = normalized.filter((check) => check.banquePostaleExternalId);
+            const toTryAndMatch = normalized.filter((check) => !check.banquePostaleExternalId);
+
+            // Valide les choix issus du formulaire avant de modifier les lignes de compte.
+            await bpService.linkAccountLines(explicitlyMatched, accountId);
+
             const savedLines = await transactionService.saveAll(normalized);
 
             // Propage le statut de verification aux lignes miroir des virements.
@@ -506,18 +512,12 @@ export default class AccountLineService {
                 }
             }
 
-            // Gère les matchs avec la Banque Postale
-            const alreadyLinked: OperationBatchCheckOutput = normalized.filter((check) => check.banquePostaleExternalId);
-            const toTryAndMatch: OperationBatchCheckOutput = normalized.filter((check) => !check.banquePostaleExternalId);
-
             const checkedLineIdsToLink = toTryAndMatch.map((check) => check.id);
             const checkedLinesToLink = checkedLineIdsToLink.length > 0
                 ? await transactionService.accountLineRepo.findBy({ id: In(checkedLineIdsToLink) })
                 : [];
 
-            // Lignes déjà matchées par l'utilisateur
-            await bpService.linkAccountLines(alreadyLinked, accountId);
-            // Lignes à matcher.
+            // Lignes sans choix explicite à matcher strictement.
             await bpService.tryAndValidateAccountLines(creatorId, checkedLinesToLink);
 
             // Ajout xp utilisateur.

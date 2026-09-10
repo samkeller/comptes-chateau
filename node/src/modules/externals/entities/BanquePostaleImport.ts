@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDa
 import { Account } from "../../accounts/entities/Account";
 import { AccountLine } from "../../accounts/entities/AccountLine";
 import { BanquePostaleCsvDataMetadata } from "@chocosous/shared";
+import { decimalNumberTransformer } from "../../../utils/DecimalNumberTransformer";
 
 @Entity("banque_postale_operation_import")
 export class BanquePostaleOperationImport {
@@ -28,7 +29,7 @@ export class BanquePostaleOperationImport {
     @Column({ type: "varchar", length: 255 })
     label: string;
 
-    @Column({ type: "decimal", precision: 10, scale: 2 })
+    @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalNumberTransformer })
     amount: number;
 
     @Column({ type: "int" })

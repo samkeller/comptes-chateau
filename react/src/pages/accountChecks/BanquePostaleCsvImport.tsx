@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { parseBanquePostaleCsv } from "../../utils/banquePostaleCsvParser";
 import BanquePostaleService from "@/services/BanquePostaleService";
 import BanquePostaleImportResult from "@/interfaces/Externals/BanquePostaleImportResult";
+import { useGlobalToast } from "@/context/GlobalToastContext";
 
 interface BanquePostaleCsvImportProps {
     accountId: number;
@@ -16,18 +17,28 @@ const banquePostaleService = new BanquePostaleService();
 export default function BanquePostaleCsvImport({ accountId, afterImportResults, disabled }: BanquePostaleCsvImportProps) {
     const [loading, setLoading] = useState(false);
     const fileUploadRef = useRef<FileUpload>(null);
+    const showGlobalToast = useGlobalToast();
 
     const customUploader = async (event: FileUploadHandlerEvent) => {
         try {
             setLoading(true);
-            const fileCandidate = event.files?.[0];
-            if (!fileCandidate) {
-                fileUploadRef.current?.clear();
-                throw new Error("Aucun fichier CSV selectionne.");
+            let parsedCsv;
+            try {
+                const fileCandidate = event.files?.[0];
+                if (!fileCandidate) {
+                    throw new Error("Aucun fichier CSV selectionne.");
+                }
+                const csvBuffer = await fileCandidate.arrayBuffer();
+                parsedCsv = parseBanquePostaleCsv(csvBuffer);
+            } catch (error) {
+                console.error("Erreur pendant l'import CSV Banque Postale", error);
+                showGlobalToast({
+                    severity: "error",
+                    summary: "Import impossible",
+                    detail: "Le fichier CSV est invalide ou non conforme au format Banque Postale."
+                });
+                return;
             }
-            const csvBuffer = await fileCandidate.arrayBuffer();
-
-            const parsedCsv = parseBanquePostaleCsv(csvBuffer);
             const results = await banquePostaleService.import(accountId, parsedCsv);
 
             afterImportResults?.(results);

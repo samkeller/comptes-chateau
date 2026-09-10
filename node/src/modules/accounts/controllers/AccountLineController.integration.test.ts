@@ -649,6 +649,62 @@ describe("AccountLineController /lazy integration", () => {
         expect(unlinkedImport.accountLineId).toBeNull();
     });
 
+    it("rejects one explicitly selected import for multiple account lines and rolls back the batch", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
+        const firstLine = await lineRepo.findOneByOrFail({ label: "L1" });
+        const secondLine = await lineRepo.findOneByOrFail({ label: "L3" });
+        const imported = await importRepo.save({
+            accountId,
+            compositeExternalId: "1|2026-03-21|SHARED|-100|1",
+            dateOperation: "2026-03-21",
+            label: "Import sélectionné deux fois",
+            amount: -100,
+            rowNumber: 1,
+            metadata: {
+                accountNumber: "2245945T038",
+                type: "CCP",
+                exportDate: "2026-03-21",
+                balance: 1000
+            }
+        });
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send([firstLine, secondLine].map((line) => ({
+                id: line.id,
+                isChecked: true,
+                dateValeur: "2026-03-21",
+                banquePostaleExternalId: imported.compositeExternalId
+            })));
+
+        expect(response.status).toBe(400);
+        expect(response.body.code).toBe("BANQUE_POSTALE_OPERATION_ALREADY_SELECTED");
+        expect((await importRepo.findOneByOrFail({ id: imported.id })).accountLineId).toBeNull();
+        expect((await lineRepo.findOneByOrFail({ id: firstLine.id })).isChecked).toBe(false);
+        expect((await lineRepo.findOneByOrFail({ id: secondLine.id })).isChecked).toBe(false);
+    });
+
+    it("rejects an unknown explicitly selected import and rolls back the account line", async () => {
+        const lineRepo = testDataSource.getRepository(AccountLine);
+        const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
+
+        const response = await request(app)
+            .post(`/accounts/${accountId}/operations/check-batch`)
+            .send([{
+                id: lineToCheck.id,
+                isChecked: true,
+                dateValeur: "2026-03-21",
+                banquePostaleExternalId: "unknown-import-id"
+            }]);
+
+        expect(response.status).toBe(404);
+        expect(response.body.code).toBe("BANQUE_POSTALE_OPERATION_NOT_FOUND");
+        const unchangedLine = await lineRepo.findOneByOrFail({ id: lineToCheck.id });
+        expect(unchangedLine.isChecked).toBe(false);
+        expect(unchangedLine.dateValeur).toBeNull();
+    });
+
     it("POST creates a transfer: source gets debit line, target gets mirror credit line, visible via /lazy on both accounts", async () => {
         const targetAccountId = 2;
         const lineRepo = testDataSource.getRepository(AccountLine);

@@ -11,6 +11,7 @@ import {
 import { AccountLineNature } from "./AccountLineNature";
 import { AccountLinePoste } from "./AccountLinePoste";
 import { Account } from "./Account";
+import { decimalNumberTransformer } from "../../../utils/DecimalNumberTransformer";
 
 export enum AccountLineSource {
     SYSTEM = "system",
@@ -82,10 +83,10 @@ export class AccountLine {
        MONTANTS (mouvement)
     ======================== */
 
-    @Column({ type: "decimal", precision: 15, scale: 2, default: 0 })
+    @Column({ type: "decimal", precision: 15, scale: 2, default: 0, transformer: decimalNumberTransformer })
     debit: number;
 
-    @Column({ type: "decimal", precision: 15, scale: 2, default: 0 })
+    @Column({ type: "decimal", precision: 15, scale: 2, default: 0, transformer: decimalNumberTransformer })
     credit: number;
 
     /* ========================
