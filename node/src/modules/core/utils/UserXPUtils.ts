@@ -9,7 +9,9 @@ type UserXpActionsPointsKeys =
     "KANBAN_TASK_CREATED" |
     "STOCK_ITEM_CREATED" |
     "STOCK_UNIT_CREATED" |
-    "STOCK_UNIT_TAKE";
+    "STOCK_UNIT_TAKE" |
+    "BANQUE_POSTALE_OPERATION_IMPORTED" |
+    "BANQUE_POSTALE_OPERATION_LINKED";
 
 const UserXpActionsPoints: { [key in UserXpActionsPointsKeys]: number } = {
     ACCOUNT_LINE_RULE_CREATED: 10,
@@ -21,6 +23,8 @@ const UserXpActionsPoints: { [key in UserXpActionsPointsKeys]: number } = {
     STOCK_ITEM_CREATED: 40,
     STOCK_UNIT_CREATED: 20,
     STOCK_UNIT_TAKE: 10,
+    BANQUE_POSTALE_OPERATION_IMPORTED: 10,
+    BANQUE_POSTALE_OPERATION_LINKED: 10,
 };
 
 export { UserXpActionsPoints, UserXpActionsPointsKeys };
