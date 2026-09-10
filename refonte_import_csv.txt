@@ -1,0 +1,61 @@
+
+
+Comportement actuel :
+    - L'import actuel fait tout en front, affiche les lignes d'import dans des tableaux séparés du tableau principal /accountCheck
+    - Les types représentant le format d'import à l'instant T ne sont disponible qu'en front (`BanquePostaleCsvOperation`, `BanquePostaleCsvData`)
+    - 
+
+Comportement attendu :
+- A l'import d'un CSV -> Ajoute toutes les *nouvelles* lignes en DB
+- On applique que les lignes nouvellement appliquée comme "import", on ne veut pas importer des lignes plusieurs fois
+- Une combinaison ligne csv <-> Opération validée par l'utilisateur (manuellement ou après matching) devient un lien incécable.
+    - Plus aucune opération ne peut être reliée à cette ligne de CSV.
+        -> Quid suppression de l'opération dans l'appli ? On supprime la ligne ?
+    - Plus aucune ligne de CSV ne peut être reliée à une operation
+
+-> Pour ne pas casser la rétro-compatibilité, il faudra bien que des account_line puisse exister sans être liées à une ligne de
+
+Le nouveau parcours devient
+1. On envoie les informations au back - lui seul est garant des données à vérifier
+2. On ouvre une transaction
+    2.1. Le back enregistre les nouvelles lignes en les comparant aux données déjà existantes
+    2.2. Pour chacun de ces lignes
+
+    2.x. Le contrat du back devient donc un tableau de données comme ceci :
+        a. Données présentes sur le CSV / importées non présentes dans les opérations en base
+        b. Données présentes en base (non cochées) mais toujours introuvées dans le csv ou en base (erreurs ?) ??
+        c. Données ne pouvant pas être déterminée finement automatiquement à une opération et nécessitant un matching "humain"
+        d. Count: Nouvelles données importées, données qui existaient déjà, données totales (potentiellement calculable par le front ?)
+3. Le front ajoute donc au tableau "à checker" les lignes -> Tableau déjà présent dans /accountChecks qui peut également être rempli à la main
+    a. présentes dans le CSV mais pas encore checked dans l'application -> La date du CSV fait office de dateValeur, on peut pré-remplir les champs et les cocher dans la tableau pour l'utilisateur
+    b. ???
+    c. Ajouter naturellement un Autocomplete/select dans les opérations pour les opérations à matcher. La datatable affiche déjà les opérations "à checker" donc non matcher, à nous de trouver une manière facile
+        de les relier à des lignes d'imports nécessitant attention utilisateur
+        - L'affichage actuel dans des sous-tableaux "accordion" sont donc obsolètes, on va essayer de tout mettre dans le même tableau histoire qu'après l'import CSV
+        - Il conviendra donc de mettre en place dans ce tableau une iconographie unique & lisible par l'utlisateur (comme ont a fait dans /accountBook avec les lignes générés automatiquement par le système)
+            Cela afin de pouvoir facilement identifier :
+                - Nouvelle lignes ajoutées par l'import
+                - Lignes validées (dateValeur) par l'import
+                - Lignes pré-existantes mais rattachées à une ligne d'import CSV nouvellement importée (matching "humain")
+
+Autres évolutions front :
+    - Le bouton "valider (0)" devrait être toujours affiché même si on scroll la page -> le scroll devrait être dans la datatable plutôt
+    - Le bouton d'import CSV devrait être plus joli & harmonieux avec le reste de l'application
+    - atomic Design comme autres pages/modules
+    - BanquePostaleImportReportPanel disparait, affichage minimmal voir inexistant si possible en dehors de la datatable /accountCheck
+
+Autres évolutions :
+    - Contrats communs dans /shared
+    - Erreurs typés en back (AppError) pour être affichées telles qu'elles dans le front, jamais de .catch() non nécessaire dans l'appli
+    - ajouter tu & tests intégrations back quand possible
+
+Points notables :
+- le comportement actuel doit rester comme il est. La page peut être utilisée en remplissage manuel pur ou bien avec l'aide de l'import.
+- L'import est source de vérité (relevé de comptes)
+- Il ne faut pas perdre les tests de parsing du CSV. Seul le CSV attendu dans le format exact est bon, tout le reste est KO.
+
+Questions ouvertes :
+- que faire des lignes dédiées à l'import  (accountNumber, type, exportDate, balance) ? Je ne vois pas tellement d'utilisation métier pour elles ni d'intérêt de les stocker. Je ne sais pas
+- Comment gérer les opérations récurrentes ? Par exemple, une operation "loyer" arrive tous les mois au même montant, si on ne match que avec label-montant du csv on va vite
+    être bloqués sur des choses relativement triviales.
+ 

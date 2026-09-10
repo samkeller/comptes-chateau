@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBanquePostaleCsv } from "./banquePostaleCsv";
+import { parseBanquePostaleCsv } from "./banquePostaleCsvParser";
 
 const validCsv = [
     "Numero Compte   ;2245945T038",

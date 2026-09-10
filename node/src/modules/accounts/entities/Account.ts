@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
+import { decimalNumberTransformer } from "../../../utils/DecimalNumberTransformer";
 
 @Entity("account")
 export class Account {
@@ -12,7 +13,7 @@ export class Account {
     /* ========================
        BASELINE
     ======================== */
-    @Column({ type: "decimal", precision: 15, scale: 2, default: 0 })
+    @Column({ type: "decimal", precision: 15, scale: 2, default: 0, transformer: decimalNumberTransformer })
     baseLineAmount: number;
 
     @Column({ type: "date" })

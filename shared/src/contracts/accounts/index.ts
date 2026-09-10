@@ -9,8 +9,16 @@ export type { SavePostePayload, AccountLinePosteDto } from "./AccountLinePosteDt
 export { SaveBudgetItemSchema } from "./BudgetDtos";
 export type { SaveBudgetItemPayload, BudgetPosteDto, BudgetItemDto, UnifiedBudgetLine } from "./BudgetDtos";
 
-export { SaveOperationSchema, OperationBatchCheckSchema } from "./OperationDtos";
-export type { SaveOperationPayload, OperationBatchCheckPayload, OperationBatchCheckInput } from "./OperationDtos";
+export {
+    SaveOperationSchema,
+    OperationBatchCheckSchema
+} from "./OperationDtos";
+
+export type {
+    SaveOperationPayload,
+    OperationBatchCheckInput,
+    OperationBatchCheckOutput
+} from "./OperationDtos";
 
 export { RECURRING_EXPENSE_FREQUENCIES, SaveRecurringExpenseSchema, RecurringExpenseDtoSchema } from "./RecurringExpenseDtos";
 export type { RecurringExpenseFrequency, SaveRecurringExpensePayload, RecurringExpenseDto } from "./RecurringExpenseDtos";

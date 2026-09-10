@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Account } from "./Account";
 import { AccountLinePoste } from "./AccountLinePoste";
+import { decimalNumberTransformer } from "../../../utils/DecimalNumberTransformer";
 
 @Entity("budget_item")
 export class BudgetItem {
@@ -10,7 +11,7 @@ export class BudgetItem {
     @Column({ type: "varchar", length: 255 })
     label: string;
 
-    @Column({ type: "decimal", precision: 10, scale: 2 })
+    @Column({ type: "decimal", precision: 10, scale: 2, transformer: decimalNumberTransformer })
     amount: number;
 
     @Column({ type: "boolean", default: true })

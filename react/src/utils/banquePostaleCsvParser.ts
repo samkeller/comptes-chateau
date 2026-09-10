@@ -1,20 +1,6 @@
 import { parseDDMMYYYYToDate } from "./DatesUtils";
 import { decodeTextWithFallback, splitCsvLine } from "./CsvUtils";
-
-export interface BanquePostaleCsvOperation {
-    dateOperation: Date;
-    label: string;
-    amount: number;
-    rowNumber: number;
-}
-
-export interface BanquePostaleCsvData {
-    accountNumber: string;
-    type: string;
-    exportDate: Date;
-    balance: number;
-    operations: BanquePostaleCsvOperation[];
-}
+import { BanquePostaleCsvData, BanquePostaleCsvOperation } from "@chocosous/shared";
 
 function parseFrenchAmountToNumber(rawAmount: string): number {
     const normalized = rawAmount
@@ -74,9 +60,9 @@ export function parseBanquePostaleCsv(csvBuffer: ArrayBuffer): BanquePostaleCsvD
 
     for (let index = headerIndex + 1; index < parsedRows.length; index += 1) {
         const row = parsedRows[index];
-        const rawDate = row[0] ?? "";
-        const rawLabel = row[1] ?? "";
-        const rawAmount = row[2] ?? "";
+        const rawDate = row[0] ?? ""; // DATE
+        const rawLabel = row[1] ?? ""; // Libellé
+        const rawAmount = row[2] ?? ""; // Montant(EUROS)
 
         if (!rawDate || !rawAmount) {
             continue;

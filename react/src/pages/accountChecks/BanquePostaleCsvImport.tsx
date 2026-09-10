@@ -1,53 +1,70 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { FileUpload, FileUploadHandlerEvent } from "primereact/fileupload";
-import { parseBanquePostaleCsv, BanquePostaleCsvData } from "../../utils/banquePostaleCsv";
+import { Button } from "primereact/button";
+import { parseBanquePostaleCsv } from "../../utils/banquePostaleCsvParser";
+import BanquePostaleService from "@/services/BanquePostaleService";
+import BanquePostaleImportResult from "@/interfaces/Externals/BanquePostaleImportResult";
+import { useGlobalToast } from "@/context/GlobalToastContext";
 
 interface BanquePostaleCsvImportProps {
+    accountId: number;
     disabled?: boolean;
-    onImport: (csvData: BanquePostaleCsvData) => void;
-    onError: (message: string) => void;
-    onImportStart?: () => void;
+    afterImportResults?: (results: BanquePostaleImportResult) => void;
 }
 
-export default function BanquePostaleCsvImport({ disabled = false, onImport, onError, onImportStart }: BanquePostaleCsvImportProps) {
+const banquePostaleService = new BanquePostaleService();
+
+export default function BanquePostaleCsvImport({ accountId, afterImportResults, disabled }: BanquePostaleCsvImportProps) {
+    const [loading, setLoading] = useState(false);
     const fileUploadRef = useRef<FileUpload>(null);
+    const showGlobalToast = useGlobalToast();
 
     const customUploader = async (event: FileUploadHandlerEvent) => {
-        onImportStart?.();
-
         try {
-            const fileCandidate = event.files?.[0];
-            if (!fileCandidate) {
-                onError("Aucun fichier CSV selectionne.");
-                fileUploadRef.current?.clear();
+            setLoading(true);
+            let parsedCsv;
+            try {
+                const fileCandidate = event.files?.[0];
+                if (!fileCandidate) {
+                    throw new Error("Aucun fichier CSV selectionne.");
+                }
+                const csvBuffer = await fileCandidate.arrayBuffer();
+                parsedCsv = parseBanquePostaleCsv(csvBuffer);
+            } catch (error) {
+                console.error("Erreur pendant l'import CSV Banque Postale", error);
+                showGlobalToast({
+                    severity: "error",
+                    summary: "Import impossible",
+                    detail: "Le fichier CSV est invalide ou non conforme au format Banque Postale."
+                });
                 return;
             }
+            const results = await banquePostaleService.import(accountId, parsedCsv);
 
-            const csvBuffer = await fileCandidate.arrayBuffer();
-            const parsedCsv = parseBanquePostaleCsv(csvBuffer);
-            onImport(parsedCsv);
-        } catch (error) {
-            console.error("Erreur pendant l'import CSV Banque Postale", error);
-            onError("Le fichier CSV est invalide ou non conforme au format Banque Postale.");
+            afterImportResults?.(results);
         } finally {
-            // Reset selection so re-importing the same file triggers the upload flow again.
             fileUploadRef.current?.clear();
+            setLoading(false);
         }
     };
 
-    return (
-        <div className="flex flex-col gap-2">
-            <FileUpload
-                ref={fileUploadRef}
-                mode="basic"
-                accept=".csv,text/csv"
-                maxFileSize={2_000_000}
-                customUpload
-                auto
-                uploadHandler={customUploader}
-                disabled={disabled}
-                chooseLabel="Importer un releve Banque Postale (CSV)"
-            />
-        </div>
-    );
+    if (loading) {
+        return <Button label="Import en cours" icon="pi pi-spin pi-spinner" disabled outlined />;
+    }
+
+    return <FileUpload
+        ref={fileUploadRef}
+        mode="basic"
+        accept=".csv,text/csv"
+        maxFileSize={2_000_000}
+        customUpload
+        auto
+        disabled={disabled}
+        uploadHandler={customUploader}
+        chooseOptions={{
+            label: "Importer un relevé",
+            icon: "pi pi-file-import",
+            className: "p-button-outlined p-button-secondary"
+        }}
+    />;
 }

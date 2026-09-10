@@ -45,8 +45,8 @@ export type {
     BudgetItemDto,
     UnifiedBudgetLine,
     SaveOperationPayload,
-    OperationBatchCheckPayload,
     OperationBatchCheckInput,
+    OperationBatchCheckOutput,
     RecurringExpenseFrequency,
     SaveRecurringExpensePayload,
     DashboardOverview,
@@ -89,6 +89,7 @@ export {
     CreateKanbanTaskSchema,
     CreateKanbanCommentSchema,
 } from "./kanban";
+
 export type {
     KanbanTaskPriority,
     CreateKanbanTaskRequest,
@@ -98,3 +99,25 @@ export type {
     KanbanTaskResponse,
     KanbanBoardResponse,
 } from "./kanban";
+
+export type {
+    BanquePostaleCsvData,
+    BanquePostaleCsvOperation,
+    BanquePostaleCsvDataMetadata,
+    BanquePostaleImportPayload,
+    BanquePostaleImportResultPayload,
+    BanquePostaleOperationImportDto,
+    BanquePostaleMatchedResultPayload,
+    BanquePostaleAmbiguousResultPayload,
+} from "./externals";
+
+export {
+    BanquePostaleCsvDataSchema,
+    BanquePostaleCsvOperationSchema,
+    BanquePostaleCsvDataMetadataSchema,
+    BanquePostaleImportSchema,
+    BanquePostaleImportResultSchema,
+    BanquePostaleAmbiguousResultSchema,
+    BanquePostaleMatchedResultSchema,
+    BanquePostaleOperationImportDtoSchema,
+} from "./externals";
