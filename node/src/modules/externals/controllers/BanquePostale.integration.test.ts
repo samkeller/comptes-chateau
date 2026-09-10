@@ -129,9 +129,17 @@ describe("BanquePostale Integration Tests", () => {
             linesProcessed: 9,
             linesCreated: 0,
             linesSkipped: 9,
-            matched: [],
-            ambiguous: [],
         });
+        expect(repeatedResponse.body.matched).toHaveLength(4);
+        expect(repeatedResponse.body.ambiguous).toEqual([
+            expect.objectContaining({
+                accountLineId: ambiguousLine.id,
+                candidates: expect.arrayContaining([
+                    expect.objectContaining({ label: "Candidat ambigu 1", amount: -40 }),
+                    expect.objectContaining({ label: "Candidat ambigu 2", amount: -40 }),
+                ]),
+            }),
+        ]);
         expect(await importedOperationRepository.count()).toBe(9);
     });
 

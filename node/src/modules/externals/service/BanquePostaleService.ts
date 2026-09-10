@@ -30,6 +30,7 @@ export default class BanquePostaleService {
             const transactionService = new BanquePostaleService(entityManager);
             const { accountId, accountNumber, type, balance, exportDate } = data;
             const newBanquePostaleOperations: Omit<BanquePostaleOperationImport, "id" | "createdAt" | "account">[] = [];
+            const otherImportedOperations: BanquePostaleOperationImportDto[] = [];
 
             for (const operation of data.operations) {
                 const compositeExternalId = transactionService.buildCompositeExternalId(
@@ -54,62 +55,78 @@ export default class BanquePostaleService {
                             exportDate,
                         }
                     });
+                } else {
+                    otherImportedOperations.push(toBanquePostaleOperationDto(existingOperation));
                 }
             }
 
-            const newlyCreatedOperationsRaw = await transactionService.banquePostaleImportRepository.save(newBanquePostaleOperations);
-            const newlyCreatedOperations: BanquePostaleOperationImportDto[] = newlyCreatedOperationsRaw.map((op) => toBanquePostaleOperationDto(op));
+            const newlyCreatedOperationsDto: BanquePostaleOperationImportDto[] = await transactionService.banquePostaleImportRepository
+                .save(newBanquePostaleOperations)
+                .then((values) => values.map((op) => toBanquePostaleOperationDto(op)));
 
-            const uncheckedLines = await transactionService.accountLineService.getAllUncheckedLines(accountId);
-            const ambiguousCandidates: BanquePostaleAmbiguousResultPayload[] = [];
-            const matchedCandidates: BanquePostaleMatchedResultPayload[] = [];
+            const mergedOperations: BanquePostaleOperationImportDto[] = [
+                ...newlyCreatedOperationsDto,
+                ...otherImportedOperations
+            ];
 
-            for (const line of uncheckedLines) {
-                const checkMinDate = new Date(line.dateOperation);
-                checkMinDate.setDate(checkMinDate.getDate() - 2);
-
-                const checkMaxDate = new Date(line.dateOperation);
-                checkMaxDate.setDate(checkMaxDate.getDate() + 2);
-
-                const matchingCandidates = newlyCreatedOperations.filter((candidate) => {
-                    const parsedCandidateDate = new Date(candidate.dateOperation);
-                    return candidate.accountId === accountId &&
-                        parsedCandidateDate >= checkMinDate &&
-                        parsedCandidateDate <= checkMaxDate &&
-                        candidate.amount === line.credit - line.debit;
-                });
-
-                if (matchingCandidates.length === 1) {
-                    matchedCandidates.push({
-                        type: "matched",
-                        accountLineId: line.id,
-                        candidate: matchingCandidates[0]
-                    });
-                } else if (matchingCandidates.length > 1) {
-                    ambiguousCandidates.push({
-                        type: "ambiguous",
-                        accountLineId: line.id,
-                        candidates: matchingCandidates
-                    });
-                }
-            }
+            const { matchedCandidates, ambiguousCandidates } = await transactionService.matchCandidates(
+                accountId,
+                mergedOperations
+            );
 
             return {
                 linesProcessed: data.operations.length,
-                linesCreated: newlyCreatedOperations.length,
-                linesSkipped: data.operations.length - newlyCreatedOperations.length,
+                linesCreated: newlyCreatedOperationsDto.length,
+                linesSkipped: otherImportedOperations.length,
                 matched: matchedCandidates,
                 ambiguous: ambiguousCandidates,
             };
         });
     }
 
-    /**
-     * Essaie de lier une ligne de compte validée avec une opération Banque Postale correspondante.
-     * @param line 
-     * @returns 
-     */
-    private async tryLinkValidatedAccountLine(userId: number, line: AccountLine): Promise<BanquePostaleOperationImport | undefined> {
+    private async matchCandidates(accountId: number, mergedOperations: BanquePostaleOperationImportDto[]): Promise<{
+        matchedCandidates: BanquePostaleMatchedResultPayload[];
+        ambiguousCandidates: BanquePostaleAmbiguousResultPayload[];
+    }> {
+        const uncheckedLines = await this.accountLineService.getAllUncheckedLines(accountId);
+        const ambiguousCandidates: BanquePostaleAmbiguousResultPayload[] = [];
+        const matchedCandidates: BanquePostaleMatchedResultPayload[] = [];
+
+        for (const line of uncheckedLines) {
+            const checkMinDate = new Date(line.dateOperation);
+            checkMinDate.setDate(checkMinDate.getDate() - 2);
+
+            const checkMaxDate = new Date(line.dateOperation);
+            checkMaxDate.setDate(checkMaxDate.getDate() + 2);
+
+            const matchingCandidates = mergedOperations.filter((candidate) => {
+                const parsedCandidateDate = new Date(candidate.dateOperation);
+
+                return candidate.accountId === accountId
+                    && parsedCandidateDate >= checkMinDate
+                    && parsedCandidateDate <= checkMaxDate
+                    && candidate.amount === line.credit - line.debit;
+            });
+
+            if (matchingCandidates.length === 1) {
+                matchedCandidates.push({
+                    type: "matched",
+                    accountLineId: line.id,
+                    candidate: matchingCandidates[0]
+                });
+            } else if (matchingCandidates.length > 1) {
+                ambiguousCandidates.push({
+                    type: "ambiguous",
+                    accountLineId: line.id,
+                    candidates: matchingCandidates
+                });
+            }
+        }
+
+        return { matchedCandidates, ambiguousCandidates };
+    }
+
+    private async tryLinkValidatedAccountLine(line: AccountLine): Promise<BanquePostaleOperationImport | undefined> {
         if (!line.isChecked || !line.dateValeur) {
             return;
         }
@@ -145,30 +162,16 @@ export default class BanquePostaleService {
             return;
         }
 
-
         return await this.banquePostaleImportRepository.save({
             ...candidates[0],
             accountLineId: line.id
         });
     }
 
-    private findByCompositeExternalId(extId: string): Promise<BanquePostaleOperationImport | null> {
-        return this.banquePostaleImportRepository.findOne({
-            where: {
-                compositeExternalId: extId
-            }
-        });
-    }
-
-    /**
-     * Loop through the account lines and attempt to link and validate each one.
-     * @param accountId The ID of the account to which the lines belong.
-     * @param line An array of account lines to be linked and validated.
-     */
     async tryAndValidateAccountLines(userId: number, line: AccountLine[]): Promise<void> {
-        const created: BanquePostaleOperationImport[] = []
+        const created: BanquePostaleOperationImport[] = [];
         for (const singleLine of line) {
-            const createdLine = await this.tryLinkValidatedAccountLine(userId, singleLine);
+            const createdLine = await this.tryLinkValidatedAccountLine(singleLine);
             if (createdLine) {
                 created.push(createdLine);
             }
@@ -177,6 +180,14 @@ export default class BanquePostaleService {
             await this.userXpService.addXPForUser(userId, "BANQUE_POSTALE_OPERATION_LINKED", created.length);
             await this.banquePostaleImportRepository.save(created);
         }
+    }
+
+    private findByCompositeExternalId(extId: string): Promise<BanquePostaleOperationImport | null> {
+        return this.banquePostaleImportRepository.findOne({
+            where: {
+                compositeExternalId: extId
+            }
+        });
     }
 
     private buildCompositeExternalId(accountId: number, dateOperation: string, label: string, montant: number): string {

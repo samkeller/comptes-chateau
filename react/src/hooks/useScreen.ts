@@ -24,6 +24,11 @@ export interface UseScreenResult {
   width: number;
 
   /**
+   * Hauteur actuelle de la fenêtre en pixels.
+   */
+  height: number;
+
+  /**
    * `true` si l'écran est considéré comme un mobile.
    */
   isMobile: boolean;
@@ -75,14 +80,16 @@ export function useScreen(): UseScreenResult {
    * Une valeur de `0` est renvoyée lors du rendu côté serveur (SSR),
    * car l'objet `window` n'est pas disponible.
    */
-  const getWidth = () =>
-    typeof window !== "undefined" ? window.innerWidth : 0;
+  const getWidth = () => typeof window !== "undefined" ? window.innerWidth : 0;
+  const getHeight = () => typeof window !== "undefined" ? window.innerHeight : 0;
 
   const [width, setWidth] = useState<number>(getWidth);
+  const [height, setHeight] = useState<number>(getHeight);
 
   useEffect(() => {
     const onResize = () => {
       setWidth(getWidth());
+      setHeight(getHeight());
     };
 
     window.addEventListener("resize", onResize);
@@ -109,6 +116,7 @@ export function useScreen(): UseScreenResult {
   const isDesktop = width >= BREAKPOINTS.tablet;
 
   return {
+    height,
     width,
     isMobile,
     isTablet,

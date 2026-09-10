@@ -7,7 +7,7 @@ class BanquePostaleImportMatchingCandidate {
     id: number = 0
     accountId: number = 0
     compositeExternalId: string = ""
-    dateOperation: Date | null = null
+    dateOperation: Date = new Date()
     label: string = ""
     amount: number = 0
     rowNumber: number = 0
@@ -16,28 +16,37 @@ class BanquePostaleImportMatchingCandidate {
     constructor(matchingCandidate: Partial<BanquePostaleOperationImportDto>) {
         Object.assign(this, matchingCandidate);
         if (matchingCandidate.dateOperation) {
-            this.dateOperation = parseApiDate(matchingCandidate.dateOperation)
+            const parsed =  parseApiDate(matchingCandidate.dateOperation)
+            this.dateOperation = parsed || new Date()
         }
     }
 }
 
 class BanquePostaleImportResultMatched {
-    type: "matched" = "matched"
+    type = "matched" as const
     accountLineId: number = 0
     candidate: BanquePostaleImportMatchingCandidate = {} as BanquePostaleImportMatchingCandidate
 
     constructor(matchedResult: Partial<BanquePostaleMatchedResultPayload>) {
         Object.assign(this, matchedResult);
+        if (matchedResult.candidate) {
+            this.candidate = new BanquePostaleImportMatchingCandidate(matchedResult.candidate);
+        }
     }
 }
 
 class BanquePostaleImportResultAmbiguous {
-    type: "ambiguous" = "ambiguous"
+    type = "ambiguous" as const
     accountLineId: number = 0
     candidates: BanquePostaleImportMatchingCandidate[] = []
 
     constructor(ambiguousResult: Partial<BanquePostaleAmbiguousResultPayload>) {
         Object.assign(this, ambiguousResult);
+        if (ambiguousResult.candidates) {
+            this.candidates = ambiguousResult.candidates.map(
+                (candidate) => new BanquePostaleImportMatchingCandidate(candidate)
+            );
+        }
     }
 }
 
@@ -62,4 +71,8 @@ class BanquePostaleImportResult {
 }
 
 export default BanquePostaleImportResult;
-export { BanquePostaleImportResultMatched, BanquePostaleImportResultAmbiguous }
+export {
+    BanquePostaleImportMatchingCandidate,
+    BanquePostaleImportResultMatched,
+    BanquePostaleImportResultAmbiguous
+}
