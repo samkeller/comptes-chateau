@@ -4,18 +4,16 @@ import { RecurringExpense, RecurringExpenseDaysCount, RecurringExpenseFrequency 
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import UserXpService from "../../core/services/UserXpService";
 import { SaveRecurringExpensePayload } from "@chocosous/shared";
-import { differenceInDays, toDate } from "date-fns";
+import { differenceInDays } from "date-fns";
 
 export default class RecurringExpenseService {
     private recurringExpenseRepo;
 
-    private userXpService = new UserXpService();
+    private userXpService: UserXpService;
 
-    constructor(manager?: EntityManager) {
-        this.recurringExpenseRepo = manager ?
-            manager.getRepository(RecurringExpense) :
-            AppDataSource.getRepository(RecurringExpense);
-
+    constructor(manager: EntityManager = AppDataSource.manager) {
+        this.recurringExpenseRepo =  manager.getRepository(RecurringExpense)
+        this.userXpService = new UserXpService(manager);
     }
 
     /**

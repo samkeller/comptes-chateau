@@ -5,7 +5,7 @@ import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
 import type { MonthlyAggregateByPoste, DashboardOverview, BudgetByPoste } from "@chocosous/shared";
 import RecurringExpenseService from "./RecurringExpenseService";
-import { EntityManager } from "typeorm";
+import { EntityManager, Repository } from "typeorm";
 
 interface PosteBudget {
     label: string;
@@ -14,21 +14,21 @@ interface PosteBudget {
 }
 
 export default class DashboardService {
-    private accountLineRepo
-    private budgetItemRepo
+    private accountLineRepo: Repository<AccountLine>
+    private budgetItemRepo: Repository<BudgetItem>
     private recurringExpenseService: RecurringExpenseService
-    private accountRepo
-    private kanbanTaskRepo
+    private accountRepo: Repository<Account>
+    private kanbanTaskRepo: Repository<KanbanTask>
 
     constructor(
         em: EntityManager = AppDataSource.manager,
     ) {
 
-        this.accountLineRepo = AppDataSource.getRepository(AccountLine);
-        this.budgetItemRepo = AppDataSource.getRepository(BudgetItem);
+        this.accountLineRepo = em.getRepository(AccountLine);
+        this.budgetItemRepo = em.getRepository(BudgetItem);
         this.recurringExpenseService = new RecurringExpenseService(em);
-        this.accountRepo = AppDataSource.getRepository(Account);
-        this.kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
+        this.accountRepo = em.getRepository(Account);
+        this.kanbanTaskRepo = em.getRepository(KanbanTask);
     }
 
     async getOverview(userId: number, accountId: number): Promise<DashboardOverview> {
