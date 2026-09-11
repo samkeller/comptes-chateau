@@ -30,10 +30,6 @@ export default function DashboardBalanceCard({ overview }: DashboardBalanceCardP
         labelSuffix: "3 mois",
         value: overview.forecastBalanceThreeMonths,
         displayValue: toMonetaryAmount(overview.forecastBalanceThreeMonths)
-    }, {
-        labelSuffix: "final",
-        value: overview.forecastBalanceFinal,
-        displayValue: toMonetaryAmount(overview.forecastBalanceFinal)
     }]
 
     const currentForecastValue = useMemo(() =>

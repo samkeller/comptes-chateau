@@ -1,18 +1,22 @@
 import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
-import { AccountLine } from "../entities/AccountLine";
 import { AccountLinePosteDto, SavePostePayload } from "@chocosous/shared";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
+import AccountLineService from "./AccountLineService";
 
 export default class PosteService {
     private readonly posteRepo: Repository<AccountLinePoste>;
+    private readonly accountLineService: AccountLineService;
 
-    constructor(manager?: EntityManager) {
-        this.posteRepo = manager
-            ? manager.getRepository(AccountLinePoste)
-            : AppDataSource.getRepository(AccountLinePoste);
+    constructor(private readonly manager: EntityManager = AppDataSource.manager) {
+        this.posteRepo = manager.getRepository(AccountLinePoste);
+        this.accountLineService = new AccountLineService(manager);
+    }
+
+    async getById(id: number, accountId: number): Promise<AccountLinePoste | null> {
+        return this.posteRepo.findOne({ where: { id, accountId } });
     }
 
     async getAll(accountId: number): Promise<AccountLinePosteDto[]> {
@@ -21,18 +25,7 @@ export default class PosteService {
             order: { label: "ASC" }
         });
 
-        const rows = await this.posteRepo
-            .createQueryBuilder("poste")
-            .leftJoin(AccountLine, "line", "line.poste_id = poste.id")
-            .select("poste.id", "id")
-            .addSelect("COUNT(line.id)", "linkedCount")
-            .where("poste.account_id = :accountId", { accountId })
-            .groupBy("poste.id")
-            .getRawMany<{ id: string; linkedCount: string }>();
-
-        const countById = new Map<number, number>(
-            rows.map((row) => [Number(row.id), Number(row.linkedCount)])
-        );
+        const countById = await this.accountLineService.getLinkedCountsByPoste(accountId);
 
         return postes.map((poste) => ({
             id: poste.id,
@@ -74,11 +67,7 @@ export default class PosteService {
         try {
             const updated = await this.posteRepo.save(existing);
 
-            const linkedAccountLines = await AppDataSource.getRepository(AccountLine).count({
-                where: {
-                    poste: { id: updated.id }
-                }
-            });
+            const linkedAccountLines = (await this.accountLineService.getLinkedCountsByPoste(accountId)).get(updated.id) ?? 0;
 
             return {
                 id: updated.id,
@@ -92,19 +81,16 @@ export default class PosteService {
     }
 
     async delete(id: number, accountId: number): Promise<void> {
-        await AppDataSource.transaction(async (manager) => {
+        await this.manager.transaction(async (manager) => {
             const posteRepo = manager.getRepository(AccountLinePoste);
-            const accountingRepo = manager.getRepository(AccountLine);
+            const accountLineService = new AccountLineService(manager);
 
             const existing = await posteRepo.findOne({ where: { id, accountId } });
             if (!existing) {
                 throw notFound("POSTE_NOT_FOUND", "Poste introuvable");
             }
 
-            await accountingRepo.query(
-                "UPDATE account_line SET poste_id = NULL WHERE poste_id = $1",
-                [id]
-            );
+            await accountLineService.clearPoste(id);
 
             await posteRepo.delete({ id });
         });

@@ -1,18 +1,18 @@
 import { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineNature } from "../entities/AccountLineNature";
-import { AccountLine } from "../entities/AccountLine";
 import { AccountLineNatureDto, SaveNaturePayload } from "@chocosous/shared";
 import { conflict, notFound } from "../../../utils/AppError";
 import { isUniqueViolation } from "../../../utils/dbErrors";
+import AccountLineService from "./AccountLineService";
 
 export default class NatureService {
     private readonly natureRepo: Repository<AccountLineNature>;
+    private readonly accountLineService: AccountLineService;
 
-    constructor(manager?: EntityManager) {
-        this.natureRepo = manager
-            ? manager.getRepository(AccountLineNature)
-            : AppDataSource.getRepository(AccountLineNature);
+    constructor(private readonly manager: EntityManager = AppDataSource.manager) {
+        this.natureRepo = manager.getRepository(AccountLineNature);
+        this.accountLineService = new AccountLineService(manager);
     }
 
     async getAll(): Promise<AccountLineNatureDto[]> {
@@ -20,17 +20,7 @@ export default class NatureService {
             order: { label: "ASC" }
         });
 
-        const rows = await this.natureRepo
-            .createQueryBuilder("nature")
-            .leftJoin(AccountLine, "line", "line.nature_id = nature.id")
-            .select("nature.id", "id")
-            .addSelect("COUNT(line.id)", "linkedCount")
-            .groupBy("nature.id")
-            .getRawMany<{ id: string; linkedCount: string }>();
-
-        const countById = new Map<number, number>(
-            rows.map((row) => [Number(row.id), Number(row.linkedCount)])
-        );
+        const countById = await this.accountLineService.getLinkedCountsByNature();
 
         return natures.map((nature) => ({
             id: nature.id,
@@ -75,11 +65,7 @@ export default class NatureService {
         try {
             const updated = await this.natureRepo.save(existing);
 
-            const linkedAccountLines = await AppDataSource.getRepository(AccountLine).count({
-                where: {
-                    nature: { id: updated.id }
-                }
-            });
+            const linkedAccountLines = (await this.accountLineService.getLinkedCountsByNature()).get(updated.id) ?? 0;
 
             return {
                 id: updated.id,
@@ -94,19 +80,16 @@ export default class NatureService {
     }
 
     async delete(id: number): Promise<void> {
-        await AppDataSource.transaction(async (manager) => {
+        await this.manager.transaction(async (manager) => {
             const natureRepo = manager.getRepository(AccountLineNature);
-            const accountingRepo = manager.getRepository(AccountLine);
+            const accountLineService = new AccountLineService(manager);
 
             const existing = await natureRepo.findOneBy({ id });
             if (!existing) {
                 throw notFound("NATURE_NOT_FOUND", "Nature introuvable");
             }
 
-            await accountingRepo.query(
-                "UPDATE account_line SET nature_id = NULL WHERE nature_id = $1",
-                [id]
-            );
+            await accountLineService.clearNature(id);
 
             await natureRepo.delete({ id });
         });

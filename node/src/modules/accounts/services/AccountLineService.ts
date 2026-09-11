@@ -13,6 +13,7 @@ import { badRequest, notFound } from "../../../utils/AppError";
 import { DeleteResult, Like } from "typeorm";
 import UserXpService from "../../core/services/UserXpService";
 import BanquePostaleService from "../../externals/service/BanquePostaleService";
+import AccountService from "./AccountService";
 
 const lazyTableQueryParserOptions = {
     allowedSortFields: new Set(Object.keys(operationTableQueryConfig.sortHandlers)),
@@ -208,7 +209,7 @@ export default class AccountLineService {
      * @param manager - EntityManager de la transaction courante.
      */
     private async resolveAccountById(accountId: number, context: string, manager = AppDataSource.manager): Promise<Account> {
-        const account = await manager.getRepository(Account).findOneBy({ id: accountId });
+        const account = await new AccountService(manager).getById(accountId);
         if (!account) {
             throw notFound("ACCOUNT_NOT_FOUND", `${context}: compte introuvable (${accountId}).`);
         }
@@ -562,6 +563,165 @@ export default class AccountLineService {
             .orderBy("al.dateOperation", "DESC")
             .addOrderBy("al.id", "DESC")
             .getMany();
+    }
+
+    async getCategorizationHistory(): Promise<AccountLine[]> {
+        return this.accountLineRepo.find({
+            relations: ["poste", "nature", "account"],
+            select: ["id", "label", "accountId"],
+        });
+    }
+
+    async getLabelsByAccount(accountId: number): Promise<Array<Pick<AccountLine, "label">>> {
+        return this.accountLineRepo.find({
+            where: { accountId },
+            select: ["label"],
+        });
+    }
+
+    async getBalanceDeltaSinceDate(
+        checkedOnly: boolean,
+        fromDate: Date,
+        toDate: Date | undefined,
+        accountId: number
+    ): Promise<{ value: string | number } | undefined> {
+        let query = this.accountLineRepo
+            .createQueryBuilder("line")
+            .select("COALESCE(SUM(line.credit - line.debit), 0)", "value")
+            .where("line.account_id = :accountId", { accountId })
+            .andWhere("line.dateOperation >= :fromDate", { fromDate })
+            .leftJoin("line.nature", "nature")
+            .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
+
+        if (toDate) {
+            query = query.andWhere("line.dateOperation < :toDate", { toDate });
+        }
+        if (checkedOnly) {
+            query = query.andWhere("line.isChecked = :isChecked", { isChecked: true });
+        }
+
+        return query.getRawOne<{ value: string | number }>();
+    }
+
+    async getOperationsToCheckCounts(accountId: number): Promise<{ inAccount: number; horsCompte: number }> {
+        const rawCounts = await this.accountLineRepo
+            .createQueryBuilder("line")
+            .leftJoin("line.nature", "nature")
+            .where("line.account_id = :accountId", { accountId })
+            .select(
+                "SUM(CASE WHEN line.isChecked = false AND (nature.id IS NULL OR nature.isHorsCompte = false) THEN 1 ELSE 0 END)",
+                "inAccount"
+            )
+            .addSelect(
+                "SUM(CASE WHEN line.isChecked = false AND nature.isHorsCompte = true THEN 1 ELSE 0 END)",
+                "horsCompte"
+            )
+            .getRawOne<{ inAccount: string | number | null; horsCompte: string | number | null }>();
+
+        return {
+            inAccount: Number(rawCounts?.inAccount ?? 0),
+            horsCompte: Number(rawCounts?.horsCompte ?? 0),
+        };
+    }
+
+    async getActualByPoste(accountId: number, month: number, year: number): Promise<Array<{
+        posteId: number;
+        posteLabel: string;
+        posteColor: string;
+        actualAmount: string;
+    }>> {
+        return this.accountLineRepo
+            .createQueryBuilder("line")
+            .innerJoin("line.poste", "poste")
+            .select("poste.id", "posteId")
+            .addSelect("poste.label", "posteLabel")
+            .addSelect("poste.color", "posteColor")
+            .addSelect("COALESCE(SUM(line.debit), 0)", "actualAmount")
+            .where("line.account_id = :accountId", { accountId })
+            .andWhere("line.dateOperation >= :monthStart", { monthStart: new Date(year, month - 1, 1) })
+            .andWhere("line.dateOperation < :nextMonthStart", { nextMonthStart: new Date(year, month, 1) })
+            .groupBy("poste.id")
+            .addGroupBy("poste.label")
+            .addGroupBy("poste.color")
+            .getRawMany();
+    }
+
+    async getMonthlyByPosteRaw(
+        fromMonth: Date,
+        toMonth: Date,
+        posteIds: number[],
+        accountId: number
+    ): Promise<Array<{ year: string; month: string; posteId: number; posteLabel: string; posteColor: string; total: string }>> {
+        return this.accountLineRepo
+            .createQueryBuilder("line")
+            .select("EXTRACT(YEAR FROM line.dateOperation)", "year")
+            .addSelect("EXTRACT(MONTH FROM line.dateOperation)", "month")
+            .addSelect("poste.id", "posteId")
+            .addSelect("poste.label", "posteLabel")
+            .addSelect("poste.color", "posteColor")
+            .addSelect("COALESCE(SUM(line.credit - line.debit), 0)", "total")
+            .innerJoin("line.poste", "poste")
+            .where("line.account_id = :accountId", { accountId })
+            .andWhere("line.dateOperation >= :fromStart", {
+                fromStart: new Date(fromMonth.getFullYear(), fromMonth.getMonth(), 1),
+            })
+            .andWhere("line.dateOperation < :toNextMonth", {
+                toNextMonth: new Date(toMonth.getFullYear(), toMonth.getMonth() + 1, 1),
+            })
+            .andWhere("poste.account_id = :accountId", { accountId })
+            .andWhere("poste.id IN (:...posteIds)", { posteIds })
+            .groupBy("year")
+            .addGroupBy("month")
+            .addGroupBy("poste.id")
+            .addGroupBy("poste.label")
+            .addGroupBy("poste.color")
+            .orderBy("year", "ASC")
+            .addOrderBy("month", "ASC")
+            .addOrderBy("poste.label", "ASC")
+            .getRawMany();
+    }
+
+    async getLinkedCountsByNature(): Promise<Map<number, number>> {
+        const rows = await this.accountLineRepo
+            .createQueryBuilder("line")
+            .select("line.nature_id", "id")
+            .addSelect("COUNT(line.id)", "linkedCount")
+            .where("line.nature_id IS NOT NULL")
+            .groupBy("line.nature_id")
+            .getRawMany<{ id: string; linkedCount: string }>();
+
+        return new Map(rows.map((row) => [Number(row.id), Number(row.linkedCount)]));
+    }
+
+    async getLinkedCountsByPoste(accountId: number): Promise<Map<number, number>> {
+        const rows = await this.accountLineRepo
+            .createQueryBuilder("line")
+            .select("line.poste_id", "id")
+            .addSelect("COUNT(line.id)", "linkedCount")
+            .where("line.account_id = :accountId", { accountId })
+            .andWhere("line.poste_id IS NOT NULL")
+            .groupBy("line.poste_id")
+            .getRawMany<{ id: string; linkedCount: string }>();
+
+        return new Map(rows.map((row) => [Number(row.id), Number(row.linkedCount)]));
+    }
+
+    async clearNature(natureId: number): Promise<void> {
+        await this.accountLineRepo
+            .createQueryBuilder()
+            .update(AccountLine)
+            .set({ natureId: null })
+            .where("nature_id = :natureId", { natureId })
+            .execute();
+    }
+
+    async clearPoste(posteId: number): Promise<void> {
+        await this.accountLineRepo
+            .createQueryBuilder()
+            .update(AccountLine)
+            .set({ posteId: null })
+            .where("poste_id = :posteId", { posteId })
+            .execute();
     }
 
     /**

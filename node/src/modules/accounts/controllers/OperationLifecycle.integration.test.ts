@@ -1,4 +1,3 @@
-import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Account } from "../entities/Account";
@@ -6,7 +5,7 @@ import { AccountLine } from "../entities/AccountLine";
 import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 import { User } from "../../core/entities/User";
 import { testDataSource } from "../../../tests/testDbSetup";
-import { errorMiddleware } from "../../core/middlewares/errorMiddleware";
+import { createTestApp } from "../../../tests/testApp";
 
 const accountId = 1;
 const targetAccountId = 2;
@@ -64,21 +63,14 @@ async function findGroupLines(transferGroupId: string): Promise<AccountLine[]> {
     });
 }
 
-let app: express.Express;
+let app: ReturnType<typeof createTestApp>;
 
 describe("Operation lifecycle - transfers (integration)", () => {
     beforeEach(async () => {
         await seedAccounts();
 
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
-        app = express();
-        app.use(express.json());
-        app.use((req, _res, next) => {
-            (req as any).session = { userId: seededUserId };
-            next();
-        });
-        app.use("/accounts/:accountId", accountScopedRoutes);
-        app.use(errorMiddleware);
+        app = createTestApp("/accounts/:accountId", accountScopedRoutes, seededUserId);
     });
 
     it("delete removes both the line and its mirror", async () => {
