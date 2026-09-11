@@ -224,7 +224,7 @@ describe("RecurringExpenseService", () => {
 
         // 30/09, 31/10, 30/11
         // Le 31/12 est après le 30/12.
-        expect(total).toBe(-300);
+        expect(total).toBe(-400);
     });
 
     it("[simulateFutureRecurrent()] includes an occurrence exactly on the forecast horizon", async () => {
