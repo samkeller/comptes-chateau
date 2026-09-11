@@ -11,6 +11,14 @@ export enum RecurringExpenseFrequency {
     QUARTERLY = 'quarterly',
 }
 
+export const RecurringExpenseDaysCount: Record<RecurringExpenseFrequency, number> = {
+    [RecurringExpenseFrequency.WEEKLY]: 7,
+    [RecurringExpenseFrequency.MONTHLY]: 30,
+    [RecurringExpenseFrequency.QUARTERLY]: 90,
+    [RecurringExpenseFrequency.YEARLY]: 365,
+};
+
+
 @Entity('recurring_expense')
 export class RecurringExpense {
     @PrimaryGeneratedColumn()

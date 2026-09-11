@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RecurringExpenseService from "./RecurringExpenseService";
 import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
+import { testDataSource } from "../../../tests/testDbSetup";
 
 const { getRepositoryMock } = vi.hoisted(() => ({
     getRepositoryMock: vi.fn()
@@ -69,5 +70,44 @@ describe("RecurringExpenseService.save", () => {
         }, 1, 99);
 
         expect(userRepo.increment).not.toHaveBeenCalled();
+    });
+
+    it("counts occurrences from the next scheduled date until the forecast horizon", async () => {
+        const service = new RecurringExpenseService(testDataSource.manager);
+        const now = new Date();
+
+        const firstOccurrence = new Date(now);
+        firstOccurrence.setDate(now.getDate() + 7);
+
+        const secondOccurrence = new Date(now);
+        secondOccurrence.setDate(now.getDate() + 25);
+
+        const horizon = new Date(now);
+        horizon.setDate(now.getDate() + 50);
+
+        await testDataSource.getRepository(RecurringExpense).save([
+            {
+                id: 1,
+                label: "Loyer",
+                solde: 100,
+                isActive: true,
+                nextOccurrence: firstOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: 1,
+            },
+            {
+                id: 2,
+                label: "Abonnement",
+                solde: 50,
+                isActive: true,
+                nextOccurrence: secondOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: 1,
+            }
+        ] as RecurringExpense[]);
+
+        const total = await service.simulateFutureRecurrent(1, horizon);
+
+        expect(total).toBe(250);
     });
 });

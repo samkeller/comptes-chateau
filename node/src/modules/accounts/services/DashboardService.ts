@@ -1,10 +1,11 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLine } from "../entities/AccountLine";
 import { BudgetItem } from "../entities/BudgetItem";
-import { RecurringExpense } from "../entities/RecurringExpense";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
 import { Account } from "../entities/Account";
 import type { MonthlyAggregateByPoste, DashboardOverview, BudgetByPoste } from "@chocosous/shared";
+import RecurringExpenseService from "./RecurringExpenseService";
+import { EntityManager } from "typeorm";
 
 interface PosteBudget {
     label: string;
@@ -13,14 +14,23 @@ interface PosteBudget {
 }
 
 export default class DashboardService {
+    private accountLineRepo
+    private budgetItemRepo
+    private recurringExpenseService: RecurringExpenseService
+    private accountRepo
+    private kanbanTaskRepo
 
     constructor(
-        private accountLineRepo = AppDataSource.getRepository(AccountLine),
-        private budgetItemRepo = AppDataSource.getRepository(BudgetItem),
-        private recurringExpenseRepo = AppDataSource.getRepository(RecurringExpense),
-        private accountRepo = AppDataSource.getRepository(Account),
-        private kanbanTaskRepo = AppDataSource.getRepository(KanbanTask),
-    ) { }
+        em: EntityManager = AppDataSource.manager,
+    ) {
+
+        this.accountLineRepo = AppDataSource.getRepository(AccountLine);
+        this.budgetItemRepo = AppDataSource.getRepository(BudgetItem);
+        this.recurringExpenseService = new RecurringExpenseService(em);
+        this.accountRepo = AppDataSource.getRepository(Account);
+        this.kanbanTaskRepo = AppDataSource.getRepository(KanbanTask);
+    }
+
     async getOverview(userId: number, accountId: number): Promise<DashboardOverview> {
         const baseline = await this.accountRepo.findOne({ where: { id: accountId } });
 
@@ -52,10 +62,19 @@ export default class DashboardService {
         const monthlyBudget = budgetVsActual.reduce((acc, item) => acc + item.budgetAmount, 0);
         const monthExpenses = budgetVsActual.reduce((acc, item) => acc + item.actualAmount, 0);
 
+        /**
+         * FinaleForecast = baseline - forecastDeltaRow - sum(recurrentExpenses qui vont arriver)
+         */
+        const simulateOneMonthForecast = await this.recurringExpenseService.simulateFutureRecurrent(accountId, nextMonthStart);
+        const simulateThreeMonthsForecast = await this.recurringExpenseService.simulateFutureRecurrent(accountId, threeMonthsEnd);
+
+        const finalOneMonthForecast = baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0) - simulateOneMonthForecast;
+        const finalThreeMonthsForecast = baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0) - simulateThreeMonthsForecast;
+
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
-            forecastBalanceMonthEnd: baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0),
-            forecastBalanceThreeMonths: baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0),
+            forecastBalanceMonthEnd: finalOneMonthForecast,
+            forecastBalanceThreeMonths: finalThreeMonthsForecast,
             monthExpenses,
             monthlyBudget,
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
@@ -194,10 +213,7 @@ export default class DashboardService {
                 where: { isActive: true, account: { id: accountId } },
                 relations: { poste: true },
             }),
-            this.recurringExpenseRepo.find({
-                where: { isActive: true, account: { id: accountId } },
-                relations: { poste: true },
-            }),
+            this.recurringExpenseService.getAllRecurringExpenses(accountId, true),
         ]);
 
         const byPoste = new Map<number, PosteBudget>();
@@ -247,7 +263,7 @@ export default class DashboardService {
 
             .leftJoin("al.nature", "nature")
             .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
-        
+
         if (toDate) {
             qb = qb.andWhere("al.dateOperation < :toDate", { toDate });
         }
