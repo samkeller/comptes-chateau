@@ -1,17 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RecurringExpenseService from "./RecurringExpenseService";
-import {
-    RecurringExpense,
-    RecurringExpenseFrequency,
-} from "../entities/RecurringExpense";
-import {
-    TEST_ACCOUNT_ID,
-    TEST_USER_ID,
-    testDataSource,
-} from "../../../tests/testDbSetup";
+import { RecurringExpense, RecurringExpenseFrequency, } from "../entities/RecurringExpense";
+import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource, } from "../../../tests/testDbSetup";
 import { User } from "../../core/entities/User";
 
-const NOW = new Date("2026-09-11T00:00:00.000Z");
+const NOW = new Date("2026-09-11");
 
 describe("RecurringExpenseService", () => {
     let service: RecurringExpenseService;
@@ -70,7 +63,7 @@ describe("RecurringExpenseService", () => {
             label: "Abonnement salle",
             solde: 31.99,
             isActive: true,
-            nextOccurrence: new Date("2026-10-01T00:00:00.000Z"),
+            nextOccurrence: new Date("2026-10-01"),
             frequency: RecurringExpenseFrequency.MONTHLY,
             natureId: null,
             posteId: null,
@@ -99,7 +92,7 @@ describe("RecurringExpenseService", () => {
     });
 
     it("counts monthly occurrences from the next scheduled date until the forecast horizon", async () => {
-        const horizon = new Date("2026-12-31T00:00:00.000Z");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save([
             {
@@ -107,7 +100,7 @@ describe("RecurringExpenseService", () => {
                 solde: -100,
                 isActive: true,
                 // 15/09, 15/10, 15/11, 15/12
-                nextOccurrence: new Date("2026-09-15T00:00:00.000Z"),
+                nextOccurrence: new Date("2026-09-15"),
                 frequency: RecurringExpenseFrequency.MONTHLY,
                 accountId: TEST_ACCOUNT_ID,
             },
@@ -116,7 +109,7 @@ describe("RecurringExpenseService", () => {
                 solde: -50,
                 isActive: true,
                 // 22/09, 22/10, 22/11, 22/12
-                nextOccurrence: new Date("2026-09-22T00:00:00.000Z"),
+                nextOccurrence: new Date("2026-09-22"),
                 frequency: RecurringExpenseFrequency.MONTHLY,
                 accountId: TEST_ACCOUNT_ID,
             },
@@ -133,9 +126,9 @@ describe("RecurringExpenseService", () => {
     });
 
     it("treats positive recurring income as a negative cash impact on the balance forecast", async () => {
-        const expenseOccurrence = new Date("2026-09-16T00:00:00.000Z");
-        const incomeOccurrence = new Date("2026-09-26T00:00:00.000Z");
-        const horizon = new Date("2026-10-26T00:00:00.000Z");
+        const expenseOccurrence = new Date("2026-09-16");
+        const incomeOccurrence = new Date("2026-09-26");
+        const horizon = new Date("2026-10-26");
 
         await testDataSource.getRepository(RecurringExpense).save([
             {
@@ -166,11 +159,11 @@ describe("RecurringExpenseService", () => {
         // Dépenses : 2 × -100 = -200
         // Revenus : 2 × +30 = 60
         // Total : -140
-        expect(total).toBe(-170);
+        expect(total).toBe(-140);
     });
 
     it("[simulateFutureRecurrent()] includes the recurring expense occurring on the last day of the current month", async () => {
-        const endOfMonth = new Date("2026-09-30T00:00:00.000Z");
+        const endOfMonth = new Date("2026-09-30");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
@@ -190,8 +183,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] includes all monthly occurrences until the end of the month three months later", async () => {
-        const firstOccurrence = new Date("2026-09-30T00:00:00.000Z");
-        const horizon = new Date("2026-12-31T00:00:00.000Z");
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
@@ -212,8 +205,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] does not include the occurrence after the forecast horizon", async () => {
-        const firstOccurrence = new Date("2026-09-30T00:00:00.000Z");
-        const horizon = new Date("2026-12-30T00:00:00.000Z");
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-30");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
@@ -235,8 +228,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] includes an occurrence exactly on the forecast horizon", async () => {
-        const firstOccurrence = new Date("2026-09-30T00:00:00.000Z");
-        const horizon = new Date("2026-12-31T00:00:00.000Z");
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
@@ -257,8 +250,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] preserves the existing sign convention", async () => {
-        const firstOccurrence = new Date("2026-09-30T00:00:00.000Z");
-        const horizon = new Date("2026-12-31T00:00:00.000Z");
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save([
             {
@@ -291,8 +284,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] calculates quarterly occurrences using calendar months", async () => {
-        const firstOccurrence = new Date("2026-09-30T00:00:00.000Z");
-        const horizon = new Date("2027-06-30T00:00:00.000Z");
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2027-06-30");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Assurance",
