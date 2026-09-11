@@ -246,7 +246,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "250.50" },   // currentDelta (checked)
                 { value: "300.00" },   // forecast month end
                 { value: "400.75" },   // forecast 3 months
-                { value: "500.00" },   // forecast final
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
@@ -264,7 +263,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "250.50" },
                 { value: "300.00" },
                 { value: "400.75" },
-                { value: "500.00" },
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 500, actualAmount: 120 }],
             toCheckCounts: { inAccount: 3, horsCompte: 1 }
@@ -274,7 +272,6 @@ describe("DashboardService.getOverview", () => {
 
         expect(result.forecastBalanceMonthEnd).toBeCloseTo(1300.00);
         expect(result.forecastBalanceThreeMonths).toBeCloseTo(1400.75);
-        expect(result.forecastBalanceFinal).toBeCloseTo(1500.00);
     });
 
     it("forecastBalances >= currentBalance when unchecked ops have positive net", async () => {
@@ -284,7 +281,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "100" },    // checked only
                 { value: "200" },    // month end
                 { value: "300" },    // 3 months
-                { value: "400" },    // final
             ],
             toCheckCounts: { inAccount: 0, horsCompte: 0 }
         });
@@ -294,10 +290,8 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBeCloseTo(600);
         expect(result.forecastBalanceMonthEnd).toBeCloseTo(700);
         expect(result.forecastBalanceThreeMonths).toBeCloseTo(800);
-        expect(result.forecastBalanceFinal).toBeCloseTo(900);
         expect(result.forecastBalanceMonthEnd).toBeGreaterThanOrEqual(result.currentBalance);
         expect(result.forecastBalanceThreeMonths).toBeGreaterThanOrEqual(result.forecastBalanceMonthEnd);
-        expect(result.forecastBalanceFinal).toBeGreaterThanOrEqual(result.forecastBalanceThreeMonths);
     });
 
     it("uses fallback baseline (amount=0, date=1960) when no baseline exists", async () => {
@@ -307,7 +301,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "500" },
                 { value: "650" },
                 { value: "750" },
-                { value: "850" },
             ],
             budgetVsActual: [{ posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 200, actualAmount: 80 }],
             toCheckCounts: { inAccount: 2, horsCompte: 0 }
@@ -319,7 +312,6 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBeCloseTo(500);
         expect(result.forecastBalanceMonthEnd).toBeCloseTo(650);
         expect(result.forecastBalanceThreeMonths).toBeCloseTo(750);
-        expect(result.forecastBalanceFinal).toBeCloseTo(850);
     });
 
     it("handles string amounts from PostgreSQL decimals", async () => {
@@ -329,7 +321,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "-150.33" },
                 { value: "-100.00" },
                 { value: "-50.10" },
-                { value: "0.00" },
             ],
             budgetVsActual: [
                 { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 300.50, actualAmount: 120.25 },
@@ -343,7 +334,6 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBeCloseTo(2350.66);
         expect(result.forecastBalanceMonthEnd).toBeCloseTo(2400.99);
         expect(result.forecastBalanceThreeMonths).toBeCloseTo(2450.89);
-        expect(result.forecastBalanceFinal).toBeCloseTo(2500.99);
         expect(result.monthExpenses).toBeCloseTo(200.50);
         expect(result.monthlyBudget).toBeCloseTo(450.75);
         expect(result.operationsToCheckInAccountCount).toBe(5);
@@ -354,7 +344,6 @@ describe("DashboardService.getOverview", () => {
         const service = buildService({
             baseline: { amount: 0, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
-                { value: "0" },
                 { value: "0" },
                 { value: "0" },
                 { value: "0" },
@@ -380,7 +369,6 @@ describe("DashboardService.getOverview", () => {
                 undefined,     // currentDelta returns undefined
                 { value: 0 },  // forecastDelta month end
                 undefined, // forecast 3 months
-                { value: 50 }
             ],
             toCheckCounts: { inAccount: null, horsCompte: null }
         });
@@ -390,7 +378,6 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBe(1000);
         expect(result.forecastBalanceMonthEnd).toBe(1000);
         expect(result.forecastBalanceThreeMonths).toBe(1000);
-        expect(result.forecastBalanceFinal).toBe(1050);
         expect(result.monthExpenses).toBe(0);
         expect(result.operationsToCheckInAccountCount).toBe(0);
         expect(result.operationsToCheckHorsCompteCount).toBe(0);
@@ -403,7 +390,6 @@ describe("DashboardService.getOverview", () => {
                 { value: "-1200.00" },
                 { value: "-1500.00" },
                 { value: "-1800.00" },
-                { value: "-2000.00" },
             ],
             budgetVsActual: [
                 { posteId: 1, posteLabel: "A", posteColor: "#000", budgetAmount: 800, actualAmount: 1200 },
@@ -416,7 +402,6 @@ describe("DashboardService.getOverview", () => {
         expect(result.currentBalance).toBeCloseTo(3800);
         expect(result.forecastBalanceMonthEnd).toBeCloseTo(3500);
         expect(result.forecastBalanceThreeMonths).toBeCloseTo(3200);
-        expect(result.forecastBalanceFinal).toBeCloseTo(3000);
         expect(result.monthExpenses).toBeCloseTo(1200);
         expect(result.monthlyBudget).toBeCloseTo(800);
         expect(result.operationsToCheckInAccountCount).toBe(10);
@@ -427,7 +412,6 @@ describe("DashboardService.getOverview", () => {
         const service = buildService({
             baseline: { amount: 0, effectiveDate: new Date("2025-01-01") },
             deltaResults: [
-                { value: "0" },
                 { value: "0" },
                 { value: "0" },
                 { value: "0" },

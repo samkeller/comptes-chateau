@@ -81,3 +81,7 @@
 ## [1.2.2 - 06/09/2026]
 ### Added
 - Chocostocks v2 o/ - Le module est fonctionnel
+
+## [1.2.3 - 10/09/2026]
+### Added
+- Import CSV Banque Postale V2 avec stockage en base - On ne perdra plus jamais un historique !

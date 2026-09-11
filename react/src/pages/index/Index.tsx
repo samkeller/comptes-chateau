@@ -84,9 +84,8 @@ export default function Index() {
         [accountOverviews]
     );
 
-
-    const totalForecastBalanceFinal = useMemo(
-        () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalanceFinal, 0),
+    const totalForecastBalanceThreeMonths = useMemo(
+        () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalanceThreeMonths, 0),
         [accountOverviews]
     );
 
@@ -118,8 +117,8 @@ export default function Index() {
                                         <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceMonthEnd)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-surface-500">Solde prévisionnel (total)</div>
-                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceFinal)}</div>
+                                        <div className="text-sm text-surface-500">Solde prévisionnel (trois mois)</div>
+                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceThreeMonths)}</div>
                                     </div>
                                 </div>
                             </Card>
