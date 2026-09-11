@@ -222,8 +222,7 @@ describe("RecurringExpenseService", () => {
             horizon,
         );
 
-        // 30/09, 31/10, 30/11
-        // Le 31/12 est après le 30/12.
+        // 30/09, 31/10, 30/11, 30/12
         expect(total).toBe(-400);
     });
 
