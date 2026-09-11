@@ -23,7 +23,7 @@ export default function DashboardBalanceCard({ overview }: DashboardBalanceCardP
 
 
     const timeLineValues = [{
-        labelSuffix: "ce mois",
+        labelSuffix: "fin du mois",
         value: overview.forecastBalanceMonthEnd,
         displayValue: toMonetaryAmount(overview.forecastBalanceMonthEnd),
     }, {
@@ -62,7 +62,7 @@ export default function DashboardBalanceCard({ overview }: DashboardBalanceCardP
                             onClick={() => setTimelineActiveIndex(Math.max(0, timelineActiveIndex - 1))}
                         />
                         <span className="font-semibold text-lg grow">Prévisionnel - {currentForecastValue.labelSuffix}</span>
-                        <TooltipInfoIcon tooltipText="Prend en compte toutes les opérations (validées ou non) dont les natures de dépenses sont liées au compte en banque." />
+                        <TooltipInfoIcon tooltipText="Prend en compte toutes les opérations (validées ou non) dont les natures de dépenses sont liées au compte en banque. Prend également les dépenses récurrentes à venir." />
                         <Button
                             text rounded
                             icon="pi pi-angle-right"

@@ -113,7 +113,7 @@ export default function Index() {
                                         <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalCurrentBalance)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-surface-500">Solde prévisionnel (ce mois)</div>
+                                        <div className="text-sm text-surface-500">Solde prévisionnel (fin du mois)</div>
                                         <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceMonthEnd)}</div>
                                     </div>
                                     <div>

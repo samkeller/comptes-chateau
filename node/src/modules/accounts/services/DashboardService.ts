@@ -29,8 +29,10 @@ export default class DashboardService {
 
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        const threeMonthsEnd = new Date(now.getFullYear(), now.getMonth() + 3, 1);
+        // Dernier jour du mois courant
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        // Dernier jour du troisième mois à venir
+        const threeMonthsEnd = new Date(now.getFullYear(), now.getMonth() + 3, 0);
 
         const [
             currentDeltaRaw,
@@ -41,7 +43,7 @@ export default class DashboardService {
             assignedKanbanTasksCount,
         ] = await Promise.all([
             this.accountLineService.getBalanceDeltaSinceDate(true, baseLineDate, undefined, accountId),
-            this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, nextMonthStart, accountId),
+            this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, monthEnd, accountId),
             this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, threeMonthsEnd, accountId),
             this.getBudgetVsActual(accountId, monthStart.getMonth() + 1, monthStart.getFullYear()),
             this.accountLineService.getOperationsToCheckCounts(accountId),
@@ -49,7 +51,7 @@ export default class DashboardService {
         ]);
 
         const [simulateOneMonthForecast, simulateThreeMonthsForecast] = await Promise.all([
-            this.recurringExpenseService.simulateFutureRecurrent(accountId, nextMonthStart),
+            this.recurringExpenseService.simulateFutureRecurrent(accountId, monthEnd),
             this.recurringExpenseService.simulateFutureRecurrent(accountId, threeMonthsEnd),
         ]);
 

@@ -594,7 +594,7 @@ export default class AccountLineService {
             .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
 
         if (toDate) {
-            query = query.andWhere("line.dateOperation < :toDate", { toDate });
+            query = query.andWhere("line.dateOperation <= :toDate", { toDate });
         }
         if (checkedOnly) {
             query = query.andWhere("line.isChecked = :isChecked", { isChecked: true });
