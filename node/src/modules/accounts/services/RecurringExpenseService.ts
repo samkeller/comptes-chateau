@@ -124,9 +124,6 @@ export default class RecurringExpenseService {
                 return acc;
             }
 
-            const itemAmount = Math.abs(amount);
-            const signMultiplier = amount < 0 ? 1 : -1;
-
             let occurrenceDate = new Date(item.nextOccurrence);
             let occurrencesCount = 0;
 
@@ -150,7 +147,12 @@ export default class RecurringExpenseService {
                         throw new Error(`Unsupported recurring expense frequency: ${item.frequency}`,);
                 }
             }
-            return acc + signMultiplier * amount * occurrencesCount;
+
+
+            // solde est déjà signé :
+            // -100 => -100 d'impact
+            // +30  => +30 d'impact
+            return acc + amount * occurrencesCount;
         }, 0);
     }
 }

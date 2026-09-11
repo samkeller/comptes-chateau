@@ -57,10 +57,8 @@ export default class DashboardService {
 
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
-            forecastBalanceMonthEnd:
-                baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0) - simulateOneMonthForecast,
-            forecastBalanceThreeMonths:
-                baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0) - simulateThreeMonthsForecast,
+            forecastBalanceMonthEnd: baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0) + simulateOneMonthForecast,
+            forecastBalanceThreeMonths: baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0) + simulateThreeMonthsForecast,
             monthExpenses: budgetVsActual.reduce((total, item) => total + item.actualAmount, 0),
             monthlyBudget: budgetVsActual.reduce((total, item) => total + item.budgetAmount, 0),
             operationsToCheckInAccountCount: toCheckCounts.inAccount,

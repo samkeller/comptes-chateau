@@ -136,12 +136,13 @@ export default function RecurringExpenses() {
                         header="Prochaine activation"
                         body={(v: RecurringExpense) => {
                             const frequencyLabel = getFrequencyLabel(v.frequency);
+                            const customId = `custom-label-next-occurence-${v.id}`;
                             return (
                                 v.nextOccurrence && <>
-                                    <Tooltip target=".custom-label-next-occurence" />
+                                    <Tooltip target={`.${customId}`} />
                                     <span
-                                        className="custom-label-next-occurence"
-                                        data-pr-tooltip={`${v.nextOccurrence.toLocaleDateString('fr-FR')} (${frequencyLabel.toLowerCase()})`}
+                                        className={`${customId} ${!v.isActive && "line-through"}`}
+                                        data-pr-tooltip={`${v.nextOccurrence.toLocaleDateString('fr-FR')} (${frequencyLabel.toLowerCase()}) ${v.isActive ? '' : '(Inactif)'}`}
                                     >
                                         {v.nextOccurrence && formatDistanceToNow(v.nextOccurrence)}
                                     </span>

@@ -1,3 +1,17 @@
+
+/**
+ * Routes front de l'application
+ * 
+ * @example
+ * import { routePaths } from '@/routes/routePaths';
+ * console.log(routePaths.home); // "/"
+ * 
+ * @example
+ * import { navigateToAccount } from '@/routes/routePaths';
+ * import { generatePath, useNavigate } from "react-router-dom";
+ * navigate(generatePath(routePaths.account.root, { accountId: 1 }));
+ */
+
 export const routePaths = {
     home: "/",
     auth: "/auth",
