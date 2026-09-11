@@ -5,6 +5,8 @@ import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemUnitsView from "./StockItemUnitsView";
+import { useScreen } from "@/hooks/useScreen";
+import { Divider } from "primereact/divider";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
@@ -14,8 +16,9 @@ interface StockItemsDatatableProps {
 
 const stockService = new StockItemsService();
 
-export default function StockItemsDatatable({ locationId, searchQuery, afterRemoveStockUnitOptimistic }: StockItemsDatatableProps) {
+export default function StockItemsList({ locationId, searchQuery, afterRemoveStockUnitOptimistic }: StockItemsDatatableProps) {
 
+    const { isDesktop } = useScreen()
     const [stockItems, setStockItems] = useState<StockItem[]>([]);
     const [filteredStockItems, setFilteredStockItems] = useState<StockItem[]>([]);
     const [expandedRows, setExpandedRows] = useState<StockItem[]>();
@@ -39,6 +42,39 @@ export default function StockItemsDatatable({ locationId, searchQuery, afterRemo
         setStockItems(data);
         setFilteredStockItems(data);
         setLoading(false);
+    }
+
+    /**
+     * Affichage mobile
+     */
+    if (!isDesktop) {
+        return (
+            <div className="flex flex-col gap-2">
+                {
+                    filteredStockItems.map(item => (
+                        <div
+                            key={item.id}
+                            className="flex-1 gap-1 rounded border-2 border-surface p-2"
+                        >
+                            <div className="flex justify-between">
+
+                                <span className="font-semibold">{item.label}</span>
+                                <span>{item.stockUnitsCount}</span>
+                            </div>
+                            <Divider />
+                            <div>
+                                <StockItemUnitsView
+                                    stockItemId={item.id}
+                                    locationId={locationId}
+                                    afterRemoveStockUnitOptimistic={(unitId, locationId) => locationId && afterRemoveStockUnitOptimistic?.(unitId, locationId)}
+                                />
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+        )
+
     }
 
     return (

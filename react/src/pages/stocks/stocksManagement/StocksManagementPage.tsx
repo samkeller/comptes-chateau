@@ -7,7 +7,7 @@ import StockLocation from "@/interfaces/stocks/StockLocation";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import StockLocationDialog from "./StockLocationDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
-import StockItemsDatatable from "./organisms/StockItemsDatatable";
+import StockItemsList from "./organisms/StockItemsList";
 import { InputText } from "primereact/inputtext";
 
 const stockLocationService = new StockLocationService();
@@ -17,6 +17,7 @@ const STOCK_TAKE_GROUP = "stock-take";
 export default function StocksManagementPage() {
     const showToast = useGlobalToast();
     const navigate = useNavigate();
+
     const { locationId: locationIdParam } = useParams<{ locationId: string }>();
     const selectedLocationId = locationIdParam ? Number(locationIdParam) : null;
     const [searchQuery, setSearchQuery] = useState("");
@@ -156,7 +157,7 @@ export default function StocksManagementPage() {
                     />
 
                     <div className="flex flex-col gap-4 w-full">
-                        <div className="flex justify-between items-center gap-4 lg:w-full">
+                        <div className="flex flex-wrap justify-between items-center gap-4 lg:w-full">
                             <h2 className="m-0 text-lg font-semibold">
                                 {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
@@ -166,7 +167,7 @@ export default function StocksManagementPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <StockItemsDatatable
+                        <StockItemsList
                             locationId={selectedLocationId}
                             searchQuery={searchQuery}
                             afterRemoveStockUnitOptimistic={(_unitId, locationId) => {

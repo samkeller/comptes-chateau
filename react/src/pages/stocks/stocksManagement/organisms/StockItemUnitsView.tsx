@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useScreen } from "@/hooks/useScreen";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { showGlobalToast } from "@/services/GlobalToast";
@@ -14,6 +15,7 @@ const stockUnitsService = new StockUnitsService()
 
 export default function StockItemUnitsView({ stockItemId, locationId, afterRemoveStockUnitOptimistic }: StockItemUnitsViewProps) {
     const [units, setUnits] = useState<StockUnit[]>([]);
+    const {isDesktop} = useScreen();
 
     useEffect(() => {
         loadStockUnits(stockItemId, locationId ?? undefined);
@@ -48,7 +50,10 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
      * @returns Un objet où chaque clé est une date d'expiration et la valeur est un tableau de StockUnit ayant cette date d'expiration
      */
     const groupedUnits = units.reduce((acc: { [key: string]: StockUnit[] }, unit) => {
-        const expirationDate = unit.expirationDate ? new Date(unit.expirationDate).toISOString().split('T')[0] : "Aucune date d'expiration";
+        const noExpiryLabel = isDesktop ? "Aucune date d'expiration" : "";
+        const expirationDate = unit.expirationDate
+            ? new Date(unit.expirationDate).toISOString().split('T')[0]
+            : noExpiryLabel;
         if (!acc[expirationDate]) {
             acc[expirationDate] = [];
         }
@@ -68,11 +73,10 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
                             className="flex justify-between items-center gap-4"
                         >
                             <div className="flex flex-col">
-
                                 <h3>{expirationDate}</h3>
                                 <span>{firstUnit.quantity} {firstUnit.unit} - {count === 1 ? "1 unité" : `${count} unités`}</span>
                             </div>
-                            
+
                             <TakeStockUnitButton
                                 unitId={firstUnit.id}
                                 unitLabel={firstUnit.item.label}
