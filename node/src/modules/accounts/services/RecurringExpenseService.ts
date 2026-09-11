@@ -1,10 +1,10 @@
 import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
-import { RecurringExpense, RecurringExpenseDaysCount, RecurringExpenseFrequency } from "../entities/RecurringExpense";
+import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import { normalizeApiDateInput } from "../../../utils/ApiDateUtils";
 import UserXpService from "../../core/services/UserXpService";
 import { SaveRecurringExpensePayload } from "@chocosous/shared";
-import { differenceInDays } from "date-fns";
+import { addMonths, addWeeks, addYears } from "date-fns";
 
 export default class RecurringExpenseService {
     private recurringExpenseRepo;
@@ -12,7 +12,7 @@ export default class RecurringExpenseService {
     private userXpService: UserXpService;
 
     constructor(manager: EntityManager = AppDataSource.manager) {
-        this.recurringExpenseRepo =  manager.getRepository(RecurringExpense)
+        this.recurringExpenseRepo = manager.getRepository(RecurringExpense)
         this.userXpService = new UserXpService(manager);
     }
 
@@ -103,6 +103,13 @@ export default class RecurringExpenseService {
     * const toDate = new Date("dans trois mois");
     * const total = simulateFutureRecurrent(futureRecurrent, toDate);
     * -> Total: 300
+    * @example
+    * const futureRecurrent = [
+    *     { nextOccurrence: "new Date()", solde: -100, frequency: RecurringExpenseFrequency.MONTHLY }
+    * ];
+    * const toDate = new Date("dans trois ans");
+    * const total = simulateFutureRecurrent(futureRecurrent, toDate);
+    * -> Total: -3600
     * @param futureRecurrent 
     * @param toDate 
     * @returns 
@@ -111,16 +118,41 @@ export default class RecurringExpenseService {
         const futureRecurrent = await this.getFutureActiveRecurrent(accountId, new Date());
 
         return futureRecurrent.reduce((acc, item) => {
-            if (item.nextOccurrence > toDate) {
+            const amount = Number(item.solde);
+
+            if (!Number.isFinite(amount)) {
                 return acc;
             }
 
-            const itemAmount = Math.abs(Number(item.solde));
-            const daysFromNextOccurrence = differenceInDays(toDate, item.nextOccurrence);
-            const occurrencesCount = Math.floor(daysFromNextOccurrence / RecurringExpenseDaysCount[item.frequency]) + 1;
-            const signMultiplier = Number(item.solde) < 0 ? 1 : -1;
+            let occurrenceDate = new Date(item.nextOccurrence);
+            let occurrencesCount = 0;
 
-            return acc + signMultiplier * itemAmount * occurrencesCount;
+            while (occurrenceDate <= toDate) {
+                occurrencesCount++;
+
+                switch (item.frequency) {
+                    case RecurringExpenseFrequency.WEEKLY:
+                        occurrenceDate = addWeeks(occurrenceDate, 1);
+                        break;
+                    case RecurringExpenseFrequency.MONTHLY:
+                        occurrenceDate = addMonths(occurrenceDate, 1);
+                        break;
+                    case RecurringExpenseFrequency.QUARTERLY:
+                        occurrenceDate = addMonths(occurrenceDate, 3);
+                        break;
+                    case RecurringExpenseFrequency.YEARLY:
+                        occurrenceDate = addYears(occurrenceDate, 1);
+                        break;
+                    default:
+                        throw new Error(`Unsupported recurring expense frequency: ${item.frequency}`,);
+                }
+            }
+
+
+            // solde est déjà signé :
+            // -100 => -100 d'impact
+            // +30  => +30 d'impact
+            return acc + amount * occurrencesCount;
         }, 0);
     }
 }

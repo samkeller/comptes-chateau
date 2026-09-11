@@ -15,8 +15,11 @@ import { Calendar } from 'primereact/calendar';
 import { useGlobalToast } from '../../../context/GlobalToastContext';
 import AccountLineNatureService from '../../../services/AccountLineNatureService';
 import AccountLinePosteService from '../../../services/AccountLinePosteService';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { generatePath, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useAccountId } from '@/hooks/useAccountId';
+import RequiredMark from '@/components/atoms/form/RequiredMark';
+import Optional from '@/components/atoms/form/Optional';
+import { routePaths } from '@/routes/routePaths';
 
 const recurringExpenseService = new RecurringExpenseService();
 
@@ -72,7 +75,20 @@ export default function AddRecurringExpenseDialog() {
     }, [expenseId, accountId]);
 
     const handleSubmit = () => {
-        if (!label || !natureId || !posteId) return;
+        console.log(label, natureId, posteId, solde, isActive, nextOccurrence, frequency)
+        const requiredFieldsFilled = label && natureId && posteId;
+        if (!requiredFieldsFilled) {
+            const missingFields = [];
+            if (!label) missingFields.push('Libellé');
+            if (!natureId) missingFields.push('Nature');
+            if (!posteId) missingFields.push('Poste');
+            showGlobalToast({
+                severity: 'warn',
+                summary: 'Champs requis manquants',
+                detail: `Veuillez remplir tous les champs requis : ${missingFields.join(', ')}.`
+            });
+            return;
+        };
 
         const expense: Partial<RecurringExpense> = {
             id: editingExpense ? editingExpense.id : 0,
@@ -98,7 +114,7 @@ export default function AddRecurringExpenseDialog() {
             })
     };
 
-    const hideDialog = () => navigate(-1);
+    const hideDialog = () => navigate(generatePath(routePaths.account.recurringExpenses, { accountId: accountId.toString() }));
 
     const footer = <div>
         <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
@@ -127,7 +143,7 @@ export default function AddRecurringExpenseDialog() {
                         onChange={(e) => setLabel(e.target.value)}
                         className='w-full'
                     />
-                    <label htmlFor="label">Libellé</label>
+                    <label htmlFor="label">Libellé <RequiredMark /></label>
                 </FloatLabel>
                 <div className='flex gap-1'>
                     <FloatLabel className='flex-1'>
@@ -137,7 +153,7 @@ export default function AddRecurringExpenseDialog() {
                             onChange={(e) => setNatureId(e.value as number | null)}
                             className='w-full'
                         />
-                        <label htmlFor="nature">Nature</label>
+                        <label htmlFor="nature">Nature <RequiredMark /></label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
                         <AccountLinePosteDropdown
@@ -147,16 +163,16 @@ export default function AddRecurringExpenseDialog() {
                             onChange={(e) => setPosteId(e.value as number | null)}
                             className='w-full'
                         />
-                        <label htmlFor="poste">Poste</label>
+                        <label htmlFor="poste">Poste <RequiredMark /></label>
                     </FloatLabel>
                 </div>
                 <div className='flex gap-1 items-center'>
                     <FloatLabel className='flex-1'>
                         <InputNumber id="solde" value={solde} onValueChange={(e) => setSolde(e.value || 0)} mode="currency" currency="EUR" locale="fr-FR" className='w-full' />
-                        <label htmlFor="solde">Montant</label>
+                        <label htmlFor="solde">Montant <Optional /></label>
                     </FloatLabel>
                     <div className="flex items-center gap-2">
-                        <label htmlFor="isActive">Actif</label>
+                        <label htmlFor="isActive">Actif <RequiredMark /></label>
                         <InputSwitch id="isActive" checked={isActive} onChange={(e) => setIsActive(e.value)} />
                     </div>
                 </div>
@@ -169,7 +185,7 @@ export default function AddRecurringExpenseDialog() {
                             onChange={(e) => e.value && setNextOccurrence(e.value)}
                             className='w-full'
                         />
-                        <label htmlFor="nextOccurrence">Première activation</label>
+                        <label htmlFor="nextOccurrence">Première activation <RequiredMark /></label>
                     </FloatLabel>
                     <FloatLabel className='flex-1'>
                         <Dropdown id="frequency"
@@ -183,7 +199,7 @@ export default function AddRecurringExpenseDialog() {
                             className='w-full'
                             onChange={(e) => setFrequency(e.value as RecurringExpenseFrequency)}
                         />
-                        <label htmlFor="frequency">Fréquence</label>
+                        <label htmlFor="frequency">Fréquence <RequiredMark /></label>
                     </FloatLabel>
                 </div>
             </div>

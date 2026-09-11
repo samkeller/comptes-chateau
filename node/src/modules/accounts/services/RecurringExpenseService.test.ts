@@ -1,34 +1,58 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RecurringExpenseService from "./RecurringExpenseService";
-import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
-import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { RecurringExpense, RecurringExpenseFrequency, } from "../entities/RecurringExpense";
+import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource, } from "../../../tests/testDbSetup";
 import { User } from "../../core/entities/User";
+
+const NOW = new Date("2026-09-11");
 
 describe("RecurringExpenseService", () => {
     let service: RecurringExpenseService;
 
     beforeEach(async () => {
         service = new RecurringExpenseService(testDataSource.manager);
+
         const userRepo = testDataSource.getRepository(User);
-        const user = await userRepo.findOne({ where: { id: TEST_USER_ID } });
+        const user = await userRepo.findOne({
+            where: { id: TEST_USER_ID },
+        });
+
         if (user) {
             user.totalXp = 0;
             await userRepo.save(user);
         }
+
+        // On fake uniquement Date.
+        // Les timers réels restent disponibles pour TypeORM / SQLite.
+        vi.useFakeTimers({
+            toFake: ["Date"],
+            now: NOW,
+        });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it("awards XP when creating a recurring expense", async () => {
-        await service.save({
-            label: "Abonnement salle",
-            solde: 29.99,
-            isActive: true,
-            nextOccurrence: "2026-04-01",
-            frequency: RecurringExpenseFrequency.MONTHLY,
-            natureId: null,
-            posteId: null,
-        }, TEST_ACCOUNT_ID, TEST_USER_ID);
+        await service.save(
+            {
+                label: "Abonnement salle",
+                solde: 29.99,
+                isActive: true,
+                nextOccurrence: "2026-10-01",
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                natureId: null,
+                posteId: null,
+            },
+            TEST_ACCOUNT_ID,
+            TEST_USER_ID,
+        );
 
-        const user = await testDataSource.getRepository(User).findOne({ where: { id: TEST_USER_ID } });
+        const user = await testDataSource.getRepository(User).findOne({
+            where: { id: TEST_USER_ID },
+        });
+
         expect(user?.totalXp).toBe(100);
     });
 
@@ -39,38 +63,194 @@ describe("RecurringExpenseService", () => {
             label: "Abonnement salle",
             solde: 31.99,
             isActive: true,
-            nextOccurrence: new Date("2026-05-01T00:00:00.000Z"),
+            nextOccurrence: new Date("2026-10-01"),
             frequency: RecurringExpenseFrequency.MONTHLY,
             natureId: null,
             posteId: null,
         });
 
-        await service.save({
-            id: 1,
-            label: "Abonnement salle",
-            solde: 31.99,
-            isActive: true,
-            nextOccurrence: "2026-05-01",
-            frequency: RecurringExpenseFrequency.MONTHLY,
-            natureId: null,
-            posteId: null,
-        }, TEST_ACCOUNT_ID, TEST_USER_ID);
+        await service.save(
+            {
+                id: 1,
+                label: "Abonnement salle",
+                solde: 31.99,
+                isActive: true,
+                nextOccurrence: "2026-10-01",
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                natureId: null,
+                posteId: null,
+            },
+            TEST_ACCOUNT_ID,
+            TEST_USER_ID,
+        );
 
-        const user = await testDataSource.getRepository(User).findOne({ where: { id: TEST_USER_ID } });
+        const user = await testDataSource.getRepository(User).findOne({
+            where: { id: TEST_USER_ID },
+        });
+
         expect(user?.totalXp).toBe(0);
     });
 
-    it("counts occurrences from the next scheduled date until the forecast horizon", async () => {
-        const now = new Date();
+    it("counts monthly occurrences from the next scheduled date until the forecast horizon", async () => {
+        const horizon = new Date("2026-12-31");
 
-        const firstOccurrence = new Date(now);
-        firstOccurrence.setDate(now.getDate() + 7);
+        await testDataSource.getRepository(RecurringExpense).save([
+            {
+                label: "Loyer",
+                solde: -100,
+                isActive: true,
+                // 15/09, 15/10, 15/11, 15/12
+                nextOccurrence: new Date("2026-09-15"),
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: TEST_ACCOUNT_ID,
+            },
+            {
+                label: "Abonnement",
+                solde: -50,
+                isActive: true,
+                // 22/09, 22/10, 22/11, 22/12
+                nextOccurrence: new Date("2026-09-22"),
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: TEST_ACCOUNT_ID,
+            },
+        ] as RecurringExpense[]);
 
-        const secondOccurrence = new Date(now);
-        secondOccurrence.setDate(now.getDate() + 25);
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
 
-        const horizon = new Date(now);
-        horizon.setDate(now.getDate() + 50);
+        // Loyer : 4 × 100 = +400
+        // Abonnement : 4 × 50 = +200
+        expect(total).toBe(-600);
+    });
+
+    it("treats positive recurring income as a negative cash impact on the balance forecast", async () => {
+        const expenseOccurrence = new Date("2026-09-16");
+        const incomeOccurrence = new Date("2026-09-26");
+        const horizon = new Date("2026-10-26");
+
+        await testDataSource.getRepository(RecurringExpense).save([
+            {
+                label: "Loyer",
+                solde: -100,
+                isActive: true,
+                // 16/09 puis 16/10
+                nextOccurrence: expenseOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: TEST_ACCOUNT_ID,
+            },
+            {
+                label: "Remboursement",
+                solde: 30,
+                isActive: true,
+                // 26/09 puis 26/10
+                nextOccurrence: incomeOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: TEST_ACCOUNT_ID,
+            },
+        ] as RecurringExpense[]);
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
+
+        // Dépenses : 2 × -100 = -200
+        // Revenus : 2 × +30 = 60
+        // Total : -140
+        expect(total).toBe(-140);
+    });
+
+    it("[simulateFutureRecurrent()] includes the recurring expense occurring on the last day of the current month", async () => {
+        const endOfMonth = new Date("2026-09-30");
+
+        await testDataSource.getRepository(RecurringExpense).save({
+            label: "Loyer",
+            solde: -100,
+            isActive: true,
+            nextOccurrence: endOfMonth,
+            frequency: RecurringExpenseFrequency.MONTHLY,
+            accountId: TEST_ACCOUNT_ID,
+        });
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            endOfMonth,
+        );
+
+        expect(total).toBe(-100);
+    });
+
+    it("[simulateFutureRecurrent()] includes all monthly occurrences until the end of the month three months later", async () => {
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
+
+        await testDataSource.getRepository(RecurringExpense).save({
+            label: "Loyer",
+            solde: -100,
+            isActive: true,
+            nextOccurrence: firstOccurrence,
+            frequency: RecurringExpenseFrequency.MONTHLY,
+            accountId: TEST_ACCOUNT_ID,
+        });
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
+
+        // 30/09, 31/10, 30/11, 31/12
+        expect(total).toBe(-400);
+    });
+
+    it("[simulateFutureRecurrent()] does not include the occurrence after the forecast horizon", async () => {
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-30");
+
+        await testDataSource.getRepository(RecurringExpense).save({
+            label: "Loyer",
+            solde: -100,
+            isActive: true,
+            nextOccurrence: firstOccurrence,
+            frequency: RecurringExpenseFrequency.MONTHLY,
+            accountId: TEST_ACCOUNT_ID,
+        });
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
+
+        // 30/09, 31/10, 30/11, 30/12
+        expect(total).toBe(-400);
+    });
+
+    it("[simulateFutureRecurrent()] includes an occurrence exactly on the forecast horizon", async () => {
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
+
+        await testDataSource.getRepository(RecurringExpense).save({
+            label: "Loyer",
+            solde: -100,
+            isActive: true,
+            nextOccurrence: firstOccurrence,
+            frequency: RecurringExpenseFrequency.MONTHLY,
+            accountId: TEST_ACCOUNT_ID,
+        });
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
+
+        // 30/09, 31/10, 30/11, 31/12
+        expect(total).toBe(-400);
+    });
+
+    it("[simulateFutureRecurrent()] preserves the existing sign convention", async () => {
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save([
             {
@@ -82,53 +262,45 @@ describe("RecurringExpenseService", () => {
                 accountId: TEST_ACCOUNT_ID,
             },
             {
-                label: "Abonnement",
-                solde: -50,
+                label: "Salaire",
+                solde: 2000,
                 isActive: true,
-                nextOccurrence: secondOccurrence,
-                frequency: RecurringExpenseFrequency.MONTHLY,
-                accountId: TEST_ACCOUNT_ID,
-            }
-        ] as RecurringExpense[]);
-
-        const total = await service.simulateFutureRecurrent(TEST_ACCOUNT_ID, horizon);
-
-        expect(total).toBe(250);
-    });
-
-    it("treats positive recurring income as a negative cash impact on the balance forecast", async () => {
-        const now = new Date();
-
-        const expenseOccurrence = new Date(now);
-        expenseOccurrence.setDate(now.getDate() + 5);
-
-        const incomeOccurrence = new Date(now);
-        incomeOccurrence.setDate(now.getDate() + 15);
-
-        const horizon = new Date(now);
-        horizon.setDate(now.getDate() + 45);
-
-        await testDataSource.getRepository(RecurringExpense).save([
-            {
-                label: "Loyer",
-                solde: -100,
-                isActive: true,
-                nextOccurrence: expenseOccurrence,
+                nextOccurrence: firstOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
                 accountId: TEST_ACCOUNT_ID,
             },
-            {
-                label: "Remboursement",
-                solde: 30,
-                isActive: true,
-                nextOccurrence: incomeOccurrence,
-                frequency: RecurringExpenseFrequency.MONTHLY,
-                accountId: TEST_ACCOUNT_ID,
-            }
         ] as RecurringExpense[]);
 
-        const total = await service.simulateFutureRecurrent(TEST_ACCOUNT_ID, horizon);
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
 
-        expect(total).toBe(140);
+        // Dépenses : 4 × -100 = -400
+        // Revenus : 4 × +2000 = +8000
+        // Total : 7600
+        expect(total).toBe(7600);
+    });
+
+    it("[simulateFutureRecurrent()] calculates quarterly occurrences using calendar months", async () => {
+        const firstOccurrence = new Date("2026-09-30");
+        const horizon = new Date("2027-06-30");
+
+        await testDataSource.getRepository(RecurringExpense).save({
+            label: "Assurance",
+            solde: -300,
+            isActive: true,
+            nextOccurrence: firstOccurrence,
+            frequency: RecurringExpenseFrequency.QUARTERLY,
+            accountId: TEST_ACCOUNT_ID,
+        });
+
+        const total = await service.simulateFutureRecurrent(
+            TEST_ACCOUNT_ID,
+            horizon,
+        );
+
+        // 30/09, 31/12, 31/03, 30/06
+        expect(total).toBe(-1200);
     });
 });
