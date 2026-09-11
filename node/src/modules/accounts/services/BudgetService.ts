@@ -54,9 +54,10 @@ export default class BudgetService {
 
         // Add recurring expenses
         for (const expense of recurringExpenses) {
-
             /**
-             * Calcules l'équivalent mensuel de l'amount du recurring expense en fonction de sa fréquence.
+             * L'API de budget est une vue de planification, pas de solde comptable brut.
+             * On normalise donc le montant en magnitude pour afficher les montants à venir,
+             * tandis que la vraie convention de signe est gérée dans le calcul de forecast.
              */
             let amountByFrequency: number;
             switch (expense.frequency) {

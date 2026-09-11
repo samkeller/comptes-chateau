@@ -117,10 +117,12 @@ export default class RecurringExpenseService {
                 return acc;
             }
 
+            const itemAmount = Math.abs(Number(item.solde));
             const daysFromNextOccurrence = differenceInDays(toDate, item.nextOccurrence);
             const occurrencesCount = Math.floor(daysFromNextOccurrence / RecurringExpenseDaysCount[item.frequency]) + 1;
+            const signMultiplier = Number(item.solde) < 0 ? 1 : -1;
 
-            return acc + item.solde * occurrencesCount;
+            return acc + signMultiplier * itemAmount * occurrencesCount;
         }, 0);
     }
 }

@@ -89,7 +89,7 @@ describe("RecurringExpenseService.save", () => {
             {
                 id: 1,
                 label: "Loyer",
-                solde: 100,
+                solde: -100,
                 isActive: true,
                 nextOccurrence: firstOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -98,7 +98,7 @@ describe("RecurringExpenseService.save", () => {
             {
                 id: 2,
                 label: "Abonnement",
-                solde: 50,
+                solde: -50,
                 isActive: true,
                 nextOccurrence: secondOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -109,5 +109,44 @@ describe("RecurringExpenseService.save", () => {
         const total = await service.simulateFutureRecurrent(1, horizon);
 
         expect(total).toBe(250);
+    });
+
+    it("treats positive recurring income as a negative cash impact on the balance forecast", async () => {
+        const service = new RecurringExpenseService(testDataSource.manager);
+        const now = new Date();
+
+        const expenseOccurrence = new Date(now);
+        expenseOccurrence.setDate(now.getDate() + 5);
+
+        const incomeOccurrence = new Date(now);
+        incomeOccurrence.setDate(now.getDate() + 15);
+
+        const horizon = new Date(now);
+        horizon.setDate(now.getDate() + 45);
+
+        await testDataSource.getRepository(RecurringExpense).save([
+            {
+                id: 3,
+                label: "Loyer",
+                solde: -100,
+                isActive: true,
+                nextOccurrence: expenseOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: 1,
+            },
+            {
+                id: 4,
+                label: "Remboursement",
+                solde: 30,
+                isActive: true,
+                nextOccurrence: incomeOccurrence,
+                frequency: RecurringExpenseFrequency.MONTHLY,
+                accountId: 1,
+            }
+        ] as RecurringExpense[]);
+
+        const total = await service.simulateFutureRecurrent(1, horizon);
+
+        expect(total).toBe(140);
     });
 });
