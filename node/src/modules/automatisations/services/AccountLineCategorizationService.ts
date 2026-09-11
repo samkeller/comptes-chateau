@@ -1,13 +1,14 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { AccountLineRule } from "../entities/AccountLineRule";
-import { AccountLine } from "../../accounts/entities/AccountLine";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { normalizeAccountLineRuleLabel, normalizeForMatching } from "../utils/AccountLineRulesUtils";
 import { AccountLineRuleValidationError } from "./errors/AccountLineRuleErrors";
 import UserXpService from "../../core/services/UserXpService";
-import { Like } from "typeorm";
+import { EntityManager, Like, Repository } from "typeorm";
 import type { SaveAccountLineRuleRequest, UnmappedAccountLineRuleResponse } from "@chocosous/shared";
+import AccountLineService from "../../accounts/services/AccountLineService";
+import PosteService from "../../accounts/services/PosteService";
 
 interface PatternAggregation {
     pattern: string;
@@ -20,11 +21,17 @@ interface PatternAggregation {
 }
 
 export default class AccountLineCategorizationService {
-    private ruleRepo = AppDataSource.getRepository(AccountLineRule);
-    private lineRepo = AppDataSource.getRepository(AccountLine);
-    private posteRepo = AppDataSource.getRepository(AccountLinePoste);
+    private readonly ruleRepo: Repository<AccountLineRule>;
+    private readonly accountLineService: AccountLineService;
+    private readonly posteService: PosteService;
+    private readonly userXpService: UserXpService;
 
-    private userXpService = new UserXpService()
+    constructor(manager: EntityManager = AppDataSource.manager) {
+        this.ruleRepo = manager.getRepository(AccountLineRule);
+        this.accountLineService = new AccountLineService(manager);
+        this.posteService = new PosteService(manager);
+        this.userXpService = new UserXpService(manager);
+    }
 
     private FREQUENCY_THRESHOLD = 3; // Seuil de fréquence pour suggérer un poste ou une nature
 
@@ -105,10 +112,7 @@ export default class AccountLineCategorizationService {
         );
 
         // 2. Charger l'historique avec les relations associées (1 seule requête SQL !)
-        const lines = await this.lineRepo.find({
-            relations: ["poste", "nature", "account"],
-            select: ["id", "label", "accountId"],
-        });
+        const lines = await this.accountLineService.getCategorizationHistory();
 
         // 3. Agrégation en mémoire
         const aggregations = new Map<string, PatternAggregation>();
@@ -207,12 +211,7 @@ export default class AccountLineCategorizationService {
             throw new AccountLineRuleValidationError("Le motif (pattern) ne peut pas être vide.");
         }
         if (body.posteId) {
-            const poste = await this.posteRepo.findOne({
-                where: {
-                    id: body.posteId,
-                    accountId: body.accountId,
-                }
-            });
+            const poste = await this.posteService.getById(body.posteId, body.accountId);
 
             if (!poste) {
                 throw new AccountLineRuleValidationError(
@@ -239,10 +238,7 @@ export default class AccountLineCategorizationService {
             return 0;
         }
 
-        const lines = await this.lineRepo.find({
-            where: { accountId },
-            select: ["label"],
-        });
+        const lines = await this.accountLineService.getLabelsByAccount(accountId);
 
         return lines.reduce((count, line) => {
             return normalizeForMatching(line.label) === normalizedPattern ? count + 1 : count;

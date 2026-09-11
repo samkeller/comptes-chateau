@@ -1,40 +1,29 @@
+import type { BudgetByPoste, DashboardOverview, MonthlyAggregateByPoste } from "@chocosous/shared";
+import type { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
-import { AccountLine } from "../entities/AccountLine";
-import { BudgetItem } from "../entities/BudgetItem";
-import { KanbanTask } from "../../kanban/entities/KanbanTask";
-import { Account } from "../entities/Account";
-import type { MonthlyAggregateByPoste, DashboardOverview, BudgetByPoste } from "@chocosous/shared";
+import KanbanBoardService from "../../kanban/services/KanbanBoardService";
+import AccountLineService from "./AccountLineService";
+import AccountService from "./AccountService";
+import BudgetService from "./BudgetService";
 import RecurringExpenseService from "./RecurringExpenseService";
-import { EntityManager, Repository } from "typeorm";
-
-interface PosteBudget {
-    label: string;
-    color: string;
-    amount: number;
-}
 
 export default class DashboardService {
-    private accountLineRepo: Repository<AccountLine>
-    private budgetItemRepo: Repository<BudgetItem>
-    private recurringExpenseService: RecurringExpenseService
-    private accountRepo: Repository<Account>
-    private kanbanTaskRepo: Repository<KanbanTask>
+    private readonly accountLineService: AccountLineService;
+    private readonly accountService: AccountService;
+    private readonly budgetService: BudgetService;
+    private readonly recurringExpenseService: RecurringExpenseService;
+    private readonly kanbanBoardService: KanbanBoardService;
 
-    constructor(
-        em: EntityManager = AppDataSource.manager,
-    ) {
-
-        this.accountLineRepo = em.getRepository(AccountLine);
-        this.budgetItemRepo = em.getRepository(BudgetItem);
-        this.recurringExpenseService = new RecurringExpenseService(em);
-        this.accountRepo = em.getRepository(Account);
-        this.kanbanTaskRepo = em.getRepository(KanbanTask);
+    constructor(manager: EntityManager = AppDataSource.manager) {
+        this.accountLineService = new AccountLineService(manager);
+        this.accountService = new AccountService(manager);
+        this.budgetService = new BudgetService(manager);
+        this.recurringExpenseService = new RecurringExpenseService(manager);
+        this.kanbanBoardService = new KanbanBoardService(manager);
     }
 
     async getOverview(userId: number, accountId: number): Promise<DashboardOverview> {
-        const baseline = await this.accountRepo.findOne({ where: { id: accountId } });
-
-        // Cas fallback si jamais on n'a pas de baseline en base (ex: première utilisation), on part de 0
+        const baseline = await this.accountService.getById(accountId);
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
@@ -51,43 +40,33 @@ export default class DashboardService {
             toCheckCounts,
             assignedKanbanTasksCount,
         ] = await Promise.all([
-            this.getBalanceDeltaSinceDate(true, baseLineDate, undefined, accountId),
-            this.getBalanceDeltaSinceDate(false, baseLineDate, nextMonthStart, accountId),
-            this.getBalanceDeltaSinceDate(false, baseLineDate, threeMonthsEnd, accountId),
+            this.accountLineService.getBalanceDeltaSinceDate(true, baseLineDate, undefined, accountId),
+            this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, nextMonthStart, accountId),
+            this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, threeMonthsEnd, accountId),
             this.getBudgetVsActual(accountId, monthStart.getMonth() + 1, monthStart.getFullYear()),
-            this.getOperationsToCheckCounts(accountId),
-            this.getAssignedKanbanTasksCount(userId),
+            this.accountLineService.getOperationsToCheckCounts(accountId),
+            this.kanbanBoardService.getAssignedTasksCount(userId),
         ]);
 
-        const monthlyBudget = budgetVsActual.reduce((acc, item) => acc + item.budgetAmount, 0);
-        const monthExpenses = budgetVsActual.reduce((acc, item) => acc + item.actualAmount, 0);
-
-        /**
-         * FinaleForecast = baseline - forecastDeltaRow - sum(recurrentExpenses qui vont arriver)
-         */
-        const simulateOneMonthForecast = await this.recurringExpenseService.simulateFutureRecurrent(accountId, nextMonthStart);
-        const simulateThreeMonthsForecast = await this.recurringExpenseService.simulateFutureRecurrent(accountId, threeMonthsEnd);
-
-        const finalOneMonthForecast = baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0) - simulateOneMonthForecast;
-        const finalThreeMonthsForecast = baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0) - simulateThreeMonthsForecast;
+        const [simulateOneMonthForecast, simulateThreeMonthsForecast] = await Promise.all([
+            this.recurringExpenseService.simulateFutureRecurrent(accountId, nextMonthStart),
+            this.recurringExpenseService.simulateFutureRecurrent(accountId, threeMonthsEnd),
+        ]);
 
         return {
             currentBalance: baselineAmount + Number(currentDeltaRaw?.value ?? 0),
-            forecastBalanceMonthEnd: finalOneMonthForecast,
-            forecastBalanceThreeMonths: finalThreeMonthsForecast,
-            monthExpenses,
-            monthlyBudget,
+            forecastBalanceMonthEnd:
+                baselineAmount + Number(forecastDeltaMonthEndRaw?.value ?? 0) - simulateOneMonthForecast,
+            forecastBalanceThreeMonths:
+                baselineAmount + Number(forecastDeltaThreeMonthsRaw?.value ?? 0) - simulateThreeMonthsForecast,
+            monthExpenses: budgetVsActual.reduce((total, item) => total + item.actualAmount, 0),
+            monthlyBudget: budgetVsActual.reduce((total, item) => total + item.budgetAmount, 0),
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
             operationsToCheckHorsCompteCount: toCheckCounts.horsCompte,
             assignedKanbanTasksCount,
         };
     }
 
-    /**
-     * Agrège les opérations par mois et par poste
-     * @param fromMonth Format YYYY-MM
-     * @param toMonth Format YYYY-MM
-     */
     async getMonthlyByPoste(
         fromMonth: Date,
         toMonth: Date,
@@ -95,40 +74,25 @@ export default class DashboardService {
         accountId: number
     ): Promise<MonthlyAggregateByPoste[]> {
         const [rawResults, budgetByPoste] = await Promise.all([
-            this.getMonthlyByPosteRaw(fromMonth, toMonth, posteIds, accountId),
-            this.computeBudgetByPoste(accountId, posteIds),
+            this.accountLineService.getMonthlyByPosteRaw(fromMonth, toMonth, posteIds, accountId),
+            this.budgetService.getBudgetByPoste(accountId, posteIds),
         ]);
 
-        return rawResults.map((r) => ({
-            year: parseInt(r.year),
-            month: parseInt(r.month),
-            posteId: r.posteId,
-            posteLabel: r.posteLabel,
-            posteColor: r.posteColor,
-            total: parseFloat(r.total),
-            budgetAmount: budgetByPoste.get(r.posteId)?.amount ?? 0,
+        return rawResults.map((row) => ({
+            year: parseInt(row.year),
+            month: parseInt(row.month),
+            posteId: row.posteId,
+            posteLabel: row.posteLabel,
+            posteColor: row.posteColor,
+            total: parseFloat(row.total),
+            budgetAmount: budgetByPoste.get(row.posteId)?.amount ?? 0,
         }));
     }
 
     async getBudgetVsActual(accountId: number, month: number, year: number): Promise<BudgetByPoste[]> {
-
         const [actualResults, budgetByPoste] = await Promise.all([
-            this.accountLineRepo
-                .createQueryBuilder("al")
-                .innerJoin("al.poste", "poste")
-                .select("poste.id", "posteId")
-                .addSelect("poste.label", "posteLabel")
-                .addSelect("poste.color", "posteColor")
-                .addSelect("COALESCE(SUM(al.debit), 0)", "actualAmount")
-                .where("al.account_id = :accountId", { accountId })
-                .andWhere("al.dateOperation >= :monthStart", { monthStart: new Date(year, month - 1, 1) })
-                .andWhere("al.dateOperation < :nextMonthStart", { nextMonthStart: new Date(year, month, 1) })
-                .groupBy("poste.id")
-                .addGroupBy("poste.label")
-                .addGroupBy("poste.color")
-                .getRawMany<{ posteId: number; posteLabel: string; posteColor: string; actualAmount: string }>(),
-            // BudgetItems + RecurringExpenses
-            this.computeBudgetByPoste(accountId),
+            this.accountLineService.getActualByPoste(accountId, month, year),
+            this.budgetService.getBudgetByPoste(accountId),
         ]);
 
         const posteMap = new Map<number, { label: string; color: string; budget: number; actual: number }>();
@@ -161,147 +125,4 @@ export default class DashboardService {
             }))
             .sort((a, b) => b.budgetAmount - a.budgetAmount);
     }
-
-    private async getMonthlyByPosteRaw(
-        fromMonth: Date,
-        toMonth: Date,
-        posteIds: number[],
-        accountId: number
-    ): Promise<Array<{ year: string; month: string; posteId: number; posteLabel: string; posteColor: string; total: string }>> {
-        let qb = this.accountLineRepo
-            .createQueryBuilder("al")
-            .select("EXTRACT(YEAR FROM al.dateOperation)", "year")
-            .addSelect("EXTRACT(MONTH FROM al.dateOperation)", "month")
-            .addSelect("poste.id", "posteId")
-            .addSelect("poste.label", "posteLabel")
-            .addSelect("poste.color", "posteColor")
-            .addSelect("COALESCE(SUM(al.credit - al.debit), 0)", "total")
-            .innerJoin("al.poste", "poste")
-            .where("al.account_id = :accountId", { accountId })
-            .groupBy("year")
-            .addGroupBy("month")
-            .addGroupBy("poste.id")
-            .addGroupBy("poste.label")
-            .addGroupBy("poste.color")
-            .orderBy("year", "ASC")
-            .addOrderBy("month", "ASC")
-            .addOrderBy("poste.label", "ASC");
-
-        // Normalise les bornes aux mois complets (le Calendar front est en vue "month")
-        const fromStart = new Date(fromMonth.getFullYear(), fromMonth.getMonth(), 1);
-        const toNextMonth = new Date(toMonth.getFullYear(), toMonth.getMonth() + 1, 1);
-
-        if (fromMonth) {
-            qb = qb.andWhere("al.dateOperation >= :fromStart", { fromStart });
-        }
-        if (toMonth) {
-            qb = qb.andWhere("al.dateOperation < :toNextMonth", { toNextMonth });
-        }
-        qb = qb.andWhere("poste.account_id = :accountId", { accountId });
-        qb = qb.andWhere("poste.id IN (:...posteIds)", { posteIds });
-
-        return qb.getRawMany();
-    }
-
-    /**
-     * Computes total budget per poste (BudgetItems + RecurringExpenses).
-     * Optionally filtered to a subset of posteIds.
-     */
-    private async computeBudgetByPoste(accountId: number, posteIds?: number[]): Promise<Map<number, PosteBudget>> {
-        const [budgetItems, recurringExpenses] = await Promise.all([
-            this.budgetItemRepo.find({
-                where: { isActive: true, account: { id: accountId } },
-                relations: { poste: true },
-            }),
-            this.recurringExpenseService.getAllRecurringExpenses(accountId, true),
-        ]);
-
-        const byPoste = new Map<number, PosteBudget>();
-
-        for (const item of budgetItems) {
-            if (!item.poste) continue;
-            if (posteIds && !posteIds.includes(item.poste.id)) continue;
-            const existing = byPoste.get(item.poste.id);
-            if (existing) {
-                existing.amount += Number(item.amount);
-            } else {
-                byPoste.set(item.poste.id, { label: item.poste.label, color: item.poste.color, amount: Number(item.amount) });
-            }
-        }
-
-        for (const expense of recurringExpenses) {
-            if (!expense.poste) continue;
-            if (posteIds && !posteIds.includes(expense.poste.id)) continue;
-            const existing = byPoste.get(expense.poste.id);
-            if (existing) {
-                existing.amount += Math.abs(Number(expense.solde));
-            } else {
-                byPoste.set(expense.poste.id, { label: expense.poste.label, color: expense.poste.color, amount: Math.abs(Number(expense.solde)) });
-            }
-        }
-
-        return byPoste;
-    }
-
-    /**
-     * Calcule la différence de solde depuis une date donnée (coalesce sum of credit - debit)
-     * @param checkedOnly Permet de réutiliser la fonction pour les deux calculs de solde (current vs forecast)
-     * @param fromDate
-     * @returns 
-     */
-    private async getBalanceDeltaSinceDate(
-        checkedOnly: boolean,
-        fromDate: Date,
-        toDate: Date | undefined,
-        accountId: number
-    ): Promise<{ value: string | number } | undefined> {
-        let qb = this.accountLineRepo
-            .createQueryBuilder("al")
-            .select("COALESCE(SUM(al.credit - al.debit), 0)", "value")
-            .where("al.account_id = :accountId", { accountId })
-            .andWhere("al.dateOperation >= :fromDate", { fromDate })
-
-            .leftJoin("al.nature", "nature")
-            .andWhere("(nature.id IS NULL OR nature.isHorsCompte = false)");
-
-        if (toDate) {
-            qb = qb.andWhere("al.dateOperation < :toDate", { toDate });
-        }
-
-        if (checkedOnly) {
-            qb = qb.andWhere("al.isChecked = :isChecked", { isChecked: true });
-        }
-
-        return qb.getRawOne<{ value: string | number }>();
-    }
-
-    private async getOperationsToCheckCounts(accountId: number): Promise<{ inAccount: number; horsCompte: number }> {
-        const rawCounts = await this.accountLineRepo
-            .createQueryBuilder("al")
-            .leftJoin("al.nature", "nature")
-            .where("al.account_id = :accountId", { accountId })
-            .select(
-                "SUM(CASE WHEN al.isChecked = false AND (nature.id IS NULL OR nature.isHorsCompte = false) THEN 1 ELSE 0 END)",
-                "inAccount"
-            )
-            .addSelect(
-                "SUM(CASE WHEN al.isChecked = false AND nature.isHorsCompte = true THEN 1 ELSE 0 END)",
-                "horsCompte"
-            )
-            .getRawOne<{ inAccount: string | number | null; horsCompte: string | number | null }>();
-
-        return {
-            inAccount: Number(rawCounts?.inAccount ?? 0),
-            horsCompte: Number(rawCounts?.horsCompte ?? 0)
-        };
-    }
-
-    private async getAssignedKanbanTasksCount(userId: number): Promise<number> {
-        return this.kanbanTaskRepo
-            .createQueryBuilder("task")
-            .innerJoin("task.assignees", "assignee", "assignee.id = :userId", { userId })
-            .where("task.isDone = :isDone", { isDone: false })
-            .getCount();
-    }
-
 }
