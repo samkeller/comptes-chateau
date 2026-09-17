@@ -1,6 +1,7 @@
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { useScreen } from "@/hooks/useScreen";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
@@ -26,6 +27,7 @@ export default function StockLocationsPanel({
     onDeleteLocation,
     className,
 }: StockLocationsPanelProps) {
+    const { isDesktop } = useScreen();
 
     const StockLocationListItem = (
         { location, className }: {
@@ -80,7 +82,23 @@ export default function StockLocationsPanel({
     return (
 
         <Card
-            title="Lieux de stockage"
+            title={
+                <div className="flex justify-between">
+                    <h1>Lieux de stockage</h1>
+                    <Button
+                        icon="pi pi-map-marker"
+                        size="small"
+                        onClick={onAddLocation}
+                        // Desktop -> Label
+                        {...(isDesktop && { label: "Ajouter" })}
+                        // Mobile -> Tooltip
+                        {... (!isDesktop && {
+                            tooltip: "Ajouter un lieu de stockage",
+                            tooltipOptions: { position: "left" }
+                        })}
+                    />
+                </div>
+            }
             className={`light h-full min-h-0 ${className ?? ""}`}
             pt={{
                 body: {
@@ -97,14 +115,6 @@ export default function StockLocationsPanel({
                 </div>
             ) : (
                 <FillRemainingHeight>
-                    <div className="flex shrink-0 justify-end mb-4">
-                        <Button
-                            label="Ajouter"
-                            icon="pi pi-map-marker"
-                            size="small"
-                            onClick={onAddLocation}
-                        />
-                    </div>
                     <div className="min-h-0 flex-1">
                         <AppScrollPanel>
                             <div className="flex flex-col gap-2">
