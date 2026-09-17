@@ -1,13 +1,13 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useEffect, useMemo, useState } from "react";
 import type { UnifiedBudgetLine } from "@chocosous/shared";
-import BudgetService from "../../services/BudgetService";
-import { toMonetaryAmount } from "../../utils/NumberUtils";
+import BudgetService from "../../../services/BudgetService";
+import { toMonetaryAmount } from "../../../utils/NumberUtils";
 import { Tag } from "primereact/tag";
-import { ColoredLabel } from "../../components/datatableBodys/ColoredLabel";
+import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { useAccountId } from "../../hooks/useAccountId";
+import { useAccountId } from "../../../hooks/useAccountId";
 
 interface GroupedData {
     posteLabel: string;
@@ -18,7 +18,7 @@ interface GroupedData {
     percentage: number;
 }
 
-export default function UnifiedBudgetView() {
+export default function BudgetOverview() {
     const accountId = useAccountId();
     const [lines, setLines] = useState<UnifiedBudgetLine[]>([]);
     const [loading, setLoading] = useState<boolean>(true);

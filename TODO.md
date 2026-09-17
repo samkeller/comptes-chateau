@@ -12,10 +12,10 @@ Project Description
 - [ ] Ajouter dans les formulaires des indications claires sur les données étant obligatoires/facultatives (mettre en valeur les lignes obligatoires). Cf FloatLabel. Harmonisation partout  
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines)  
 - [ ] Fixtures back (https://github.com/RobinCK/typeorm-fixtures) - Peu urgent  
-- [ ] Refaire écran :accountId/budget/overview en clarifiant les recettes et les dépenses et avec un graphique plus clair que ce long tableau ()  
 
 ### In Progress
 
+- [ ] Refaire écran :accountId/budget/overview en clarifiant les recettes et les dépenses et avec un graphique plus clair que ce long tableau ()  
 - [ ] Gestion d'erreurs centralisés (AppError back -> catchés par Interceptors.ts -> Supprimer tous les catchs() front inutiles - le back envoie les messages d'erreurs)  
 
 ### Done ✓
