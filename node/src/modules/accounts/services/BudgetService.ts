@@ -2,7 +2,7 @@ import { AppDataSource } from "../../../db/dataSource";
 import { badRequest, notFound } from "../../../utils/AppError";
 import type { AccountLinePoste } from "../entities/AccountLinePoste";
 import { BudgetItem } from "../entities/BudgetItem";
-import type { BudgetItemDto, SaveBudgetItemPayload, UnifiedBudgetLine } from "@chocosous/shared";
+import type { BudgetItemDto, RecurringExpenseFrequency, SaveBudgetItemPayload, UnifiedBudgetLine } from "@chocosous/shared";
 import { toBudgetItemDto } from "../mappers/BudgetItemMapper";
 import type { EntityManager, Repository } from "typeorm";
 import PosteService from "./PosteService";
@@ -13,6 +13,8 @@ export interface PosteBudget {
     color: string;
     amount: number;
 }
+
+type BudgetLineAmounts = Pick<UnifiedBudgetLine, "amount" | "debit" | "credit">;
 
 export default class BudgetService {
     private readonly budgetItemRepo: Repository<BudgetItem>;
@@ -50,47 +52,29 @@ export default class BudgetService {
 
         const lines: UnifiedBudgetLine[] = [];
 
-        // Add budget items
         for (const item of budgetItems) {
+            const amounts = BudgetService.toBudgetLineAmounts(Number(item.amount));
+
             lines.push({
                 id: `budget_${item.id}`,
                 source: 'budget',
                 label: item.label,
-                amount: Number(item.amount),
+                ...amounts,
                 posteId: item.poste?.id ?? null,
                 posteLabel: item.poste?.label ?? null,
                 posteColor: item.poste?.color ?? null,
             });
         }
 
-        // Add recurring expenses
         for (const expense of recurringExpenses) {
-            /**
-             * L'API de budget est une vue de planification, pas de solde comptable brut.
-             * On normalise donc le montant en magnitude pour afficher les montants à venir,
-             * tandis que la vraie convention de signe est gérée dans le calcul de forecast.
-             */
-            let amountByFrequency: number;
-            switch (expense.frequency) {
-                case 'weekly':
-                    amountByFrequency = Number(expense.solde) * 4.34524; // Average weeks in a month
-                    break;
-                case 'quarterly':
-                    amountByFrequency = Number(expense.solde) / 3;
-                    break;
-                case 'yearly':
-                    amountByFrequency = Number(expense.solde) / 12;
-                    break;
-                case 'monthly':
-                default:
-                    amountByFrequency = Number(expense.solde);
-            }
+            const monthlyAmount = BudgetService.toMonthlyAmount(Number(expense.solde), expense.frequency);
+            const amounts = BudgetService.toBudgetLineAmounts(monthlyAmount);
 
             lines.push({
                 id: `recurring_${expense.id}`,
                 source: 'recurring',
                 label: expense.label,
-                amount: Math.abs(amountByFrequency),
+                ...amounts,
                 posteId: expense.poste?.id ?? null,
                 posteLabel: expense.poste?.label ?? null,
                 posteColor: expense.poste?.color ?? null,
@@ -217,5 +201,38 @@ export default class BudgetService {
         }
 
         return poste;
+    }
+
+    /**
+    * Convertit un montant en lignes de budget avec montant, débit et crédit.
+    * @param amount Le montant à convertir en lignes de budget.
+    * @returns Un objet contenant le montant, le débit et le crédit.
+    */
+    private static toBudgetLineAmounts(amount: number): BudgetLineAmounts {
+        return {
+            amount,
+            debit: amount < 0 ? Math.abs(amount) : 0,
+            credit: amount > 0 ? amount : 0,
+        };
+    }
+
+    /**
+     * Convertit un montant selon la fréquence en montant mensuel.
+     * @param amount Le montant à convertir.
+     * @param frequency La fréquence du montant (weekly, monthly, quarterly, yearly).
+     * @returns Le montant converti en montant mensuel.
+     */
+    private static toMonthlyAmount(amount: number, frequency: RecurringExpenseFrequency): number {
+        switch (frequency) {
+            case 'weekly':
+                return amount * 4.34524;
+            case 'quarterly':
+                return amount / 3;
+            case 'yearly':
+                return amount / 12;
+            case 'monthly':
+            default:
+                return amount;
+        }
     }
 }

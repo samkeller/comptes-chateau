@@ -2,26 +2,18 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { useEffect, useMemo, useState } from "react";
 import type { UnifiedBudgetLine } from "@chocosous/shared";
 import BudgetService from "../../../services/BudgetService";
-import { toMonetaryAmount } from "../../../utils/NumberUtils";
-import { Tag } from "primereact/tag";
-import { ColoredLabel } from "../../../components/datatableBodys/ColoredLabel";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { useAccountId } from "../../../hooks/useAccountId";
+import BudgetDisplayByPoste from "./organisms/BudgetDatatableDisplayByPoste";
+import IconSelectButton from "@/components/atoms/form/IconSelectButton";
+import { buildBudgetOverviewData } from "./BudgetOverviewCalculations";
+import BudgetSummary from "./molecules/BudgetSummary";
 
-interface GroupedData {
-    posteLabel: string;
-    posteColor: string | null;
-    posteId: number | null;
-    lines: UnifiedBudgetLine[];
-    subtotal: number;
-    percentage: number;
-}
 
 export default function BudgetOverview() {
     const accountId = useAccountId();
     const [lines, setLines] = useState<UnifiedBudgetLine[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [display, setDisplay] = useState<"Graph" | "List">("Graph");
 
     useEffect(() => {
         setLoading(true);
@@ -31,37 +23,7 @@ export default function BudgetOverview() {
             .finally(() => setLoading(false));
     }, [accountId]);
 
-    const totalBudget = useMemo(() => {
-        return lines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    }, [lines]);
-
-    const groupedData = useMemo((): GroupedData[] => {
-        const posteMap = new Map<string, UnifiedBudgetLine[]>();
-
-        for (const line of lines) {
-            const posteKey = `${line.posteId ?? 'null'}:${line.posteLabel ?? 'Sans poste'}`;
-            const current = posteMap.get(posteKey) ?? [];
-            current.push(line);
-            posteMap.set(posteKey, current);
-        }
-
-        return Array.from(posteMap.values())
-            .map((posteLines) => {
-                const firstLine = posteLines[0]!;
-                const subtotal = posteLines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-                const percentage = totalBudget > 0 ? (subtotal / totalBudget) * 100 : 0;
-
-                return {
-                    posteLabel: firstLine.posteLabel || "Sans poste",
-                    posteColor: firstLine.posteColor,
-                    posteId: firstLine.posteId,
-                    lines: posteLines,
-                    subtotal,
-                    percentage,
-                };
-            })
-            .sort((a, b) => a.posteLabel.localeCompare(b.posteLabel));
-    }, [lines, totalBudget]);
+    const { groupedData, totals } = useMemo(() => buildBudgetOverviewData(lines), [lines]);
 
     return (
         <>
@@ -73,68 +35,30 @@ export default function BudgetOverview() {
 
             {!loading && groupedData.length > 0 && (
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between rounded-border border border-surface bg-surface-50 px-4 py-3">
-                        <span className="font-semibold text-surface-700">Budget global</span>
-                        <span className="text-xl font-bold text-surface-900">{toMonetaryAmount(totalBudget)}</span>
+                    <div className="flex flex-col gap-3 rounded-border border border-surface bg-surface-50 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex min-w-48 flex-col gap-1">
+                            <span className="font-semibold text-surface-800">Budget global</span>
+                            <BudgetSummary totals={totals} />
+                        </div>
+
+
+                        <IconSelectButton
+                            options={[
+                                { value: "Graph", icon: "pi pi-chart-bar" },
+                                { value: "List", icon: "pi pi-list" },
+                            ]}
+                            defaultValue={"Graph"}
+                            onSelected={(selected) => setDisplay(selected as "Graph" | "List")}
+                        />
                     </div>
 
-                    {groupedData.map((posteGroup) => (
-                        <section
-                            key={`poste-${posteGroup.posteId ?? "none"}-${posteGroup.posteLabel}`}
-                            className="overflow-hidden rounded-border border border-surface"
-                        >
-                            <div className="flex items-center justify-between gap-4 bg-surface-100 px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                    {posteGroup.posteColor ? (
-                                        <ColoredLabel
-                                            data={{
-                                                label: posteGroup.posteLabel,
-                                                color: posteGroup.posteColor,
-                                            }}
-                                        />
-                                    ) : (
-                                        <span className="font-semibold text-surface-700">{posteGroup.posteLabel}</span>
-                                    )}
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className="text-lg font-bold text-surface-900">{toMonetaryAmount(posteGroup.subtotal)}</span>
-                                    <span className="text-sm text-surface-500">{posteGroup.percentage.toFixed(2)} % du budget</span>
-                                </div>
-                            </div>
-
-                            <DataTable value={posteGroup.lines} size="small" stripedRows>
-                                <Column
-                                    style={{ width: "10%" }}
-                                    field="source"
-                                    header="Type"
-                                    body={(rowData) => (
-                                        rowData.source === 'budget' ?
-                                            <Tag className="w-24" value="Budget" severity="info" /> :
-                                            <Tag className="w-24" value="Récurrent" severity="success" />
-                                    )} />
-                                <Column
-                                    style={{ width: "60%" }}
-                                    field="label"
-                                    header="Libellé"
-                                />
-                                <Column
-                                    style={{ width: "15%" }}
-                                    field="amount"
-                                    header="Montant"
-                                    align="right"
-                                    body={(rowData) => toMonetaryAmount(rowData.amount)}
-                                />
-                                <Column
-                                    style={{ width: "15%" }}
-                                    field="amount"
-                                    header="Poids"
-                                    align="right"
-                                    body={(rowData) => totalBudget > 0 ? `${((rowData.amount / totalBudget) * 100).toFixed(2)} %` : "0.00 %"}
-                                />
-                            </DataTable>
-                        </section>
-
-                    ))}
+                    {
+                        display === "Graph" ? (
+                            // <BudgetOverviewGraph data={groupedData} totalBudget={totals.netTotal} />
+                            <>{"Jyes"}</>
+                        ) :
+                            groupedData.map((posteGroup) => <BudgetDisplayByPoste key={`poste-${posteGroup.posteId ?? "none"}-${posteGroup.posteLabel}`} data={posteGroup} />)
+                    }
                 </div>
             )}
 
