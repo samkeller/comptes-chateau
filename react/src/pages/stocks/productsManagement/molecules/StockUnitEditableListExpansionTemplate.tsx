@@ -1,5 +1,5 @@
 import { Column, ColumnEditorOptions } from "primereact/column";
-import { StockUnitGroup } from "./StockUnitEditableList";
+import { StockUnitGroup } from "../hooks/useStockUnitsEditor";
 import {
     DataTable,
     DataTableRowEditCompleteEvent,

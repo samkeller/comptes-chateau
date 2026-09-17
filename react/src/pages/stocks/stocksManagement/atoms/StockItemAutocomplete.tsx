@@ -41,6 +41,7 @@ export default function StockItemAutocomplete({
     return (
         <AutoComplete
             className={className}
+            inputClassName="w-full"
             value={stockItemSearch}
             suggestions={suggestions}
             field="label"

@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { Button } from "primereact/button";
-import { FloatLabel } from "primereact/floatlabel";
 import { Message } from "primereact/message";
 import { CreateStockItemDto } from "@/services/stocks/dto/CreateStockItemDto";
-import StockItemAutocomplete from "../stocksManagement/atoms/StockItemAutocomplete";
-import { InputText } from "primereact/inputtext";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import StockUnitEditableList from "./molecules/StockUnitEditableList";
+import StockUnitEditableListMobile from "./organisms/StockUnitEditableListMobile";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
-import Optional from "@/components/atoms/form/Optional";
+import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit";
+import { useScreen } from "@/hooks/useScreen";
+import StockItemAutocomplete from "../stocksManagement/atoms/StockItemAutocomplete";
+import { FloatLabel } from "primereact/floatlabel";
 import RequiredMark from "@/components/atoms/form/RequiredMark";
+import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
+import ProductOptionalFields from "./molecules/ProductOptionalFields";
 
 const stockItemsService = new StockItemsService();
 const stockUnitsService = new StockUnitsService();
@@ -28,6 +29,7 @@ const EMPTY_STOCK_ITEM_DTO: CreateStockItemDto = {
 
 export default function ProductManagementPage() {
     const [formData, setFormData] = useState<CreateStockItemDto>(EMPTY_STOCK_ITEM_DTO);
+    const { isDesktop } = useScreen();
 
     /**
      * Indique si le stockItem sélectionné dans l'autocomplete est modifié par rapport à la DB.
@@ -55,12 +57,8 @@ export default function ProductManagementPage() {
 
     const submitButtonFlavorMessage = () => {
         switch (stockUnitStatus) {
-            case "found":
-                return "Ce produit existe déjà, vous pouvez l'utiliser tel quel.";
-
             case "found&edit":
-                return "Ce produit existe déjà, mais vous avez modifié ses informations.";
-
+                return "Le produit a été modifié.";
             case "notFound":
                 return "Aucun produit ne correspond à ce nom. Il sera créé.";
         }
@@ -159,145 +157,128 @@ export default function ProductManagementPage() {
         await reloadStockUnits(stockItem.id);
     };
 
-    return (
-        <FillRemainingHeight>
-            <AppScrollPanel direction="vertical">
-                <div className="flex flex-col gap-8">
-                    <div className="flex justify-end gap-4">
-                        {formData.label !== "" && (
-                            <Message
-                                className="text-sm"
-                                content={submitButtonFlavorMessage()}
-                                severity="info"
-                            />
-                        )}
+    const onLabelChange = (value: string) => {
+        if (value.length === 0) {
+            setSelectedStockItem(null);
+            // Réinitialise l'objet sans perdre les valeurs déjà saisies dans le formulaire.
+            setFormData(() => ({
+                ...EMPTY_STOCK_ITEM_DTO,
+                id: undefined,
+            }));
+        }
 
-                        <Button
-                            label="Enregistrer"
-                            icon="pi pi-save"
-                            loading={savingForm}
-                            disabled={
-                                savingForm // Si on est en train de sauvegarder
-                                || (!formData.label.trim() || !formData.defaultUnit.trim()) // Ou si les champs obligatoires ne sont pas remplis.
+        setFormData((prevFormData) => ({
+            ...prevFormData,
+            label: value,
+        }));
+    };
+
+    const onDefaultUnitChange = (value: StockUnitUnits) => {
+        setFormData((prevFormData) => ({ ...prevFormData, defaultUnit: value }));
+    };
+
+    const onBarcodeChange = (value: string) => {
+        setFormData((prevFormData) => ({ ...prevFormData, barcode: value }));
+    };
+
+    const onImageUrlChange = (value: string) => {
+        setFormData((prevFormData) => ({ ...prevFormData, imageUrl: value }));
+    };
+
+    const onUnitsChange = (newUnits: CreateStockUnitDto[]) => {
+        setFormData((prevFormData) => ({ ...prevFormData, units: newUnits }));
+    };
+
+    return (
+        <FillRemainingHeight offset={50}>
+            <AppScrollPanel direction="vertical" >
+                <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-8">
+                        <div className="flex flex-col justify-end gap-4 md:flex-row">
+                            {
+                                formData.label !== "" && stockUnitStatus !== "found" && (
+                                    <Message
+                                        className="text-sm"
+                                        content={submitButtonFlavorMessage()}
+                                        severity="info"
+                                    />
+                                )
                             }
-                            onClick={submitForm}
+
+                            <Button
+                                label="Enregistrer"
+                                icon="pi pi-save"
+                                loading={savingForm}
+                                disabled={savingForm || !formData.label.trim() || !formData.defaultUnit.trim()}
+                                onClick={submitForm}
+                            />
+                        </div>
+
+                        <div className="flex w-full flex-col gap-8 md:flex-row">
+                            <FloatLabel className="w-full flex-1">
+                                <StockItemAutocomplete
+                                    className="w-full"
+                                    refreshKey={stockItemsRefreshKey}
+                                    onChange={onLabelChange}
+                                    onSelect={onSelectStockItem}
+                                />
+
+                                <label htmlFor="label">
+                                    Nom du produit
+                                    <RequiredMark />
+                                </label>
+                            </FloatLabel>
+
+                            <FloatLabel className="w-full flex-1">
+                                <Dropdown
+                                    id="defaultUnit"
+                                    className="w-full"
+                                    value={formData.defaultUnit}
+                                    options={[...STOCK_UNIT_UNITS]}
+                                    onChange={(event) => onDefaultUnitChange(event.value)}
+                                />
+
+                                <label htmlFor="defaultUnit">
+                                    Unité par défaut
+                                    <RequiredMark />
+                                </label>
+                            </FloatLabel>
+                        </div>
+
+                        <ProductOptionalFields
+                            barcode={formData.barcode}
+                            imageUrl={formData.imageUrl}
+                            onBarcodeChange={onBarcodeChange}
+                            onImageUrlChange={onImageUrlChange}
                         />
                     </div>
 
-                    <div className="flex w-full gap-2">
-                        <FloatLabel className="flex-1">
-                            <StockItemAutocomplete
-                                className="w-full"
-                                refreshKey={stockItemsRefreshKey}
-                                onChange={(value) => {
-                                    if (value.length === 0) {
-                                        setSelectedStockItem(null);
-                                        // Réinitialise l'objet sans perdre les valeurs déjà saisies dans le formulaire.
-                                        setFormData(() => ({
-                                            ...EMPTY_STOCK_ITEM_DTO,
-                                            id: undefined,
-                                        }));
-                                    }
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        label: value,
-                                    }));
-                                }}
-                                onSelect={onSelectStockItem}
-                            />
-
-                            <label htmlFor="label">
-                                Nom du produit
-                                <RequiredMark />
-                            </label>
-                        </FloatLabel>
-                    </div>
-
-                    <div className="flex w-full gap-2">
-                        <FloatLabel className="flex-1">
-                            <InputText
-                                id="barcode"
-                                className="w-full"
-                                value={formData.barcode ?? ""}
-                                onChange={(event) => {
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        barcode: event.target.value,
-                                    }));
-                                }}
-                            />
-
-                            <label htmlFor="barcode">
-                                Code-barres
-                                <Optional />
-                            </label>
-                        </FloatLabel>
-
-                        <FloatLabel className="flex-1">
-                            <Dropdown
-                                id="defaultUnit"
-                                className="w-full"
-                                value={formData.defaultUnit}
-                                options={[...STOCK_UNIT_UNITS]}
-                                onChange={(event) => {
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        defaultUnit: event.value,
-                                    }));
-                                }}
-                            />
-
-                            <label htmlFor="defaultUnit">
-                                Unité par défaut
-                                <RequiredMark />
-                            </label>
-                        </FloatLabel>
-                    </div>
-
-                    <div className="flex w-full gap-2">
-                        <FloatLabel className="flex-1">
-                            <InputText
-                                id="imageUrl"
-                                className="w-full"
-                                value={formData.imageUrl ?? ""}
-                                onChange={(event) => {
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        imageUrl: event.target.value,
-                                    }));
-                                }}
-                            />
-
-                            <label htmlFor="imageUrl">
-                                URL de l'image
-                                <Optional />
-                            </label>
-                        </FloatLabel>
-                    </div>
-
                     {formData.label.length > 0 && (
-                        <div className="flex w-full gap-2">
-                            {
-                                (formData.id !== undefined) ? (
+                        <div className="flex w-full">
+                            {formData.id !== undefined ? (
+                                isDesktop ? (
                                     <StockUnitEditableList
                                         stockItemId={formData.id}
                                         stockItemLabel={formData.label}
                                         stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
-                                        onChange={(newUnits) => {
-                                            setFormData((prevFormData) => ({
-                                                ...prevFormData,
-                                                units: newUnits,
-                                            }));
-                                        }}
+                                        onChange={onUnitsChange}
                                     />
                                 ) : (
-                                    <Message
-                                        text="Enregistrez le produit est nécessaire pour pouvoir ajouter des unités."
-                                        severity="info"
+                                    <StockUnitEditableListMobile
+                                        stockItemId={formData.id}
+                                        stockItemLabel={formData.label}
+                                        stockItemUnit={formData.defaultUnit}
+                                        stockUnits={formData.units}
+                                        onChange={onUnitsChange}
                                     />
                                 )
-                            }
+                            ) : (
+                                <Message
+                                    text="Enregistrez le produit est nécessaire pour pouvoir ajouter des unités."
+                                    severity="info"
+                                />
+                            )}
                         </div>
                     )}
                 </div>
