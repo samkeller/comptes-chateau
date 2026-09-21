@@ -17,7 +17,7 @@ export default function SourceBadge({ source, isCompact = false }: SourceBadgePr
     // Compact -> Première lettre
     const value = isCompact ? label.slice(0, 1) : label;
 
-    const id = useId();
+    const id = useId().replace(/:/g, "-");
     const customId = `source-badge-${source}-${id}`;
 
     return <>
