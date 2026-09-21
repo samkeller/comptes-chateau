@@ -45,7 +45,7 @@ export default function ExpenseDistribution({ datas }: ExpenseDistributionProps)
                 <div className="flex min-w-0 justify-center">
                     <BudgetDonut
                         datas={datas}
-                        onHoverPoste={(posteId) => posteId !== null && setHighlightPoste(posteId)}
+                        onHoverPoste={(posteId) => setHighlightPoste(posteId)}
                         onClickPoste={onClickPoste}
                     />
                 </div>
