@@ -1,6 +1,7 @@
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { GroupedBudgetData } from "../BudgetOverviewCalculations";
 import SourceBadge from "../atoms/SourceBadge";
+import ColorDot from "@/components/atoms/ColorDot";
 
 interface PosteDetailsPanelProps {
     posteData: GroupedBudgetData;
@@ -13,10 +14,7 @@ export default function PosteDetailsPanel({ posteData, onClose }: PosteDetailsPa
             {/* Panel Header */}
             <div className="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                    <span
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: posteData.posteColor || "#38bdf8" }}
-                    />
+                    <ColorDot color={posteData.posteColor || "#38bdf8"} />
                     <h4 className="font-semibold text-slate-100 text-sm truncate">
                         {posteData.posteLabel}
                     </h4>

@@ -14,6 +14,7 @@ import AccountLinePosteService from "../../../services/AccountLinePosteService";
 import type { SavePostePayload } from "@chocosous/shared";
 import AccountService from "../../../services/AccountService";
 import Account from "../../../interfaces/Account";
+import ColorDot from "@/components/atoms/ColorDot";
 
 const NEW_POSTE_ROW_ID = -1;
 const POSTE_CONFIRM_GROUP = "poste-setup-delete";
@@ -247,7 +248,7 @@ export default function PosteSetupCard() {
                         if (!row.uiEditing) {
                             return (
                                 <span className="inline-flex items-center gap-2">
-                                    <span className="rounded-full inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
+                                    <ColorDot color={row.color} size="1rem" />
                                 </span>
                             );
                         }

@@ -1,3 +1,5 @@
+import { ProgressBar } from "primereact/progressbar";
+
 interface ExpenseTypologyBarProps {
     recurringTotal: number;
     budgetTotal: number;
@@ -9,12 +11,18 @@ export default function ExpenseTypologyBar({ recurringTotal, budgetTotal }: Expe
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="flex h-1.5 overflow-hidden rounded-full bg-sky-400/80" aria-label="Répartition des dépenses">
-                <div className="bg-success" style={{ width: `${recurringPercentage}%` }} />
-            </div>
+            <h2>Typologie des dépenses</h2>
+            <ProgressBar
+                value={recurringPercentage}
+                showValue={false}
+                pt={{
+                    value: { className: "bg-success" },
+                    root: { className: "bg-info/80 h-3" }
+                }}
+            />
             <div className="flex justify-between text-xs text-slate-400">
-                <span><span className="text-success">{recurringPercentage.toFixed(0)}%</span> Fixe</span>
-                <span><span className="text-info">{(100 - recurringPercentage).toFixed(0)}%</span> Libre</span>
+                <span>Dépenses récurrentes <span className="text-success">{recurringPercentage.toFixed(0)}%</span></span>
+                <span><span className="text-info">{(100 - recurringPercentage).toFixed(0)}%</span> Budget</span>
             </div>
         </div>
     );

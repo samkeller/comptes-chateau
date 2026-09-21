@@ -4,6 +4,7 @@ import BalanceGauge from "../molecules/BalanceGauge";
 import ExpenseTypologyBar from "../molecules/ExpenseTypologyBar";
 import IncomeList from "../molecules/IncomeList";
 import ExpenseDistribution from "./ExpenseDistribution";
+import { Divider } from "primereact/divider";
 
 interface BudgetDashboardViewProps {
     datas: GroupedBudgetData[];
@@ -25,21 +26,17 @@ export default function BudgetDashboardView({ datas }: BudgetDashboardViewProps)
 
     return (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            {/* Panneau gauche */}
             <div className="flex flex-col gap-5 rounded-xl border border-slate-700/80 bg-slate-800/50 p-5 lg:col-span-4">
                 <BalanceGauge totalCredit={globalCredit} totalDebit={globalDebit} netTotal={globalCredit - globalDebit} />
-                <div className="border-t border-slate-700 pt-5">
-                    <IncomeList lines={incomeLines} />
-                </div>
+                <Divider />
+                <IncomeList lines={incomeLines} />
             </div>
+            {/* Panneau droit */}
             <div className="flex flex-col gap-5 rounded-xl border border-slate-700/80 bg-slate-800/50 p-5 lg:col-span-8">
-                <div>
-                    <h2 className="mb-3 text-sm font-semibold text-slate-100">Typologie des dépenses</h2>
-                    <ExpenseTypologyBar recurringTotal={globalRecurring} budgetTotal={globalBudget} />
-                </div>
-                <div className="border-t border-slate-700 pt-5">
-                    <h2 className="mb-4 text-sm font-semibold text-slate-100">Répartition des dépenses</h2>
-                    <ExpenseDistribution datas={expenseDatas} />
-                </div>
+                <ExpenseTypologyBar recurringTotal={globalRecurring} budgetTotal={globalBudget} />
+                <Divider />
+                <ExpenseDistribution datas={expenseDatas} />
             </div>
         </div>
     );
