@@ -31,6 +31,11 @@ const primeReactOptions: Partial<APIOptions> = {
       barY: {
         className: "w-[0.3rem]!"
       }
+    },
+    divider: {
+      root: {
+        className: "m-0"
+      }
     }
   }
 }

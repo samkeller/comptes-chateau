@@ -14,6 +14,7 @@ import { DEFAULT_SETUP_COLOR, fromColorPickerValue, isHexColor, toColorPickerVal
 import AccountLineNatureService from "../../../services/AccountLineNatureService";
 import type { SaveNaturePayload } from "@chocosous/shared";
 import TooltipInfoIcon from "../../../components/TooltipInfoIcon";
+import ColorDot from "@/components/atoms/ColorDot";
 
 const NEW_NATURE_ROW_ID = -1;
 const NATURE_CONFIRM_GROUP = "nature-setup-delete";
@@ -227,7 +228,7 @@ export default function NatureSetupCard() {
                         if (!row.uiEditing) {
                             return (
                                 <span className="inline-flex items-center gap-2">
-                                    <span className="rounded-full inline-block" style={{ width: "1rem", height: "1rem", backgroundColor: row.color }} />
+                                    <ColorDot color={row.color} size="1rem" />
                                 </span>
                             );
                         }

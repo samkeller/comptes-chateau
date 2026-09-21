@@ -33,7 +33,10 @@ export interface UnifiedBudgetLine {
     id: string;
     source: "budget" | "recurring";
     label: string;
+    /** Montant mensuel signe: negatif pour un debit, positif pour un credit. */
     amount: number;
+    debit: number;
+    credit: number;
     posteId: number | null;
     posteLabel: string | null;
     posteColor: string | null;

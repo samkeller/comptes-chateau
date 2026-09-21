@@ -6,7 +6,7 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "./styles/MarkdownStyles.css" layer(components);
 @import "./styles/PrimereactOverrides.css" layer(components);
-@import "./styles/ThemeOverrides.css" ;
+@import "./styles/ThemeOverrides.css";
 
 @theme {
   --color-surface-0: var(--surface-0);
@@ -21,9 +21,28 @@
   --color-surface-800: var(--surface-800);
   --color-surface-900: var(--surface-900);
   --color-surface: var(--surface-border);
-  --color-primary: var(--primary-color);
+
   --color-muted-color: var(--text-color-secondary);
   --radius-border: var(--border-radius);
+
+  --color-primary: var(--primary-color);
+  --color-primary-contrast: var(--primary-color-text);
+
+  --color-secondary: var(--surface-500);
+  --color-contrast: var(--surface-900);
+
+  /* From Primereact V10 - lara-dark-teal */
+  --color-success: #4ade80;
+  --color-success-contrast: #052e16;
+
+  --color-info: #38bdf8;
+  --color-info-contrast: #082f49;
+
+  --color-warn: #fb923c;
+  --color-warn-contrast: #431407;
+
+  --color-error: #f87171;
+  --color-error-contrast: #450a0a;
 }
 
 :root {
@@ -58,7 +77,7 @@ body {
 }
 
 .p-fluid .p-inputtext,
-.p-fluid .p-selectbutton > .p-button {
+.p-fluid .p-selectbutton>.p-button {
   width: 100%;
 }
 

@@ -14,7 +14,7 @@ import AccountDashboard from "../pages/accountDashboard/AccountDashboard";
 import AccountScopedOutlet from "./AccountScopedOutlet";
 import AccountLineCategorization from "@/pages/accountAutomatisations/accountLineCategorization/AccountLineCategorization";
 import AddAccountLineDialog from "@/pages/accountBook/AddAccountLineDialog";
-import UnifiedBudgetView from "@/pages/budget/UnifiedBudgetView";
+import BudgetOverview from "@/pages/budget/budgetOverview/BudgetOverview";
 import RecurringExpenses from "@/pages/budget/recurringExpenses/RecurringExpenses";
 import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecurringExpenseDialog";
 import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
@@ -73,7 +73,7 @@ const router = createBrowserRouter([
               },
               {
                 path: "overview",
-                element: <UnifiedBudgetView />,
+                element: <BudgetOverview />,
               },
               {
                 path: "recurringExpenses",
