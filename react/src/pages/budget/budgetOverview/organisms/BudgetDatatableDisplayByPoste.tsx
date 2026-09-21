@@ -1,10 +1,10 @@
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Tag } from "primereact/tag";
 import type { UnifiedBudgetLine } from "@chocosous/shared";
 import { getBudgetLineWeight, type GroupedBudgetData } from "../BudgetOverviewCalculations"
 import { toMonetaryAmount } from "@/utils/NumberUtils";
+import SourceBadge from "../atoms/SourceBadge";
 
 interface BudgetDatatableDisplayByPosteProps {
     data: GroupedBudgetData
@@ -57,11 +57,7 @@ export default function BudgetDatatableDisplayByPoste({ data }: BudgetDatatableD
                     style={{ width: "10%" }}
                     field="source"
                     header="Type"
-                    body={(rowData) => (
-                        rowData.source === 'budget' ?
-                            <Tag className="w-24" value="Budget" severity="info" /> :
-                            <Tag className="w-24" value="Récurrent" severity="success" />
-                    )} />
+                    body={(rowData: UnifiedBudgetLine) => <SourceBadge source={rowData.source} /> } />
                 <Column
                     style={{ width: "30%" }}
                     field="label"

@@ -1,5 +1,6 @@
 import {
     Chart as ChartJS,
+    ArcElement,
     CategoryScale,
     LinearScale,
     PointElement,
@@ -12,6 +13,7 @@ import {
 
 // Enregistrement des composants Chart.js
 ChartJS.register(
+    ArcElement,
     CategoryScale,
     LinearScale,
     PointElement,
