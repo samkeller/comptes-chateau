@@ -1,6 +1,6 @@
 import { GroupedBudgetData } from "../BudgetOverviewCalculations";
 import { ChartData, ChartOptions, Plugin } from "chart.js";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Chart } from "primereact/chart";
 
@@ -22,6 +22,11 @@ interface BudgetDonutProps {
     onClickPoste?: (posteId: number | null) => void;
 }
 
+/**
+ * TODO - Re-render du composant au survol d'un poste budgétaire.
+ * @param param0 
+ * @returns 
+ */
 export default function BudgetDonut({ datas, onHoverPoste, onClickPoste }: BudgetDonutProps) {
     const total = datas.reduce((sum, data) => sum + data.debitTotal, 0);
 
@@ -58,10 +63,11 @@ export default function BudgetDonut({ datas, onHoverPoste, onClickPoste }: Budge
         },
     }), [total]);
 
-    const chartOptions: ChartOptions<"doughnut"> = {
+    const chartOptions: ChartOptions<"doughnut"> = useMemo(() => ({
         cutout: "68%",
         responsive: true,
         maintainAspectRatio: false,
+        aspectRatio: 1,
         plugins: {
             legend: { display: false },
             tooltip: { enabled: false },
@@ -95,15 +101,12 @@ export default function BudgetDonut({ datas, onHoverPoste, onClickPoste }: Budge
 
             onClickPoste?.(poste.posteId);
         },
-    };
+    }), [datas, onHoverPoste, onClickPoste]);
+
     return (<Chart
         type="doughnut"
         data={chartData}
-        options={{
-            ...chartOptions,
-            maintainAspectRatio: true,
-            aspectRatio: 1,
-        }}
+        options={chartOptions}
         plugins={[centerTextPlugin]}
         className="w-full max-w-125"
     />);

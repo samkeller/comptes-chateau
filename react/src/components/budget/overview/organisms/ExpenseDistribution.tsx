@@ -1,5 +1,5 @@
 import type { GroupedBudgetData } from "@/pages/budget/budgetOverview/BudgetOverviewCalculations";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import AppScrollPanel from "@/components/atoms/primereact/AppScrollPanel";
 import GroupedBudgetDataDisplay from "../molecules/GroupedBudgetDataDisplay";
@@ -16,12 +16,17 @@ export default function ExpenseDistribution({ datas }: ExpenseDistributionProps)
      */
     const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+    const onHoverPoste = useCallback((posteId: number | null) => {
+        setHighlightPoste(current => current === posteId ? current : posteId
+        );
+    }, []);
+
     /**
      * Au clic sur un poste, le met en surbrillance et fait défiler jusqu'à lui.
      * @param posteId 
      * @returns 
      */
-    function onClickPoste(posteId: number | null) {
+    const onClickPoste = useCallback((posteId: number | null) => {
         if (posteId === null) {
             return;
         }
@@ -34,8 +39,7 @@ export default function ExpenseDistribution({ datas }: ExpenseDistributionProps)
             behavior: "smooth",
             block: "center",
         });
-    }
-
+    }, []);
 
     return (
         <div>
@@ -45,7 +49,7 @@ export default function ExpenseDistribution({ datas }: ExpenseDistributionProps)
                 <div className="flex min-w-0 justify-center">
                     <BudgetDonut
                         datas={datas}
-                        onHoverPoste={(posteId) => setHighlightPoste(posteId)}
+                        onHoverPoste={onHoverPoste}
                         onClickPoste={onClickPoste}
                     />
                 </div>
