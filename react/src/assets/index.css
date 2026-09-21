@@ -22,6 +22,9 @@
   --color-surface-900: var(--surface-900);
   --color-surface: var(--surface-border);
 
+  --color-muted-color: var(--text-color-secondary);
+  --radius-border: var(--border-radius);
+
   --color-primary: var(--primary-color);
   --color-primary-contrast: var(--primary-color-text);
 
