@@ -1,6 +1,6 @@
 import { GroupedBudgetData } from "../BudgetOverviewCalculations";
 import { ChartData, ChartOptions, Plugin } from "chart.js";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { toMonetaryAmount } from "@/utils/NumberUtils";
 import { Chart } from "primereact/chart";
 
