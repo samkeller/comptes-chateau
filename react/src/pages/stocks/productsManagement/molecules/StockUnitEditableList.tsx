@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
-import { dateEditor, dropdownEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import { STOCK_UNIT_UNITS, StockUnitUnits } from "@/interfaces/stocks/StockUnit";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
@@ -160,11 +160,14 @@ export default function StockUnitEditableList({
                         <span className="font-semibold">
                             {
                                 isMultipleUnits(group)
-                                ? `${group.stockUnits.length} x ${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
-                                : `${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
+                                    ? `${group.stockUnits.length} x ${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
+                                    : `${group.stockUnits[0].quantity} ${group.stockUnits[0].unit}`
                             }
                         </span>
                     )}
+                    className="cursor-pointer"
+                    editor={(opts) => numberEditor(opts, {suffix: ` ${opts.rowData.stockUnits[0].unit}`})}
+                    onCellEditComplete={onGroupCellEditComplete}
                 />
 
                 <Column
