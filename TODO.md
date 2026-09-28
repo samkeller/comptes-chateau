@@ -6,13 +6,12 @@ Project Description
 
 ### Todo
 
-- [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
-- [ ] Ajouter "se rappeller du device" pour n'avoir à se logger que tous les 60 jours  
 - [ ] Mettre à plat la création d'opérations / accountLines (back) & assurer que la modification unitaire avec isChecked & dateValeur ajoute bien de l'xp.  
 - [ ] Les boutons "Supprimer" "Renommer" etc devraient être factorisés dans composants/atoms pour permettre l'homogénéité graphique dans toute l'appli. Globalement dans 90% des cas on utilise qu'une icone + tooltip en fonction de ou on est dans la page mais parfois il y a le label. On peut faire des atoms "DeleteButton", "EditButton" etc (tout ce qui apparait + de trois fois dans l'application) & permettre de passer des ButtonProps au composants si besoin d'overrides (normalement cela devrait être minimal).  
 - De plus, on pourrait de cette manière ajouter les actions clavier (touche entrée pour valider, echap pour annuler) de manière uniforme dans toute l'application.  
 - [ ] Ajouter dans les formulaires des indications claires sur les données étant obligatoires/facultatives (mettre en valeur les lignes obligatoires). Cf FloatLabel. Harmonisation partout  
-- [ ] Ajouter cache frontend (kanban, stocks, accountLines) - données qui changent peu ou batch quotidien  
+- [ ] Ajouter cache frontend (kanban, stocks, accountLines) - données qui changent peu ou batch quotidien. (node-cache obsolète ???)  
+- [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
 - [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
 
 ### In Progress
@@ -26,4 +25,5 @@ Project Description
 - [x] Sécuriser ++++ les opérations "miroirs" entre plusieurs comptes. (test unitaires CRUD, impacts modifications, suppression, etc, Ajouter confirm spécifique quand impacts cascade)  
 - [x] Refaire écran :accountId/budget/overview en clarifiant les recettes et les dépenses et avec un graphique plus clair que ce long tableau ()  
 - [x] [Mobile] - Le formulaire de création/modification d'une opération ne permet pas les valeurs négatives (android)  
+- [x] Ajouter "se rappeler du device" pour n'avoir à se logger que tous les 60 jours  
 

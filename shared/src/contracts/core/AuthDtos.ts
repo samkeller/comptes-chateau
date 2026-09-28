@@ -4,6 +4,7 @@ import { z } from "zod";
 export const LoginSchema = z.object({
     username: z.string().min(1).transform((value) => value.trim().toLowerCase()),
     password: z.string().min(1),
+    rememberDevice: z.boolean().optional().default(false),
 });
 
 export type LoginRequest = z.infer<typeof LoginSchema>;

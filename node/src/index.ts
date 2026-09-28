@@ -13,8 +13,7 @@ import ApiRouter from './ApiRouter';
 import helmet from 'helmet';
 import path from 'path';
 import "./jobs/crons"; // Lancer les crons
-
-export const COOKIE_NAME = "sid";
+import { getSessionDurationMs, SESSION_COOKIE_NAME } from './config/session';
 
 const APP_SECRET = process.env.SESSION_SECRET
 
@@ -32,7 +31,7 @@ AppDataSource.initialize().then(() => {
     app.set("trust proxy", 1);
 
     app.use(session({
-        name: COOKIE_NAME,
+        name: SESSION_COOKIE_NAME,
         secret: APP_SECRET,
         store: getPgSessionStoreInstance(),
         resave: false,
@@ -41,7 +40,7 @@ AppDataSource.initialize().then(() => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production", // false en dev
             sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 // 24H
+            maxAge: getSessionDurationMs(false)
         }
     }));
 

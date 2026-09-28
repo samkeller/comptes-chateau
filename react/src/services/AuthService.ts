@@ -5,8 +5,8 @@ import type { LoginRequest, LoginResponse } from "@chocosous/shared";
 
 class AuthService extends BaseService {
 
-    login(username: string, password: string): Promise<User> {
-        const payload: LoginRequest = { username, password };
+    login(username: string, password: string, rememberDevice: boolean): Promise<User> {
+        const payload: LoginRequest = { username, password, rememberDevice };
         return axios.post<LoginResponse>(this.apiUrl + "/auth/login", payload).then((r) => new User(r.data))
     }
 

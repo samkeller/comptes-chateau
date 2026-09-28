@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
 import { Router } from "express";
 import { LoginSchema, type LoginResponse } from "@chocosous/shared";
-import { COOKIE_NAME } from "../../../index";
 import rateLimit from "express-rate-limit";
 import { AppDataSource } from "../../../db/dataSource";
 import { User } from "../entities/User";
 import { unauthorized } from "../../../utils/AppError";
 import { validateBody } from "../middlewares/validate";
+import { getSessionDurationMs, SESSION_COOKIE_NAME } from "../../../config/session";
 
 const AuthRoutes = Router();
 
@@ -22,7 +22,7 @@ const loginLimiter = rateLimit({
 AuthRoutes.use(loginLimiter);
 
 AuthRoutes.post("/login", validateBody(LoginSchema), async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, rememberDevice } = req.body;
 
   const userRepo = AppDataSource.getRepository(User);
   const user = await userRepo
@@ -40,6 +40,7 @@ AuthRoutes.post("/login", validateBody(LoginSchema), async (req, res) => {
 
   req.session.userId = user.id;
   req.session.username = user.username;
+  req.session.cookie.maxAge = getSessionDurationMs(rememberDevice);
 
   const response: LoginResponse = {
     id: user.id,
@@ -55,7 +56,7 @@ AuthRoutes.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) return res.sendStatus(500);
 
-    res.clearCookie(COOKIE_NAME);
+    res.clearCookie(SESSION_COOKIE_NAME);
     res.sendStatus(204);
   });
 });

@@ -10,10 +10,12 @@ import { SelectButton } from "primereact/selectbutton";
 import { useConnectedUser } from "../context/ConnectedUserContext";
 import CatsChase from "@/components/atoms/Sprite/CatsChase";
 import { useScreen } from "@/hooks/useScreen";
+import { Checkbox } from "primereact/checkbox";
 
 export default function AuthPage() {
     const [username, setUsername] = useState<"Gaelle" | "Sam" | "70ul0u53&b3rl10z">("Gaelle");
     const [password, setPassword] = useState("");
+    const [rememberDevice, setRememberDevice] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +32,7 @@ export default function AuthPage() {
         setError(null);
 
         try {
-            await authService.login(username, password);
+            await authService.login(username, password, rememberDevice);
             await refreshUser();
             showGlobalToast({
                 severity: "success",
@@ -48,17 +50,17 @@ export default function AuthPage() {
         <div className="flex flex-col items-center justify-center min-h-dvh gap-4 overflow-hidden">
             <Card
                 header={
-                    <div className="text-center">
+                    <div className="flex justify-center">
                         <img
                             src={ChocoChou}
                             alt="Chat triste"
                             className="w-full rounded-border mb-6"
-                            style={{ maxHeight: 260, objectFit: "cover" }}
+                            style={{ maxHeight: 260, maxWidth: "80%", objectFit: "cover" }}
                         />
                     </div>
                 }
                 title="Passer la choco-sécurité"
-                className="min-w-30 max-w-80"
+                className="min-w-30 max-w-180"
             >
                 <div className="p-fluid flex flex-col gap-6">
                     <div>
@@ -77,6 +79,14 @@ export default function AuthPage() {
                         placeholder="Mot de passe"
                         onKeyDown={(e) => e.key === "Enter" && submit()}
                     />
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            inputId="remember-device"
+                            checked={rememberDevice}
+                            onChange={(event) => setRememberDevice(Boolean(event.checked))}
+                        />
+                        <label htmlFor="remember-device">Se souvenir de cet appareil</label>
+                    </div>
                     <div className="flex justify-end">
                         <Button
                             label="Connexion"
