@@ -128,7 +128,7 @@ describe("RecurringExpenseService", () => {
     it("treats positive recurring income as a negative cash impact on the balance forecast", async () => {
         const expenseOccurrence = new Date("2026-09-16");
         const incomeOccurrence = new Date("2026-09-26");
-        const horizon = new Date("2026-10-26");
+        const horizon = new Date("2026-10-27");
 
         await testDataSource.getRepository(RecurringExpense).save([
             {
@@ -205,8 +205,8 @@ describe("RecurringExpenseService", () => {
     });
 
     it("[simulateFutureRecurrent()] does not include the occurrence after the forecast horizon", async () => {
-        const firstOccurrence = new Date("2026-09-30");
-        const horizon = new Date("2026-12-30");
+        const firstOccurrence = new Date("2026-09-29");
+        const horizon = new Date("2027-01-01");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
@@ -228,7 +228,7 @@ describe("RecurringExpenseService", () => {
 
     it("[simulateFutureRecurrent()] includes an occurrence exactly on the forecast horizon", async () => {
         const firstOccurrence = new Date("2026-09-30");
-        const horizon = new Date("2026-12-31");
+        const horizon = new Date("2027-01-01");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
