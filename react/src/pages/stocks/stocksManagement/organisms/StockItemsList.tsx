@@ -7,6 +7,7 @@ import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemUnitsView from "./StockItemUnitsView";
 import { useScreen } from "@/hooks/useScreen";
 import { Divider } from "primereact/divider";
+import { parseDateToDisplay } from "@/utils/DatesUtils";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
@@ -108,6 +109,13 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                         <div className="flex flex-col gap-1">
                             <span className="font-semibold">{item.label}</span>
                         </div>
+                    )}
+                />
+                <Column
+                    field="nextStockUnitExpiration"
+                    header="Prochaine Expiration"
+                    body={(item: StockItem) => (
+                        item.nextStockUnitExpiration && <span>{parseDateToDisplay(item.nextStockUnitExpiration)} </span>
                     )}
                 />
                 <Column

@@ -33,6 +33,7 @@ export default class StockItemService {
                 units: {
                     id: true,
                     locationId: true,
+                    expirationDate: true,
                 },
             },
         });

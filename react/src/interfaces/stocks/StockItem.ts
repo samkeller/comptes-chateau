@@ -9,6 +9,7 @@ export default class StockItem {
     imageUrl: string | null = null;
 
     stockUnitsCount: number = 0;
+    nextStockUnitExpiration: Date | null = null;
     stockUnitsIds: number[] = [];
 
     createdAt?: Date;
@@ -21,5 +22,6 @@ export default class StockItem {
         if (partial.createdAt) this.createdAt = parseApiDateTime(partial.createdAt) ?? undefined;
         if (partial.updatedAt) this.updatedAt = parseApiDateTime(partial.updatedAt) ?? undefined;
         if (partial.deletedAt) this.deletedAt = parseApiDateTime(partial.deletedAt) ?? null;
+        if (partial.nextStockUnitExpiration) this.nextStockUnitExpiration = parseApiDateTime(partial.nextStockUnitExpiration) ?? null;
     }
 }
