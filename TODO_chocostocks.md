@@ -4,7 +4,7 @@
 // Ecran produits
 [ ] Fix update changement d'unité (id manquant)
 [ ] Faciliter le reset du formulaire pour créer un nouveau produit / clarifier quel produit on modifie
-[ ] A la création d'un nouveau produit, ajouter une nouvelle ligne vide directement
+[X] A la création d'un nouveau produit, ajouter une nouvelle ligne vide directement
 
 
 // Ecran stocks

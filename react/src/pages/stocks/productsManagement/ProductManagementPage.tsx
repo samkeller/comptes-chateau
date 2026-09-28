@@ -108,14 +108,19 @@ export default function ProductManagementPage() {
             };
 
             let savedStockItem: StockItem;
+            let isCreation: boolean = false;
 
+            // Mise à jour du stockItem existant
             if (selectedStockItem) {
                 savedStockItem = await stockItemsService.update(
                     selectedStockItem.id,
                     payload
                 );
-            } else {
+            }
+            // Création d'un nouveau stockItem
+            else {
                 savedStockItem = await stockItemsService.create(payload);
+                isCreation = true;
             }
 
             // Refraichit toujours l'autocomplete.
@@ -130,9 +135,18 @@ export default function ProductManagementPage() {
                 barcode: savedStockItem.barcode ?? undefined,
                 defaultUnit: savedStockItem.defaultUnit,
                 imageUrl: savedStockItem.imageUrl ?? undefined,
+                units: isCreation
+                    ? [{
+                        clientId: crypto.randomUUID(),
+                        quantity: 1,
+                        unit: prevFormData.defaultUnit,
+                        locationId: 1
+                    }]
+                    : formData.units,
             }));
 
-            await reloadStockUnits(savedStockItem.id);
+            // Si update -> Recharge les units
+            if (!isCreation) await reloadStockUnits(savedStockItem.id);
         } finally {
             setSavingForm(false);
         }
