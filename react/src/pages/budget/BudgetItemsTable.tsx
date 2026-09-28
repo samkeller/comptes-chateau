@@ -168,6 +168,7 @@ export default function BudgetItemsTable() {
                                             currency="EUR"
                                             locale="fr-FR"
                                             className="w-full"
+                                            inputMode="numeric" // Nécessaire pour téléphone - signe "-"
                                         />
                                     </td>
                                     <td className="text-center p-2 border border-surface">
@@ -218,6 +219,7 @@ export default function BudgetItemsTable() {
                                                 currency="EUR"
                                                 locale="fr-FR"
                                                 className="w-full"
+                                                inputMode="numeric" // Nécessaire pour téléphone - signe "-"
                                             />
                                         ) : toMonetaryAmount(line.amount)}
                                     </td>
