@@ -13,13 +13,7 @@ import ApiRouter from './ApiRouter';
 import helmet from 'helmet';
 import path from 'path';
 import "./jobs/crons"; // Lancer les crons
-import { getSessionDurationMs, SESSION_COOKIE_NAME } from './config/session';
-
-const APP_SECRET = process.env.SESSION_SECRET
-
-if (!APP_SECRET) {
-    throw new Error("No SESSION_SECRET provided in environment variables");
-}
+import { EXPRESS_SESSION_CONFIG } from './config/session';
 
 if (!process.env.PORT) {
     throw new Error("No PORT provided in environment variables");
@@ -30,19 +24,7 @@ AppDataSource.initialize().then(() => {
     const app = express();
     app.set("trust proxy", 1);
 
-    app.use(session({
-        name: SESSION_COOKIE_NAME,
-        secret: APP_SECRET,
-        store: getPgSessionStoreInstance(),
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // false en dev
-            sameSite: "lax",
-            maxAge: getSessionDurationMs(false)
-        }
-    }));
+    app.use(session(EXPRESS_SESSION_CONFIG));
 
     app.use(helmet()); // Headers de sécurité
     app.use(cors({
