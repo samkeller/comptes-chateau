@@ -9,4 +9,4 @@
 
 // Ecran stocks
 [X] Affiche clairement les dates de péremption
-[ ] Pouvoir trier par date de péremption (nulls à la fin)
+[X] Pouvoir trier par date de péremption (nulls à la fin)
