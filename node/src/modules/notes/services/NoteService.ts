@@ -70,10 +70,11 @@ export default class NoteService {
                 throw badRequest("NOTE_CONTENT_REQUIRE_TEXT", "Une checklist ne peut pas contenir de texte Markdown");
             }
 
-            note.title = body.title;
-            if (body.content !== undefined && note.type === "text") note.content = body.content;
-            if (body.isPinned !== undefined) note.isPinned = body.isPinned;
-            await noteRepo.save(note);
+            await noteRepo.update(id, {
+                title: body.title,
+                ...(body.content !== undefined && note.type === "text" ? { content: body.content } : {}),
+                ...(body.isPinned !== undefined ? { isPinned: body.isPinned } : {}),
+            });
 
             if (body.items !== undefined) {
                 await itemRepo.delete({ noteId: id });
@@ -98,7 +99,7 @@ export default class NoteService {
 
             Object.assign(item, changes);
             await itemRepo.save(item);
-            await manager.getRepository(Note).save(note);
+            await this.touchNote(manager, note);
             return toNoteItemDto(item);
         });
     }
@@ -114,15 +115,14 @@ export default class NoteService {
             if (count >= MAX_NOTE_ITEMS) {
                 throw badRequest("NOTE_ITEM_LIMIT", `Une checklist ne peut pas dépasser ${MAX_NOTE_ITEMS} items`);
             }
-            const maxOrder = await itemRepo
-                .createQueryBuilder("item")
-                .select("MAX(item.sortOrder)", "maxSortOrder")
-                .where("item.noteId = :noteId", { noteId })
-                .getRawOne<{ maxSortOrder: number | null }>();
-            const nextOrder = (maxOrder?.maxSortOrder ?? -1) + 1;
+            const lastItem = await itemRepo.findOne({
+                where: { noteId },
+                order: { sortOrder: "DESC" },
+            });
+            const nextOrder = (lastItem?.sortOrder ?? -1) + 1;
             const item = this.createItem(input, note, nextOrder);
             await itemRepo.save(item);
-            await manager.getRepository(Note).save(note);
+            await this.touchNote(manager, note);
             return toNoteItemDto(item);
         });
     }
@@ -137,16 +137,14 @@ export default class NoteService {
             const item = await itemRepo.findOneBy({ id: itemId, noteId });
             if (!item) throw notFound("NOTE_ITEM_NOT_FOUND", "Item de note introuvable");
             await itemRepo.remove(item);
-            await manager.getRepository(Note).save(note);
+            await this.touchNote(manager, note);
         });
     }
 
     async archive(id: number): Promise<NoteDto> {
         const note = await this.findNoteOrThrow(id);
         if (!note.isArchived) {
-            note.isArchived = true;
-            note.archivedAt = new Date();
-            await this.noteRepo.save(note);
+            await this.noteRepo.update(id, { isArchived: true, archivedAt: new Date() });
         }
         return this.getById(id);
     }
@@ -154,9 +152,7 @@ export default class NoteService {
     async unarchive(id: number): Promise<NoteDto> {
         const note = await this.findNoteOrThrow(id);
         if (note.isArchived) {
-            note.isArchived = false;
-            note.archivedAt = null;
-            await this.noteRepo.save(note);
+            await this.noteRepo.update(id, { isArchived: false, archivedAt: null });
         }
         return this.getById(id);
     }
@@ -177,6 +173,10 @@ export default class NoteService {
             isChecked: input.isChecked ?? false,
             sortOrder: input.sortOrder ?? defaultOrder,
         });
+    }
+
+    private async touchNote(manager: EntityManager, note: Note): Promise<void> {
+        await manager.getRepository(Note).update(note.id, { title: note.title });
     }
 
     private async findNoteOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {
