@@ -77,4 +77,17 @@ describe("NoteService", () => {
             .resolves.toMatchObject({ label: "Pommes", isChecked: true });
         await expect(service.getById(note.id)).resolves.toMatchObject({ title: "Courses", items: [{ isChecked: true }] });
     });
+
+    it("deletes checklist items through the note foreign-key cascade", async () => {
+        const note = await service.create({
+            title: "Courses",
+            type: "checklist",
+            items: [{ label: "Pain" }],
+        }, TEST_USER_ID);
+        const itemId = note.items[0].id;
+
+        await service.delete(note.id, TEST_USER_ID);
+
+        await expect(testDataSource.getRepository(NoteItem).findOneBy({ id: itemId })).resolves.toBeNull();
+    });
 });

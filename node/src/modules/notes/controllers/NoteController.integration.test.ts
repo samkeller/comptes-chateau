@@ -64,4 +64,24 @@ describe("NoteController integration", () => {
         expect(deleteResponse.status).toBe(403);
         await expect(testDataSource.getRepository(Note).findOneBy({ id: note.id })).resolves.not.toBeNull();
     });
+
+    it("moves notes between the active and archived lists", async () => {
+        const createResponse = await request(app)
+            .post("/notes")
+            .send({ title: "À classer", type: "text", content: "Contenu" });
+        const noteId = createResponse.body.id as number;
+
+        const archiveResponse = await request(app).patch(`/notes/${noteId}/archive`);
+        const activeList = await request(app).get("/notes");
+        const archivedList = await request(app).get("/notes?archived=true");
+
+        expect(archiveResponse.status).toBe(200);
+        expect(archiveResponse.body.isArchived).toBe(true);
+        expect(activeList.body).toHaveLength(0);
+        expect(archivedList.body).toHaveLength(1);
+
+        const restoreResponse = await request(app).patch(`/notes/${noteId}/unarchive`);
+        expect(restoreResponse.status).toBe(200);
+        expect(restoreResponse.body).toMatchObject({ isArchived: false, archivedAt: null });
+    });
 });
