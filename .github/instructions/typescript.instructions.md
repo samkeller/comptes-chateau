@@ -12,7 +12,7 @@ Apply these rules to all TypeScript changes in this repository.
 
 - Keep strict typing at all boundaries: controller input, service output, and DTO mapping.
 - Avoid `any`; use `unknown` with explicit narrowing when input shape is uncertain.
-- Reuse existing interfaces from `react/src/interfaces` and backend DTO shapes before creating new types.
+- Reuse contracts and DTOs from `shared/` for data exchanged between the frontend and backend.
 - Model nullable database values explicitly and handle them before rendering or returning API responses.
 
 ## Naming and Structure
@@ -32,6 +32,8 @@ Apply these rules to all TypeScript changes in this repository.
 ## Backend Conventions
 
 - Keep controllers thin and delegate business behavior to `node/src/services`.
+- For new modules, expose controllers as Express routers with route handlers; keep one service per entity, and access only that entity's repository from its service.
+- When a service needs another entity, call that entity's service instead of accessing its repository directly.
 - Validate and sanitize request inputs at API boundaries.
 - Handle async errors consistently with `try/catch` and return coherent API error responses.
 - Keep TypeORM entity changes aligned with generated migrations only.

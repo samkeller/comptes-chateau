@@ -15,7 +15,7 @@ applyTo: '**/*.md, node/src/**/*.ts, react/src/**/*.ts, react/src/**/*.tsx'
 ## Code Documentation
 
 - Add comments only when intent is not obvious from code structure and naming.
-- Document public service methods and controller behaviors when they enforce business rules.
+- Write focused JSDoc in French for public methods that enforce business rules or non-obvious algorithms.
 - Clarify non-obvious assumptions for date handling, recurring operations, and financial calculations.
 
 ## Project Documentation

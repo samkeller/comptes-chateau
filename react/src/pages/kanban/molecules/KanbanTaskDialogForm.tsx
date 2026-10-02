@@ -125,9 +125,12 @@ export default function KanbanTaskDialogForm({ taskData, setTaskData, allTags, c
                                 ) {
                                     event.preventDefault();
                                     // WORKAROUND: PrimeReact AutoComplete doesn't expose typed input value on onKeyDown
-                                    const valueStr: string = (event.target as any).value;
+                                    const input = event.currentTarget.querySelector("input");
+                                    if (!input) return;
+
+                                    const valueStr = input.value;
                                     addTag(valueStr);
-                                    (event.target as any).value = "";
+                                    input.value = "";
                                 }
                             }}
                             itemTemplate={option => <KanbanTagDisplay tag={option} />}

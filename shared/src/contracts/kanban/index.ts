@@ -3,6 +3,8 @@ export type { KanbanTaskPriority } from "./KanbanTaskPriority";
 
 export { CreateKanbanTaskSchema } from "./CreateKanbanTaskDto";
 export type { CreateKanbanTaskRequest } from "./CreateKanbanTaskDto";
+export { UpdateKanbanTaskSchema } from "./CreateKanbanTaskDto";
+export type { UpdateKanbanTaskRequest } from "./CreateKanbanTaskDto";
 
 export { CreateKanbanCommentSchema } from "./CreateKanbanCommentDto";
 export type { CreateKanbanCommentRequest } from "./CreateKanbanCommentDto";

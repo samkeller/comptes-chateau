@@ -1,6 +1,6 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
@@ -19,7 +19,7 @@ import {
 import KanbanTaskCard from "./KanbanTaskCard";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
-import type { CreateKanbanTaskRequest } from "@chocosous/shared";
+import type { UpdateKanbanTaskRequest } from "@chocosous/shared";
 import { useScreen } from "@/hooks/useScreen";
 import { Button } from "primereact/button";
 
@@ -31,7 +31,7 @@ export default function KanbanPage() {
             activationConstraint: { distance: 5 },
         }),
     );
-    const service = new KanbanService();
+    const service = useMemo(() => new KanbanService(), []);
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -41,17 +41,18 @@ export default function KanbanPage() {
     const [loading, setLoading] = useState<boolean>(true);
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
+    const [selectedTaskInitialTab, setSelectedTaskInitialTab] = useState<"task" | "comments">("task");
     const [activeTaskDragId, setActiveTaskDragId] = useState<number | null>(null);
     const [mobileDisplayedColumn, setMobileDisplayedColumn] = useState<number>(0);
 
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
-    useEffect(() => {
-        loadData()
-    }, []);
+    function selectTask(task: KanbanTask, initialTab: "task" | "comments" = "task") {
+        setSelectedTask(task);
+        setSelectedTaskInitialTab(initialTab);
+    }
 
-    async function loadData() {
-        setLoading(true);
+    const loadData = useCallback(async () => {
         try {
             const [boardData, tagsData] = await Promise.all([
                 service.getBoardData(),
@@ -65,7 +66,16 @@ export default function KanbanPage() {
         } finally {
             setLoading(false);
         }
+    }, [service]);
+
+    function reloadData() {
+        setLoading(true);
+        void loadData();
     }
+
+    useEffect(() => {
+        void loadData();
+    }, [loadData]);
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -79,13 +89,12 @@ export default function KanbanPage() {
         const draggedTask = tasks.find(t => t.id === draggedTaskId);
         if (!draggedTask || draggedTask.columnId === targetColumnId) return;
 
-        const updatedTask: CreateKanbanTaskRequest = {
-            ...draggedTask,
+        const updatedTask: UpdateKanbanTaskRequest = {
             columnId: targetColumnId,
         };
 
         service.saveKanbanTask(updatedTask, draggedTaskId)
-            .then(() => loadData())
+            .then(reloadData)
     }
 
     const activeTask = activeTaskDragId ? tasks.find(t => t.id === activeTaskDragId) ?? null : null;
@@ -120,7 +129,7 @@ export default function KanbanPage() {
                         <ProgressSpinner />
                     </div>
                 ) : (
-                    <FillRemainingHeight>
+                    <FillRemainingHeight offset={30}>
                         <div className="flex h-full w-full flex-col gap-3">
                             <KanbanFilters
                                 allUsers={allUsers}
@@ -159,10 +168,17 @@ export default function KanbanPage() {
                                             allTags={allTags.map(entry => entry)}
                                             allUsers={allUsers.map(user => new User(user))}
                                             task={selectedTask}
+                                            initialTab={selectedTaskInitialTab}
+                                            onCommentCountChange={(taskId, commentCount) => {
+                                                setTasks(current => current.map(task =>
+                                                    task.id === taskId ? new KanbanTask({ ...task, commentCount }) : task
+                                                ));
+                                            }}
                                             closeDialog={(reloadList) => {
                                                 setSelectedTask(null);
+                                                setSelectedTaskInitialTab("task");
                                                 if (reloadList) {
-                                                    loadData();
+                                                    reloadData();
                                                 }
                                             }}
                                         />
@@ -176,7 +192,7 @@ export default function KanbanPage() {
                                                 tasks={displayedTasks.filter(
                                                     t => t.columnId === columns[mobileDisplayedColumn]?.id
                                                 )}
-                                                setSelectedTask={setSelectedTask}
+                                                setSelectedTask={selectTask}
                                                 activeId={activeTaskDragId}
                                                 className="w-full"
                                             />
@@ -193,7 +209,7 @@ export default function KanbanPage() {
                                                 tasks={displayedTasks.filter(
                                                     t => t.columnId === column.id
                                                 )}
-                                                setSelectedTask={setSelectedTask}
+                                                setSelectedTask={selectTask}
                                                 activeId={activeTaskDragId}
                                                 className="min-w-0 flex-1"
                                             />

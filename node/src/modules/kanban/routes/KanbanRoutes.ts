@@ -1,7 +1,7 @@
 import { Router } from "express";
 import KanbanController from "../controllers/KanbanController";
 import { validateBody, validateParams, IdParamSchema, CommentIdParamSchema } from "../../core/middlewares/validate";
-import { CreateKanbanTaskSchema, CreateKanbanCommentSchema } from "@chocosous/shared";
+import { CreateKanbanTaskSchema, CreateKanbanCommentSchema, UpdateKanbanTaskSchema } from "@chocosous/shared";
 
 const KanbanRoutes = Router();
 const kanbanController = new KanbanController();
@@ -9,7 +9,7 @@ const kanbanController = new KanbanController();
 KanbanRoutes.get("/board", kanbanController.getBoard);
 KanbanRoutes.get("/tags", kanbanController.getAllTags);
 KanbanRoutes.post("/task", validateBody(CreateKanbanTaskSchema), kanbanController.createTask);
-KanbanRoutes.patch("/task/:id", validateParams(IdParamSchema), validateBody(CreateKanbanTaskSchema), kanbanController.saveTask);
+KanbanRoutes.patch("/task/:id", validateParams(IdParamSchema), validateBody(UpdateKanbanTaskSchema), kanbanController.saveTask);
 KanbanRoutes.delete("/task/:id", validateParams(IdParamSchema), kanbanController.deleteTask);
 KanbanRoutes.patch("/task/mark-done/:id", validateParams(IdParamSchema), kanbanController.markTaskAsDone);
 KanbanRoutes.get("/task/:id/comments", validateParams(IdParamSchema), kanbanController.getTaskComments);

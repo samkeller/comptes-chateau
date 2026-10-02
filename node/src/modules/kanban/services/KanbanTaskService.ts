@@ -29,6 +29,14 @@ export default class KanbanTaskService {
         return this.taskRepo.save(task);
     }
 
+    async markDoneIfNotDone(id: number, userId: number): Promise<boolean> {
+        const result = await this.taskRepo.update(
+            { id, isDone: false },
+            { isDone: true, doneByUserId: userId },
+        );
+        return result.affected === 1;
+    }
+
     async delete(id: number): Promise<void> {
         await this.taskRepo.delete({ id });
     }

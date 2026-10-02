@@ -15,7 +15,7 @@ import { ScrollPanel } from "primereact/scrollpanel"
 interface KanbanColumnProps {
     column: KanbanColumn
     tasks: KanbanTask[]
-    setSelectedTask: (task: KanbanTask) => void
+    setSelectedTask: (task: KanbanTask, initialTab?: "task" | "comments") => void
     activeId: number | null,
     className?: string
 }
