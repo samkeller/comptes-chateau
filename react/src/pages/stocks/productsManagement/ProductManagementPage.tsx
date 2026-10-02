@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Message } from "primereact/message";
 import { CreateStockItemDto, SaveStockItemPayload } from "@/services/stocks/dto/CreateStockItemDto";
 import StockItem from "@/interfaces/stocks/StockItem";
@@ -17,9 +17,12 @@ import RequiredMark from "@/components/atoms/form/RequiredMark";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import ProductOptionalFields from "./molecules/ProductOptionalFields";
+import StockLocation from "@/interfaces/stocks/StockLocation";
+import StockLocationService from "@/services/stocks/StockLocationService";
 
 const stockItemsService = new StockItemsService();
 const stockUnitsService = new StockUnitsService();
+const stockLocationService = new StockLocationService();
 
 const EMPTY_STOCK_ITEM_DTO: CreateStockItemDto = {
     label: "",
@@ -38,6 +41,11 @@ export default function ProductManagementPage() {
     const [stockItemsRefreshKey, setStockItemsRefreshKey] = useState(0);
     const [selectedStockItem, setSelectedStockItem] = useState<StockItem | null>(null);
     const [savingForm, setSavingForm] = useState(false);
+    const [stockLocations, setStockLocations] = useState<StockLocation[]>([]);
+
+    useEffect(() => {
+        stockLocationService.listLocations().then(setStockLocations)
+    }, []);
 
     const isStockItemModified =
         selectedStockItem !== null &&
@@ -131,6 +139,9 @@ export default function ProductManagementPage() {
 
             setSelectedStockItem(savedStockItem);
 
+            // À la création, on pré-remplit une stockUnit (non persistée) sur le premier emplacement disponible.
+            const defaultLocation = stockLocations[0];
+
             setFormData((prevFormData) => ({
                 ...prevFormData,
                 id: savedStockItem.id,
@@ -143,9 +154,9 @@ export default function ProductManagementPage() {
                         clientId: crypto.randomUUID(),
                         quantity: 1,
                         unit: prevFormData.defaultUnit,
-                        locationId: 1
+                        locationId: defaultLocation.id || 1, // Il y aura toujours des emplacements disponibles.
                     }]
-                    : formData.units,
+                    : prevFormData.units,
             }));
 
             // Si update -> Recharge les units
@@ -289,6 +300,7 @@ export default function ProductManagementPage() {
                                         stockItemLabel={formData.label}
                                         stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
+                                        stockLocations={stockLocations}
                                         onChange={onUnitsChange}
                                     />
                                 ) : (
@@ -297,6 +309,7 @@ export default function ProductManagementPage() {
                                         stockItemLabel={formData.label}
                                         stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
+                                        stockLocations={stockLocations}
                                         onChange={onUnitsChange}
                                     />
                                 )
