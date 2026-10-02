@@ -43,3 +43,7 @@ export const PatchNoteItemSchema = z.object({
 });
 
 export const CreateNoteItemSchema = NoteItemInputSchema;
+
+export type CreateNoteRequest = z.infer<typeof CreateNoteSchema>;
+export type UpdateNoteRequest = z.infer<typeof UpdateNoteSchema>;
+export type PatchNoteItemRequest = z.infer<typeof PatchNoteItemSchema>;

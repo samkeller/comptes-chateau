@@ -123,9 +123,12 @@ export {
 } from "./notes";
 export type {
     CreateNoteItemInput,
+    CreateNoteRequest,
     NoteDto,
     NoteItemDto,
+    PatchNoteItemRequest,
     NoteType,
+    UpdateNoteRequest,
 } from "./notes";
 
 export {

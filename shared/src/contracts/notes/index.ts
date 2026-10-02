@@ -8,3 +8,8 @@ export {
     PatchNoteItemSchema,
     UpdateNoteSchema,
 } from "./NoteSchemas";
+export type {
+    CreateNoteRequest,
+    PatchNoteItemRequest,
+    UpdateNoteRequest,
+} from "./NoteSchemas";
