@@ -12,4 +12,5 @@ export interface KanbanTaskResponse {
     assignees?: UserDto[];
     isDone: boolean;
     doneByUserId?: number | null;
+    commentCount: number;
 }

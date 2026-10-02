@@ -12,6 +12,7 @@ import { ScrollPanel } from "primereact/scrollpanel";
 
 interface KanbanCommentSectionProps {
     taskId: number;
+    onCommentCountChange: (commentCount: number) => void;
 }
 
 function toCommentDateFormat(iso: string): string {
@@ -26,7 +27,7 @@ function toCommentDateFormat(iso: string): string {
 
 const service = new KanbanService();
 
-export default function KanbanCommentSection({ taskId }: KanbanCommentSectionProps) {
+export default function KanbanCommentSection({ taskId, onCommentCountChange }: KanbanCommentSectionProps) {
     const { connectedUser } = useConnectedUser();
 
     const [comments, setComments] = useState<KanbanCommentResponse[]>([]);
@@ -50,6 +51,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
             .createComment(taskId, newContent)
             .then((created) => {
                 setComments(prev => [...prev, created]);
+                onCommentCountChange(comments.length + 1);
                 setNewContent("");
             })
             .finally(() => {
@@ -62,6 +64,7 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
             .deleteComment(commentId)
             .then(() => {
                 setComments(prev => prev.filter(c => c.id !== commentId));
+                onCommentCountChange(Math.max(0, comments.length - 1));
             })
     }
 
@@ -110,9 +113,10 @@ export default function KanbanCommentSection({ taskId }: KanbanCommentSectionPro
                                                         rounded
                                                         severity="danger"
                                                         size="small"
-                                                        className="ml-auto py-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="ml-auto min-h-11 min-w-11"
                                                         onClick={() => handleDelete(comment.id)}
                                                         tooltip="Supprimer"
+                                                        aria-label="Supprimer le commentaire"
                                                     />
                                                 )}
                                             </div>

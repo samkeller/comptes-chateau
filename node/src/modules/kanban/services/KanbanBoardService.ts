@@ -13,6 +13,7 @@ import type { User } from "../../core/entities/User";
 import { toUserDto } from "../../core/mappers/UserMapper";
 import UserService from "../../core/services/UserService";
 import UserXpService from "../../core/services/UserXpService";
+import { xpEventBus } from "../../core/events/XpEventBus";
 import type { KanbanColumn } from "../entities/KanbanColumn";
 import type { KanbanComment } from "../entities/KanbanComment";
 import type { KanbanTask } from "../entities/KanbanTask";
@@ -30,14 +31,12 @@ export default class KanbanBoardService {
     private readonly columnService: KanbanColumnService;
     private readonly commentService: KanbanCommentService;
     private readonly userService: UserService;
-    private readonly userXpService: UserXpService;
 
     constructor(private readonly manager: EntityManager = AppDataSource.manager) {
         this.taskService = new KanbanTaskService(manager);
         this.columnService = new KanbanColumnService(manager);
         this.commentService = new KanbanCommentService(manager);
         this.userService = new UserService(manager);
-        this.userXpService = new UserXpService(manager);
     }
 
     async getAssignedTasksCount(userId: number): Promise<number> {
@@ -54,10 +53,11 @@ export default class KanbanBoardService {
             this.taskService.getAllWithAssignees(),
             this.userService.getAll(),
         ]);
+        const commentCounts = await this.commentService.getCountsByTaskIds(tasks.map((task) => task.id));
 
         return {
             columns,
-            tasks: tasks.map(toKanbanTaskDto),
+            tasks: tasks.map((task) => toKanbanTaskDto(task, commentCounts.get(task.id) ?? 0)),
             users: users.map(toUserDto),
         };
     }
@@ -67,25 +67,38 @@ export default class KanbanBoardService {
     }
 
     async createTask(body: CreateKanbanTaskRequest, connectedUserId: number): Promise<KanbanTaskResponse> {
-        const column = await this.columnService.getById(body.columnId);
-        if (!column) {
-            throw notFound("KANBAN_COLUMN_NOT_FOUND", "Colonne kanban introuvable");
-        }
+        let xpEvent: Parameters<typeof xpEventBus.emit>[0] | null = null;
+        const createdTask = await this.manager.transaction(async (manager) => {
+            const columnService = new KanbanColumnService(manager);
+            const taskService = new KanbanTaskService(manager);
+            const userService = new UserService(manager);
+            const userXpService = new UserXpService(manager, (event) => {
+                xpEvent = event;
+            });
 
-        const assignees = await this.resolveAssignees(body.assigneeIds);
-        const task = this.taskService.create({
-            title: body.title,
-            description: body.description ?? null,
-            tags: this.normalizeTags(body.tags),
-            column,
-            priority: body.priority ?? "normal",
-            assignees,
+            const column = await columnService.getById(body.columnId);
+            if (!column) {
+                throw notFound("KANBAN_COLUMN_NOT_FOUND", "Colonne kanban introuvable");
+            }
+
+            const assignees = await this.resolveAssignees(body.assigneeIds, userService);
+            const task = taskService.create({
+                title: body.title,
+                description: body.description ?? null,
+                tags: this.normalizeTags(body.tags),
+                column,
+                priority: body.priority ?? "normal",
+                assignees,
+            });
+            const savedTask = await taskService.save(task);
+            await userXpService.addXPForUser(connectedUserId, "KANBAN_TASK_CREATED");
+            const loadedTask = await taskService.getByIdWithAssignees(savedTask.id);
+            if (!loadedTask) throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
+            return toKanbanTaskDto(loadedTask);
         });
-        const savedTask = await this.taskService.save(task);
 
-        await this.userXpService.addXPForUser(connectedUserId, "KANBAN_TASK_CREATED");
-
-        return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
+        if (xpEvent) xpEventBus.emit(xpEvent);
+        return createdTask;
     }
 
     async saveTask(body: UpdateKanbanTaskRequest, id: number): Promise<KanbanTaskResponse> {
@@ -125,10 +138,13 @@ export default class KanbanBoardService {
     }
 
     async markTaskAsDone(taskId: number, userId: number): Promise<void> {
+        let xpEvent: Parameters<typeof xpEventBus.emit>[0] | null = null;
         await this.manager.transaction(async (manager) => {
             const taskService = new KanbanTaskService(manager);
             const userService = new UserService(manager);
-            const userXpService = new UserXpService(manager);
+            const userXpService = new UserXpService(manager, (event) => {
+                xpEvent = event;
+            });
 
             if (!await taskService.getById(taskId)) {
                 throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
@@ -140,9 +156,13 @@ export default class KanbanBoardService {
             if (!await taskService.markDoneIfNotDone(taskId, userId)) return;
             await userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
         });
+        if (xpEvent) xpEventBus.emit(xpEvent);
     }
 
     async getTaskComments(taskId: number): Promise<KanbanCommentResponse[]> {
+        if (!await this.taskService.getById(taskId)) {
+            throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
+        }
         const comments = await this.commentService.getAllByTaskId(taskId);
         return comments.map((comment) => this.toCommentDto(comment));
     }
@@ -195,11 +215,14 @@ export default class KanbanBoardService {
         return [...uniqueTags];
     }
 
-    private async resolveAssignees(assigneeIds: number[] | undefined): Promise<User[]> {
+    private async resolveAssignees(
+        assigneeIds: number[] | undefined,
+        userService: UserService = this.userService,
+    ): Promise<User[]> {
         if (!assigneeIds || assigneeIds.length === 0) return [];
 
         const uniqueIds = [...new Set(assigneeIds)];
-        const users = await this.userService.getByIds(uniqueIds);
+        const users = await userService.getByIds(uniqueIds);
         if (users.length !== uniqueIds.length) {
             throw notFound("KANBAN_ASSIGNEE_NOT_FOUND", "Un ou plusieurs assignees introuvables");
         }

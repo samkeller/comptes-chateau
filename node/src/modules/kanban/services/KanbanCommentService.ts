@@ -17,6 +17,19 @@ export default class KanbanCommentService {
         });
     }
 
+    async getCountsByTaskIds(taskIds: number[]): Promise<Map<number, number>> {
+        if (taskIds.length === 0) return new Map();
+
+        const rows = await this.commentRepo.createQueryBuilder("comment")
+            .select("comment.taskId", "taskId")
+            .addSelect("COUNT(comment.id)", "commentCount")
+            .where("comment.taskId IN (:...taskIds)", { taskIds })
+            .groupBy("comment.taskId")
+            .getRawMany<{ taskId: number; commentCount: string }>();
+
+        return new Map(rows.map((row) => [Number(row.taskId), Number(row.commentCount)]));
+    }
+
     async getById(id: number): Promise<KanbanComment | null> {
         return this.commentRepo.findOneBy({ id });
     }

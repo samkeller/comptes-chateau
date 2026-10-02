@@ -41,10 +41,16 @@ export default function KanbanPage() {
     const [loading, setLoading] = useState<boolean>(true);
 
     const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
+    const [selectedTaskInitialTab, setSelectedTaskInitialTab] = useState<"task" | "comments">("task");
     const [activeTaskDragId, setActiveTaskDragId] = useState<number | null>(null);
     const [mobileDisplayedColumn, setMobileDisplayedColumn] = useState<number>(0);
 
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
+
+    function selectTask(task: KanbanTask, initialTab: "task" | "comments" = "task") {
+        setSelectedTask(task);
+        setSelectedTaskInitialTab(initialTab);
+    }
 
     useEffect(() => {
         loadData()
@@ -158,8 +164,15 @@ export default function KanbanPage() {
                                             allTags={allTags.map(entry => entry)}
                                             allUsers={allUsers.map(user => new User(user))}
                                             task={selectedTask}
+                                            initialTab={selectedTaskInitialTab}
+                                            onCommentCountChange={(taskId, commentCount) => {
+                                                setTasks(current => current.map(task =>
+                                                    task.id === taskId ? new KanbanTask({ ...task, commentCount }) : task
+                                                ));
+                                            }}
                                             closeDialog={(reloadList) => {
                                                 setSelectedTask(null);
+                                                setSelectedTaskInitialTab("task");
                                                 if (reloadList) {
                                                     loadData();
                                                 }
@@ -175,7 +188,7 @@ export default function KanbanPage() {
                                                 tasks={displayedTasks.filter(
                                                     t => t.columnId === columns[mobileDisplayedColumn]?.id
                                                 )}
-                                                setSelectedTask={setSelectedTask}
+                                                setSelectedTask={selectTask}
                                                 activeId={activeTaskDragId}
                                                 className="w-full"
                                             />
@@ -192,7 +205,7 @@ export default function KanbanPage() {
                                                 tasks={displayedTasks.filter(
                                                     t => t.columnId === column.id
                                                 )}
-                                                setSelectedTask={setSelectedTask}
+                                                setSelectedTask={selectTask}
                                                 activeId={activeTaskDragId}
                                                 className="min-w-0 flex-1"
                                             />
