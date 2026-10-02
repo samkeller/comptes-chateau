@@ -1,6 +1,7 @@
 import axios from "axios";
 import BaseService from "../BaseService";
 import type {
+    KanbanBoardResponse,
     CreateKanbanTaskRequest,
     KanbanCommentResponse,
     UpdateKanbanTaskRequest,
@@ -21,11 +22,11 @@ export default class KanbanService extends BaseService {
     private kanbanApiUrl = this.apiUrl + "/kanban";
 
     getBoardData(): Promise<KanbanBoardData> {
-        return axios.get(this.kanbanApiUrl + "/board").then(res => {
+        return axios.get<KanbanBoardResponse>(this.kanbanApiUrl + "/board").then(res => {
             return {
-                columns: res.data.columns.map((column: any) => new KanbanColumn(column)),
-                tasks: res.data.tasks.map((task: any) => new KanbanTask(task)),
-                users: res.data.users.map((user: any) => new User(user)),
+                columns: res.data.columns.map((column) => new KanbanColumn(column)),
+                tasks: res.data.tasks.map((task) => new KanbanTask(task)),
+                users: res.data.users.map((user) => new User(user)),
             }
         });
     }
@@ -62,4 +63,3 @@ export default class KanbanService extends BaseService {
         return axios.delete(this.kanbanApiUrl + `/comment/${commentId}`);
     }
 }
-

@@ -65,7 +65,7 @@ Ajouter des tests de conversion/rendu pour ce sous-ensemble avant de généralis
 
 ### Bundle
 
-Lors de l’audit initial, la comparaison chiffrée n’était pas disponible : les dépendances Node n’étaient pas installées et aucune mesure Vite par fonctionnalité n’existait. Pour la livraison des correctifs Kanban, le chunk JS principal Vite est passé de **2 422,77 kB / 749,35 kB gzip** à **2 423,07 kB / 750,91 kB gzip** (+0,30 kB brut / +1,56 kB gzip). Cette variation couvre les changements Kanban et n’isole pas le coût Markdown. Les dépendances Markdown étant conservées, aucun gain lié à leur suppression n’est revendiqué.
+Lors de l’audit initial, la comparaison chiffrée n’était pas disponible : les dépendances Node n’étaient pas installées et aucune mesure Vite par fonctionnalité n’existait. Pour la livraison des correctifs Kanban, le chunk JS principal Vite est passé de **2 422,77 kB / 749,35 kB gzip** à **2 423,12 kB / 750,93 kB gzip** (+0,35 kB brut / +1,58 kB gzip). Cette variation couvre les changements Kanban et n’isole pas le coût Markdown. Les dépendances Markdown étant conservées, aucun gain lié à leur suppression n’est revendiqué.
 
 ## 3. Back : constats
 
