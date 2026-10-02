@@ -4,6 +4,7 @@ import type {
     KanbanBoardResponse,
     KanbanCommentResponse,
     KanbanTaskResponse,
+    UpdateKanbanTaskRequest,
 } from "@chocosous/shared";
 import type { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
@@ -87,16 +88,22 @@ export default class KanbanBoardService {
         return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
     }
 
-    async saveTask(body: CreateKanbanTaskRequest, id: number): Promise<KanbanTaskResponse> {
+    async saveTask(body: UpdateKanbanTaskRequest, id: number): Promise<KanbanTaskResponse> {
         const existingTask = await this.taskService.getByIdWithAssignees(id);
         if (!existingTask) {
             throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
         }
 
-        existingTask.columnId = body.columnId;
-        existingTask.title = body.title;
-        existingTask.description = body.description || null;
-        existingTask.priority = body.priority || "normal";
+        if (body.columnId !== undefined) {
+            const column = await this.columnService.getById(body.columnId);
+            if (!column) {
+                throw notFound("KANBAN_COLUMN_NOT_FOUND", "Colonne kanban introuvable");
+            }
+            existingTask.columnId = column.id;
+        }
+        if (body.title !== undefined) existingTask.title = body.title;
+        if (body.description !== undefined) existingTask.description = body.description;
+        if (body.priority !== undefined) existingTask.priority = body.priority;
 
         if (body.tags !== undefined) {
             existingTask.tags = this.normalizeTags(body.tags);
@@ -124,9 +131,7 @@ export default class KanbanBoardService {
             throw notFound("KANBAN_USER_NOT_FOUND", "Utilisateur introuvable");
         }
 
-        task.isDone = true;
-        task.doneByUserId = userId;
-        await this.taskService.save(task);
+        if (!await this.taskService.markDoneIfNotDone(taskId, userId)) return;
         await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
     }
 

@@ -87,12 +87,14 @@ export type {
 export {
     KANBAN_TASK_PRIORITIES,
     CreateKanbanTaskSchema,
+    UpdateKanbanTaskSchema,
     CreateKanbanCommentSchema,
 } from "./kanban";
 
 export type {
     KanbanTaskPriority,
     CreateKanbanTaskRequest,
+    UpdateKanbanTaskRequest,
     CreateKanbanCommentRequest,
     KanbanCommentResponse,
     KanbanColumnResponse,
