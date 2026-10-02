@@ -32,7 +32,7 @@ export default class KanbanBoardService {
     private readonly userService: UserService;
     private readonly userXpService: UserXpService;
 
-    constructor(manager: EntityManager = AppDataSource.manager) {
+    constructor(private readonly manager: EntityManager = AppDataSource.manager) {
         this.taskService = new KanbanTaskService(manager);
         this.columnService = new KanbanColumnService(manager);
         this.commentService = new KanbanCommentService(manager);
@@ -125,14 +125,21 @@ export default class KanbanBoardService {
     }
 
     async markTaskAsDone(taskId: number, userId: number): Promise<void> {
-        const task = await this.taskService.getByIdWithAssignees(taskId);
-        if (!task) throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
-        if (!await this.userService.getById(userId)) {
-            throw notFound("KANBAN_USER_NOT_FOUND", "Utilisateur introuvable");
-        }
+        await this.manager.transaction(async (manager) => {
+            const taskService = new KanbanTaskService(manager);
+            const userService = new UserService(manager);
+            const userXpService = new UserXpService(manager);
 
-        if (!await this.taskService.markDoneIfNotDone(taskId, userId)) return;
-        await this.userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
+            if (!await taskService.getById(taskId)) {
+                throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
+            }
+            if (!await userService.getById(userId)) {
+                throw notFound("KANBAN_USER_NOT_FOUND", "Utilisateur introuvable");
+            }
+
+            if (!await taskService.markDoneIfNotDone(taskId, userId)) return;
+            await userXpService.addXPForUser(userId, "KANBAN_TASK_COMPLETED");
+        });
     }
 
     async getTaskComments(taskId: number): Promise<KanbanCommentResponse[]> {
