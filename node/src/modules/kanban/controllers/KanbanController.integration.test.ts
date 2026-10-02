@@ -49,6 +49,17 @@ describe("KanbanController integration", () => {
         });
     });
 
+    it("returns a not-found error when updating a task to a missing column", async () => {
+        await createTask();
+
+        const response = await request(app)
+            .patch(`/kanban/task/${taskId}`)
+            .send({ columnId: 999 });
+
+        expect(response.status).toBe(404);
+        expect(response.body.code).toBe("KANBAN_COLUMN_NOT_FOUND");
+    });
+
     it("awards completion XP only once when the done endpoint is called repeatedly", async () => {
         await createTask();
 

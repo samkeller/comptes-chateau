@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { KANBAN_TASK_PRIORITIES } from "./KanbanTaskPriority";
 
-/** Schéma de validation pour la création ou la modification d'une tâche kanban. */
+/** Schéma de validation pour la création d'une tâche kanban. */
 export const CreateKanbanTaskSchema = z.object({
     title: z.string().trim().min(1).max(255),
     columnId: z.number().int(),
