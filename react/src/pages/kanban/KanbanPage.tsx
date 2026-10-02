@@ -129,7 +129,7 @@ export default function KanbanPage() {
                         <ProgressSpinner />
                     </div>
                 ) : (
-                    <FillRemainingHeight>
+                    <FillRemainingHeight offset={30}>
                         <div className="flex h-full w-full flex-col gap-3">
                             <KanbanFilters
                                 allUsers={allUsers}

@@ -6,7 +6,6 @@ import UserAvatar from "../../components/atoms/UserAvatar";
 import { AvatarGroup } from "primereact/avatargroup";
 import TailwindTag from "@/components/atoms/TailwindTag";
 import { useScreen } from "@/hooks/useScreen";
-import { Button } from "primereact/button";
 
 interface KanbanTaskCardProps {
     task: KanbanTask,
@@ -26,8 +25,16 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
                     {task.title}
                 </span>
             </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+                {
+                    task.commentCount > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-primary">
+                            <i className="pi pi-comments" />
+                            {task.commentCount}
+                        </span>
+                    )
+                }
 
-            <div className="flex items-center gap-1 self-start sm:self-auto">
                 {task.assignees.length > 0 && (
                     <AvatarGroup>
                         {task.assignees.map((assignee) => <UserAvatar key={assignee.id} user={assignee} />)}
@@ -67,20 +74,7 @@ export default function KanbanTaskCard({ task, setSelectedTask }: KanbanTaskCard
                     content: { className: "pt-2" },
                 }}
                 onClick={() => setSelectedTask && setSelectedTask(task)}
-            >
-                <Button
-                    label={`Commentaires (${task.commentCount})`}
-                    icon="pi pi-comments"
-                    text
-                    size="small"
-                    className="min-h-11 min-w-11"
-                    aria-label={`Ouvrir les commentaires (${task.commentCount})`}
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        setSelectedTask?.(task, "comments");
-                    }}
-                />
-            </Card>
+            />
         </div >
     )
 }
