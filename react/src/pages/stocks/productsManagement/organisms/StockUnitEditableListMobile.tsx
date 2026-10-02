@@ -1,20 +1,17 @@
-import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
 import { StockUnitUnits } from "@/interfaces/stocks/StockUnit";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import StockLocationService from "@/services/stocks/StockLocationService";
 import { useStockUnitsEditor } from "../hooks/useStockUnitsEditor";
 import StockUnitCard from "../molecules/StockUnitCard";
-
-const stockLocationService = new StockLocationService();
 
 interface StockUnitEditableListMobileProps {
     stockItemId: number;
     stockItemLabel: string;
     stockItemUnit: StockUnitUnits;
     stockUnits: CreateStockUnitDto[];
+    stockLocations: StockLocation[];
     onChange: (updatedStockUnits: CreateStockUnitDto[]) => void;
 }
 
@@ -26,13 +23,9 @@ export default function StockUnitEditableListMobile({
     stockItemLabel,
     stockItemUnit,
     stockUnits,
+    stockLocations,
     onChange,
 }: StockUnitEditableListMobileProps) {
-    const [stockLocations, setStockLocations] = useState<StockLocation[]>([]);
-
-    useEffect(() => {
-        stockLocationService.listLocations().then(setStockLocations);
-    }, []);
 
     const { addStockUnit, updateStockUnit, deleteStockUnitOptimistic } = useStockUnitsEditor({
         stockItemId,

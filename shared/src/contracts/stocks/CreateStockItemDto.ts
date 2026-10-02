@@ -16,7 +16,6 @@ export const CreateStockItemSchema = z.object({
     barcode: z.string().trim().max(64).optional(),
     defaultUnit: z.string().trim().min(1).max(64),
     imageUrl: z.string().optional(),
-    units: z.array(StockUnitCreateSchema),
 });
 
 export type CreateStockItemDto = z.infer<typeof CreateStockItemSchema>;

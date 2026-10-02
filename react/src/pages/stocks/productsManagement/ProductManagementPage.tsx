@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Message } from "primereact/message";
-import { CreateStockItemDto } from "@/services/stocks/dto/CreateStockItemDto";
+import { CreateStockItemDto, SaveStockItemPayload } from "@/services/stocks/dto/CreateStockItemDto";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
@@ -17,9 +17,12 @@ import RequiredMark from "@/components/atoms/form/RequiredMark";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import ProductOptionalFields from "./molecules/ProductOptionalFields";
+import StockLocation from "@/interfaces/stocks/StockLocation";
+import StockLocationService from "@/services/stocks/StockLocationService";
 
 const stockItemsService = new StockItemsService();
 const stockUnitsService = new StockUnitsService();
+const stockLocationService = new StockLocationService();
 
 const EMPTY_STOCK_ITEM_DTO: CreateStockItemDto = {
     label: "",
@@ -38,6 +41,11 @@ export default function ProductManagementPage() {
     const [stockItemsRefreshKey, setStockItemsRefreshKey] = useState(0);
     const [selectedStockItem, setSelectedStockItem] = useState<StockItem | null>(null);
     const [savingForm, setSavingForm] = useState(false);
+    const [stockLocations, setStockLocations] = useState<StockLocation[]>([]);
+
+    useEffect(() => {
+        stockLocationService.listLocations().then(setStockLocations)
+    }, []);
 
     const isStockItemModified =
         selectedStockItem !== null &&
@@ -102,26 +110,37 @@ export default function ProductManagementPage() {
         setSavingForm(true);
 
         try {
-            const payload: CreateStockItemDto = {
-                ...formData,
+            const payload: SaveStockItemPayload = {
+                id: formData.id,
                 label: formData.label.trim(),
+                barcode: formData.barcode,
+                defaultUnit: formData.defaultUnit,
+                imageUrl: formData.imageUrl,
             };
 
             let savedStockItem: StockItem;
+            let isCreation: boolean = false;
 
+            // Mise à jour du stockItem existant
             if (selectedStockItem) {
                 savedStockItem = await stockItemsService.update(
                     selectedStockItem.id,
                     payload
                 );
-            } else {
+            }
+            // Création d'un nouveau stockItem
+            else {
                 savedStockItem = await stockItemsService.create(payload);
+                isCreation = true;
             }
 
             // Refraichit toujours l'autocomplete.
             setStockItemsRefreshKey((value) => value + 1);
 
             setSelectedStockItem(savedStockItem);
+
+            // À la création, on pré-remplit une stockUnit (non persistée) sur le premier emplacement disponible.
+            const defaultLocation = stockLocations[0];
 
             setFormData((prevFormData) => ({
                 ...prevFormData,
@@ -130,9 +149,18 @@ export default function ProductManagementPage() {
                 barcode: savedStockItem.barcode ?? undefined,
                 defaultUnit: savedStockItem.defaultUnit,
                 imageUrl: savedStockItem.imageUrl ?? undefined,
+                units: isCreation
+                    ? [{
+                        clientId: crypto.randomUUID(),
+                        quantity: 1,
+                        unit: prevFormData.defaultUnit,
+                        locationId: defaultLocation.id || 1, // Il y aura toujours des emplacements disponibles.
+                    }]
+                    : prevFormData.units,
             }));
 
-            await reloadStockUnits(savedStockItem.id);
+            // Si update -> Recharge les units
+            if (!isCreation) await reloadStockUnits(savedStockItem.id);
         } finally {
             setSavingForm(false);
         }
@@ -141,20 +169,30 @@ export default function ProductManagementPage() {
     /**
      * Sélection d'un stockItem via l'autocomplete.
      */
-    const onSelectStockItem = async (stockItem: StockItem) => {
+    const onSelectStockItem = async (stockItem: StockItem | null) => {
         setSelectedStockItem(stockItem);
 
-        setFormData((prevFormData) => ({
-            ...prevFormData,
-            id: stockItem.id,
-            label: stockItem.label,
-            barcode: stockItem.barcode ?? undefined,
-            defaultUnit: stockItem.defaultUnit,
-            imageUrl: stockItem.imageUrl ?? undefined,
-            units: [],
-        }));
+        if (stockItem !== null) {
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                id: stockItem.id,
+                label: stockItem.label,
+                barcode: stockItem.barcode ?? undefined,
+                defaultUnit: stockItem.defaultUnit,
+                imageUrl: stockItem.imageUrl ?? undefined,
+                units: [],
+            }));
+            await reloadStockUnits(stockItem.id);
 
-        await reloadStockUnits(stockItem.id);
+            return;
+        }
+        else {
+            setFormData(() => ({
+                ...EMPTY_STOCK_ITEM_DTO,
+                id: undefined,
+            }));
+        }
+
     };
 
     const onLabelChange = (value: string) => {
@@ -262,6 +300,7 @@ export default function ProductManagementPage() {
                                         stockItemLabel={formData.label}
                                         stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
+                                        stockLocations={stockLocations}
                                         onChange={onUnitsChange}
                                     />
                                 ) : (
@@ -270,6 +309,7 @@ export default function ProductManagementPage() {
                                         stockItemLabel={formData.label}
                                         stockItemUnit={formData.defaultUnit}
                                         stockUnits={formData.units}
+                                        stockLocations={stockLocations}
                                         onChange={onUnitsChange}
                                     />
                                 )

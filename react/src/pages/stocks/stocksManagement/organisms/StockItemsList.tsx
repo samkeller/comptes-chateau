@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Column } from "primereact/column";
+import { Column, ColumnSortEvent } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import StockItemsService from "@/services/stocks/StockItemsService";
@@ -7,6 +7,7 @@ import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemUnitsView from "./StockItemUnitsView";
 import { useScreen } from "@/hooks/useScreen";
 import { Divider } from "primereact/divider";
+import { parseDateToDisplay } from "@/utils/DatesUtils";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
@@ -96,14 +97,23 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                 // Scroll
                 scrollable
                 scrollHeight="flex"
+
+                // Sort
+                sortMode="single"
+                sortField="label" // Presort
+                sortOrder={1} // Ascending by default
+                removableSort
+
+
                 className="pb-4 w-full"
                 loading={loading}
                 emptyMessage="Aucun produit disponible"
             >
                 <Column expander style={{ width: "4rem" }} />
                 <Column
-                    field="label"
                     header="Produit"
+                    field="label"
+                    sortable
                     body={(item: StockItem) => (
                         <div className="flex flex-col gap-1">
                             <span className="font-semibold">{item.label}</span>
@@ -111,8 +121,30 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                     )}
                 />
                 <Column
+                    header="Prochaine Expiration"
+                    field="nextStockUnitExpiration"
+                    sortable
+                    sortFunction={({ order, data }: ColumnSortEvent) => {
+                        const fixOrder = order === undefined || order === null ? 1 : order; // Default to ascending if order is not provided
+                        return data.sort((a: StockItem, b: StockItem) => {
+                            const expA = a.nextStockUnitExpiration;
+                            const expB = b.nextStockUnitExpiration;
+
+                            if (expA === null && expB === null) return 0;
+                            if (expA === null) return fixOrder;       // 1 → après, -1 → avant
+                            if (expB === null) return -fixOrder;      // inverse
+
+                            return fixOrder * (expA.getTime() - expB.getTime());
+                        });
+                    }}
+                    body={(item: StockItem) => (
+                        item.nextStockUnitExpiration && <span>{parseDateToDisplay(item.nextStockUnitExpiration)} </span>
+                    )}
+                />
+                <Column
                     header="Stock"
                     field="stockUnitsCount"
+                    sortable
                 />
             </DataTable>
         </FillRemainingHeight>

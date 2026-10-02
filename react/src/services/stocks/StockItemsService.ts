@@ -1,7 +1,7 @@
 import axios from "axios";
 import BaseService from "../BaseService";
 import StockItem from "@/interfaces/stocks/StockItem";
-import { CreateStockItemDto } from "./dto/CreateStockItemDto";
+import { SaveStockItemPayload } from "./dto/CreateStockItemDto";
 
 export default class StockItemsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/items`;
@@ -26,7 +26,7 @@ export default class StockItemsService extends BaseService {
      * @param payload 
      * @returns 
      */
-    create(payload: CreateStockItemDto): Promise<StockItem> {
+    create(payload: SaveStockItemPayload): Promise<StockItem> {
         return axios.post(`${this.stocksApiUrl}`, payload)
             .then((res) => new StockItem(res.data));
     }
@@ -39,7 +39,7 @@ export default class StockItemsService extends BaseService {
      */
     update(
         id: number,
-        payload: CreateStockItemDto
+        payload: SaveStockItemPayload
     ): Promise<StockItem> {
         return axios.patch(`${this.stocksApiUrl}/${id}`, payload)
             .then((res) => new StockItem(res.data));

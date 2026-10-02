@@ -16,6 +16,12 @@ export interface StockUnitGroup {
     unit: StockUnitUnits;
     expirationDate?: Date;
     locationId: number;
+    /**
+     * Libellé résolu de l'emplacement. Stocké dans le groupe (rowData) car les cellules
+     * de la DataTable PrimeReact sont mémoïsées sur rowData : un body template qui lirait
+     * `stockLocations` en closure ne serait pas rafraîchi au chargement des emplacements.
+     */
+    locationLabel?: string;
 }
 
 interface UseStockUnitsEditorParams {
@@ -60,12 +66,13 @@ export function useStockUnitsEditor({
                     unit: stockUnit.unit,
                     expirationDate: stockUnit.expirationDate,
                     locationId: stockUnit.locationId,
+                    locationLabel: stockLocations.find((location) => location.id === stockUnit.locationId)?.label,
                 });
             }
         });
 
         return Array.from(groups.values());
-    }, [stockUnits]);
+    }, [stockUnits, stockLocations]);
 
     const isMultipleUnits = (group: StockUnitGroup) => group.stockUnits.length > 1;
 
@@ -108,6 +115,7 @@ export function useStockUnitsEditor({
         if (!currentStockUnit) {
             return;
         }
+        console.log("Updating stock unit with clientId:", clientId, "for stockItemId:", stockItemId);
 
         const savedUnit: StockUnit =
             currentStockUnit.id === undefined
@@ -140,6 +148,8 @@ export function useStockUnitsEditor({
             ...stockUnit,
             [event.field]: event.newValue,
         }));
+
+        console.log("Updating stock unit group with stockItemId:", stockItemId, "and group:", group);
 
         const savedDtos: CreateStockUnitDto[] = await Promise.all(
             updatedUnits.map(async (stockUnit) => {

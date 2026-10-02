@@ -246,6 +246,7 @@ export default function AddAccountLineDialog() {
                             locale="fr-FR"
                             className="w-full"
                             invalid={amount === 0}
+                            inputMode="numeric" // Nécessaire pour téléphone - signe "-"
                         />
                         <label htmlFor="amount">Montant</label>
                     </FloatLabel>

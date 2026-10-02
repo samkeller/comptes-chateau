@@ -1,7 +1,7 @@
 import { CreateStockUnitDto } from "../../../../services/stocks/dto/CreateStockUnitDto";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import StockUnitEditableListExpansionTemplate from "./StockUnitEditableListExpansionTemplate";
@@ -11,16 +11,14 @@ import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import StockLocation from "@/interfaces/stocks/StockLocation";
-import StockLocationService from "@/services/stocks/StockLocationService";
 import { useStockUnitsEditor, StockUnitGroup } from "../hooks/useStockUnitsEditor";
-
-const stockLocationService = new StockLocationService();
 
 interface StockUnitEditableListProps {
     stockItemId: number;
     stockItemLabel: string;
     stockItemUnit: StockUnitUnits;
     stockUnits: CreateStockUnitDto[];
+    stockLocations: StockLocation[];
     onChange: (updatedStockUnits: CreateStockUnitDto[]) => void;
 }
 
@@ -32,14 +30,10 @@ export default function StockUnitEditableList({
     stockItemLabel,
     stockItemUnit,
     stockUnits,
+    stockLocations,
     onChange,
 }: StockUnitEditableListProps) {
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-    const [stockLocations, setStockLocations] = useState<StockLocation[]>([]);
-
-    useEffect(() => {
-        stockLocationService.listLocations().then(setStockLocations);
-    }, []);
 
     const {
         stockUnitGroups,
@@ -203,12 +197,7 @@ export default function StockUnitEditableList({
                 <Column
                     field="locationId"
                     header="Emplacement"
-                    body={(group: StockUnitGroup) => {
-                        const locationLabel = stockLocations.find(
-                            (location) => location.id === group.stockUnits[0].locationId
-                        )?.label;
-                        return locationLabel;
-                    }}
+                    body={(group: StockUnitGroup) => group.locationLabel ?? "-"}
                     className="cursor-pointer"
                     editor={(opts) =>
                         dropdownEditor(

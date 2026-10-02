@@ -168,7 +168,16 @@ export default function AddRecurringExpenseDialog() {
                 </div>
                 <div className='flex gap-1 items-center'>
                     <FloatLabel className='flex-1'>
-                        <InputNumber id="solde" value={solde} onValueChange={(e) => setSolde(e.value || 0)} mode="currency" currency="EUR" locale="fr-FR" className='w-full' />
+                        <InputNumber
+                            id="solde"
+                            value={solde}
+                            onValueChange={(e) => setSolde(e.value || 0)}
+                            mode="currency"
+                            currency="EUR"
+                            locale="fr-FR"
+                            className='w-full'
+                            inputMode="numeric" // Nécessaire pour téléphone - signe "-"
+                        />
                         <label htmlFor="solde">Montant <Optional /></label>
                     </FloatLabel>
                     <div className="flex items-center gap-2">

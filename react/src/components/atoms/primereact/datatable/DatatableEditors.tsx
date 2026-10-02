@@ -11,13 +11,25 @@ export const textEditor = (options: ColumnEditorOptions) => (
     />
 );
 
-export const numberEditor = (options: ColumnEditorOptions, InputProps?: Omit<InputNumberProps, "value" | "onValueChange">) => (
+export const numberEditor = (options: ColumnEditorOptions, inputProps?: Omit<InputNumberProps, "value" | "onValueChange">) => (
     <InputNumber
         value={options.value ?? 0}
         onValueChange={(event) => options.editorCallback?.(event.value)}
-        {...InputProps}
+        {...inputProps}
     />
 );
+
+export const currencyEditor = (options: ColumnEditorOptions, inputProps?: Omit<InputNumberProps, "value" | "onValueChange" | "mode" | "currency" | "locale">, allowNegative = false) => (
+    <InputNumber
+        value={options.value ?? 0}
+        onValueChange={(event) => options.editorCallback?.(event.value)}
+        mode="currency"
+        currency="EUR"
+        locale="fr-FR"
+        {...allowNegative && { inputMode: "numeric" }} // Nécessaire pour téléphone - signe "-" 
+        {...inputProps}
+    />
+)
 
 export const dateEditor = (options: ColumnEditorOptions) => (
     <Calendar

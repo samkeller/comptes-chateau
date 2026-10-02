@@ -16,6 +16,7 @@ export interface StockItemDto {
     defaultUnit: string;
     imageUrl: string | null;
     stockUnitsCount: number;
+    nextStockUnitExpiration: string | null;
     createdAt: string;
 }
 

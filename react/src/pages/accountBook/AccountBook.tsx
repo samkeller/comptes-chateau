@@ -250,7 +250,11 @@ export default function AccountBook() {
                             <InputNumber
                                 value={options.value || null}
                                 onChange={(e) => options.filterApplyCallback(e.value)}
+                                mode="currency"
+                                currency="EUR"
+                                locale="fr-FR"
                                 className="w-full"
+                                inputMode="numeric" // Nécessaire pour téléphone - signe "-"
                             />
                         )}
                         style={{ maxWidth: "200px" }}

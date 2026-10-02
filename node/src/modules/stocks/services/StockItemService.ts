@@ -33,6 +33,7 @@ export default class StockItemService {
                 units: {
                     id: true,
                     locationId: true,
+                    expirationDate: true,
                 },
             },
         });
@@ -66,10 +67,12 @@ export default class StockItemService {
             throw new Error("Stock item not found");
         }
 
-        const savedStockItem = await this.stockItemRepo.save({
-            ...stockItem,
-            ...body,
-        });
+        stockItem.label = body.label;
+        stockItem.barcode = body.barcode ?? null;
+        stockItem.defaultUnit = body.defaultUnit;
+        stockItem.imageUrl = body.imageUrl ?? null;
+
+        const savedStockItem = await this.stockItemRepo.save(stockItem);
 
         return toStockItemDto(savedStockItem);
     }
