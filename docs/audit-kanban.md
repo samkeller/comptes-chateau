@@ -35,14 +35,6 @@ Aucun blocage global empêchant l’usage du Kanban n’a été identifié. Deux
 - **Effort :** S.
 - **Risque prod :** faible ; un regroupement peut réduire la découvrabilité des filtres si le libellé ou l’état actif ne sont pas visibles.
 
-### Important — Le déplacement de tâches est incohérent avec le tactile et les tablettes
-
-- **Fichiers :** `react/src/pages/kanban/KanbanPage.tsx`, `react/src/pages/kanban/KanbanTaskCard.tsx`, `react/src/pages/kanban/KanbanColumnDisplay.tsx`, `react/src/hooks/useScreen.ts`
-- **Constat :** le glisser-déposer `@dnd-kit` est désactivé sur les cartes et colonnes hors desktop (largeur < 1024 px) pour préserver le défilement tactile. En revanche, l’affichage à colonne unique et les boutons précédent/suivant ne s’activent qu’en dessous de 768 px. Entre 768 et 1023 px, toutes les colonnes sont affichées sans glisser-déposer. Sur téléphone, le changement de colonne passe par le dialogue d’édition ; les boutons précédent/suivant changent de colonne affichée, pas la colonne de la tâche.
-- **Correctif proposé :** préserver le défilement vertical natif sur mobile et offrir une action explicite et tactile pour déplacer une tâche vers une colonne ; harmoniser le comportement tablette avec les seuils `useScreen`. Ne réactiver le drag tactile qu’après essais réels sur PWA.
-- **Effort :** M.
-- **Risque prod :** moyen ; une cible de drag peut concurrencer le scroll et provoquer des déplacements involontaires.
-
 ### Confort — Le dialogue mobile est fenêtré et sépare tâche/commentaires
 
 - **Fichiers :** `react/src/pages/kanban/organisms/KanbanTaskDialog.tsx`, `react/src/pages/kanban/molecules/KanbanTaskDialogForm.tsx`
