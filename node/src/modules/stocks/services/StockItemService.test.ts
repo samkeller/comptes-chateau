@@ -21,7 +21,6 @@ describe("StockItemService.create", () => {
     it("should create a new stock item", async () => {
         await stockItemService.create({
             label: "Test Item",
-            units: [],
             defaultUnit: "pcs",
             barcode: "123456789",
         }, TEST_USER_ID);
@@ -49,7 +48,6 @@ describe("StockItemService.create", () => {
 
         const createdItem = await stockItemService.create({
             label: "Test Item",
-            units: [],
             defaultUnit: "pcs",
             barcode: "123456789",
         }, TEST_USER_ID);

@@ -9,3 +9,8 @@ export interface CreateStockItemDto {
     imageUrl?: string;
     units: CreateStockUnitDto[];
 }
+
+/**
+ * Payload envoyé à l'API stockItem : les stockUnits sont persistées séparément via /stocks/units.
+ */
+export type SaveStockItemPayload = Omit<CreateStockItemDto, "units">;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Message } from "primereact/message";
-import { CreateStockItemDto } from "@/services/stocks/dto/CreateStockItemDto";
+import { CreateStockItemDto, SaveStockItemPayload } from "@/services/stocks/dto/CreateStockItemDto";
 import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
@@ -102,9 +102,12 @@ export default function ProductManagementPage() {
         setSavingForm(true);
 
         try {
-            const payload: CreateStockItemDto = {
-                ...formData,
+            const payload: SaveStockItemPayload = {
+                id: formData.id,
                 label: formData.label.trim(),
+                barcode: formData.barcode,
+                defaultUnit: formData.defaultUnit,
+                imageUrl: formData.imageUrl,
             };
 
             let savedStockItem: StockItem;

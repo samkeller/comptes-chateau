@@ -108,6 +108,7 @@ export function useStockUnitsEditor({
         if (!currentStockUnit) {
             return;
         }
+        console.log("Updating stock unit with clientId:", clientId, "for stockItemId:", stockItemId);
 
         const savedUnit: StockUnit =
             currentStockUnit.id === undefined
@@ -140,6 +141,8 @@ export function useStockUnitsEditor({
             ...stockUnit,
             [event.field]: event.newValue,
         }));
+
+        console.log("Updating stock unit group with stockItemId:", stockItemId, "and group:", group);
 
         const savedDtos: CreateStockUnitDto[] = await Promise.all(
             updatedUnits.map(async (stockUnit) => {
