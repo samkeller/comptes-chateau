@@ -228,7 +228,7 @@ describe("RecurringExpenseService", () => {
 
     it("[simulateFutureRecurrent()] includes an occurrence exactly on the forecast horizon", async () => {
         const firstOccurrence = new Date("2026-09-30");
-        const horizon = new Date("2027-01-01");
+        const horizon = new Date("2026-12-31");
 
         await testDataSource.getRepository(RecurringExpense).save({
             label: "Loyer",
