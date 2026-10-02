@@ -155,20 +155,30 @@ export default function ProductManagementPage() {
     /**
      * Sélection d'un stockItem via l'autocomplete.
      */
-    const onSelectStockItem = async (stockItem: StockItem) => {
+    const onSelectStockItem = async (stockItem: StockItem | null) => {
         setSelectedStockItem(stockItem);
 
-        setFormData((prevFormData) => ({
-            ...prevFormData,
-            id: stockItem.id,
-            label: stockItem.label,
-            barcode: stockItem.barcode ?? undefined,
-            defaultUnit: stockItem.defaultUnit,
-            imageUrl: stockItem.imageUrl ?? undefined,
-            units: [],
-        }));
+        if (stockItem !== null) {
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                id: stockItem.id,
+                label: stockItem.label,
+                barcode: stockItem.barcode ?? undefined,
+                defaultUnit: stockItem.defaultUnit,
+                imageUrl: stockItem.imageUrl ?? undefined,
+                units: [],
+            }));
+            await reloadStockUnits(stockItem.id);
 
-        await reloadStockUnits(stockItem.id);
+            return;
+        }
+        else {
+            setFormData(() => ({
+                ...EMPTY_STOCK_ITEM_DTO,
+                id: undefined,
+            }));
+        }
+
     };
 
     const onLabelChange = (value: string) => {

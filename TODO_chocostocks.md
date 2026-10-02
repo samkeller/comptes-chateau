@@ -3,7 +3,7 @@
 ## TODO List for ChocoStocks Project
 // Ecran produits
 [ ] Fix update changement d'unité (id manquant)
-[ ] Faciliter le reset du formulaire pour créer un nouveau produit / clarifier quel produit on modifie
+[X] Faciliter le reset du formulaire pour créer un nouveau produit / clarifier quel produit on modifie
 [X] A la création d'un nouveau produit, ajouter une nouvelle ligne vide directement
 
 
