@@ -1,6 +1,6 @@
 import { Dialog } from "primereact/dialog"
 import KanbanColumn from "../../../interfaces/kanban/KanbanColumn"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "primereact/button";
 import KanbanService from "../../../services/kanban/KanbanService";
 import KanbanTask from "../../../interfaces/kanban/KanbanTask";
@@ -35,7 +35,6 @@ export default function KanbanTaskDialog({
 }: KanbanTaskDialogProps) {
     const service = new KanbanService();
     const { isMobile } = useScreen();
-    const [activeSection, setActiveSection] = useState<"task" | "comments">("task");
     const [activeTabIndex, setActiveTabIndex] = useState(initialTab === "comments" ? 1 : 0);
 
     /**
@@ -60,13 +59,6 @@ export default function KanbanTaskDialog({
             }]
             : []),
     ];
-
-    useEffect(() => {
-        if (isCreation && activeSection === "comments") {
-            setActiveSection("task");
-        }
-    }, [isCreation, activeSection]);
-
 
     function handleSubmit() {
         const persistPromise = isCreation

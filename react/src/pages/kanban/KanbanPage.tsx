@@ -1,6 +1,6 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
@@ -31,7 +31,7 @@ export default function KanbanPage() {
             activationConstraint: { distance: 5 },
         }),
     );
-    const service = new KanbanService();
+    const service = useMemo(() => new KanbanService(), []);
 
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -53,10 +53,10 @@ export default function KanbanPage() {
     }
 
     useEffect(() => {
-        loadData()
-    }, []);
+        void loadData();
+    }, [loadData]);
 
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [boardData, tagsData] = await Promise.all([
@@ -71,7 +71,7 @@ export default function KanbanPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [service]);
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
