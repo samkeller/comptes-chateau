@@ -12,7 +12,7 @@ export function toNoteItemDto(item: NoteItem): NoteItemDto {
     };
 }
 
-export function toNoteDto(note: Note): NoteDto {
+export function toNoteDto(note: Note, items: NoteItem[] = note.items ?? []): NoteDto {
     return {
         id: note.id,
         title: note.title,
@@ -24,7 +24,7 @@ export function toNoteDto(note: Note): NoteDto {
         createdAt: note.createdAt.toISOString(),
         updatedAt: note.updatedAt.toISOString(),
         authorId: note.authorId,
-        items: (note.items ?? [])
+        items: items
             .slice()
             .sort((left, right) => left.sortOrder - right.sortOrder || left.id - right.id)
             .map(toNoteItemDto),

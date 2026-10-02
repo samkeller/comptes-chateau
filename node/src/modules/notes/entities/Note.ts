@@ -10,7 +10,7 @@ import {
     Relation,
     UpdateDateColumn,
 } from "typeorm";
-import type { NoteType } from "@chocosous/shared";
+import { NOTE_TYPES, type NoteType } from "@chocosous/shared";
 import { User } from "../../core/entities/User";
 import { NoteItem } from "./NoteItem";
 
@@ -23,7 +23,7 @@ export class Note {
     @Column({ type: "varchar", length: 255 })
     title: string;
 
-    @Column({ type: "varchar", length: 16 })
+    @Column({ type: "enum", enum: NOTE_TYPES, enumName: "note_type_enum" })
     type: NoteType;
 
     @Column({ type: "text", nullable: true })

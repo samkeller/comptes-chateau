@@ -1,44 +1,49 @@
-import type {
-    CreateNoteItemInput,
-    CreateNoteRequest,
-    NoteDto,
-    NoteItemDto,
-    PatchNoteItemRequest,
-    UpdateNoteRequest,
-} from "@chocosous/shared";
+import type { CreateNoteRequest, NoteDto, UpdateNoteRequest } from "@chocosous/shared";
 import type { EntityManager, Repository } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { badRequest, forbidden, notFound } from "../../../utils/AppError";
 import { Note } from "../entities/Note";
 import { NoteItem } from "../entities/NoteItem";
-import { toNoteDto, toNoteItemDto } from "../mappers/NoteMapper";
-
-const MAX_NOTE_ITEMS = 200;
+import { toNoteDto } from "../mappers/NoteMapper";
+import NoteItemService from "./NoteItemService";
 
 export default class NoteService {
     private readonly noteRepo: Repository<Note>;
+    private readonly noteItemService: NoteItemService;
 
     constructor(private readonly manager: EntityManager = AppDataSource.manager) {
         this.noteRepo = manager.getRepository(Note);
+        this.noteItemService = new NoteItemService(this, manager);
     }
 
+    /**
+     * Récupère les notes du filtre demandé, épinglées en premier puis triées par dernière modification.
+     */
     async list(archived: boolean): Promise<NoteDto[]> {
         const notes = await this.noteRepo.find({
             where: { isArchived: archived },
-            relations: { items: true },
             order: { isPinned: "DESC", updatedAt: "DESC" },
         });
-        return notes.map(toNoteDto);
+        const items = await this.noteItemService.getForNotes(notes.map((note) => note.id));
+        const itemsByNote = new Map<number, NoteItem[]>();
+
+        for (const item of items) {
+            const noteItems = itemsByNote.get(item.noteId) ?? [];
+            noteItems.push(item);
+            itemsByNote.set(item.noteId, noteItems);
+        }
+
+        return notes.map((note) => toNoteDto(note, itemsByNote.get(note.id)));
     }
 
     async getById(id: number): Promise<NoteDto> {
-        return toNoteDto(await this.findNoteOrThrow(id));
+        const note = await this.findNoteOrThrow(id);
+        return toNoteDto(note, await this.noteItemService.getForNote(id));
     }
 
     async create(body: CreateNoteRequest, authorId: number): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
             const noteRepo = manager.getRepository(Note);
-            const itemRepo = manager.getRepository(NoteItem);
             const note = await noteRepo.save(noteRepo.create({
                 title: body.title,
                 type: body.type,
@@ -48,19 +53,19 @@ export default class NoteService {
                 archivedAt: null,
                 authorId,
             }));
+            const items = body.type === "checklist" && body.items?.length
+                ? await this.noteItemService.createForNote(note, body.items, manager)
+                : [];
 
-            if (body.type === "checklist" && body.items?.length) {
-                await itemRepo.save(body.items.map((item, index) => this.createItem(item, note, index)));
-            }
-
-            return toNoteDto(await this.findNoteOrThrow(note.id, manager));
+            return toNoteDto(note, items);
         });
     }
 
+    /**
+     * Met à jour les champs de la note et remplace les items seulement si `items` est fourni.
+     */
     async update(id: number, body: UpdateNoteRequest): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
-            const noteRepo = manager.getRepository(Note);
-            const itemRepo = manager.getRepository(NoteItem);
             const note = await this.findNoteOrThrow(id, manager);
 
             if (body.items !== undefined && note.type !== "checklist") {
@@ -70,74 +75,18 @@ export default class NoteService {
                 throw badRequest("NOTE_CONTENT_REQUIRE_TEXT", "Une checklist ne peut pas contenir de texte Markdown");
             }
 
-            await noteRepo.update(id, {
+            await manager.getRepository(Note).update(id, {
                 title: body.title,
                 ...(body.content !== undefined && note.type === "text" ? { content: body.content } : {}),
                 ...(body.isPinned !== undefined ? { isPinned: body.isPinned } : {}),
             });
 
             if (body.items !== undefined) {
-                await itemRepo.delete({ noteId: id });
-                if (body.items.length > 0) {
-                    await itemRepo.save(body.items.map((item, index) => this.createItem(item, note, index)));
-                }
+                await this.noteItemService.replaceForNote(note, body.items, manager);
             }
 
-            return toNoteDto(await this.findNoteOrThrow(id, manager));
-        });
-    }
-
-    async patchItem(noteId: number, itemId: number, changes: PatchNoteItemRequest): Promise<NoteItemDto> {
-        return this.manager.transaction(async (manager) => {
-            const note = await this.findNoteOrThrow(noteId, manager);
-            if (note.type !== "checklist") {
-                throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
-            }
-            const itemRepo = manager.getRepository(NoteItem);
-            const item = await itemRepo.findOneBy({ id: itemId, noteId });
-            if (!item) throw notFound("NOTE_ITEM_NOT_FOUND", "Item de note introuvable");
-
-            Object.assign(item, changes);
-            await itemRepo.save(item);
-            await this.touchNote(manager, note);
-            return toNoteItemDto(item);
-        });
-    }
-
-    async addItem(noteId: number, input: CreateNoteItemInput): Promise<NoteItemDto> {
-        return this.manager.transaction(async (manager) => {
-            const note = await this.findNoteOrThrow(noteId, manager);
-            if (note.type !== "checklist") {
-                throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
-            }
-            const itemRepo = manager.getRepository(NoteItem);
-            const count = await itemRepo.countBy({ noteId });
-            if (count >= MAX_NOTE_ITEMS) {
-                throw badRequest("NOTE_ITEM_LIMIT", `Une checklist ne peut pas dépasser ${MAX_NOTE_ITEMS} items`);
-            }
-            const lastItem = await itemRepo.findOne({
-                where: { noteId },
-                order: { sortOrder: "DESC" },
-            });
-            const nextOrder = (lastItem?.sortOrder ?? -1) + 1;
-            const item = this.createItem(input, note, nextOrder);
-            await itemRepo.save(item);
-            await this.touchNote(manager, note);
-            return toNoteItemDto(item);
-        });
-    }
-
-    async deleteItem(noteId: number, itemId: number): Promise<void> {
-        await this.manager.transaction(async (manager) => {
-            const note = await this.findNoteOrThrow(noteId, manager);
-            if (note.type !== "checklist") {
-                throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
-            }
-            const itemRepo = manager.getRepository(NoteItem);
-            const item = await itemRepo.findOneBy({ id: itemId, noteId });
-            if (!item) throw notFound("NOTE_ITEM_NOT_FOUND", "Item de note introuvable");
-            await itemRepo.remove(item);
-            await this.touchNote(manager, note);
+            const updatedNote = await this.findNoteOrThrow(id, manager);
+            return toNoteDto(updatedNote, await this.noteItemService.getForNote(id, manager));
         });
     }
 
@@ -157,6 +106,9 @@ export default class NoteService {
         return this.getById(id);
     }
 
+    /**
+     * Supprime définitivement une note uniquement à la demande de son auteur.
+     */
     async delete(id: number, requestingUserId: number): Promise<void> {
         const note = await this.findNoteOrThrow(id);
         if (note.authorId !== requestingUserId) {
@@ -165,25 +117,26 @@ export default class NoteService {
         await this.noteRepo.delete({ id });
     }
 
-    private createItem(input: CreateNoteItemInput, note: Note, defaultOrder: number): NoteItem {
-        return Object.assign(new NoteItem(), {
-            noteId: note.id,
-            note,
-            label: input.label,
-            isChecked: input.isChecked ?? false,
-            sortOrder: input.sortOrder ?? defaultOrder,
-        });
+    /**
+     * Fournit au service des items une note existante de type checklist, sans lui ouvrir l'accès au dépôt Note.
+     */
+    async getChecklistOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {
+        const note = await this.findNoteOrThrow(id, manager);
+        if (note.type !== "checklist") {
+            throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
+        }
+        return note;
     }
 
-    private async touchNote(manager: EntityManager, note: Note): Promise<void> {
+    /**
+     * Met à jour le timestamp de la note après une modification portée par un item.
+     */
+    async touchUpdatedAt(note: Note, manager: EntityManager = this.manager): Promise<void> {
         await manager.getRepository(Note).update(note.id, { title: note.title });
     }
 
     private async findNoteOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {
-        const note = await manager.getRepository(Note).findOne({
-            where: { id },
-            relations: { items: true },
-        });
+        const note = await manager.getRepository(Note).findOneBy({ id });
         if (!note) throw notFound("NOTE_NOT_FOUND", "Note introuvable");
         return note;
     }

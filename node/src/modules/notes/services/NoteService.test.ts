@@ -5,12 +5,15 @@ import { User } from "../../core/entities/User";
 import { Note } from "../entities/Note";
 import { NoteItem } from "../entities/NoteItem";
 import NoteService from "./NoteService";
+import NoteItemService from "./NoteItemService";
 
 describe("NoteService", () => {
     let service: NoteService;
+    let itemService: NoteItemService;
 
     beforeEach(() => {
         service = new NoteService(testDataSource.manager);
+        itemService = new NoteItemService(service, testDataSource.manager);
     });
 
     it("creates a checklist with ordered unchecked items", async () => {
@@ -68,10 +71,10 @@ describe("NoteService", () => {
 
     it("appends items and updates checked state without replacing the note", async () => {
         const note = await service.create({ title: "Courses", type: "checklist" }, TEST_USER_ID);
-        const item = await service.addItem(note.id, { label: "Pommes" });
+        const item = await itemService.add(note.id, { label: "Pommes" });
 
         expect(item.sortOrder).toBe(0);
-        await service.patchItem(note.id, item.id, { isChecked: true });
+        await itemService.patch(note.id, item.id, { isChecked: true });
 
         await expect(testDataSource.getRepository(NoteItem).findOneByOrFail({ id: item.id }))
             .resolves.toMatchObject({ label: "Pommes", isChecked: true });

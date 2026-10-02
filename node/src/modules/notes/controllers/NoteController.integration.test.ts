@@ -1,4 +1,5 @@
 import request from "supertest";
+import { Router } from "express";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createTestApp } from "../../../tests/testApp";
 import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
@@ -9,8 +10,14 @@ describe("NoteController integration", () => {
     let app: ReturnType<typeof createTestApp>;
 
     beforeAll(async () => {
-        const { default: noteRoutes } = await import("../routes/NoteRoutes");
-        app = createTestApp("/notes", noteRoutes);
+        const [{ default: noteRoutes }, { default: noteItemRoutes }] = await Promise.all([
+            import("./NoteController"),
+            import("./NoteItemController"),
+        ]);
+        const routes = Router();
+        routes.use("/notes", noteRoutes);
+        routes.use("/notes/:noteId/items", noteItemRoutes);
+        app = createTestApp("/", routes);
     });
 
     it("creates a checklist, toggles an item, and lists it", async () => {
@@ -57,7 +64,14 @@ describe("NoteController integration", () => {
             passwordHash: "testpasswordhash",
             totalXp: 0,
         });
-        const otherUserApp = createTestApp("/notes", (await import("../routes/NoteRoutes")).default, otherUser.id);
+        const [{ default: noteRoutes }, { default: noteItemRoutes }] = await Promise.all([
+            import("./NoteController"),
+            import("./NoteItemController"),
+        ]);
+        const otherUserRoutes = Router();
+        otherUserRoutes.use("/notes", noteRoutes);
+        otherUserRoutes.use("/notes/:noteId/items", noteItemRoutes);
+        const otherUserApp = createTestApp("/", otherUserRoutes, otherUser.id);
 
         const deleteResponse = await request(otherUserApp).delete(`/notes/${note.id}`);
 
