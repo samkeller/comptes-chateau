@@ -114,6 +114,21 @@ export type {
 } from "./externals";
 
 export {
+    NOTE_TYPES,
+    CreateNoteItemSchema,
+    CreateNoteSchema,
+    NotesArchiveQuerySchema,
+    PatchNoteItemSchema,
+    UpdateNoteSchema,
+} from "./notes";
+export type {
+    CreateNoteItemInput,
+    NoteDto,
+    NoteItemDto,
+    NoteType,
+} from "./notes";
+
+export {
     BanquePostaleCsvDataSchema,
     BanquePostaleCsvOperationSchema,
     BanquePostaleCsvDataMetadataSchema,
