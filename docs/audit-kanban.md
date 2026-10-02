@@ -109,6 +109,14 @@ La comparaison chiffrée avant/après n’est pas disponible dans cet audit : le
 - **Effort :** S.
 - **Risque prod :** faible ; corrige un cas invalide avec une erreur cohérente.
 
+### Important — Le schéma ne borne pas le titre à la longueur de la colonne DB
+
+- **Fichiers :** `shared/src/contracts/kanban/CreateKanbanTaskDto.ts`, `node/src/modules/kanban/entities/KanbanTask.ts`
+- **Constat :** Zod exige un titre non vide mais ne fixe pas de longueur maximale, alors que la colonne `title` est `varchar(255)`. Un titre trop long passe la validation d’entrée puis échoue lors de l’écriture en base. `description` est aussi sans limite applicative ; son stockage `text` ne pose pas la même contrainte immédiate, mais peut accepter un contenu disproportionné.
+- **Correctif proposé :** aligner explicitement la taille maximale du titre sur 255 et définir une limite raisonnable pour la description, avec tests de limites. Vérifier que le front affiche les erreurs de validation de manière exploitable.
+- **Effort :** S.
+- **Risque prod :** faible ; les requêtes actuellement acceptées mais impossibles à stocker seront rejetées proprement.
+
 ### Confort — Les commentaires d’une tâche inexistante renvoient une liste vide
 
 - **Fichiers :** `node/src/modules/kanban/services/KanbanBoardService.ts`, `node/src/modules/kanban/controllers/KanbanController.ts`
