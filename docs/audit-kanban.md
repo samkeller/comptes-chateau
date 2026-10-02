@@ -65,7 +65,7 @@ Ajouter des tests de conversion/rendu pour ce sous-ensemble avant de généralis
 
 ### Bundle
 
-La comparaison chiffrée avant/après n’est pas disponible dans cet audit : les dépendances Node ne sont pas installées dans l’environnement et aucune mesure Vite existante de taille par fonctionnalité n’a été trouvée. Comme la recommandation conserve les dépendances d’affichage et d’édition, une baisse de bundle n’est pas présumée. Mesurer la sortie de build Vite de la PR 2 puis comparer après changement éventuel ; ne pas annoncer de gain sans mesure.
+Lors de l’audit initial, la comparaison chiffrée n’était pas disponible : les dépendances Node n’étaient pas installées et aucune mesure Vite par fonctionnalité n’existait. Pour la livraison des correctifs Kanban, le chunk JS principal Vite est passé de **2 422,77 kB / 749,35 kB gzip** à **2 423,07 kB / 750,91 kB gzip** (+0,30 kB brut / +1,56 kB gzip). Cette variation couvre les changements Kanban et n’isole pas le coût Markdown. Les dépendances Markdown étant conservées, aucun gain lié à leur suppression n’est revendiqué.
 
 ## 3. Back : constats
 
@@ -153,3 +153,10 @@ La comparaison chiffrée avant/après n’est pas disponible dans cet audit : le
 ## Backlog hors MVP
 
 À laisser hors de cette itération : réouverture Kanban si la règle XP n’est pas arbitrée, déplacement tactile avancé / réordonnancement sur mobile, pagination du board avant besoin mesuré ; pour Notes : rappels, images, couleurs, labels, collaboration temps réel, conversion texte/checklist et import Google Keep. L’XP des notes reste explicitement hors MVP.
+
+## Suivi après PR 2
+
+- **Traité :** cartes allégées, accès direct aux commentaires avec compteur, cible tactile de suppression, filtres regroupés sur mobile, détail plein écran mobile, `PATCH` partiel avec `200`, validation de colonne/titre, complétion idempotente et transactions pour les XP de création/complétion. La publication des événements XP de ces deux flux attend le commit.
+- **Tests :** tests de service et intégration controller pg-mem couvrant les droits de suppression, création/XP, mise à jour partielle, colonne inconnue, complétion répétée, compteur de commentaires et 404 pour une tâche absente.
+- **Markdown et réutilisation :** les deux composants Markdown existants et `UserAvatar` sont directement réutilisables ; aucun doublon de dépendance n’a été supprimé car chaque bibliothèque sert encore. Pas de composant abstrait de confirmation/mutation optimiste sans usage Kanban correspondant ; ces besoins restent à implémenter côté Notes lorsqu’ils seront nécessaires.
+- **Reporté :** réouverture/règle XP associée, pagination/archivage du Kanban avant besoin mesuré, et réordonnancement avancé tactile. La présentation des filtres et le dialogue mobile recommandés ci-dessus ont été simplifiés en PR 2.

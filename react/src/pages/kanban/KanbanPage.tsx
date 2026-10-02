@@ -52,12 +52,7 @@ export default function KanbanPage() {
         setSelectedTaskInitialTab(initialTab);
     }
 
-    useEffect(() => {
-        void loadData();
-    }, [loadData]);
-
     const loadData = useCallback(async () => {
-        setLoading(true);
         try {
             const [boardData, tagsData] = await Promise.all([
                 service.getBoardData(),
@@ -72,6 +67,15 @@ export default function KanbanPage() {
             setLoading(false);
         }
     }, [service]);
+
+    function reloadData() {
+        setLoading(true);
+        void loadData();
+    }
+
+    useEffect(() => {
+        void loadData();
+    }, [loadData]);
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -90,7 +94,7 @@ export default function KanbanPage() {
         };
 
         service.saveKanbanTask(updatedTask, draggedTaskId)
-            .then(() => loadData())
+            .then(reloadData)
     }
 
     const activeTask = activeTaskDragId ? tasks.find(t => t.id === activeTaskDragId) ?? null : null;
@@ -174,7 +178,7 @@ export default function KanbanPage() {
                                                 setSelectedTask(null);
                                                 setSelectedTaskInitialTab("task");
                                                 if (reloadList) {
-                                                    loadData();
+                                                    reloadData();
                                                 }
                                             }}
                                         />
