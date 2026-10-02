@@ -19,7 +19,7 @@ import {
 import KanbanTaskCard from "./KanbanTaskCard";
 import { User } from "../../interfaces/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
-import type { CreateKanbanTaskRequest } from "@chocosous/shared";
+import type { UpdateKanbanTaskRequest } from "@chocosous/shared";
 import { useScreen } from "@/hooks/useScreen";
 import { Button } from "primereact/button";
 
@@ -79,8 +79,7 @@ export default function KanbanPage() {
         const draggedTask = tasks.find(t => t.id === draggedTaskId);
         if (!draggedTask || draggedTask.columnId === targetColumnId) return;
 
-        const updatedTask: CreateKanbanTaskRequest = {
-            ...draggedTask,
+        const updatedTask: UpdateKanbanTaskRequest = {
             columnId: targetColumnId,
         };
 

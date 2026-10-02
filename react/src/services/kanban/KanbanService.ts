@@ -1,6 +1,10 @@
 import axios from "axios";
 import BaseService from "../BaseService";
-import type { CreateKanbanTaskRequest, KanbanCommentResponse } from "@chocosous/shared";
+import type {
+    CreateKanbanTaskRequest,
+    KanbanCommentResponse,
+    UpdateKanbanTaskRequest,
+} from "@chocosous/shared";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumn from "@/interfaces/kanban/KanbanColumn";
 import { User } from "@/interfaces/User";
@@ -34,7 +38,7 @@ export default class KanbanService extends BaseService {
         return axios.post(this.kanbanApiUrl + "/task", formData).then(res => res.data);
     }
 
-    saveKanbanTask(task: CreateKanbanTaskRequest, id: number): Promise<KanbanTask> {
+    saveKanbanTask(task: UpdateKanbanTaskRequest, id: number): Promise<KanbanTask> {
         return axios.patch(this.kanbanApiUrl + "/task/" + id, task).then(res => res.data);
     }
 
@@ -58,5 +62,4 @@ export default class KanbanService extends BaseService {
         return axios.delete(this.kanbanApiUrl + `/comment/${commentId}`);
     }
 }
-
 
