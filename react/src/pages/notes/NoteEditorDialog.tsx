@@ -129,9 +129,20 @@ export default function NoteEditorDialog({
         if (isDraftChecklist || !note) return;
         if (item.id === undefined) return;
         const savedItem = note.items.find((entry) => entry.id === item.id);
-        if (!savedItem || label === savedItem.label) return;
+        if (!savedItem) return;
+        const normalizedLabel = label.trim();
+        if (!normalizedLabel) {
+            setItems((current) => current.map((entry) => entry.id === item.id
+                ? { ...entry, label: savedItem.label }
+                : entry));
+            return;
+        }
+        if (normalizedLabel === savedItem.label) return;
+        setItems((current) => current.map((entry) => entry.id === item.id
+            ? { ...entry, label: normalizedLabel }
+            : entry));
         try {
-            const updated = await service.updateItem(note.id, savedItem.id, { label });
+            const updated = await service.updateItem(note.id, savedItem.id, { label: normalizedLabel });
             onItemChanged(note.id, updated);
         } catch {
             setItems((current) => current.map((entry) => entry.id === savedItem.id

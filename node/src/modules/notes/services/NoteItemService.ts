@@ -34,6 +34,10 @@ export default class NoteItemService {
         });
     }
 
+    async deleteForNote(noteId: number, manager: EntityManager = this.manager): Promise<void> {
+        await manager.getRepository(NoteItem).delete({ noteId });
+    }
+
     /**
      * Crée les items initiaux dans la même transaction que la note.
      */

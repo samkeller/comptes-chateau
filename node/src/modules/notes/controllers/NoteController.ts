@@ -4,7 +4,6 @@ import {
     NotesArchiveQuerySchema,
     UpdateNoteSchema,
 } from "@chocosous/shared";
-import { z } from "zod";
 import requireUserId from "../../accounts/utils/requireUserId";
 import { validateBody, validateParams, validateQuery, IdParamSchema } from "../../core/middlewares/validate";
 import NoteService from "../services/NoteService";
@@ -48,5 +47,4 @@ NoteRoutes.delete("/:id", validateParams(IdParamSchema), async (req: Request, re
     res.status(204).send();
 });
 
-export const NoteIdParamSchema = z.object({ noteId: z.coerce.number().int().positive() });
 export default NoteRoutes;

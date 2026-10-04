@@ -84,7 +84,7 @@ export default class NoteService {
             }
 
             if (note.type === "checklist" && targetType === "text") {
-                await this.noteItemService.replaceForNote(note, [], manager);
+                await this.noteItemService.deleteForNote(note.id, manager);
             }
 
             await manager.getRepository(Note).update(id, {
