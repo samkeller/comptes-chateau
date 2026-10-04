@@ -147,7 +147,7 @@ export default class NoteService {
      * Met à jour le timestamp de la note après une modification portée par un item.
      */
     async touchUpdatedAt(note: Note, manager: EntityManager = this.manager): Promise<void> {
-        await manager.getRepository(Note).update(note.id, { title: note.title });
+        await manager.getRepository(Note).update(note.id, { updatedAt: new Date() });
     }
 
     private async findNoteOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {

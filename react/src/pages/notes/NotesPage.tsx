@@ -58,9 +58,7 @@ export default function NotesPage() {
     }
 
     function retryLoading(): void {
-        setLoading(true);
-        setLoadError(false);
-        void loadNotes();
+        loadNotes();
     }
 
     const displayedNotes = useMemo(() => {
@@ -178,16 +176,13 @@ export default function NotesPage() {
                         onClick={() => setShowArchived((current) => !current)}
                     />
                     <div className="flex flex-col gap-2 sm:flex-row">
-                        <span className="p-input-icon-left flex-1">
-                            <i className="pi pi-search" />
-                            <InputSearch
-                                value={search}
-                                onChange={(event) => setSearch(event.target.value)}
-                                placeholder="Rechercher une note"
-                                aria-label="Rechercher une note"
-                                className="w-full"
-                            />
-                        </span>
+                        <InputSearch
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder="Rechercher une note"
+                            aria-label="Rechercher une note"
+                            className="w-full flex-1"
+                        />
                         {view === "active" && (
                             <Button
                                 label="Nouvelle note"

@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useScreen } from "@/hooks/useScreen";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import MarkdownEditor from "@/components/form/markdown/MarkdownEditor";
@@ -22,6 +22,8 @@ interface NoteEditorDialogProps {
     onArchive: (note: NoteDto) => void;
 }
 
+type NoteItemDraft = CreateNoteItemInput & { id?: number };
+
 export default function NoteEditorDialog({
     note,
     initialType,
@@ -32,12 +34,12 @@ export default function NoteEditorDialog({
     onItemDeleted,
     onArchive,
 }: NoteEditorDialogProps) {
-    const service = new NotesService();
+    const service = useMemo(() => new NotesService(), []);
     const { isMobile } = useScreen();
     const showToast = useGlobalToast();
     const [title, setTitle] = useState(note?.title ?? "");
     const [content, setContent] = useState(note?.content ?? "");
-    const [items, setItems] = useState<CreateNoteItemInput[]>(note?.items ?? []);
+    const [items, setItems] = useState<NoteItemDraft[]>(() => note?.items.map((item) => ({ ...item })) ?? []);
     const [draftType, setDraftType] = useState<NoteType>(note?.type ?? initialType);
     const [hasTypeToggled, setHasTypeToggled] = useState(false);
     const [newItemLabel, setNewItemLabel] = useState("");
@@ -104,50 +106,52 @@ export default function NoteEditorDialog({
         }
     }
 
-    async function changeItem(item: CreateNoteItemInput, index: number, changes: Partial<CreateNoteItemInput>): Promise<void> {
+    async function changeItem(item: NoteItemDraft, index: number, changes: Partial<CreateNoteItemInput>): Promise<void> {
         const nextItem = { ...item, ...changes };
         if (isDraftChecklist) {
-            setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? nextItem : entry));
+            setItems((current) => current.map((entry, entryIndex) =>
+                item.id !== undefined ? entry.id === item.id ? nextItem : entry : entryIndex === index ? nextItem : entry
+            ));
             return;
         }
-        const currentItem = note.items[index];
-        if (!currentItem) return;
-        setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? nextItem : entry));
+        if (item.id === undefined) return;
+        setItems((current) => current.map((entry) => entry.id === item.id ? nextItem : entry));
         try {
-            const updated = await service.updateItem(note.id, currentItem.id, changes);
+            const updated = await service.updateItem(note.id, item.id, changes);
             onItemChanged(note.id, updated);
         } catch {
-            setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? item : entry));
+            setItems((current) => current.map((entry) => entry.id === item.id ? item : entry));
             showToast({ severity: "error", summary: "Impossible de modifier l’élément." });
         }
     }
 
-    async function saveItemLabel(index: number): Promise<void> {
+    async function saveItemLabel(item: NoteItemDraft): Promise<void> {
         if (isDraftChecklist || !note) return;
-        const item = items[index];
-        const savedItem = note.items[index];
-        if (!item || !savedItem || item.label === savedItem.label) return;
+        if (item.id === undefined) return;
+        const savedItem = note.items.find((entry) => entry.id === item.id);
+        if (!savedItem || item.label === savedItem.label) return;
         try {
             const updated = await service.updateItem(note.id, savedItem.id, { label: item.label });
             onItemChanged(note.id, updated);
         } catch {
-            setItems((current) => current.map((entry, entryIndex) =>
-                entryIndex === index ? { ...entry, label: savedItem.label } : entry
-            ));
+            setItems((current) => current.map((entry) => entry.id === savedItem.id
+                ? { ...entry, label: savedItem.label }
+                : entry));
             showToast({ severity: "error", summary: "Impossible de modifier l’élément." });
         }
     }
 
-    async function removeItem(index: number): Promise<void> {
+    async function removeItem(item: NoteItemDraft, index: number): Promise<void> {
         if (isDraftChecklist) {
-            setItems((current) => current.filter((_item, itemIndex) => itemIndex !== index));
+            setItems((current) => current.filter((entry, itemIndex) =>
+                item.id !== undefined ? entry.id !== item.id : itemIndex !== index
+            ));
             return;
         }
-        const item = note.items[index];
-        if (!item) return;
+        if (!note || item.id === undefined) return;
         try {
             await service.deleteItem(note.id, item.id);
-            setItems((current) => current.filter((_entry, itemIndex) => itemIndex !== index));
+            setItems((current) => current.filter((entry) => entry.id !== item.id));
             onItemDeleted(note.id, item.id);
         } catch {
             showToast({ severity: "error", summary: "Impossible de supprimer l’élément." });
@@ -249,7 +253,7 @@ export default function NoteEditorDialog({
                     <div className="flex flex-col gap-2">
                         <label className="font-medium">Liste</label>
                         {items.map((item, index) => (
-                            <div key={note?.items[index]?.id ?? `draft-${index}`} className="flex items-center gap-2">
+                            <div key={item.id ?? `draft-${index}`} className="flex items-center gap-2">
                                 <Checkbox
                                     inputId={`note-item-${index}`}
                                     checked={item.isChecked ?? false}
@@ -260,7 +264,7 @@ export default function NoteEditorDialog({
                                     onChange={(event) => setItems((current) => current.map((entry, entryIndex) =>
                                         entryIndex === index ? { ...entry, label: event.target.value } : entry
                                     ))}
-                                    onBlur={() => void saveItemLabel(index)}
+                                    onBlur={() => void saveItemLabel(item)}
                                     maxLength={500}
                                     aria-label={`Élément ${index + 1}`}
                                     className={`min-h-11 flex-1 ${item.isChecked ? "line-through opacity-60" : ""}`}
@@ -271,7 +275,7 @@ export default function NoteEditorDialog({
                                     rounded
                                     severity="danger"
                                     aria-label={`Supprimer ${item.label}`}
-                                    onClick={() => void removeItem(index)}
+                                    onClick={() => void removeItem(item, index)}
                                 />
                             </div>
                         ))}
