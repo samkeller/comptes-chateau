@@ -159,7 +159,7 @@ export default function StocksManagementPage() {
                     <div className="flex flex-col gap-4 w-full">
                         <div className="flex flex-wrap justify-between items-center gap-4 lg:w-full">
                             <h2 className="m-0 text-lg font-semibold">
-                                {selectedLocation ? `²Produits - ${selectedLocation.label}` : "Produits disponibles"}
+                                {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
                             <InputSearch
                                 placeholder="Recherche rapide"
