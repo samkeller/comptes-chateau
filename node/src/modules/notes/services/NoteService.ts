@@ -45,8 +45,9 @@ export default class NoteService {
     /** Crée la note et ses items dans une transaction afin de ne jamais exposer une checklist partielle. */
     async create(body: CreateNoteRequest, authorId: number): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
-            const noteRepo = manager.getRepository(Note);
-            const note = await noteRepo.save(noteRepo.create({
+            const noteService = new NoteService(manager);
+
+            const note = await noteService.noteRepo.save(noteService.noteRepo.create({
                 title: body.title,
                 type: body.type,
                 content: body.type === "text" ? body.content ?? null : null,
@@ -56,7 +57,7 @@ export default class NoteService {
                 authorId,
             }));
             const items = body.type === "checklist" && body.items?.length
-                ? await this.noteItemService.createForNote(note, body.items, manager)
+                ? await noteService.noteItemService.createForNote(note, body.items)
                 : [];
 
             return toNoteDto(note, items);
@@ -69,7 +70,8 @@ export default class NoteService {
      */
     async update(id: number, body: UpdateNoteRequest): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
-            const note = await this.findNoteOrThrow(id, manager);
+            const noteService = new NoteService(manager);
+            const note = await noteService.findNoteOrThrow(id);
             const targetType = body.type ?? note.type;
 
             if (body.items !== undefined && targetType !== "checklist") {
@@ -87,7 +89,7 @@ export default class NoteService {
             }
 
             if (note.type === "checklist" && targetType === "text") {
-                await this.noteItemService.deleteForNote(note.id, manager);
+                await noteService.noteItemService.deleteForNote(note.id);
             }
 
             await manager.getRepository(Note).update(id, {
@@ -100,11 +102,11 @@ export default class NoteService {
             note.type = targetType;
 
             if (body.items !== undefined) {
-                await this.noteItemService.replaceForNote(note, body.items, manager);
+                await noteService.noteItemService.replaceForNote(note, body.items);
             }
 
-            const updatedNote = await this.findNoteOrThrow(id, manager);
-            return toNoteDto(updatedNote, await this.noteItemService.getForNote(id, manager));
+            const updatedNote = await noteService.findNoteOrThrow(id);
+            return toNoteDto(updatedNote, await noteService.noteItemService.getForNote(id));
         });
     }
 
@@ -140,8 +142,8 @@ export default class NoteService {
     /**
      * Fournit au service des items une note existante de type checklist, sans lui ouvrir l'accès au dépôt Note.
      */
-    async getChecklistOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {
-        const note = await this.findNoteOrThrow(id, manager);
+    async getChecklistOrThrow(id: number): Promise<Note> {
+        const note = await this.findNoteOrThrow(id);
         if (note.type !== "checklist") {
             throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
         }
@@ -151,12 +153,12 @@ export default class NoteService {
     /**
      * Met à jour le timestamp de la note après une modification portée par un item.
      */
-    async touchUpdatedAt(note: Note, manager: EntityManager = this.manager): Promise<void> {
-        await manager.getRepository(Note).update(note.id, { updatedAt: new Date() });
+    async touchUpdatedAt(note: Note): Promise<void> {
+        await this.manager.getRepository(Note).update(note.id, { updatedAt: new Date() });
     }
 
-    private async findNoteOrThrow(id: number, manager: EntityManager = this.manager): Promise<Note> {
-        const note = await manager.getRepository(Note).findOneBy({ id });
+    private async findNoteOrThrow(id: number): Promise<Note> {
+        const note = await this.manager.getRepository(Note).findOneBy({ id });
         if (!note) throw notFound("NOTE_NOT_FOUND", "Note introuvable");
         return note;
     }
