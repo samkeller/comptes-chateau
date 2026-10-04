@@ -1,7 +1,7 @@
 import type { NoteDto, NoteItemDto, NoteType } from "@chocosous/shared";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
+import InputSearch from "@/components/atoms/primereact/InputSearch";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalToast } from "@/context/GlobalToastContext";
@@ -190,7 +190,7 @@ export default function NotesPage() {
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <span className="p-input-icon-left flex-1">
                             <i className="pi pi-search" />
-                            <InputText
+                            <InputSearch
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                                 placeholder="Rechercher une note"
