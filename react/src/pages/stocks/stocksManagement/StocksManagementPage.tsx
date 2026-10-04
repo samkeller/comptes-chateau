@@ -8,7 +8,7 @@ import StockLocationService from "@/services/stocks/StockLocationService";
 import StockLocationDialog from "./StockLocationDialog";
 import StockLocationsPanel from "./organisms/StockLocationsPanel";
 import StockItemsList from "./organisms/StockItemsList";
-import { InputText } from "primereact/inputtext";
+import InputSearch from "@/components/atoms/primereact/InputSearch";
 
 const stockLocationService = new StockLocationService();
 const LOCATION_DELETE_GROUP = "stock-location-delete";
@@ -161,7 +161,7 @@ export default function StocksManagementPage() {
                             <h2 className="m-0 text-lg font-semibold">
                                 {selectedLocation ? `Produits - ${selectedLocation.label}` : "Produits disponibles"}
                             </h2>
-                            <InputText
+                            <InputSearch
                                 placeholder="Recherche rapide"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -183,7 +183,7 @@ export default function StocksManagementPage() {
                         />
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }

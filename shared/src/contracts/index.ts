@@ -87,12 +87,14 @@ export type {
 export {
     KANBAN_TASK_PRIORITIES,
     CreateKanbanTaskSchema,
+    UpdateKanbanTaskSchema,
     CreateKanbanCommentSchema,
 } from "./kanban";
 
 export type {
     KanbanTaskPriority,
     CreateKanbanTaskRequest,
+    UpdateKanbanTaskRequest,
     CreateKanbanCommentRequest,
     KanbanCommentResponse,
     KanbanColumnResponse,
@@ -110,6 +112,24 @@ export type {
     BanquePostaleMatchedResultPayload,
     BanquePostaleAmbiguousResultPayload,
 } from "./externals";
+
+export {
+    NOTE_TYPES,
+    CreateNoteItemSchema,
+    CreateNoteSchema,
+    NotesArchiveQuerySchema,
+    PatchNoteItemSchema,
+    UpdateNoteSchema,
+} from "./notes";
+export type {
+    CreateNoteItemInput,
+    CreateNoteRequest,
+    NoteDto,
+    NoteItemDto,
+    PatchNoteItemRequest,
+    NoteType,
+    UpdateNoteRequest,
+} from "./notes";
 
 export {
     BanquePostaleCsvDataSchema,

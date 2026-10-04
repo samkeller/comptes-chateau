@@ -13,6 +13,7 @@ export default class KanbanTask {
     assignees: User[] = [];
     isDone: boolean = false;
     doneByUserId: number | null = null;
+    commentCount: number = 0;
     
     constructor(partial: Partial<KanbanTask>) {
         Object.assign(this, partial);

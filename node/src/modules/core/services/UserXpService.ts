@@ -8,11 +8,16 @@ import { xpEventBus } from "../events/XpEventBus";
 import type { XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 
+type XpEventPublisher = (event: XpUpdatedEvent) => void;
+
 export default class UserXpService {
 
     private userRepo: Repository<User>;
 
-    constructor(private readonly em = AppDataSource.manager) {
+    constructor(
+        private readonly em = AppDataSource.manager,
+        private readonly publishXpEvent: XpEventPublisher = (event) => xpEventBus.emit(event),
+    ) {
         this.userRepo = em.getRepository(User);
     }
 
@@ -39,9 +44,8 @@ export default class UserXpService {
             newTotalXp: updatedUser!.totalXp,
         };
 
-        xpEventBus.emit(gainedEvent);
+        this.publishXpEvent(gainedEvent);
 
         return updatedUser!;
     }
 }
-

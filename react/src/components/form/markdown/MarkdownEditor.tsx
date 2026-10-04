@@ -4,6 +4,8 @@ import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 import MarkdownToolbar from "./MarkdownToolbar";
 import { useEffect } from 'react';
+import { TabPanel, TabView } from 'primereact/tabview';
+import { MarkdownRenderer } from '@/components/atoms/MarkdownRenderer';
 
 interface MarkdownEditorProps {
     value: string,
@@ -55,13 +57,26 @@ export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps)
 
     return (
         <div className="flex flex-col gap-2">
-           <MarkdownToolbar editor={editor} />
-            <EditorContent
-                editor={editor}
-                className="markdown-editor-surface rounded-border bg-gray-900 p-4 min-h-[12rem] focus-within:ring-2 focus-within:ring-teal-400/30 focus-within:border-teal-400 transition-all cursor-text"
-                style={{ border: "1px solid #424b57" }}
-                onClick={() => editor?.chain().focus().run()}
-            />
+            <TabView
+                panelContainerClassName='px-0'
+            >
+                <TabPanel header="Editeur">
+                    <div className="sticky top-0 z-20 bg-card pb-2">
+                        <MarkdownToolbar editor={editor} />
+                    </div>
+                    <div className="px-2">
+                        <EditorContent
+                            editor={editor}
+                            className="mt-2 markdown-editor-surface rounded-border bg-gray-900 p-4 min-h-[12rem] focus-within:ring-2 focus-within:ring-teal-400/30 focus-within:border-teal-400 transition-all cursor-text"
+                            style={{ border: "1px solid #424b57" }}
+                            onClick={() => editor?.chain().focus().run()}
+                        />
+                    </div>
+                </TabPanel>
+                <TabPanel header="Aperçu">
+                    <MarkdownRenderer>{value}</MarkdownRenderer>
+                </TabPanel>
+            </TabView>
         </div>
     );
 }

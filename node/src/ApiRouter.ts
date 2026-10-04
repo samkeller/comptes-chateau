@@ -10,6 +10,8 @@ import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
 import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
 import BanquePostaleRoutes from "./modules/externals/controllers/BanquePostaleController";
+import NoteRoutes from "./modules/notes/controllers/NoteController";
+import NoteItemRoutes from "./modules/notes/controllers/NoteItemController";
 
 const ApiRouter = Router()
 
@@ -21,6 +23,8 @@ ApiRouter.use('/accounts/:accountId', AccountScopedRoutes)
 
 ApiRouter.use('/nature', NatureRoutes)
 ApiRouter.use('/kanban', KanbanRoutes)
+ApiRouter.use('/notes', NoteRoutes)
+ApiRouter.use('/notes/:noteId/items', NoteItemRoutes)
 ApiRouter.use('/stocks', StockRoutes)
 ApiRouter.use('/users', UserRoutes)
 ApiRouter.use('/jobs', JobRoutes)

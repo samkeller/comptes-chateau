@@ -30,6 +30,7 @@ export const routePaths = {
     setup: "/setup",
     automatisations: "/automatisations",
     kanban: "/kanban",
+    notes: "/notes",
     stocks: {
         index: "/stocks",
         stocksManagement: "/stocks/stocksManagement",

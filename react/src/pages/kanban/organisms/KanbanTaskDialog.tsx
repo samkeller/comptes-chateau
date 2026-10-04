@@ -1,6 +1,6 @@
 import { Dialog } from "primereact/dialog"
 import KanbanColumn from "../../../interfaces/kanban/KanbanColumn"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "primereact/button";
 import KanbanService from "../../../services/kanban/KanbanService";
 import KanbanTask from "../../../interfaces/kanban/KanbanTask";
@@ -19,14 +19,23 @@ interface KanbanTaskDialogProps {
     allTags: string[],
     allUsers: User[],
     task: KanbanTask,
+    initialTab: "task" | "comments",
+    onCommentCountChange: (taskId: number, commentCount: number) => void,
     closeDialog: (reloadList: boolean) => void
 }
 
-export default function KanbanTaskDialog({ columns, allTags, allUsers, task, closeDialog }: KanbanTaskDialogProps) {
+export default function KanbanTaskDialog({
+    columns,
+    allTags,
+    allUsers,
+    task,
+    initialTab,
+    onCommentCountChange,
+    closeDialog,
+}: KanbanTaskDialogProps) {
     const service = new KanbanService();
     const { isMobile } = useScreen();
-    const [activeSection, setActiveSection] = useState<"task" | "comments">("task");
-    const [activeTabIndex, setActiveTabIndex] = useState(0);
+    const [activeTabIndex, setActiveTabIndex] = useState(initialTab === "comments" ? 1 : 0);
 
     /**
      * Obligé de copier l'objet task dans un state local pour pouvoir éditer les champs, sinon on modifie directement l'objet passé en props et ça fait n'importe quoi (le formulaire se met à jour à chaque changement de champ et perd le focus)
@@ -50,13 +59,6 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
             }]
             : []),
     ];
-
-    useEffect(() => {
-        if (isCreation && activeSection === "comments") {
-            setActiveSection("task");
-        }
-    }, [isCreation, activeSection]);
-
 
     function handleSubmit() {
         const persistPromise = isCreation
@@ -150,7 +152,9 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
         <Dialog
             visible
             onHide={() => closeDialog(false)}
-            className="w-[90vw] max-w-300 h-[90vh] p-0"
+            className={isMobile
+                ? "m-0 h-dvh max-h-dvh w-screen max-w-none rounded-none p-0"
+                : "h-[90vh] w-[90vw] max-w-300 p-0"}
             contentClassName="flex flex-col min-h-0 flex-1 overflow-hidden"
             closeOnEscape
             dismissableMask
@@ -187,7 +191,10 @@ export default function KanbanTaskDialog({ columns, allTags, allUsers, task, clo
                 {
                     (!isMobile || activeTabIndex === 1) && !isCreation &&
                     <div className="flex-1">
-                        <KanbanCommentSection taskId={task.id} />
+                        <KanbanCommentSection
+                            taskId={task.id}
+                            onCommentCountChange={(commentCount) => onCommentCountChange(task.id, commentCount)}
+                        />
                     </div>
                 }
             </div>

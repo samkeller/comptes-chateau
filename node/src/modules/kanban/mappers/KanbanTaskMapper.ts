@@ -3,7 +3,7 @@ import type { KanbanTaskResponse } from "@chocosous/shared";
 import { KanbanTask } from "../entities/KanbanTask";
 
 /** Convertit une entité KanbanTask en DTO exposé par l'API. */
-export function toKanbanTaskDto(task: KanbanTask): KanbanTaskResponse {
+export function toKanbanTaskDto(task: KanbanTask, commentCount = 0): KanbanTaskResponse {
         return {
             id: task.id,
             title: task.title,
@@ -14,5 +14,6 @@ export function toKanbanTaskDto(task: KanbanTask): KanbanTaskResponse {
             assignees: task.assignees?.map(toUserDto),
             isDone: task.isDone,
             doneByUserId: task.doneByUserId ?? null,
+            commentCount,
         };
     }
