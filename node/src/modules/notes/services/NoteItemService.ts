@@ -5,7 +5,7 @@ import { badRequest, notFound } from "../../../utils/AppError";
 import { Note } from "../entities/Note";
 import { NoteItem } from "../entities/NoteItem";
 import { toNoteItemDto } from "../mappers/NoteMapper";
-import type NoteService from "./NoteService";
+import NoteService from "./NoteService";
 
 const MAX_NOTE_ITEMS = 200;
 
@@ -80,8 +80,9 @@ export default class NoteItemService {
      */
     async add(noteId: number, input: CreateNoteItemInput): Promise<NoteItemDto> {
         return this.manager.transaction(async (manager) => {
-            const noteItemService = new NoteItemService(this.noteService, manager);
-            const note = await noteItemService.noteService.getChecklistOrThrow(noteId);
+            const noteService = new NoteService(manager);
+            const noteItemService = new NoteItemService(noteService, manager);
+            const note = await noteService.getChecklistOrThrow(noteId);
             const itemRepo = noteItemService.noteItemRepo;
             const count = await itemRepo.countBy({ noteId });
             if (count >= MAX_NOTE_ITEMS) {
@@ -97,7 +98,7 @@ export default class NoteItemService {
                 isChecked: input.isChecked ?? false,
                 sortOrder: input.sortOrder ?? (lastItem?.sortOrder ?? -1) + 1,
             }));
-            await noteItemService.noteService.touchUpdatedAt(note);
+            await noteService.touchUpdatedAt(note);
             return toNoteItemDto(item);
         });
     }
@@ -105,16 +106,17 @@ export default class NoteItemService {
     /** Modifie un item et actualise la date de la note dans la même transaction. */
     async patch(noteId: number, itemId: number, changes: PatchNoteItemRequest): Promise<NoteItemDto> {
         return this.manager.transaction(async (manager) => {
-            const noteItemService = new NoteItemService(this.noteService, manager);
+            const noteService = new NoteService(manager);
+            const noteItemService = new NoteItemService(noteService, manager);
 
-            const note = await noteItemService.noteService.getChecklistOrThrow(noteId);
+            const note = await noteService.getChecklistOrThrow(noteId);
             const itemRepo = noteItemService.noteItemRepo;
             const item = await itemRepo.findOneBy({ id: itemId, noteId });
             if (!item) throw notFound("NOTE_ITEM_NOT_FOUND", "Item de note introuvable");
 
             Object.assign(item, changes);
             await itemRepo.save(item);
-            await noteItemService.noteService.touchUpdatedAt(note);
+            await noteService.touchUpdatedAt(note);
             return toNoteItemDto(item);
         });
     }
@@ -122,15 +124,16 @@ export default class NoteItemService {
     /** Supprime un item appartenant à la note et actualise la date de modification. */
     async delete(noteId: number, itemId: number): Promise<void> {
         await this.manager.transaction(async (manager) => {
-            const noteItemService = new NoteItemService(this.noteService, manager);
+            const noteService = new NoteService(manager);
+            const noteItemService = new NoteItemService(noteService, manager);
 
-            const note = await this.noteService.getChecklistOrThrow(noteId);
-            const itemRepo = this.noteItemRepo;
+            const note = await noteService.getChecklistOrThrow(noteId);
+            const itemRepo = noteItemService.noteItemRepo;
             const item = await itemRepo.findOneBy({ id: itemId, noteId });
             if (!item) throw notFound("NOTE_ITEM_NOT_FOUND", "Item de note introuvable");
 
             await itemRepo.remove(item);
-            await this.noteService.touchUpdatedAt(note);
+            await noteService.touchUpdatedAt(note);
         });
     }
 
