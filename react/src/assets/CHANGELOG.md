@@ -92,3 +92,11 @@
 
 ### Suppression
 - Forecast définitif
+
+## [1.2.5 - 12/09/2026]
+
+### Added
+- Ajouté le nouveau module ! /notes
+
+### Fixes
+- Affichage plus simple des tâches /kanban (nombre de commentaires, moins de fioritures, etc) - Mobile & desktop
