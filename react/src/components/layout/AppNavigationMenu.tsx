@@ -23,7 +23,8 @@ type NavKey =
     | "automatisations"
     | "setup"
     | "stocks"
-    | "kanban";
+    | "kanban"
+    | "notes";
 
 interface NavHandle {
     navKey?: NavKey;
@@ -173,6 +174,12 @@ export default function AppNavigationMenu({
             icon: "pi pi-box",
             className: activeNavKey === "stocks" ? "bg-surface-200" : undefined,
             command: () => navigateTo("/stocks")
+        },
+        {
+            label: "Notes",
+            icon: "pi pi-file-edit",
+            className: activeNavKey === "notes" ? "bg-surface-200" : undefined,
+            command: () => navigateTo(routePaths.notes)
         },
         {
             label: "Kanban",

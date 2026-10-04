@@ -23,6 +23,7 @@ import { routePaths } from "./routePaths";
 import Stocks from "@/pages/stocks/Stocks";
 import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
 import ProductManagementPage from "@/pages/stocks/productsManagement/ProductManagementPage";
+import NotesPage from "@/pages/notes/NotesPage";
 
 const router = createBrowserRouter([
   {
@@ -130,6 +131,11 @@ const router = createBrowserRouter([
         path: routePaths.kanban,
         element: <KanbanPage />,
         handle: { navKey: "kanban" },
+      },
+      {
+        path: routePaths.notes,
+        element: <NotesPage />,
+        handle: { navKey: "notes" },
       },
       {
         path: "*",
