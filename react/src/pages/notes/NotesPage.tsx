@@ -3,65 +3,35 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import InputSearch from "@/components/atoms/primereact/InputSearch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import { PageTemplate } from "@/pages/PageTemplate";
 import NotesService from "@/services/notes/NotesService";
 import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import NoteEditorDialog from "./NoteEditorDialog";
+import { useScreen } from "@/hooks/useScreen";
 
+const notesService = new NotesService();
 export default function NotesPage() {
-    const service = useMemo(() => new NotesService(), []);
     const showToast = useGlobalToast();
     const [notes, setNotes] = useState<NoteDto[]>([]);
     const [showArchived, setShowArchived] = useState(false);
     const view = showArchived ? "archived" : "active";
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState(false);
     const [editingNote, setEditingNote] = useState<NoteDto | null>(null);
     const [creatingType, setCreatingType] = useState<NoteType | null>(null);
     const mutationVersions = useRef(new Map<string, number>());
-
-    const fetchNotes = useCallback((archived: boolean): Promise<NoteDto[]> => {
-        return service.getAll(archived);
-    }, [service]);
+    const { isMobile } = useScreen()
 
     useEffect(() => {
-        let isCurrent = true;
-        void fetchNotes(showArchived)
-            .then((data) => {
-                if (isCurrent) setNotes(data);
-            })
-            .catch(() => {
-                if (isCurrent) setLoadError(true);
-            })
-            .finally(() => {
-                if (isCurrent) setLoading(false);
-            });
-        return () => {
-            isCurrent = false;
-        };
-    }, [fetchNotes, showArchived]);
-
-    function loadNotes(): void {
         setLoading(true);
-        setLoadError(false);
-        void fetchNotes(showArchived)
-            .then(setNotes)
-            .catch(() => setLoadError(true))
+
+        notesService.getAll(showArchived)
+            .then((data) => setNotes(data))
             .finally(() => setLoading(false));
-    }
 
-    function retryLoading(): void {
-        loadNotes();
-    }
-
-    function toggleArchivedView(): void {
-        setLoading(true);
-        setLoadError(false);
-        setShowArchived((current) => !current);
-    }
+    }, [showArchived]);
 
     const displayedNotes = useMemo(() => {
         const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -118,7 +88,7 @@ export default function NotesPage() {
         updateItemInState(note.id, optimisticItem);
 
         try {
-            await service.updateItem(note.id, item.id, { isChecked: optimisticItem.isChecked });
+            await notesService.updateItem(note.id, item.id, { isChecked: optimisticItem.isChecked });
         } catch {
             if (mutationVersions.current.get(key) === version) {
                 updateItemInState(note.id, item);
@@ -129,7 +99,7 @@ export default function NotesPage() {
 
     async function togglePin(note: NoteDto): Promise<void> {
         try {
-            const updatedNote = await service.update(note.id, {
+            const updatedNote = await notesService.update(note.id, {
                 title: note.title,
                 isPinned: !note.isPinned,
             });
@@ -142,8 +112,8 @@ export default function NotesPage() {
     async function toggleArchive(note: NoteDto): Promise<void> {
         try {
             const updatedNote = note.isArchived
-                ? await service.unarchive(note.id)
-                : await service.archive(note.id);
+                ? await notesService.unarchive(note.id)
+                : await notesService.archive(note.id);
             setNotes((current) => current.filter((currentNote) => currentNote.id !== updatedNote.id));
             setEditingNote(null);
             showToast({
@@ -169,39 +139,38 @@ export default function NotesPage() {
     return (
         <PageTemplate pageTitle="Notes">
             <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <Button
-                        label={showArchived ? "Afficher les notes actives" : "Afficher les archives"}
-                        icon={showArchived ? "pi pi-file" : "pi pi-inbox"}
-                        outlined={!showArchived}
-                        aria-pressed={showArchived}
-                        onClick={toggleArchivedView}
-                    />
+                <div className="flex justify-end">
                     <div className="flex flex-col gap-2 sm:flex-row">
-                        <InputSearch
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Rechercher une note"
-                            aria-label="Rechercher une note"
-                            className="w-full flex-1"
+                        <Button
+                            label="Nouvelle note"
+                            icon="pi pi-plus"
+                            onClick={() => setCreatingType("text")}
                         />
-                        {view === "active" && (
-                            <Button
-                                label="Nouvelle note"
-                                icon="pi pi-plus"
-                                onClick={() => setCreatingType("text")}
-                            />
-                        )}
                     </div>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+
+                    <InputSearch
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Rechercher une note"
+                        aria-label="Rechercher une note"
+                        className="w-full flex-1"
+                    />
+                    <Button
+                        {...(!isMobile && { label: "Afficher les notes archivées" })}
+                        icon={showArchived ? "pi pi-check-circle" : "pi pi-circle"}
+                        outlined={!showArchived}
+                        size="small"
+                        className="shrink-0"
+                        onClick={() => setShowArchived(!showArchived)}
+                        {...(isMobile && { tooltip: "Afficher les notes archivées", tooltipOptions: { position: "bottom" } })}
+                    />
+
                 </div>
 
                 {loading ? (
                     <div className="flex justify-center p-12"><ProgressSpinner /></div>
-                ) : loadError ? (
-                    <div className="flex flex-col items-center gap-3 p-8 text-center">
-                        <p>Impossible de charger les notes.</p>
-                        <Button label="Réessayer" icon="pi pi-refresh" onClick={retryLoading} />
-                    </div>
                 ) : displayedNotes.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-surface p-10 text-center text-surface-500">
                         {search ? "Aucune note ne correspond à la recherche." : view === "archived"
@@ -223,66 +192,65 @@ export default function NotesPage() {
                                         setEditingNote(note);
                                     }
                                 }}
-                                className="cursor-pointer rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                                className="cursor-pointer rounded-xl focus-visible:outline focus-visible:outline-primary"
                             >
-                            <Card className="w-full border border-surface shadow-sm transition-colors hover:border-primary">
-                                <div className="flex min-w-0 items-start justify-between gap-2">
-                                    <span className="min-w-0 flex-1 truncate text-lg font-semibold">{note.title}</span>
-                                    {view === "active" && (
-                                        <Button
-                                            icon={note.isPinned ? "pi pi-bookmark-fill" : "pi pi-bookmark"}
-                                            rounded
-                                            text
-                                            aria-label={note.isPinned ? "Désépingler" : "Épingler"}
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                void togglePin(note);
-                                            }}
-                                        />
-                                    )}
-                                </div>
-                                {note.type === "text" ? (
-                                    note.content ? (
-                                        <div className="mt-2 max-h-32 overflow-hidden text-sm text-surface-500">
-                                            <MarkdownRenderer>{note.content}</MarkdownRenderer>
-                                        </div>
-                                    ) : (
-                                        <span className="mt-2 block text-sm italic text-surface-500">Note vide</span>
-                                    )
-                                ) : (
-                                    <div className="mt-2 flex flex-col">
-                                        {note.items.length === 0 && (
-                                            <span className="py-2 text-sm italic text-surface-500">Checklist vide</span>
-                                        )}
-                                        {note.items.slice(0, 5).map((item) => (
-                                            <label
-                                                key={item.id}
-                                                className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${
-                                                    note.isArchived ? "cursor-default" : "hover:bg-surface-800"
-                                                }`}
-                                                onClick={(event) => event.stopPropagation()}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.isChecked}
-                                                    disabled={note.isArchived}
-                                                    onChange={() => void toggleItem(note, item)}
-                                                    className="h-5 w-5 shrink-0 accent-teal-400"
-                                                    aria-label={`${item.isChecked ? "Décocher" : "Cocher"} ${item.label}`}
-                                                />
-                                                <span className={`line-clamp-2 text-sm ${item.isChecked ? "line-through opacity-60" : ""}`}>
-                                                    {item.label}
-                                                </span>
-                                            </label>
-                                        ))}
-                                        {note.items.length > 5 && (
-                                            <span className="mt-2 text-sm text-surface-500">
-                                                + {note.items.length - 5} autres éléments
-                                            </span>
+                                <Card className="w-full border border-surface shadow-sm transition-colors hover:border-primary">
+                                    <div className="flex min-w-0 items-start justify-between gap-2">
+                                        <span className="min-w-0 flex-1 truncate text-lg font-semibold">{note.title}</span>
+                                        {view === "active" && (
+                                            <Button
+                                                icon={note.isPinned ? "pi pi-bookmark-fill" : "pi pi-bookmark"}
+                                                rounded
+                                                text
+                                                aria-label={note.isPinned ? "Désépingler" : "Épingler"}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    void togglePin(note);
+                                                }}
+                                            />
                                         )}
                                     </div>
-                                )}
-                            </Card>
+                                    {note.type === "text" ? (
+                                        note.content ? (
+                                            <div className="mt-2 max-h-32 overflow-hidden text-sm text-surface-500">
+                                                <MarkdownRenderer>{note.content}</MarkdownRenderer>
+                                            </div>
+                                        ) : (
+                                            <span className="mt-2 block text-sm italic text-surface-500">Note vide</span>
+                                        )
+                                    ) : (
+                                        <div className="mt-2 flex flex-col">
+                                            {note.items.length === 0 && (
+                                                <span className="py-2 text-sm italic text-surface-500">-</span>
+                                            )}
+                                            {note.items.slice(0, 5).map((item) => (
+                                                <label
+                                                    key={item.id}
+                                                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${note.isArchived ? "cursor-default" : "hover:bg-surface-800"
+                                                        }`}
+                                                    onClick={(event) => event.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.isChecked}
+                                                        disabled={note.isArchived}
+                                                        onChange={() => void toggleItem(note, item)}
+                                                        className="h-5 w-5 shrink-0 accent-teal-400"
+                                                        aria-label={`${item.isChecked ? "Décocher" : "Cocher"} ${item.label}`}
+                                                    />
+                                                    <span className={`line-clamp-2 text-sm ${item.isChecked ? "line-through opacity-60" : ""}`}>
+                                                        {item.label}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                            {note.items.length > 5 && (
+                                                <span className="mt-2 text-sm text-surface-500">
+                                                    + {note.items.length - 5} autres éléments
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </Card>
                             </article>
                         ))}
                     </div>
