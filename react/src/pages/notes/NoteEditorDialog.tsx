@@ -40,12 +40,14 @@ export default function NoteEditorDialog({
     const [content, setContent] = useState(note?.content ?? "");
     const [items, setItems] = useState<NoteItemDraft[]>(() => note?.items.map((item) => ({ ...item })) ?? []);
     const [draftType, setDraftType] = useState<NoteType>(note?.type ?? initialType);
+    const [hasTypeToggled, setHasTypeToggled] = useState(false);
     const [saving, setSaving] = useState(false);
     const isCreating = note === null;
-    const isLocalItemEditing = isCreating || note?.type !== "checklist";
+    const isLocalItemEditing = isCreating || hasTypeToggled;
 
     function toggleType(newType: NoteType): void {
         if (newType === draftType) return;
+        setHasTypeToggled(true);
         if (draftType === "text") {
             setItems(markdownToChecklist(content));
         } else {
@@ -61,6 +63,7 @@ export default function NoteEditorDialog({
         }
         setSaving(true);
         try {
+            const shouldReplaceItems = hasTypeToggled || note?.type !== "checklist";
             const savedNote = isCreating
                 ? await notesService.create({
                     title: title.trim(),
@@ -75,10 +78,9 @@ export default function NoteEditorDialog({
                     type: draftType,
                     ...(draftType === "text"
                         ? { content }
-                        : note.type !== "checklist"
+                        : shouldReplaceItems
                             ? { items }
                             : {})
-                    ,
                 });
             onSaved(savedNote);
             showToast({ severity: "success", summary: isCreating ? "Note créée." : "Note modifiée." });

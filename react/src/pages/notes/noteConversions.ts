@@ -3,6 +3,10 @@ import type { CreateNoteItemInput, NoteItemDto } from "@chocosous/shared";
 const LIST_PREFIX = /^\s*(?:[-*+]|\d+\.)\s+(?:\[([ xX])\]\s*)?/;
 const HEADING_PREFIX = /^\s{0,3}#{1,6}\s+/;
 
+/**
+ * Convertit les lignes Markdown en items, en conservant l'état des tâches GFM.
+ * Les styles et la hiérarchie Markdown sont volontairement aplatis dans une checklist.
+ */
 export function markdownToChecklist(markdown: string): CreateNoteItemInput[] {
     return markdown
         .split(/\r?\n/)
@@ -19,6 +23,7 @@ export function markdownToChecklist(markdown: string): CreateNoteItemInput[] {
         .map((item, sortOrder) => ({ ...item, sortOrder }));
 }
 
+/** Sérialise les items sous forme de liste de tâches GFM pour une note texte. */
 export function checklistToMarkdown(items: Array<Pick<NoteItemDto, "label"> & { isChecked?: boolean }>): string {
     return items
         .map((item) => `- [${item.isChecked ? "x" : " "}] ${item.label}`)

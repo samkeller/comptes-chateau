@@ -34,6 +34,7 @@ export default class NoteItemService {
         });
     }
 
+    /** Supprime les items lors d'une conversion de checklist vers une note texte. */
     async deleteForNote(noteId: number, manager: EntityManager = this.manager): Promise<void> {
         await manager.getRepository(NoteItem).delete({ noteId });
     }
@@ -100,6 +101,7 @@ export default class NoteItemService {
         });
     }
 
+    /** Modifie un item et actualise la date de la note dans la même transaction. */
     async patch(noteId: number, itemId: number, changes: PatchNoteItemRequest): Promise<NoteItemDto> {
         return this.manager.transaction(async (manager) => {
             const note = await this.noteService.getChecklistOrThrow(noteId, manager);
@@ -114,6 +116,7 @@ export default class NoteItemService {
         });
     }
 
+    /** Supprime un item appartenant à la note et actualise la date de modification. */
     async delete(noteId: number, itemId: number): Promise<void> {
         await this.manager.transaction(async (manager) => {
             const note = await this.noteService.getChecklistOrThrow(noteId, manager);

@@ -19,21 +19,31 @@ export default function NotesPage() {
     const view = showArchived ? "archived" : "active";
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [reloadVersion, setReloadVersion] = useState(0);
     const [editingNote, setEditingNote] = useState<NoteDto | null>(null);
     const [creatingType, setCreatingType] = useState<NoteType | null>(null);
     const mutationVersions = useRef(new Map<string, number>());
     const { width, isMobile } = useScreen()
     const noteMinWidth = 300; // Valeur arbitraire pour la largeur minimale d'une note
-    const noteColumnCount = Math.floor(width / noteMinWidth);
+    const noteColumnCount = Math.max(1, Math.floor(width / noteMinWidth));
 
     useEffect(() => {
-        setLoading(true);
-
-        notesService.getAll(showArchived)
-            .then((data) => setNotes(data))
-            .finally(() => setLoading(false));
-
-    }, [showArchived]);
+        let isCurrentRequest = true;
+        void notesService.getAll(showArchived)
+            .then((data) => {
+                if (isCurrentRequest) setNotes(data);
+            })
+            .catch(() => {
+                if (isCurrentRequest) setLoadError(true);
+            })
+            .finally(() => {
+                if (isCurrentRequest) setLoading(false);
+            });
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [showArchived, reloadVersion]);
 
     const displayedNotes = useMemo(() => {
         const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -132,6 +142,18 @@ export default function NotesPage() {
         setCreatingType(null);
     }
 
+    function changeArchiveView(): void {
+        setLoading(true);
+        setLoadError(false);
+        setShowArchived((current) => !current);
+    }
+
+    function retryLoading(): void {
+        setLoading(true);
+        setLoadError(false);
+        setReloadVersion((current) => current + 1);
+    }
+
     function removeNote(noteId: number): void {
         setNotes((current) => current.filter((note) => note.id !== noteId));
         setEditingNote(null);
@@ -210,7 +232,7 @@ export default function NotesPage() {
                         outlined={!showArchived}
                         size="small"
                         className="shrink-0"
-                        onClick={() => setShowArchived(!showArchived)}
+                        onClick={changeArchiveView}
                         {...(isMobile && { tooltip: "Afficher les notes archivées", tooltipOptions: { position: "bottom" } })}
                     />
 
@@ -218,6 +240,11 @@ export default function NotesPage() {
 
                 {loading ? (
                     <div className="flex justify-center p-12"><ProgressSpinner /></div>
+                ) : loadError ? (
+                    <div className="flex flex-col items-center gap-3 p-8 text-center">
+                        <p>Impossible de charger les notes.</p>
+                        <Button label="Réessayer" icon="pi pi-refresh" onClick={retryLoading} />
+                    </div>
                 ) : displayedNotes.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-surface p-10 text-center text-surface-500">
                         {search ? "Aucune note ne correspond à la recherche." : view === "archived"

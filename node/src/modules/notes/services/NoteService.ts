@@ -36,11 +36,13 @@ export default class NoteService {
         return notes.map((note) => toNoteDto(note, itemsByNote.get(note.id)));
     }
 
+    /** Récupère une note et ses items dans l'ordre défini par la checklist. */
     async getById(id: number): Promise<NoteDto> {
         const note = await this.findNoteOrThrow(id);
         return toNoteDto(note, await this.noteItemService.getForNote(id));
     }
 
+    /** Crée la note et ses items dans une transaction afin de ne jamais exposer une checklist partielle. */
     async create(body: CreateNoteRequest, authorId: number): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
             const noteRepo = manager.getRepository(Note);
@@ -62,7 +64,8 @@ export default class NoteService {
     }
 
     /**
-     * Met à jour les champs de la note et remplace les items seulement si `items` est fourni.
+     * Met à jour la note dans une transaction. Lors d'un changement de type, le client doit fournir
+     * le contenu texte ou la nouvelle liste complète pour garder les deux représentations cohérentes.
      */
     async update(id: number, body: UpdateNoteRequest): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
@@ -105,6 +108,7 @@ export default class NoteService {
         });
     }
 
+    /** Archive une note une seule fois et conserve la date de sa première mise en archive. */
     async archive(id: number): Promise<NoteDto> {
         const note = await this.findNoteOrThrow(id);
         if (!note.isArchived) {
@@ -113,6 +117,7 @@ export default class NoteService {
         return this.getById(id);
     }
 
+    /** Restaure une note et efface sa date d'archivage. */
     async unarchive(id: number): Promise<NoteDto> {
         const note = await this.findNoteOrThrow(id);
         if (note.isArchived) {
