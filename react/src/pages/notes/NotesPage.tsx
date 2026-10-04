@@ -29,8 +29,6 @@ export default function NotesPage() {
 
     useEffect(() => {
         let isCurrent = true;
-        setLoading(true);
-        setLoadError(false);
         void fetchNotes(showArchived)
             .then((data) => {
                 if (isCurrent) setNotes(data);
@@ -57,6 +55,12 @@ export default function NotesPage() {
 
     function retryLoading(): void {
         loadNotes();
+    }
+
+    function toggleArchivedView(): void {
+        setLoading(true);
+        setLoadError(false);
+        setShowArchived((current) => !current);
     }
 
     const displayedNotes = useMemo(() => {
@@ -171,7 +175,7 @@ export default function NotesPage() {
                         icon={showArchived ? "pi pi-file" : "pi pi-inbox"}
                         outlined={!showArchived}
                         aria-pressed={showArchived}
-                        onClick={() => setShowArchived((current) => !current)}
+                        onClick={toggleArchivedView}
                     />
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <InputSearch
