@@ -7,9 +7,9 @@ import { useMemo, useState } from "react";
 import { useScreen } from "@/hooks/useScreen";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import MarkdownEditor from "@/components/form/markdown/MarkdownEditor";
-import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import NotesService from "@/services/notes/NotesService";
 import { checklistToMarkdown, markdownToChecklist } from "./noteConversions";
+import { SelectButton } from "primereact/selectbutton";
 
 interface NoteEditorDialogProps {
     note: NoteDto | null;
@@ -41,23 +41,20 @@ export default function NoteEditorDialog({
     const [content, setContent] = useState(note?.content ?? "");
     const [items, setItems] = useState<NoteItemDraft[]>(() => note?.items.map((item) => ({ ...item })) ?? []);
     const [draftType, setDraftType] = useState<NoteType>(note?.type ?? initialType);
-    const [hasTypeToggled, setHasTypeToggled] = useState(false);
     const [newItemLabel, setNewItemLabel] = useState("");
     const [saving, setSaving] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const isCreating = note === null;
     const type = draftType;
-    const isLocalItemEditing = isCreating || note?.type !== "checklist" || hasTypeToggled;
+    const isLocalItemEditing = isCreating || note?.type !== "checklist";
 
-    function toggleType(): void {
-        setHasTypeToggled(true);
-        if (type === "text") {
+    function toggleType(newType: NoteType): void {
+        if (newType === "text") {
             setItems(markdownToChecklist(content));
-            setDraftType("checklist");
         } else {
             setContent(checklistToMarkdown(items));
-            setDraftType("text");
         }
+        setDraftType(newType);
     }
 
     async function saveNote(): Promise<void> {
@@ -76,13 +73,13 @@ export default function NoteEditorDialog({
                 : await service.update(note.id, {
                     title: title.trim(),
                     type,
-                    ...(type === "text" ? { content } : note.type !== "checklist" || hasTypeToggled ? { items } : {}),
+                    ...(type === "text" ? { content } : note.type !== "checklist" ? { items } : {}),
                 });
             onSaved(savedNote);
             showToast({ severity: "success", summary: isCreating ? "Note créée." : "Note modifiée." });
             onClose();
         } catch {
-            showToast({ severity: "error", summary: "Impossible d’enregistrer la note." });
+            showToast({ severity: "error", summary: "Impossible d'enregistrer la note." });
         } finally {
             setSaving(false);
         }
@@ -102,7 +99,7 @@ export default function NoteEditorDialog({
             onItemChanged(note.id, item);
             setNewItemLabel("");
         } catch {
-            showToast({ severity: "error", summary: "Impossible d’ajouter l’élément." });
+            showToast({ severity: "error", summary: "Impossible d'ajouter l'élément." });
         }
     }
 
@@ -121,7 +118,7 @@ export default function NoteEditorDialog({
             onItemChanged(note.id, updated);
         } catch {
             setItems((current) => current.map((entry) => entry.id === item.id ? item : entry));
-            showToast({ severity: "error", summary: "Impossible de modifier l’élément." });
+            showToast({ severity: "error", summary: "Impossible de modifier l'élément." });
         }
     }
 
@@ -148,7 +145,7 @@ export default function NoteEditorDialog({
             setItems((current) => current.map((entry) => entry.id === savedItem.id
                 ? { ...entry, label: savedItem.label }
                 : entry));
-            showToast({ severity: "error", summary: "Impossible de modifier l’élément." });
+            showToast({ severity: "error", summary: "Impossible de modifier l'élément." });
         }
     }
 
@@ -165,7 +162,7 @@ export default function NoteEditorDialog({
             setItems((current) => current.filter((entry) => entry.id !== item.id));
             onItemDeleted(note.id, item.id);
         } catch {
-            showToast({ severity: "error", summary: "Impossible de supprimer l’élément." });
+            showToast({ severity: "error", summary: "Impossible de supprimer l'élément." });
         }
     }
 
@@ -180,41 +177,48 @@ export default function NoteEditorDialog({
         }
     }
 
-    const footer = (
-        <div className="flex flex-wrap justify-between gap-2">
+    const header = (
+        <div className="flex flex-row gap-2 justify-between w-full">
+            <h2 className="text-lg font-semibold">{isCreating ? "Nouvelle note" : "Modifier la note"}</h2>
             <div className="flex gap-2">
                 {!isCreating && (
                     <>
                         <Button
-                            label={note.isArchived ? "Désarchiver" : "Archiver"}
+                            tooltip={note.isArchived ? "Désarchiver" : "Archiver"}
+                            className="py-0 h-8 w-8"
                             icon={note.isArchived ? "pi pi-inbox" : "pi pi-box"}
                             severity="secondary"
-                            outlined
+                            rounded text
                             onClick={() => onArchive(note)}
                         />
                         <Button
-                            label={confirmDelete ? "Confirmer" : "Supprimer"}
+                            tooltip={confirmDelete ? "Confirmer" : "Supprimer"}
+                            className="py-0 h-8 w-8"
                             icon="pi pi-trash"
                             severity="danger"
-                            outlined
+                            rounded text
                             onClick={() => confirmDelete ? void deleteNote() : setConfirmDelete(true)}
                         />
+                        {/* TODO: Remplacer par confirm */}
                         {confirmDelete && (
                             <Button label="Annuler" text onClick={() => setConfirmDelete(false)} />
                         )}
                     </>
                 )}
             </div>
-            <div className="flex gap-2">
-                <Button label="Fermer" text onClick={onClose} />
-                <Button
-                    label={isCreating ? "Créer" : "Enregistrer"}
-                    icon="pi pi-check"
-                    loading={saving}
-                    disabled={!title.trim()}
-                    onClick={() => void saveNote()}
-                />
-            </div>
+        </div>
+    )
+
+    const footer = (
+        <div className="flex flex-wrap justify-end gap-2">
+            <Button label="Fermer" text onClick={onClose} />
+            <Button
+                label={isCreating ? "Créer" : "Enregistrer"}
+                icon="pi pi-check"
+                loading={saving}
+                disabled={!title.trim()}
+                onClick={() => void saveNote()}
+            />
         </div>
     );
 
@@ -222,7 +226,7 @@ export default function NoteEditorDialog({
         <Dialog
             visible
             onHide={onClose}
-            header={isCreating ? "Nouvelle note" : "Modifier la note"}
+            header={header}
             footer={footer}
             className={isMobile ? "m-0 h-dvh max-h-dvh w-screen max-w-none rounded-none" : "w-[min(42rem,90vw)]"}
             contentClassName="max-h-[70dvh] overflow-y-auto"
@@ -230,25 +234,34 @@ export default function NoteEditorDialog({
             dismissableMask={!saving}
         >
             <div className="flex flex-col gap-4">
-                <InputText
-                    autoFocus
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Titre"
-                    maxLength={255}
-                    aria-label="Titre de la note"
-                    className="w-full text-lg font-semibold"
-                />
-                <div className="flex items-center justify-between rounded-lg border border-surface px-3 py-2">
-                    <span className="font-medium">Contenu de la note</span>
-                    <Button
-                        label={type === "text" ? "Texte" : "Checklist"}
-                        icon={type === "text" ? "pi pi-align-left" : "pi pi-check-square"}
-                        outlined
-                        aria-label={`Changer le type en ${type === "text" ? "checklist" : "texte"}`}
-                        onClick={toggleType}
+                <div className="flex gap-2">
+                    <InputText
+                        autoFocus
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                        placeholder="Titre"
+                        maxLength={255}
+                        aria-label="Titre de la note"
+                        className="grow text-lg font-semibold"
+                    />
+                    <SelectButton
+                        value={type}
+                        options={[
+                            { label: "Texte", value: "text", icon: "pi pi-align-left" },
+                            { label: "Checklist", value: "checklist", icon: "pi pi-check-square" }
+                        ]}
+                        itemTemplate={(item) => (
+                            <span className="flex items-center gap-2">
+                                <i className={item.icon}></i>
+                                <span>{item.label}</span>
+                            </span>
+                        )}
+                        onChange={(e) => toggleType(e.value)}
+                        aria-label="Changer le type de note"
                     />
                 </div>
+
+
                 {type === "text" ? (
                     <div className="flex flex-col gap-2">
                         <label className="font-medium">Contenu</label>
