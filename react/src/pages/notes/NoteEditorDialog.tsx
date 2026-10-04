@@ -47,7 +47,7 @@ export default function NoteEditorDialog({
     const [confirmDelete, setConfirmDelete] = useState(false);
     const isCreating = note === null;
     const type = draftType;
-    const isDraftChecklist = isCreating || note?.type !== "checklist" || hasTypeToggled;
+    const isLocalItemEditing = isCreating || note?.type !== "checklist" || hasTypeToggled;
 
     function toggleType(): void {
         setHasTypeToggled(true);
@@ -91,7 +91,7 @@ export default function NoteEditorDialog({
     async function addChecklistItem(): Promise<void> {
         const label = newItemLabel.trim();
         if (!label) return;
-        if (isDraftChecklist) {
+        if (isLocalItemEditing) {
             setItems((current) => [...current, { label }]);
             setNewItemLabel("");
             return;
@@ -108,7 +108,7 @@ export default function NoteEditorDialog({
 
     async function changeItem(item: NoteItemDraft, index: number, changes: Partial<CreateNoteItemInput>): Promise<void> {
         const nextItem = { ...item, ...changes };
-        if (isDraftChecklist) {
+        if (isLocalItemEditing) {
             setItems((current) => current.map((entry, entryIndex) =>
                 item.id !== undefined ? entry.id === item.id ? nextItem : entry : entryIndex === index ? nextItem : entry
             ));
@@ -126,7 +126,7 @@ export default function NoteEditorDialog({
     }
 
     async function saveItemLabel(item: NoteItemDraft, label: string): Promise<void> {
-        if (isDraftChecklist || !note) return;
+        if (isLocalItemEditing || !note) return;
         if (item.id === undefined) return;
         const savedItem = note.items.find((entry) => entry.id === item.id);
         if (!savedItem) return;
@@ -153,7 +153,7 @@ export default function NoteEditorDialog({
     }
 
     async function removeItem(item: NoteItemDraft, index: number): Promise<void> {
-        if (isDraftChecklist) {
+        if (isLocalItemEditing) {
             setItems((current) => current.filter((entry, itemIndex) =>
                 item.id !== undefined ? entry.id !== item.id : itemIndex !== index
             ));

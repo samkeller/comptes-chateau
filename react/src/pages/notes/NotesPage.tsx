@@ -144,7 +144,7 @@ export default function NotesPage() {
             const updatedNote = note.isArchived
                 ? await service.unarchive(note.id)
                 : await service.archive(note.id);
-            replaceNote(updatedNote);
+            setNotes((current) => current.filter((currentNote) => currentNote.id !== updatedNote.id));
             setEditingNote(null);
             showToast({
                 severity: "success",
