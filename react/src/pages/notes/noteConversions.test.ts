@@ -12,9 +12,17 @@ describe("noteConversions", () => {
     });
 
     it("converts checklist checked states to Markdown task list lines", () => {
-        expect(checklistToMarkdown([
+        const items = [
             { label: "Pain", isChecked: true },
             { label: "Lait", isChecked: false },
-        ])).toBe("- [x] Pain\n- [ ] Lait");
+        ];
+
+        const markdown = checklistToMarkdown(items);
+
+        expect(markdown).toBe("- [x] Pain\n- [ ] Lait");
+        expect(markdownToChecklist(markdown)).toEqual([
+            { label: "Pain", isChecked: true, sortOrder: 0 },
+            { label: "Lait", isChecked: false, sortOrder: 1 },
+        ]);
     });
 });
