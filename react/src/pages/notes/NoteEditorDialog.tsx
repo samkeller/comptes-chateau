@@ -240,13 +240,16 @@ export default function NoteEditorDialog({
             onHide={onClose}
             header={header}
             footer={footer}
-            className={isMobile ? "m-0 h-dvh max-h-dvh w-screen max-w-none rounded-none" : "w-[min(42rem,90vw)]"}
+            className={isMobile
+                ? "m-0 h-dvh max-h-dvh w-screen max-w-none rounded-none"
+                : "w-[min(42rem,90vw)]"
+            }
             contentClassName="max-h-[70dvh] overflow-y-auto"
             draggable={false}
             dismissableMask={!saving}
         >
             <div className="flex flex-col gap-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center">
                     <InputText
                         autoFocus
                         value={title}
