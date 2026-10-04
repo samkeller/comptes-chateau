@@ -10,13 +10,12 @@ import NotesService from "@/services/notes/NotesService";
 import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import NoteEditorDialog from "./NoteEditorDialog";
 
-type NotesView = "active" | "archived";
-
 export default function NotesPage() {
     const service = useMemo(() => new NotesService(), []);
     const showToast = useGlobalToast();
     const [notes, setNotes] = useState<NoteDto[]>([]);
-    const [view, setView] = useState<NotesView>("active");
+    const [showArchived, setShowArchived] = useState(false);
+    const view = showArchived ? "archived" : "active";
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
@@ -171,22 +170,13 @@ export default function NotesPage() {
         <PageTemplate pageTitle="Notes">
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex gap-2" role="group" aria-label="Afficher les notes">
-                        <Button
-                            label="Notes actives"
-                            icon="pi pi-file"
-                            outlined={view !== "active"}
-                            aria-pressed={view === "active"}
-                            onClick={() => setView("active")}
-                        />
-                        <Button
-                            label="Archives"
-                            icon="pi pi-inbox"
-                            outlined={view !== "archived"}
-                            aria-pressed={view === "archived"}
-                            onClick={() => setView("archived")}
-                        />
-                    </div>
+                    <Button
+                        label={showArchived ? "Afficher les notes actives" : "Afficher les archives"}
+                        icon={showArchived ? "pi pi-file" : "pi pi-inbox"}
+                        outlined={!showArchived}
+                        aria-pressed={showArchived}
+                        onClick={() => setShowArchived((current) => !current)}
+                    />
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <span className="p-input-icon-left flex-1">
                             <i className="pi pi-search" />
@@ -199,21 +189,11 @@ export default function NotesPage() {
                             />
                         </span>
                         {view === "active" && (
-                            <div className="flex gap-2">
-                                <Button
-                                    label="Note"
-                                    icon="pi pi-file-edit"
-                                    onClick={() => setCreatingType("text")}
-                                    className="flex-1"
-                                />
-                                <Button
-                                    label="Checklist"
-                                    icon="pi pi-list-check"
-                                    outlined
-                                    onClick={() => setCreatingType("checklist")}
-                                    className="flex-1"
-                                />
-                            </div>
+                            <Button
+                                label="Nouvelle note"
+                                icon="pi pi-plus"
+                                onClick={() => setCreatingType("text")}
+                            />
                         )}
                     </div>
                 </div>
@@ -234,35 +214,44 @@ export default function NotesPage() {
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {displayedNotes.map((note) => (
-                            <Card key={note.id} className="w-full border border-surface shadow-sm">
+                            <article
+                                key={note.id}
+                                tabIndex={0}
+                                aria-label={`Ouvrir la note ${note.title}`}
+                                onClick={() => setEditingNote(note)}
+                                onKeyDown={(event) => {
+                                    if (event.target !== event.currentTarget) return;
+                                    if (event.key === "Enter" || event.key === " ") {
+                                        event.preventDefault();
+                                        setEditingNote(note);
+                                    }
+                                }}
+                                className="cursor-pointer rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                            >
+                            <Card className="w-full border border-surface shadow-sm transition-colors hover:border-primary">
                                 <div className="flex min-w-0 items-start justify-between gap-2">
-                                    <button
-                                        className="min-w-0 flex-1 text-left"
-                                        onClick={() => setEditingNote(note)}
-                                        aria-label={`Modifier ${note.title}`}
-                                    >
-                                        <span className="block truncate text-lg font-semibold">{note.title}</span>
-                                    </button>
+                                    <span className="min-w-0 flex-1 truncate text-lg font-semibold">{note.title}</span>
                                     {view === "active" && (
                                         <Button
                                             icon={note.isPinned ? "pi pi-bookmark-fill" : "pi pi-bookmark"}
                                             rounded
                                             text
                                             aria-label={note.isPinned ? "Désépingler" : "Épingler"}
-                                            onClick={() => void togglePin(note)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                void togglePin(note);
+                                            }}
                                         />
                                     )}
                                 </div>
                                 {note.type === "text" ? (
-                                    <button className="mt-2 block w-full text-left" onClick={() => setEditingNote(note)}>
-                                        {note.content ? (
-                                            <div className="max-h-32 overflow-hidden text-sm text-surface-500">
-                                                <MarkdownRenderer>{note.content}</MarkdownRenderer>
-                                            </div>
-                                        ) : (
-                                            <span className="text-sm italic text-surface-500">Note vide</span>
-                                        )}
-                                    </button>
+                                    note.content ? (
+                                        <div className="mt-2 max-h-32 overflow-hidden text-sm text-surface-500">
+                                            <MarkdownRenderer>{note.content}</MarkdownRenderer>
+                                        </div>
+                                    ) : (
+                                        <span className="mt-2 block text-sm italic text-surface-500">Note vide</span>
+                                    )
                                 ) : (
                                     <div className="mt-2 flex flex-col">
                                         {note.items.length === 0 && (
@@ -274,6 +263,7 @@ export default function NotesPage() {
                                                 className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${
                                                     note.isArchived ? "cursor-default" : "hover:bg-surface-800"
                                                 }`}
+                                                onClick={(event) => event.stopPropagation()}
                                             >
                                                 <input
                                                     type="checkbox"
@@ -289,23 +279,14 @@ export default function NotesPage() {
                                             </label>
                                         ))}
                                         {note.items.length > 5 && (
-                                            <button
-                                                className="min-h-11 self-start text-sm text-primary"
-                                                onClick={() => setEditingNote(note)}
-                                            >
+                                            <span className="mt-2 text-sm text-surface-500">
                                                 + {note.items.length - 5} autres éléments
-                                            </button>
+                                            </span>
                                         )}
-                                        <Button
-                                            label="Ouvrir la checklist"
-                                            icon="pi pi-pencil"
-                                            text
-                                            className="mt-1 min-h-11 self-start"
-                                            onClick={() => setEditingNote(note)}
-                                        />
                                     </div>
                                 )}
                             </Card>
+                            </article>
                         ))}
                     </div>
                 )}

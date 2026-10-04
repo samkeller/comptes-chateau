@@ -9,6 +9,7 @@ import { useGlobalToast } from "@/context/GlobalToastContext";
 import MarkdownEditor from "@/components/form/markdown/MarkdownEditor";
 import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import NotesService from "@/services/notes/NotesService";
+import { checklistToMarkdown, markdownToChecklist } from "./noteConversions";
 
 interface NoteEditorDialogProps {
     note: NoteDto | null;
@@ -37,11 +38,25 @@ export default function NoteEditorDialog({
     const [title, setTitle] = useState(note?.title ?? "");
     const [content, setContent] = useState(note?.content ?? "");
     const [items, setItems] = useState<CreateNoteItemInput[]>(note?.items ?? []);
+    const [draftType, setDraftType] = useState<NoteType>(note?.type ?? initialType);
+    const [hasTypeToggled, setHasTypeToggled] = useState(false);
     const [newItemLabel, setNewItemLabel] = useState("");
     const [saving, setSaving] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const isCreating = note === null;
-    const type = note?.type ?? initialType;
+    const type = draftType;
+    const isDraftChecklist = isCreating || note?.type !== "checklist" || hasTypeToggled;
+
+    function toggleType(): void {
+        setHasTypeToggled(true);
+        if (type === "text") {
+            setItems(markdownToChecklist(content));
+            setDraftType("checklist");
+        } else {
+            setContent(checklistToMarkdown(items));
+            setDraftType("text");
+        }
+    }
 
     async function saveNote(): Promise<void> {
         if (!title.trim()) {
@@ -58,7 +73,8 @@ export default function NoteEditorDialog({
                 })
                 : await service.update(note.id, {
                     title: title.trim(),
-                    ...(type === "text" ? { content } : {}),
+                    type,
+                    ...(type === "text" ? { content } : note.type !== "checklist" || hasTypeToggled ? { items } : {}),
                 });
             onSaved(savedNote);
             showToast({ severity: "success", summary: isCreating ? "Note créée." : "Note modifiée." });
@@ -73,7 +89,7 @@ export default function NoteEditorDialog({
     async function addChecklistItem(): Promise<void> {
         const label = newItemLabel.trim();
         if (!label) return;
-        if (isCreating) {
+        if (isDraftChecklist) {
             setItems((current) => [...current, { label }]);
             setNewItemLabel("");
             return;
@@ -90,7 +106,7 @@ export default function NoteEditorDialog({
 
     async function changeItem(item: CreateNoteItemInput, index: number, changes: Partial<CreateNoteItemInput>): Promise<void> {
         const nextItem = { ...item, ...changes };
-        if (isCreating) {
+        if (isDraftChecklist) {
             setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? nextItem : entry));
             return;
         }
@@ -107,7 +123,7 @@ export default function NoteEditorDialog({
     }
 
     async function saveItemLabel(index: number): Promise<void> {
-        if (isCreating || !note) return;
+        if (isDraftChecklist || !note) return;
         const item = items[index];
         const savedItem = note.items[index];
         if (!item || !savedItem || item.label === savedItem.label) return;
@@ -123,7 +139,7 @@ export default function NoteEditorDialog({
     }
 
     async function removeItem(index: number): Promise<void> {
-        if (isCreating) {
+        if (isDraftChecklist) {
             setItems((current) => current.filter((_item, itemIndex) => itemIndex !== index));
             return;
         }
@@ -191,7 +207,7 @@ export default function NoteEditorDialog({
         <Dialog
             visible
             onHide={onClose}
-            header={isCreating ? (type === "text" ? "Nouvelle note" : "Nouvelle checklist") : "Modifier la note"}
+            header={isCreating ? "Nouvelle note" : "Modifier la note"}
             footer={footer}
             className={isMobile ? "m-0 h-dvh max-h-dvh w-screen max-w-none rounded-none" : "w-[min(42rem,90vw)]"}
             contentClassName="max-h-[70dvh] overflow-y-auto"
@@ -208,6 +224,16 @@ export default function NoteEditorDialog({
                     aria-label="Titre de la note"
                     className="w-full text-lg font-semibold"
                 />
+                <div className="flex items-center justify-between rounded-lg border border-surface px-3 py-2">
+                    <span className="font-medium">Contenu de la note</span>
+                    <Button
+                        label={type === "text" ? "Texte" : "Checklist"}
+                        icon={type === "text" ? "pi pi-align-left" : "pi pi-check-square"}
+                        outlined
+                        aria-label={`Changer le type en ${type === "text" ? "checklist" : "texte"}`}
+                        onClick={toggleType}
+                    />
+                </div>
                 {type === "text" ? (
                     <div className="flex flex-col gap-2">
                         <label className="font-medium">Contenu</label>

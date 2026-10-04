@@ -29,9 +29,17 @@ export const CreateNoteSchema = z.object({
 
 export const UpdateNoteSchema = z.object({
     title: z.string().trim().min(1).max(255),
+    type: z.enum(NOTE_TYPES).optional(),
     content: z.string().max(20_000).nullable().optional(),
     isPinned: z.boolean().optional(),
     items: z.array(NoteItemInputSchema).max(200).optional(),
+}).superRefine((note, context) => {
+    if (note.type === "text" && note.items?.length) {
+        context.addIssue({ code: "custom", path: ["items"], message: "Une note texte ne peut pas contenir d’items" });
+    }
+    if (note.type === "checklist" && note.content != null) {
+        context.addIssue({ code: "custom", path: ["content"], message: "Une checklist ne peut pas contenir de texte Markdown" });
+    }
 });
 
 export const PatchNoteItemSchema = z.object({

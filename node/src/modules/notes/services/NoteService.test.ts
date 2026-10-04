@@ -93,4 +93,48 @@ describe("NoteService", () => {
 
         await expect(testDataSource.getRepository(NoteItem).findOneBy({ id: itemId })).resolves.toBeNull();
     });
+
+    it("converts text content into unchecked checklist items", async () => {
+        const note = await service.create({
+            title: "Courses",
+            type: "text",
+            content: "Pain\nLait",
+        }, TEST_USER_ID);
+
+        const converted = await service.update(note.id, {
+            title: note.title,
+            type: "checklist",
+            items: [{ label: "Pain" }, { label: "Lait" }],
+        });
+
+        expect(converted).toMatchObject({
+            type: "checklist",
+            content: null,
+            items: [
+                { label: "Pain", isChecked: false, sortOrder: 0 },
+                { label: "Lait", isChecked: false, sortOrder: 1 },
+            ],
+        });
+    });
+
+    it("converts checklist items into Markdown and removes the structured items", async () => {
+        const note = await service.create({
+            title: "Courses",
+            type: "checklist",
+            items: [{ label: "Pain", isChecked: true }, { label: "Lait" }],
+        }, TEST_USER_ID);
+
+        const converted = await service.update(note.id, {
+            title: note.title,
+            type: "text",
+            content: "- [x] Pain\n- [ ] Lait",
+        });
+
+        expect(converted).toMatchObject({
+            type: "text",
+            content: "- [x] Pain\n- [ ] Lait",
+            items: [],
+        });
+        expect(await testDataSource.getRepository(NoteItem).countBy({ noteId: note.id })).toBe(0);
+    });
 });

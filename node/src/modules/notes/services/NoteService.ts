@@ -67,19 +67,34 @@ export default class NoteService {
     async update(id: number, body: UpdateNoteRequest): Promise<NoteDto> {
         return this.manager.transaction(async (manager) => {
             const note = await this.findNoteOrThrow(id, manager);
+            const targetType = body.type ?? note.type;
 
-            if (body.items !== undefined && note.type !== "checklist") {
+            if (body.items !== undefined && targetType !== "checklist") {
                 throw badRequest("NOTE_ITEMS_REQUIRE_CHECKLIST", "Seules les checklists peuvent contenir des items");
             }
-            if (body.content !== undefined && note.type === "checklist" && body.content !== null) {
+            if (body.content !== undefined && targetType === "checklist" && body.content !== null) {
                 throw badRequest("NOTE_CONTENT_REQUIRE_TEXT", "Une checklist ne peut pas contenir de texte Markdown");
+            }
+
+            if (targetType !== note.type && targetType === "checklist" && body.items === undefined) {
+                throw badRequest("NOTE_CONVERSION_ITEMS_REQUIRED", "La conversion en checklist doit fournir ses items");
+            }
+            if (targetType !== note.type && targetType === "text" && body.content === undefined) {
+                throw badRequest("NOTE_CONVERSION_CONTENT_REQUIRED", "La conversion en note texte doit fournir son contenu");
+            }
+
+            if (note.type === "checklist" && targetType === "text") {
+                await this.noteItemService.replaceForNote(note, [], manager);
             }
 
             await manager.getRepository(Note).update(id, {
                 title: body.title,
-                ...(body.content !== undefined && note.type === "text" ? { content: body.content } : {}),
+                ...(targetType !== note.type ? { type: targetType } : {}),
+                ...(targetType === "checklist" ? { content: null } : {}),
+                ...(body.content !== undefined && targetType === "text" ? { content: body.content } : {}),
                 ...(body.isPinned !== undefined ? { isPinned: body.isPinned } : {}),
             });
+            note.type = targetType;
 
             if (body.items !== undefined) {
                 await this.noteItemService.replaceForNote(note, body.items, manager);
