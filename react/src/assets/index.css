@@ -43,6 +43,8 @@
 
   --color-error: #f87171;
   --color-error-contrast: #450a0a;
+
+  --color-card: #1f2937;
 }
 
 :root {

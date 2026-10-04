@@ -31,11 +31,15 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
 
     function onHeadingChange(level: number) {
         if (!editor) return;
+
+        const chain = editor.chain().focus();
+
         if (level === 0) {
-            editor.chain().focus().setParagraph().run();
-        } else {
-            editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+            chain.setParagraph().run();
+            return;
         }
+
+        chain.setHeading({ level: level as HeadingLevel }).run();
     }
 
     const btnProps: (isActive: boolean) => ButtonProps = (isActive) => ({
@@ -55,9 +59,9 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
                 options={HEADING_OPTIONS}
                 onChange={e => onHeadingChange(e.value as number)}
                 className={`w-[9rem] p-2 h-8`}
-                pt={{ 
+                pt={{
                     input: { className: "p-0 text-[11px]" },
-                 }}
+                }}
             />
             <Button
                 {...btnProps(editor.isActive("bold"))}
