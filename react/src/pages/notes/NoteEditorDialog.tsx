@@ -125,13 +125,13 @@ export default function NoteEditorDialog({
         }
     }
 
-    async function saveItemLabel(item: NoteItemDraft): Promise<void> {
+    async function saveItemLabel(item: NoteItemDraft, label: string): Promise<void> {
         if (isDraftChecklist || !note) return;
         if (item.id === undefined) return;
         const savedItem = note.items.find((entry) => entry.id === item.id);
-        if (!savedItem || item.label === savedItem.label) return;
+        if (!savedItem || label === savedItem.label) return;
         try {
-            const updated = await service.updateItem(note.id, savedItem.id, { label: item.label });
+            const updated = await service.updateItem(note.id, savedItem.id, { label });
             onItemChanged(note.id, updated);
         } catch {
             setItems((current) => current.map((entry) => entry.id === savedItem.id
@@ -264,7 +264,7 @@ export default function NoteEditorDialog({
                                     onChange={(event) => setItems((current) => current.map((entry, entryIndex) =>
                                         entryIndex === index ? { ...entry, label: event.target.value } : entry
                                     ))}
-                                    onBlur={() => void saveItemLabel(item)}
+                                    onBlur={(event) => void saveItemLabel(item, event.currentTarget.value)}
                                     maxLength={500}
                                     aria-label={`Élément ${index + 1}`}
                                     className={`min-h-11 flex-1 ${item.isChecked ? "line-through opacity-60" : ""}`}

@@ -23,17 +23,15 @@ export default function NotesPage() {
     const [creatingType, setCreatingType] = useState<NoteType | null>(null);
     const mutationVersions = useRef(new Map<string, number>());
 
-    const fetchNotes = useCallback(async (): Promise<NoteDto[]> => {
-        const [activeNotes, archivedNotes] = await Promise.all([
-                service.getAll(false),
-                service.getAll(true),
-        ]);
-        return [...activeNotes, ...archivedNotes];
+    const fetchNotes = useCallback((archived: boolean): Promise<NoteDto[]> => {
+        return service.getAll(archived);
     }, [service]);
 
     useEffect(() => {
         let isCurrent = true;
-        void fetchNotes()
+        setLoading(true);
+        setLoadError(false);
+        void fetchNotes(showArchived)
             .then((data) => {
                 if (isCurrent) setNotes(data);
             })
@@ -46,12 +44,12 @@ export default function NotesPage() {
         return () => {
             isCurrent = false;
         };
-    }, [fetchNotes]);
+    }, [fetchNotes, showArchived]);
 
     function loadNotes(): void {
         setLoading(true);
         setLoadError(false);
-        void fetchNotes()
+        void fetchNotes(showArchived)
             .then(setNotes)
             .catch(() => setLoadError(true))
             .finally(() => setLoading(false));
