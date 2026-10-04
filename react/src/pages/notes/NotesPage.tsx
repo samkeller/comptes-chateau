@@ -24,25 +24,45 @@ export default function NotesPage() {
     const [creatingType, setCreatingType] = useState<NoteType | null>(null);
     const mutationVersions = useRef(new Map<string, number>());
 
-    const loadNotes = useCallback(async () => {
-        setLoading(true);
-        setLoadError(false);
-        try {
-            const [activeNotes, archivedNotes] = await Promise.all([
+    const fetchNotes = useCallback(async (): Promise<NoteDto[]> => {
+        const [activeNotes, archivedNotes] = await Promise.all([
                 service.getAll(false),
                 service.getAll(true),
-            ]);
-            setNotes([...activeNotes, ...archivedNotes]);
-        } catch {
-            setLoadError(true);
-        } finally {
-            setLoading(false);
-        }
+        ]);
+        return [...activeNotes, ...archivedNotes];
     }, [service]);
 
     useEffect(() => {
+        let isCurrent = true;
+        void fetchNotes()
+            .then((data) => {
+                if (isCurrent) setNotes(data);
+            })
+            .catch(() => {
+                if (isCurrent) setLoadError(true);
+            })
+            .finally(() => {
+                if (isCurrent) setLoading(false);
+            });
+        return () => {
+            isCurrent = false;
+        };
+    }, [fetchNotes]);
+
+    function loadNotes(): void {
+        setLoading(true);
+        setLoadError(false);
+        void fetchNotes()
+            .then(setNotes)
+            .catch(() => setLoadError(true))
+            .finally(() => setLoading(false));
+    }
+
+    function retryLoading(): void {
+        setLoading(true);
+        setLoadError(false);
         void loadNotes();
-    }, [loadNotes]);
+    }
 
     const displayedNotes = useMemo(() => {
         const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -203,7 +223,7 @@ export default function NotesPage() {
                 ) : loadError ? (
                     <div className="flex flex-col items-center gap-3 p-8 text-center">
                         <p>Impossible de charger les notes.</p>
-                        <Button label="Réessayer" icon="pi pi-refresh" onClick={() => void loadNotes()} />
+                        <Button label="Réessayer" icon="pi pi-refresh" onClick={retryLoading} />
                     </div>
                 ) : displayedNotes.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-surface p-10 text-center text-surface-500">
