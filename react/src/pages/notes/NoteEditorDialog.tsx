@@ -268,6 +268,7 @@ export default function NoteEditorDialog({
                                 <span>{item.label}</span>
                             </span>
                         )}
+                        allowEmpty={false}
                         onChange={(e) => toggleType(e.value)}
                         aria-label="Changer le type de note"
                     />
