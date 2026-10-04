@@ -226,7 +226,7 @@ export default function NotesPage() {
                                             {note.items.slice(0, 5).map((item) => (
                                                 <label
                                                     key={item.id}
-                                                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${note.isArchived ? "cursor-default" : "hover:bg-surface-800"
+                                                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${note.isArchived ? "cursor-default" : "hover:bg-surface-100"
                                                         }`}
                                                     onClick={(event) => event.stopPropagation()}
                                                 >
