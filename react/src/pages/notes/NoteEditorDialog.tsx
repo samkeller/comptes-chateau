@@ -253,12 +253,6 @@ export default function NoteEditorDialog({
                     <div className="flex flex-col gap-2">
                         <label className="font-medium">Contenu</label>
                         <MarkdownEditor value={content} onChange={setContent} />
-                        {content && (
-                            <details className="rounded-lg border border-surface p-3">
-                                <summary className="cursor-pointer">Aperçu</summary>
-                                <MarkdownRenderer>{content}</MarkdownRenderer>
-                            </details>
-                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
