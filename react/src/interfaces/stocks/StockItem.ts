@@ -1,6 +1,6 @@
 import { parseApiDate, parseApiDateTime } from "@/utils/DatesUtils";
 import type { StockUnitUnits } from "./StockUnit";
-import { getStockSeverity } from "@/utils/stocks/StockSeverity";
+import { getStockSeverity, type StockSeverity } from "@/utils/stocks/StockSeverity";
 
 export default class StockItem {
     id: number = 0;
@@ -26,7 +26,7 @@ export default class StockItem {
         if (partial.nextStockUnitExpiration) this.nextStockUnitExpiration = parseApiDate(partial.nextStockUnitExpiration) ?? null;
     }
 
-    public get severity(): "error" | "warn" | "info" | null {
+    public get severity(): StockSeverity {
         return getStockSeverity(this.nextStockUnitExpiration);
     }
 }

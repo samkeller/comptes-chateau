@@ -1,7 +1,7 @@
 import { parseApiDate, parseApiDateTime } from "@/utils/DatesUtils";
 import StockItem from "./StockItem";
 import StockLocation from "./StockLocation";
-import { getStockSeverity } from "@/utils/stocks/StockSeverity";
+import { getStockSeverity, type StockSeverity } from "@/utils/stocks/StockSeverity";
 
 export const STOCK_UNIT_UNITS = ["g", "kg", "ml", "cl", "L", "boite", "pack"] as const;
 export type StockUnitUnits = typeof STOCK_UNIT_UNITS[number];
@@ -32,7 +32,7 @@ export default class StockUnit {
         if (partial.updatedAt) this.updatedAt = parseApiDateTime(partial.updatedAt) ?? undefined;
     }
 
-    public get severity(): "error" | "warn" | "info" | null {
+    public get severity(): StockSeverity {
         return getStockSeverity(this.expirationDate);
     }
 }

@@ -13,6 +13,7 @@ import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { useStockUnitsEditor, StockUnitGroup } from "../hooks/useStockUnitsEditor";
 import { getStockSeverity } from "@/utils/stocks/StockSeverity";
+import StockExpirationDate from "../../atoms/StockExpirationDate";
 
 interface StockUnitEditableListProps {
     stockItemId: number;
@@ -187,7 +188,7 @@ export default function StockUnitEditableList({
                             group.stockUnits[0].expirationDate;
 
                         return expirationDate
-                            ? <span className={`text-${getStockSeverity(expirationDate)}`}>{expirationDate.toLocaleDateString("fr-FR")}</span>
+                            ? <StockExpirationDate date={expirationDate}>{expirationDate.toLocaleDateString("fr-FR")}</StockExpirationDate>
                             : "-";
                     }}
                     className="cursor-pointer"

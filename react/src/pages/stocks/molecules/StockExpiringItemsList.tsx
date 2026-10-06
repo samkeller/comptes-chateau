@@ -1,4 +1,4 @@
-import { formatDistanceToNow, parseDateToDisplay } from "@/utils/DatesUtils";
+import StockExpirationDate from "../atoms/StockExpirationDate";
 import StockDetailsCard from "./StockDetailsCard";
 import { useMemo } from "react";
 import { ScrollPanel } from "primereact/scrollpanel";
@@ -20,11 +20,10 @@ export default function StockExpiringItemsList() {
             "warn": [],
         };
 
-        expiringItems
-            .filter(e => e.severity !== null && e.severity !== "info") // Uniquement les éléments avec une sévérité "error" ou "warn"
-            .forEach(element => {
-                bySeverity[element.severity!].push(element);
-            });
+        expiringItems.forEach(element => {
+            const severity = element.severity;
+            if (severity) bySeverity[severity].push(element);
+        });
         return bySeverity;
 
     }, [expiringItems]);
@@ -74,13 +73,7 @@ export default function StockExpiringItemsList() {
 
                                 {/* Date */}
                                 <div className="text-right shrink-0">
-                                    <div className={`text-${item.severity} text-sm font-medium`}>
-                                        {parseDateToDisplay(date)}
-                                    </div>
-
-                                    <div className={`text-${item.severity} text-xs mt-1`}>
-                                        {formatDistanceToNow(date)}
-                                    </div>
+                                    <StockExpirationDate date={date} showDistance />
                                 </div>
                             </li>
                         );
