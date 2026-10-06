@@ -14,13 +14,11 @@ export default function StockExpiringItemsList() {
     }, []);
 
     /**
-     * Lie une distance de date avec une severité primereact
-     * - Périmé = error
-     * - 1 mois = warning
-     * - + 1 mois = info
-     * @param expirationDate 
-     * @returns 
-     */
+    * Lie une distance de date avec une sévérité PrimeReact
+    * - Périmé = error
+    * - <= 1 mois = warning
+    * - > 1 mois = info
+    */
     const severityClass = (expirationDate: Date) => {
         const now = new Date();
         const diffInDays = (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
@@ -29,7 +27,7 @@ export default function StockExpiringItemsList() {
         return "text-info"; // + 1 mois
     };
 
- return (
+    return (
         <Card title="Expire bientôt">
             {expiringItems.length === 0 ? (
                 <div className="text-500">
