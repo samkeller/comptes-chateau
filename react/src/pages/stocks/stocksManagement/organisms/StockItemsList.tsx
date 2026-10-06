@@ -138,7 +138,7 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                         });
                     }}
                     body={(item: StockItem) => (
-                        item.nextStockUnitExpiration && <span>{parseDateToDisplay(item.nextStockUnitExpiration)} </span>
+                        item.nextStockUnitExpiration && <span className={`text-${item.severity}`}>{parseDateToDisplay(item.nextStockUnitExpiration)} </span>
                     )}
                 />
                 <Column

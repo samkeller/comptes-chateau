@@ -17,6 +17,7 @@ import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import { Uuid } from "@chocosous/shared";
+import { getStockSeverity } from "@/utils/stocks/StockSeverity";
 
 interface StockUnitEditableListExpansionTemplateProps {
     stockItemId: number;
@@ -87,9 +88,7 @@ export default function StockUnitEditableListExpansionTemplate({
                     header="Expiration"
                     body={(entry) =>
                         entry.expirationDate
-                            ? parseDateToDisplay(
-                                entry.expirationDate
-                            )
+                            ? <span className={`text-${getStockSeverity(entry.expirationDate)}`}>{parseDateToDisplay(entry.expirationDate)}</span>
                             : "-"
                     }
                     editor={dateEditor}

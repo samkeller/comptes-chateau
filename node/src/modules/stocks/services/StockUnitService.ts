@@ -2,7 +2,8 @@ import { AppDataSource } from "../../../db/dataSource";
 import { notFound } from "../../../utils/AppError";
 import { IsNull, LessThanOrEqual, Not, type EntityManager, type Repository } from "typeorm";
 import { formatApiDate } from "../../../utils/DateUtils";
-import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
+import type { StockDashboardOverviewDto, StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
+import { addDays } from "date-fns";
 import { toStockUnitDto } from "../mappers/StockUnitMapper";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
@@ -188,6 +189,35 @@ export default class StockUnitService {
                 locationId: id,
             },
         });
+    }
+
+    /**
+     * Compte les lots présents et les produits distincts.
+     * Une échéance aujourd'hui n'est pas encore périmée ; l'horizon de 30 jours est inclus.
+     */
+    async getOverview(): Promise<StockDashboardOverviewDto> {
+        const now = new Date();
+        const overview = await this.stockUnitRepo.createQueryBuilder("unit")
+            .select("COUNT(DISTINCT unit.itemId)", "inStockItemCount")
+            .addSelect("COUNT(*)", "stockUnitCount")
+            .addSelect("COUNT(unit.expirationDate)", "datedUnitCount")
+            .addSelect("COUNT(CASE WHEN unit.expirationDate BETWEEN :today AND :horizon THEN 1 END)", "expiringSoonUnitCount")
+            .setParameters({
+                today: formatApiDate(now),
+                horizon: formatApiDate(addDays(now, 30)),
+            })
+            .getRawOne<Record<keyof StockDashboardOverviewDto, string | number>>();
+
+        if (!overview) {
+            throw new Error("Stock overview query returned no result");
+        }
+
+        return {
+            inStockItemCount: Number(overview.inStockItemCount),
+            stockUnitCount: Number(overview.stockUnitCount),
+            datedUnitCount: Number(overview.datedUnitCount),
+            expiringSoonUnitCount: Number(overview.expiringSoonUnitCount),
+        };
     }
 
     /**
