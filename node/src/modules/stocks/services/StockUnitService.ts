@@ -1,7 +1,9 @@
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound } from "../../../utils/AppError";
-import type { EntityManager, Repository } from "typeorm";
-import type { StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
+import { IsNull, LessThanOrEqual, Not, type EntityManager, type Repository } from "typeorm";
+import { formatApiDate } from "../../../utils/DateUtils";
+import type { StockDashboardOverviewDto, StockUnitCreateDto, StockUnitDto } from "@chocosous/shared";
+import { addDays } from "date-fns";
 import { toStockUnitDto } from "../mappers/StockUnitMapper";
 import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
@@ -181,6 +183,68 @@ export default class StockUnitService {
 
     }
 
+    async getStockUnitsByLocationId(id: number): Promise<StockUnit[]> {
+        return this.stockUnitRepo.find({
+            where: {
+                locationId: id,
+            },
+        });
+    }
+
+    /**
+     * Compte les lots présents et les produits distincts.
+     * Une échéance aujourd'hui n'est pas encore périmée ; l'horizon de 30 jours est inclus.
+     */
+    async getOverview(): Promise<StockDashboardOverviewDto> {
+        const now = new Date();
+        const overview = await this.stockUnitRepo.createQueryBuilder("unit")
+            .select("COUNT(DISTINCT unit.itemId)", "inStockItemCount")
+            .addSelect("COUNT(*)", "stockUnitCount")
+            .addSelect("COUNT(unit.expirationDate)", "datedUnitCount")
+            .addSelect("COUNT(CASE WHEN unit.expirationDate BETWEEN :today AND :horizon THEN 1 END)", "expiringSoonUnitCount")
+            .setParameters({
+                today: formatApiDate(now),
+                horizon: formatApiDate(addDays(now, 30)),
+            })
+            .getRawOne<Record<keyof StockDashboardOverviewDto, string | number>>();
+
+        if (!overview) {
+            throw new Error("Stock overview query returned no result");
+        }
+
+        return {
+            inStockItemCount: Number(overview.inStockItemCount),
+            stockUnitCount: Number(overview.stockUnitCount),
+            datedUnitCount: Number(overview.datedUnitCount),
+            expiringSoonUnitCount: Number(overview.expiringSoonUnitCount),
+        };
+    }
+
+    /**
+     * Renvoie les articles expirés et ceux qui expirent bientôt.
+     * @param limit 
+     * @returns 
+     */
+    async getExpiringItems(limit: number = 10): Promise<StockUnit[]> {
+        const today = formatApiDate(new Date());
+        const expiringItems = await this.stockUnitRepo.find({
+            where: {
+                expirationDate: Not(IsNull()), // Pas besoin des unités sans dates d'expirations
+            },
+            relations: {
+                item: true,
+                location: true,
+            },
+            order: {
+                expirationDate: "ASC",
+            },
+            take: limit,
+        });
+
+        return expiringItems;
+
+    }
+
     private async findOneWithRelationsOrThrow(unitId: number): Promise<StockUnit> {
         const unit = await this.stockUnitRepo.findOne({
             where: {
@@ -202,11 +266,4 @@ export default class StockUnitService {
         return unit;
     }
 
-    async getStockUnitsByLocationId(id: number): Promise<StockUnit[]> {
-        return this.stockUnitRepo.find({
-            where: {
-                locationId: id,
-            },
-        });
-    }
 }

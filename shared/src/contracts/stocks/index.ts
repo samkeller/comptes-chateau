@@ -43,4 +43,5 @@ export type {
     StockItemDto,
     StockUnitDto,
     StockMovementDto,
+    StockDashboardOverviewDto,
 } from "./StockDtos";

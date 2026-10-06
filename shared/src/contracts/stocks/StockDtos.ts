@@ -45,3 +45,11 @@ export interface StockMovementDto {
     type: StockMovementType;
     createdAt: string;
 }
+
+/** Synthèse des lots actuellement présents, sans additionner des unités de mesure différentes. */
+export interface StockDashboardOverviewDto {
+    inStockItemCount: number;
+    stockUnitCount: number;
+    datedUnitCount: number;
+    expiringSoonUnitCount: number;
+}

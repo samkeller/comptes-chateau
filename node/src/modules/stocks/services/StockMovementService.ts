@@ -72,4 +72,14 @@ export default class StockMovementService {
 
         return toStockMovementDto(savedMovement);
     }
+
+
+    async getLastMovements(limit: number = 10): Promise<StockMovementDto[]> {
+        const movements = await this.stockMovementRepo.find({
+            order: { createdAt: "DESC", id: "DESC" },
+            take: limit,
+        });
+
+        return movements.map(toStockMovementDto);
+    }
 }

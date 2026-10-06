@@ -7,7 +7,7 @@ import StockItem from "@/interfaces/stocks/StockItem";
 import StockItemUnitsView from "./StockItemUnitsView";
 import { useScreen } from "@/hooks/useScreen";
 import { Divider } from "primereact/divider";
-import { parseDateToDisplay } from "@/utils/DatesUtils";
+import StockExpirationDate from "../../atoms/StockExpirationDate";
 
 interface StockItemsDatatableProps {
     locationId: number | null;
@@ -60,7 +60,7 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                             <div className="flex justify-between">
 
                                 <span className="font-semibold">{item.label}</span>
-                                <span>{item.stockUnitsCount}</span>
+                                <span className={item.severity ? `text-${item.severity}` : undefined}>{item.stockUnitsCount}</span>
                             </div>
                             <Divider />
                             <div>
@@ -138,13 +138,16 @@ export default function StockItemsList({ locationId, searchQuery, afterRemoveSto
                         });
                     }}
                     body={(item: StockItem) => (
-                        item.nextStockUnitExpiration && <span>{parseDateToDisplay(item.nextStockUnitExpiration)} </span>
+                        item.nextStockUnitExpiration && <StockExpirationDate date={item.nextStockUnitExpiration} />
                     )}
                 />
                 <Column
                     header="Stock"
                     field="stockUnitsCount"
                     sortable
+                    body={(item: StockItem) => (
+                        <span className={item.severity ? `text-${item.severity}` : undefined}>{item.stockUnitsCount}</span>
+                    )}
                 />
             </DataTable>
         </FillRemainingHeight>

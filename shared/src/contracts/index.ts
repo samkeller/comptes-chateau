@@ -21,6 +21,7 @@ export type {
     StockItemDto,
     StockUnitDto,
     StockMovementDto,
+    StockDashboardOverviewDto,
 } from "./stocks";
 
 export {

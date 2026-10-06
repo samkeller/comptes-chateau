@@ -11,7 +11,7 @@ import {
 } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { CreateStockUnitDto } from "@/services/stocks/dto/CreateStockUnitDto";
-import { parseDateToDisplay } from "@/utils/DatesUtils";
+import StockExpirationDate from "../../atoms/StockExpirationDate";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
@@ -85,11 +85,9 @@ export default function StockUnitEditableListExpansionTemplate({
                 <Column
                     field="expirationDate"
                     header="Expiration"
-                    body={(entry) =>
+                    body={(entry: CreateStockUnitDto) =>
                         entry.expirationDate
-                            ? parseDateToDisplay(
-                                entry.expirationDate
-                            )
+                            ? <StockExpirationDate date={entry.expirationDate} />
                             : "-"
                     }
                     editor={dateEditor}

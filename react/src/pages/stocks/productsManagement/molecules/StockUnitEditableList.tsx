@@ -12,6 +12,7 @@ import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { useStockUnitsEditor, StockUnitGroup } from "../hooks/useStockUnitsEditor";
+import StockExpirationDate from "../../atoms/StockExpirationDate";
 
 interface StockUnitEditableListProps {
     stockItemId: number;
@@ -160,7 +161,7 @@ export default function StockUnitEditableList({
                         </span>
                     )}
                     className="cursor-pointer"
-                    editor={(opts) => numberEditor(opts, {suffix: ` ${opts.rowData.stockUnits[0].unit}`})}
+                    editor={(opts) => numberEditor(opts, { suffix: ` ${opts.rowData.stockUnits[0].unit}` })}
                     onCellEditComplete={onGroupCellEditComplete}
                 />
 
@@ -186,7 +187,7 @@ export default function StockUnitEditableList({
                             group.stockUnits[0].expirationDate;
 
                         return expirationDate
-                            ? expirationDate.toLocaleDateString("fr-FR")
+                            ? <StockExpirationDate date={expirationDate}>{expirationDate.toLocaleDateString("fr-FR")}</StockExpirationDate>
                             : "-";
                     }}
                     className="cursor-pointer"

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import StockExpirationDate from "../../atoms/StockExpirationDate";
+import { formatApiDate } from "@/utils/DatesUtils";
 import { useScreen } from "@/hooks/useScreen";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
-import { showGlobalToast } from "@/services/GlobalToast";
 import TakeStockUnitButton from "../../atoms/TakeStockUnitButton";
 
 interface StockItemUnitsViewProps {
@@ -15,7 +16,7 @@ const stockUnitsService = new StockUnitsService()
 
 export default function StockItemUnitsView({ stockItemId, locationId, afterRemoveStockUnitOptimistic }: StockItemUnitsViewProps) {
     const [units, setUnits] = useState<StockUnit[]>([]);
-    const {isDesktop} = useScreen();
+    const { isDesktop } = useScreen();
 
     useEffect(() => {
         loadStockUnits(stockItemId, locationId ?? undefined);
@@ -26,13 +27,6 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
             .then((units) => {
                 setUnits(units);
             })
-            .catch(() => {
-                showGlobalToast({
-                    severity: "error",
-                    summary: "Erreur",
-                    detail: "Impossible de charger les unités du stock",
-                })
-            });
     }
 
     /**
@@ -52,7 +46,7 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
     const groupedUnits = units.reduce((acc: { [key: string]: StockUnit[] }, unit) => {
         const noExpiryLabel = isDesktop ? "Aucune date d'expiration" : "";
         const expirationDate = unit.expirationDate
-            ? new Date(unit.expirationDate).toISOString().split('T')[0]
+            ? formatApiDate(unit.expirationDate)
             : noExpiryLabel;
         if (!acc[expirationDate]) {
             acc[expirationDate] = [];
@@ -73,8 +67,16 @@ export default function StockItemUnitsView({ stockItemId, locationId, afterRemov
                             className="flex justify-between items-center gap-4"
                         >
                             <div className="flex flex-col">
-                                <h3>{expirationDate}</h3>
-                                <span>{firstUnit.quantity} {firstUnit.unit} - {count === 1 ? "1 unité" : `${count} unités`}</span>
+                                <h3>
+                                    {
+                                        firstUnit.expirationDate
+                                            ? <StockExpirationDate date={firstUnit.expirationDate}>{expirationDate}</StockExpirationDate>
+                                            : expirationDate
+                                    }
+                                </h3>
+                                <span className={firstUnit.severity ? `text-${firstUnit.severity}` : undefined}>
+                                    {firstUnit.quantity} {firstUnit.unit} - {count === 1 ? "1 unité" : `${count} unités`}
+                                </span>
                             </div>
 
                             <TakeStockUnitButton
