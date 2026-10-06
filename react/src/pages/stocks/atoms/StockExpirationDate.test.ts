@@ -12,11 +12,11 @@ describe("StockExpirationDate", () => {
     afterEach(() => vi.useRealTimers());
 
     it.each([
-        { date: new Date(2026, 9, 5), color: "text-error", label: "Périmé" },
-        { date: new Date(2026, 9, 7), color: "text-warn", label: "À échéance proche" },
-    ])("colors only the alert icon for $label, including the relative date", ({ date, color, label }) => {
+        { date: new Date(2026, 9, 5), color: "text-error", label: "Périmé", icon: "pi-exclamation-triangle" },
+        { date: new Date(2026, 9, 7), color: "text-warn", label: "À échéance proche", icon: "pi-exclamation-circle" },
+    ])("colors only the alert icon for $label, including the relative date", ({ date, color, label, icon }) => {
         const html = renderToStaticMarkup(createElement(StockExpirationDate, { date, showDistance: true }));
-        expect(html).toContain(`pi-exclamation-triangle ${color}`);
+        expect(html).toContain(`${icon} ${color}`);
         expect(html).toContain(`aria-label="${label}"`);
         expect(html.match(/text-(error|warn)/g)).toHaveLength(1);
         expect(html).toContain(`${date.getDate() === 5 ? "05" : "07"} 10 2026`);
@@ -37,5 +37,17 @@ describe("StockExpirationDate", () => {
         }));
         expect(html).toContain("07/10/2026");
         expect(html).not.toContain("07 10 2026");
+    });
+
+    it("uses distinct tooltip targets when the same date is displayed twice", () => {
+        const date = new Date(2026, 9, 7);
+        const html = renderToStaticMarkup(createElement("div", null,
+            createElement(StockExpirationDate, { date }),
+            createElement(StockExpirationDate, { date }),
+        ));
+        const ids = [...html.matchAll(/id="(stock-expiration-alert-[^"]+)"/g)].map((match) => match[1]);
+
+        expect(ids).toHaveLength(2);
+        expect(new Set(ids).size).toBe(2);
     });
 });

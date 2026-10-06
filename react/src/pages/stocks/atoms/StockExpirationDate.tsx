@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { formatDistanceToNow, parseDateToDisplay } from "@/utils/DatesUtils";
 import { getStockSeverity } from "@/utils/stocks/StockSeverity";
 import { Tooltip } from "primereact/tooltip";
@@ -10,16 +10,17 @@ interface StockExpirationDateProps {
 }
 
 export default function StockExpirationDate({ date, showDistance = false, children }: StockExpirationDateProps) {
+    const alertId = `stock-expiration-alert-${useId().replace(/:/g, "")}`;
     const severity = getStockSeverity(date);
     const alertLabel = severity === "error" ? "Périmé" : "À échéance proche";
 
     return (
         <>
-            <Tooltip target={`#stock-expiration-alert-${date.getTime()}`} />
+            <Tooltip target={`#${alertId}`} />
             <span className="inline-flex items-center gap-2">
                 {severity && (
                     <i
-                        id={`stock-expiration-alert-${date.getTime()}`}
+                        id={alertId}
                         className={`pi ${severity === "error"
                             ? "pi-exclamation-triangle text-error"
                             : "pi-exclamation-circle text-warn"}`

@@ -23,6 +23,7 @@ describe("StockDetailsCard", () => {
         expect(html).toContain('aria-controls=');
         expect(html).toContain("Afficher le détail : Mouvements");
         expect(html).toContain("pi-chevron-down");
+        expect(html).toMatch(/^<div class="[^"]*\bh-full\b/);
     });
 
     it("disables expansion when details are unavailable", () => {

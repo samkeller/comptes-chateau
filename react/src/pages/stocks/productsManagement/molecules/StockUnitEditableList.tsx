@@ -12,7 +12,6 @@ import DeleteStockUnitButton from "../../atoms/DeleteStockUnitButton";
 import DuplicateStockUnitButton from "../../atoms/DuplicateStockUnitButton";
 import StockLocation from "@/interfaces/stocks/StockLocation";
 import { useStockUnitsEditor, StockUnitGroup } from "../hooks/useStockUnitsEditor";
-import { getStockSeverity } from "@/utils/stocks/StockSeverity";
 import StockExpirationDate from "../../atoms/StockExpirationDate";
 
 interface StockUnitEditableListProps {

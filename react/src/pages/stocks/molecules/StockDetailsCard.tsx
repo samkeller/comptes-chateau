@@ -14,7 +14,7 @@ export default function StockDetailsCard({ title, summary, children, hasDetails 
     const detailsId = useId();
 
     return (
-        <Card title={(
+        <Card className="h-full" title={(
             <div className="flex items-center justify-between gap-2">
                 <span>{title}</span>
                 <Button

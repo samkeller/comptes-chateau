@@ -20,7 +20,7 @@ export default function Stocks() {
     return (
         <PageTemplate pageTitle="Stocks">
             <div className="flex flex-col-reverse md:flex-col w-full lg:h-full lg:min-h-0 gap-4">
-                <div className="flex flex-col gap-2 md:flex-row items-start">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <div className="w-full md:flex-1 md:min-w-0">
                         <StocksMetrics />
                     </div>
