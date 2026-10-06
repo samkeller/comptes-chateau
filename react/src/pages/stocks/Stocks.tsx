@@ -1,11 +1,13 @@
 import { PageTemplate } from "../PageTemplate";
 import { TabPanel, TabView } from "primereact/tabview";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import StockExpiringItemsList from "./molecules/StockExpiringItemsList";
 
 const tabs = [
     { label: "Gestion des stocks", path: "stocksManagement" },
     { label: "Gestion des produits", path: "productManagement" },
 ];
+
 
 export default function Stocks() {
     const navigate = useNavigate();
@@ -15,7 +17,8 @@ export default function Stocks() {
 
     return (
         <PageTemplate pageTitle="Stocks">
-            <div className="flex flex-col w-full lg:h-full lg:min-h-0">
+            <div className="flex flex-col w-full lg:h-full lg:min-h-0 gap-4">
+                <StockExpiringItemsList />
                 <TabView
                     className="flex flex-col lg:h-full lg:min-h-0"
                     panelContainerClassName="lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
