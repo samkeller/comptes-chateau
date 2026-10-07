@@ -7,6 +7,8 @@ export {
     UpdateStockLocationSchema,
     STOCK_MOVEMENT_TYPES,
     CreateStockMovementSchema,
+    StockBarcodeParamsSchema,
+    STOCK_UNIT_UNITS,
 } from "./stocks";
 export type {
     CreateStockItemDto,
@@ -22,6 +24,8 @@ export type {
     StockUnitDto,
     StockMovementDto,
     StockDashboardOverviewDto,
+    StockBarcodeLookupResponse,
+    StockUnitUnits,
 } from "./stocks";
 
 export {
