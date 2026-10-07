@@ -64,6 +64,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        globIgnores: ['**/tesseract/**', '**/assets/*ocr*.js', '**/assets/*Ocr*.js', '**/assets/*tesseract*.js'],
         maximumFileSizeToCacheInBytes: 5242880,
         runtimeCaching: [
           {
@@ -91,7 +92,15 @@ export default defineConfig({
     })
   ],
   optimizeDeps: {
-    exclude: ["@chocosous/shared"]
+    exclude: ["@chocosous/shared", "tesseract.js"]
+  },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'assets/ocr-[name]-[hash].js',
+      },
+    },
   },
   resolve: {
     preserveSymlinks: true,

@@ -4,6 +4,12 @@
 
 -->
 
+## [Non publié]
+
+### Added
+- Scan rapide mobile des produits en stock : code-barres, suggestions Open Food Facts, lieu mémorisé et ajout de plusieurs exemplaires.
+- Lecture locale des dates de péremption par photo, avec correction et saisie manuelle.
+
 ## [1.0.0 - 02/08/2026]
 
 ### Added

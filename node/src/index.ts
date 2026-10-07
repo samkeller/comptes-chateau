@@ -26,7 +26,14 @@ AppDataSource.initialize().then(() => {
 
     app.use(session(EXPRESS_SESSION_CONFIG));
 
-    app.use(helmet()); // Headers de sécurité
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                "script-src": ["'self'", "'wasm-unsafe-eval'"],
+                "worker-src": ["'self'"],
+            },
+        },
+    })); // Headers de sécurité
     app.use(cors({
         origin: true,
         credentials: true
