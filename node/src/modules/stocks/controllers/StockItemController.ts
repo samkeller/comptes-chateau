@@ -2,9 +2,15 @@ import { Request, Response } from "express";
 import type { CreateStockItemDto } from "@chocosous/shared";
 import StockItemService from "../services/StockItemService";
 import requireUserId from "../../accounts/utils/requireUserId";
+import StockBarcodeLookupService from "../services/StockBarcodeLookupService";
 
 export default class StockItemController {
     private readonly stockItemService = new StockItemService();
+    private readonly stockBarcodeLookupService = new StockBarcodeLookupService(this.stockItemService);
+
+    lookup = async (req: Request<{ barcode: string }>, res: Response) => {
+        res.status(200).json(await this.stockBarcodeLookupService.lookup(req.params.barcode));
+    };
 
     getAll = async (req: Request, res: Response) => {
         res.status(200).json(

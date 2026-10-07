@@ -2,7 +2,8 @@ import Account from "../interfaces/Account";
 
 const LOCAL_STORAGE_KEYS = {
     ACCOUNTS_LIST: "cc.accounts.list",
-    ACTIVE_ACCOUNT_ID: "cc.accounts.activeId"
+    ACTIVE_ACCOUNT_ID: "cc.accounts.activeId",
+    SCAN_LOCATION_ID: "cc.stocks.scanLocationId"
 }
 
 interface WithExpiry {
@@ -46,6 +47,23 @@ class LocalStorageUtils {
 
     setActiveAccountId(accountId: number): void {
         this.setWithExpiry(LOCAL_STORAGE_KEYS.ACTIVE_ACCOUNT_ID, String(accountId));
+    }
+
+    getScanLocationId(): number | null {
+        try {
+            const value = Number(this.getWithExpiry(LOCAL_STORAGE_KEYS.SCAN_LOCATION_ID));
+            return Number.isInteger(value) && value > 0 ? value : null;
+        } catch {
+            return null;
+        }
+    }
+
+    setScanLocationId(locationId: number): void {
+        try {
+            this.setWithExpiry(LOCAL_STORAGE_KEYS.SCAN_LOCATION_ID, String(locationId));
+        } catch {
+            // La saisie reste disponible si le navigateur bloque le stockage local.
+        }
     }
 
     private setWithExpiry(key: string, value: string): void {

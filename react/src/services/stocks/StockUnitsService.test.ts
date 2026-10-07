@@ -45,6 +45,14 @@ describe("StockUnitsService", () => {
     });
 
     describe("create", () => {
+        it("supports manual entry without a secure-context client UUID and preserves custom units", async () => {
+            vi.mocked(axios.post).mockResolvedValueOnce({ data: { id: 1 } });
+            await service.create(10, { locationId: 5, quantity: 1, unit: "pièce" });
+            expect(axios.post).toHaveBeenCalledWith("/api/stocks/units/", {
+                itemId: 10, locationId: 5, quantity: 1, unit: "pièce",
+            });
+        });
+
         it("sends POST request without id/clientId and converts expirationDate", async () => {
             const payload: CreateStockUnitDto = {
                 id: 99,

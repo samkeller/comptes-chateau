@@ -1,5 +1,6 @@
 import { CreateStockUnitDto } from "./CreateStockUnitDto";
 import { StockUnitUnits } from "@/interfaces/stocks/StockUnit";
+import type { CreateStockItemDto as SharedCreateStockItemDto } from "@chocosous/shared";
 
 export interface CreateStockItemDto {
     id?: number;
@@ -13,4 +14,4 @@ export interface CreateStockItemDto {
 /**
  * Payload envoyé à l'API stockItem : les stockUnits sont persistées séparément via /stocks/units.
  */
-export type SaveStockItemPayload = Omit<CreateStockItemDto, "units">;
+export type SaveStockItemPayload = SharedCreateStockItemDto;

@@ -65,4 +65,22 @@ describe("StockItemService.create", () => {
         expect(userXPAfter).toEqual(userBefore!.totalXp + UserXpActionsPoints.STOCK_ITEM_CREATED);
     });
 
+    it("returns null when no item matches the barcode", async () => {
+        expect(await stockItemService.findByBarcode("0012345678901")).toBeNull();
+    });
+
+    it("selects the latest createdAt then the highest id for duplicate barcodes", async () => {
+        const barcode = "0012345678901";
+        await stockItemRepo.save([
+            { label: "Old", defaultUnit: "g", barcode, createdAt: new Date("2025-01-01") },
+            { label: "Newest first", defaultUnit: "g", barcode, createdAt: new Date("2026-01-01") },
+            { label: "Newest last", defaultUnit: "g", barcode, createdAt: new Date("2026-01-01") },
+            { label: "Old last", defaultUnit: "g", barcode, createdAt: new Date("2024-01-01") },
+        ]);
+        expect(await stockItemService.findByBarcode(barcode)).toEqual({
+            id: 3, label: "Newest last", barcode, defaultUnit: "g", imageUrl: null,
+            stockUnitsCount: 0, nextStockUnitExpiration: null, createdAt: "2026-01-01T00:00:00.000Z",
+        });
+    });
+
 });

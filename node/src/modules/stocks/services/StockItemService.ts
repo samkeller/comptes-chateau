@@ -58,6 +58,16 @@ export default class StockItemService {
         return toStockItemDto(savedStockItem);
     }
 
+    /** Les codes-barres ne sont pas uniques : privilégier le dernier produit créé, puis son ID. */
+    async findByBarcode(barcode: string): Promise<StockItemDto | null> {
+        const item = await this.stockItemRepo.findOne({
+            where: { barcode },
+            relations: { units: true },
+            order: { createdAt: "DESC", id: "DESC" },
+        });
+        return item ? toStockItemDto(item) : null;
+    }
+
     async update(id: number, body: CreateStockItemDto): Promise<StockItemDto> {
         const stockItem = await this.stockItemRepo.findOne({
             where: { id },

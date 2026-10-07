@@ -45,3 +45,6 @@ export type {
     StockMovementDto,
     StockDashboardOverviewDto,
 } from "./StockDtos";
+
+export { STOCK_UNIT_UNITS, StockBarcodeParamsSchema } from "./StockBarcodeLookupResponse";
+export type { StockUnitUnits, StockBarcodeLookupResponse } from "./StockBarcodeLookupResponse";

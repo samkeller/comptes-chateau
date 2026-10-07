@@ -17,7 +17,7 @@ export function toStockItemDto(item: StockItem): StockItemDto {
         defaultUnit: item.defaultUnit,
         imageUrl: item.imageUrl ?? null,
         stockUnitsCount: item.units?.length ?? 0,
-        nextStockUnitExpiration: nextExpirationDate,
+        nextStockUnitExpiration: nextExpirationDate ?? null,
         createdAt: item.createdAt.toISOString(),
     };
 }
