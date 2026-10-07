@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createWorker, recognize, terminate } = vi.hoisted(() => ({
+const { createWorker, recognize, setParameters, terminate } = vi.hoisted(() => ({
     createWorker: vi.fn(),
     recognize: vi.fn(),
+    setParameters: vi.fn(),
     terminate: vi.fn(),
 }));
 
-vi.mock("tesseract.js", () => ({ createWorker, OEM: { LSTM_ONLY: 1 } }));
+vi.mock("tesseract.js", () => ({ createWorker, OEM: { LSTM_ONLY: 1 }, PSM: { AUTO: "3", SPARSE_TEXT: "11" } }));
 
 interface WorkerScope {
     onmessage: ((event: MessageEvent<Blob>) => Promise<void>) | null;
@@ -21,7 +22,8 @@ beforeEach(async () => {
     vi.clearAllMocks();
     scope = { onmessage: null, postMessage: vi.fn(), close: vi.fn() };
     vi.stubGlobal("self", scope);
-    createWorker.mockResolvedValue({ recognize, terminate });
+    createWorker.mockResolvedValue({ recognize, setParameters, terminate });
+    setParameters.mockResolvedValue({});
     recognize.mockResolvedValue({ data: { text: "DLC 31/12/2026" } });
     terminate.mockResolvedValue(undefined);
     await import("./expirationDateOcr.worker");
@@ -48,9 +50,20 @@ describe("expiration OCR coordinator", () => {
             gzip: false,
             cacheMethod: "none",
         }));
+        expect(setParameters).toHaveBeenCalledWith({ tessedit_pageseg_mode: "11" });
         expect(recognize).toHaveBeenCalledOnce();
         expect(terminate).toHaveBeenCalledOnce();
         expect(scope.postMessage).toHaveBeenCalledWith({ text: "DLC 31/12/2026" });
+        expect(scope.close).toHaveBeenCalledOnce();
+    });
+
+    it("falls back to automatic page segmentation when the sparse-text pass finds no date", async () => {
+        recognize.mockResolvedValueOnce({ data: { text: "Ingrédients : sucre" } });
+        await scan();
+        expect(setParameters).toHaveBeenNthCalledWith(1, { tessedit_pageseg_mode: "11" });
+        expect(setParameters).toHaveBeenNthCalledWith(2, { tessedit_pageseg_mode: "3" });
+        expect(recognize).toHaveBeenCalledTimes(2);
+        expect(scope.postMessage).toHaveBeenCalledWith({ text: "Ingrédients : sucre\nDLC 31/12/2026" });
         expect(scope.close).toHaveBeenCalledOnce();
     });
 

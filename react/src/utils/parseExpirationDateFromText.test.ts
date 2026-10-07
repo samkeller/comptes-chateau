@@ -48,6 +48,33 @@ describe("parseExpirationDateFromText", () => {
         expect(parse("04/2027")).toEqual(new Date(2027, 3, 30));
     });
 
+    it.each([
+        ["EXP31/12/26", new Date(2026, 11, 31)],
+        ["DLC:31.12.2026L4567", new Date(2026, 11, 31)],
+        ["À consommer jusqu'au 31 DEC 2026", new Date(2026, 11, 31)],
+        ["BEST BEFORE 15 JAN 2027", new Date(2027, 0, 15)],
+        ["DDM fin déc. 27", new Date(2027, 11, 31)],
+        ["EXP 2027-03-15", new Date(2027, 2, 15)],
+        ["DLC 31|12|26", new Date(2026, 11, 31)],
+    ])("parses common packaging variants: %s", (text, expected) => {
+        expect(parse(text)).toEqual(expected);
+    });
+
+    it("prefers a labelled expiry date over later unlabelled dates lost in other texts", () => {
+        const text = [
+            "INGREDIENTS: sucre, huile de palme, noisettes 13%, lait écrémé en poudre 8,7%",
+            "Service consommateurs 0 800 12 34 56 - Offre valable jusqu'au 30/06/2031",
+            "Conditionné le 02/10/2026 L0T 26275B",
+            "A consommer de préférence avant le : 18/04/2027 12:45",
+            "www.example.com 1O0g e 3 017620 422003",
+        ].join("\n");
+        expect(parse(text)).toEqual(new Date(2027, 3, 18));
+    });
+
+    it("keeps words intact while fixing OCR confusions next to digits", () => {
+        expect(parse("Mo1s DLC 0l/l2/2O27 Lot I23")).toEqual(new Date(2027, 11, 1));
+    });
+
     it("rejects an invalid reference date", () => {
         expect(parseExpirationDateFromText("31/12/2026", new Date("invalid"))).toBeNull();
     });

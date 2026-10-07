@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createScanForm, isSafeImageUrl } from "./useScanSession";
+import { createScanForm, createScanLot, isSafeImageUrl, removeSavedCopies, totalScanCopies } from "./useScanSession";
 
 describe("stock scan image URLs", () => {
     it.each(["", "https://example.org/image.jpg", "http://example.org/image.jpg"])(
@@ -29,7 +29,9 @@ describe("stock scan prefilling", () => {
             barcode: "12345678", existingItem: null,
             suggestion: { label: "Produit", brand: null, imageUrl: null, quantity: 500, unit: "g" },
         });
-        expect(form).toMatchObject({ quantity: 500, defaultUnit: "g", unit: "g", copies: 1 });
+        expect(form).toMatchObject({ quantity: 500, defaultUnit: "g", unit: "g" });
+        expect(form.lots).toHaveLength(1);
+        expect(form.lots[0]).toMatchObject({ copies: 1, expirationDate: null });
     });
     it("preserves existing values including nonstandard units without substituting OFF data", () => {
         const form = createScanForm({
@@ -45,5 +47,27 @@ describe("stock scan prefilling", () => {
     it("opens an empty manual form when neither source knows the product", () => {
         expect(createScanForm({ barcode: "12345678", existingItem: null, suggestion: null }))
             .toMatchObject({ barcode: "12345678", label: "", quantity: 1, defaultUnit: "pack" });
+    });
+});
+
+describe("stock scan lots", () => {
+    it("keeps the lots already entered when the barcode is looked up again", () => {
+        const lots = [{ ...createScanLot(new Date(2027, 0, 31)), copies: 2 }, createScanLot(null)];
+        const form = createScanForm({ barcode: "87654321", existingItem: null, suggestion: null }, lots);
+        expect(form.barcode).toBe("87654321");
+        expect(form.lots).toBe(lots);
+    });
+    it("counts every unit across lots with or without expiration date", () => {
+        expect(totalScanCopies([
+            { ...createScanLot(new Date(2027, 0, 31)), copies: 3 },
+            { ...createScanLot(null), copies: 2 },
+        ])).toBe(5);
+    });
+    it("removes already saved units in creation order so a retry only adds the rest", () => {
+        const first = { ...createScanLot(new Date(2027, 0, 31)), copies: 2 };
+        const second = { ...createScanLot(null), copies: 3 };
+        expect(removeSavedCopies([first, second], 3)).toEqual([{ ...second, copies: 2 }]);
+        expect(removeSavedCopies([first, second], 0)).toEqual([first, second]);
+        expect(removeSavedCopies([first, second], 5)).toEqual([]);
     });
 });

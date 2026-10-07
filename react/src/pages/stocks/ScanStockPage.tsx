@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
@@ -15,7 +15,9 @@ import StockLocation from "@/interfaces/stocks/StockLocation";
 import { STOCK_UNIT_UNITS } from "@/interfaces/stocks/StockUnit";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
-import { isSafeImageUrl, useScanSession } from "./hooks/useScanSession";
+import {
+    createScanLot, isSafeImageUrl, MAX_SCAN_COPIES, totalScanCopies, useScanSession, type ScanLot,
+} from "./hooks/useScanSession";
 
 const locationService = new StockLocationService();
 
@@ -30,10 +32,11 @@ export default function ScanStockPage() {
     const [locationsStatus, setLocationsStatus] = useState<"loading" | "ready" | "error">("loading");
     const [locationsReload, setLocationsReload] = useState(0);
     const [manualBarcode, setManualBarcode] = useState("");
-    const calendarRef = useRef<Calendar>(null);
+    const [rescanning, setRescanning] = useState(false);
     const { form, phase, setForm } = session;
     const processing = phase === "lookup" || phase === "saving";
     const hasLocation = locations.some(location => location.id === locationId);
+    const totalCopies = totalScanCopies(form.lots);
 
     useEffect(() => {
         let disposed = false;
@@ -55,6 +58,22 @@ export default function ScanStockPage() {
             ...previous, defaultUnit: unit,
             unit: previous.unit === previous.defaultUnit ? unit : previous.unit,
         }));
+    };
+    const updateLot = (id: number, changes: Partial<Omit<ScanLot, "id">>): void => {
+        setForm(previous => ({
+            ...previous, lots: previous.lots.map(lot => lot.id === id ? { ...lot, ...changes } : lot),
+        }));
+    };
+    const addLot = (): void => {
+        setForm(previous => ({ ...previous, lots: [...previous.lots, createScanLot()] }));
+    };
+    const removeLot = (id: number): void => {
+        setForm(previous => ({ ...previous, lots: previous.lots.filter(lot => lot.id !== id) }));
+    };
+    const relookup = (code: string): void => {
+        setRescanning(false);
+        setForm(previous => ({ ...previous, barcode: code }));
+        void session.lookup(code);
     };
 
     return (
@@ -82,12 +101,13 @@ export default function ScanStockPage() {
                 Vérifier les stocks enregistrés
             </Link>}
             {(phase === "idle" || phase === "scanning" || phase === "lookup") && <>
-                <BarcodeScanner active={phase === "scanning" && hasLocation} onDetected={code => {
-                    setManualBarcode(code);
-                    void session.lookup(code);
-                }} />
-                <Button label="Scanner un code-barres" icon="pi pi-camera" className="min-h-12"
-                    disabled={!hasLocation || processing} onClick={session.startScanning} />
+                <BarcodeScanner key={session.scanAttempt} active={phase === "scanning" && hasLocation}
+                    onCancel={session.stopScanning} onDetected={code => {
+                        setManualBarcode(code);
+                        void session.lookup(code);
+                    }} />
+                {phase !== "scanning" && <Button label="Scanner un code-barres" icon="pi pi-camera" className="min-h-12"
+                    disabled={!hasLocation || processing} onClick={session.startScanning} />}
                 <form className="flex flex-col gap-2" onSubmit={event => {
                     event.preventDefault();
                     void session.lookup(manualBarcode);
@@ -104,7 +124,10 @@ export default function ScanStockPage() {
                 <form className="flex flex-col gap-4" onSubmit={event => {
                     event.preventDefault();
                     if (hasLocation && locationId) void session.save(locationId).then(saved => {
-                        if (saved) setManualBarcode("");
+                        if (saved) {
+                            setManualBarcode("");
+                            setRescanning(false);
+                        }
                     });
                 }}>
                     <Message severity="info" text={session.existingItem
@@ -113,8 +136,19 @@ export default function ScanStockPage() {
                     <fieldset disabled={processing} className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
                             <label htmlFor="product-barcode">Code-barres<RequiredMark /></label>
-                            <InputText id="product-barcode" inputMode="numeric" value={form.barcode} maxLength={14}
-                                required pattern="[0-9]{8,14}" onChange={event => setForm(previous => ({ ...previous, barcode: event.target.value }))} />
+                            <div className="flex gap-2">
+                                <InputText id="product-barcode" inputMode="numeric" value={form.barcode} maxLength={14}
+                                    className="flex-1 min-w-0" required pattern="[0-9]{8,14}"
+                                    onChange={event => setForm(previous => ({ ...previous, barcode: event.target.value }))} />
+                                <Button type="button" icon="pi pi-search" outlined aria-label="Rechercher ce code-barres"
+                                    tooltip="Rechercher ce code-barres" disabled={session.saveBlocked}
+                                    onClick={() => relookup(form.barcode)} />
+                                <Button type="button" icon="pi pi-camera" outlined aria-label="Scanner à nouveau le code-barres"
+                                    tooltip="Scanner à nouveau" disabled={session.saveBlocked}
+                                    onClick={() => setRescanning(value => !value)} />
+                            </div>
+                            <BarcodeScanner active={rescanning && !session.saveBlocked} onDetected={relookup}
+                                onCancel={() => setRescanning(false)} />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="product-label">Libellé<RequiredMark /></label>
@@ -149,27 +183,46 @@ export default function ScanStockPage() {
                                     if (typeof event.value === "string") setForm(previous => ({ ...previous, unit: event.value }));
                                 }} />
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="scan-expiration">Date de péremption<Optional /></label>
-                            <Calendar ref={calendarRef} inputId="scan-expiration" value={form.expirationDate}
-                                dateFormat="dd/mm/yy" showIcon showButtonBar
-                                onChange={event => setForm(previous => ({ ...previous, expirationDate: event.value instanceof Date ? event.value : null }))} />
-                            <ExpirationDateScanner disabled={processing}
-                                onDetected={date => setForm(previous => ({ ...previous, expirationDate: date }))}
-                                onManualEntry={() => calendarRef.current?.getInput()?.focus()} />
-                            <small>Vérifie toujours la date proposée avant de valider.</small>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="scan-copies">Nombre d'exemplaires<RequiredMark /></label>
-                            <InputNumber inputId="scan-copies" value={form.copies} min={1} max={100} showButtons
-                                onValueChange={event => setForm(previous => ({ ...previous, copies: event.value ?? 0 }))} />
-                        </div>
+                        <fieldset className="flex flex-col gap-3">
+                            <legend className="mb-2">Exemplaires<RequiredMark /></legend>
+                            {form.lots.map((lot, index) => {
+                                const dateInputId = `scan-expiration-${lot.id}`;
+                                return <div key={lot.id} className="flex flex-col gap-2 border-1 border-gray-300 rounded-lg p-3"
+                                    aria-label={`Lot ${index + 1}`} role="group">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="font-semibold">Lot {index + 1}</span>
+                                        {form.lots.length > 1 && <Button type="button" icon="pi pi-trash" text severity="danger"
+                                            aria-label={`Retirer le lot ${index + 1}`} onClick={() => removeLot(lot.id)} />}
+                                    </div>
+                                    <label htmlFor={`scan-copies-${lot.id}`}>Nombre d'exemplaires<RequiredMark /></label>
+                                    <InputNumber inputId={`scan-copies-${lot.id}`} value={lot.copies} min={1}
+                                        max={MAX_SCAN_COPIES} showButtons
+                                        onValueChange={event => updateLot(lot.id, { copies: event.value ?? 0 })} />
+                                    <label htmlFor={dateInputId}>Date de péremption<Optional /></label>
+                                    <Calendar inputId={dateInputId} value={lot.expirationDate}
+                                        dateFormat="dd/mm/yy" showIcon showButtonBar placeholder="Aucune date"
+                                        onChange={event => updateLot(lot.id, {
+                                            expirationDate: event.value instanceof Date ? event.value : null,
+                                        })} />
+                                    <ExpirationDateScanner disabled={processing}
+                                        onDetected={date => updateLot(lot.id, { expirationDate: date })}
+                                        onManualEntry={() => document.getElementById(dateInputId)?.focus()} />
+                                </div>;
+                            })}
+                            <Button type="button" label="Ajouter un lot (autre date ou sans date)" icon="pi pi-plus" outlined
+                                disabled={totalCopies >= MAX_SCAN_COPIES} onClick={addLot} />
+                            <small>
+                                {totalCopies} exemplaire(s) au total (maximum {MAX_SCAN_COPIES}). Laisse la date vide
+                                pour un produit sans péremption, et vérifie toujours la date proposée avant de valider.
+                            </small>
+                        </fieldset>
                     </fieldset>
                     <Button type="submit" label="Ajouter au stock" icon="pi pi-check" loading={phase === "saving"}
                         disabled={processing || session.saveBlocked || !hasLocation || !form.label.trim()
-                            || !form.defaultUnit.trim() || !form.unit.trim()} className="min-h-12" />
+                            || !form.defaultUnit.trim() || !form.unit.trim()
+                        || totalCopies < 1 || totalCopies > MAX_SCAN_COPIES} className="min-h-12" />
                     <Button type="button" label={session.saveBlocked ? "Recommencer après vérification" : "Annuler / produit suivant"} outlined disabled={processing}
-                        onClick={() => { session.reset(); setManualBarcode(""); session.startScanning(); }} />
+                        onClick={() => { setRescanning(false); session.reset(); setManualBarcode(""); session.startScanning(); }} />
                 </form>}
         </section>
     );
