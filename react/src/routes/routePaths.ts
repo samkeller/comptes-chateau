@@ -36,6 +36,7 @@ export const routePaths = {
         stocksManagement: "/stocks/stocksManagement",
         stocksManagementLocation: "/stocks/stocksManagement/:locationId",
         productManagement: "/stocks/productManagement",
+        scan: "/stocks/scan",
         
     },
 } as const;

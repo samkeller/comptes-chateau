@@ -23,6 +23,7 @@ import { routePaths } from "./routePaths";
 import Stocks from "@/pages/stocks/Stocks";
 import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
 import ProductManagementPage from "@/pages/stocks/productsManagement/ProductManagementPage";
+import ScanStockPage from "@/pages/stocks/ScanStockPage";
 import NotesPage from "@/pages/notes/NotesPage";
 
 const router = createBrowserRouter([
@@ -124,6 +125,10 @@ const router = createBrowserRouter([
           {
             path: "productManagement",
             element: <ProductManagementPage />,
+          },
+          {
+            path: "scan",
+            element: <ScanStockPage />,
           },
         ],
       },

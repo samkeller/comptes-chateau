@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import StockExpiringItemsList from "./molecules/StockExpiringItemsList";
 import LastStockMovements from "./molecules/LastStockMovements";
 import StocksMetrics from "./molecules/StocksMetrics";
+import { useScreen } from "@/hooks/useScreen";
 
 const tabs = [
     { label: "Gestion des stocks", path: "stocksManagement" },
@@ -14,8 +15,12 @@ const tabs = [
 export default function Stocks() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isDesktop } = useScreen();
+    const visibleTabs = !isDesktop
+        ? [...tabs, { label: "Scan rapide", path: "scan" }]
+        : tabs;
 
-    const activeIndex = tabs.findIndex((tab) => location.pathname.includes(`/stocks/${tab.path}`));
+    const activeIndex = visibleTabs.findIndex((tab) => location.pathname.includes(`/stocks/${tab.path}`));
 
     return (
         <PageTemplate pageTitle="Stocks">
@@ -35,9 +40,9 @@ export default function Stocks() {
                     className="flex flex-col lg:h-full lg:min-h-0"
                     panelContainerClassName="lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
                     activeIndex={activeIndex === -1 ? 0 : activeIndex}
-                    onTabChange={(event) => navigate(tabs[event.index].path)}
+                    onTabChange={(event) => navigate(visibleTabs[event.index].path)}
                 >
-                    {tabs.map((tab, index) => (
+                    {visibleTabs.map((tab, index) => (
                         <TabPanel
                             key={tab.path}
                             header={tab.label}

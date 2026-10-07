@@ -3,6 +3,9 @@ import BaseService from "../BaseService";
 import StockUnit from "@/interfaces/stocks/StockUnit";
 import { CreateStockUnitDto } from "./dto/CreateStockUnitDto";
 import { formatApiDate } from "@/utils/DatesUtils";
+import type { StockUnitCreateDto } from "@chocosous/shared";
+
+type SaveStockUnitPayload = Omit<CreateStockUnitDto, "unit"> & Pick<StockUnitCreateDto, "unit">;
 
 export default class StockUnitsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/units`;
@@ -26,7 +29,7 @@ export default class StockUnitsService extends BaseService {
      * @param payload 
      * @returns 
      */
-    create(itemId: number, payload: CreateStockUnitDto): Promise<StockUnit> {
+    create(itemId: number, payload: SaveStockUnitPayload): Promise<StockUnit> {
         const { id, clientId, ...payloadWithoutIdAndClientId } = payload;
 
         const formattedPayload = {
