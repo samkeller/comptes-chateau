@@ -93,20 +93,6 @@ cd react
 npm tests
 ```
 
-## Scan rapide des stocks
-
-- Page `/stocks/scan`, accessible par l'onglet **Scan rapide** sur mobile ; la saisie manuelle fonctionne aussi sur ordinateur.
-- Choisir un lieu, scanner ou saisir le code-barres, corriger le produit et valider les exemplaires. Le lieu est mémorisé pendant 30 jours (`cc.stocks.scanLocationId`).
-- En cas d'échec d'enregistrement, vérifier les stocks avant de recommencer : une réponse réseau perdue peut masquer un ajout réussi. La reprise automatique est désactivée pour éviter les doublons.
-- La caméra nécessite **HTTPS** ou localhost. Pour tester sur téléphone, utiliser un tunnel HTTPS vers Vite (avec son proxy `/api`) ou un environnement HTTPS ; une URL HTTP sur le réseau local ne suffit pas.
-- Le lookup authentifié `GET /api/stocks/items/lookup/:barcode` consulte d'abord les produits existants, puis Open Food Facts côté serveur (timeout de 3 secondes). Une panne OFF laisse la saisie manuelle disponible. Aucun changement de schéma.
-- Dépendances ajoutées : `@zxing/browser` 0.1.5, `@zxing/library` 0.21.3 (formats EAN/UPC), `tesseract.js` 7.0.0.
-- **Scanner la date** traite la photo localement, sans envoi à un service externe. Toujours confirmer/corriger la date proposée ; la saisie manuelle reste disponible.
-- Les assets OCR et langues français/anglais sont servis depuis `react/public/tesseract/`, avec leurs licences et provenance. Tesseract est chargé à la demande ; ses assets et chunks OCR sont exclus du précache PWA.
-- La CSP conserve les valeurs Helmet par défaut, avec `worker-src 'self'` et `script-src 'self' 'wasm-unsafe-eval'` pour l'OCR local (pas de CDN, `blob:` ni `unsafe-eval`).
-
-Avant production, vérifier sur un téléphone HTTPS les permissions caméra, les scans successifs, une photo réelle de date, la coupure de la caméra en quittant la page et le lieu après rechargement. Les tests automatisés ne remplacent pas ces vérifications matérielles.
-
 ## Migrations base de donnees (TypeORM)
 
 Ne pas creer de migration manuellement.
