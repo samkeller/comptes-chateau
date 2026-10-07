@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 import { Message } from "primereact/message";
+import { Button } from "primereact/button";
 
 interface BarcodeScannerProps {
     onDetected: (code: string) => void;
@@ -13,6 +14,7 @@ export default function BarcodeScanner({ onDetected, active }: BarcodeScannerPro
     const onDetectedRef = useRef(onDetected);
     const lastDetection = useRef({ code: "", timestamp: 0 });
     const [error, setError] = useState<string | null>(null);
+    const [restart, setRestart] = useState(0);
     const cameraUnavailable = !window.isSecureContext || !navigator.mediaDevices?.getUserMedia;
 
     useEffect(() => { onDetectedRef.current = onDetected; }, [onDetected]);
@@ -75,7 +77,7 @@ export default function BarcodeScanner({ onDetected, active }: BarcodeScannerPro
             stop();
             video.remove();
         };
-    }, [active, cameraUnavailable]);
+    }, [active, cameraUnavailable, restart]);
 
     return (
         <div className="flex flex-col gap-2">
@@ -84,6 +86,11 @@ export default function BarcodeScanner({ onDetected, active }: BarcodeScannerPro
                 text={cameraUnavailable
                     ? "Caméra indisponible : utilise HTTPS (ou localhost), ou saisis le code à la main."
                     : error ?? ""} />}
+            {active && !cameraUnavailable && error && <Button type="button" outlined
+                label="Réessayer la caméra" icon="pi pi-refresh" onClick={() => {
+                    setError(null);
+                    setRestart(value => value + 1);
+                }} />}
         </div>
     );
 }

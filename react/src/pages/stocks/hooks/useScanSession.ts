@@ -43,6 +43,7 @@ export function useScanSession() {
     const [existingItem, setExistingItem] = useState<Pick<StockItemDto, "id" | "label" | "barcode" | "defaultUnit" | "imageUrl"> | null>(null);
     const [addedCount, setAddedCount] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const [saveBlocked, setSaveBlocked] = useState(false);
     const busy = useRef(false);
     const mounted = useRef(false);
 
@@ -62,6 +63,7 @@ export function useScanSession() {
         setForm(emptyForm());
         setExistingItem(null);
         setError(null);
+        setSaveBlocked(false);
         setPhase("idle");
     };
     const lookup = async (rawCode: string): Promise<void> => {
@@ -73,6 +75,7 @@ export function useScanSession() {
         }
         busy.current = true;
         setError(null);
+        setSaveBlocked(false);
         setPhase("lookup");
         try {
             const result = await barcodeService.lookup(barcode);
@@ -101,7 +104,7 @@ export function useScanSession() {
     };
 
     const save = async (locationId: number): Promise<boolean> => {
-        if (busy.current || phase !== "form") return false;
+        if (busy.current || phase !== "form" || saveBlocked) return false;
         if (!form.label.trim() || form.label.trim().length > 255
             || !/^\d{8,14}$/.test(form.barcode.trim()) || !isSafeImageUrl(form.imageUrl)
             || !form.defaultUnit.trim() || form.defaultUnit.trim().length > 64
@@ -133,7 +136,7 @@ export function useScanSession() {
             for (let index = 0; index < form.copies; index++) {
                 if (!mounted.current) return false;
                 await unitsService.create(item.id, {
-                    clientId: crypto.randomUUID(), locationId,
+                    locationId,
                     quantity: form.quantity, unit: form.unit.trim(),
                     expirationDate: form.expirationDate ?? undefined,
                 });
@@ -148,9 +151,10 @@ export function useScanSession() {
             return true;
         } catch {
             if (mounted.current) {
-                // Une reprise ne doit recréer ni le produit ni les exemplaires déjà enregistrés.
+                // Une réponse perdue peut masquer un ajout réussi : ne pas proposer une reprise aveugle.
                 setForm(previous => ({ ...previous, copies: previous.copies - completed }));
-                setError(`${completed} exemplaire(s) ajouté(s). Réessaie pour enregistrer les exemplaires restants.`);
+                setSaveBlocked(true);
+                setError(`${completed} ajout(s) confirmé(s), mais le dernier enregistrement est incertain. Vérifie les stocks avant de recommencer un scan pour éviter les doublons.`);
                 setPhase("form");
             }
             return false;
@@ -159,5 +163,5 @@ export function useScanSession() {
         }
     };
 
-    return { phase, form, setForm, existingItem, addedCount, error, lookup, save, reset, startScanning };
+    return { phase, form, setForm, existingItem, addedCount, error, saveBlocked, lookup, save, reset, startScanning };
 }

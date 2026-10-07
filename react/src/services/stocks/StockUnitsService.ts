@@ -5,7 +5,9 @@ import { CreateStockUnitDto } from "./dto/CreateStockUnitDto";
 import { formatApiDate } from "@/utils/DatesUtils";
 import type { StockUnitCreateDto } from "@chocosous/shared";
 
-type SaveStockUnitPayload = Omit<CreateStockUnitDto, "unit"> & Pick<StockUnitCreateDto, "unit">;
+type SaveStockUnitPayload = Omit<CreateStockUnitDto, "unit" | "clientId">
+    & Pick<StockUnitCreateDto, "unit">
+    & Partial<Pick<CreateStockUnitDto, "clientId">>;
 
 export default class StockUnitsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/units`;

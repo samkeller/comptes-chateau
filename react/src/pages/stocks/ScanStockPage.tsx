@@ -5,6 +5,8 @@ import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
+import { Link } from "react-router-dom";
+import { routePaths } from "@/routes/routePaths";
 import BarcodeScanner from "@/components/atoms/BarcodeScanner";
 import ExpirationDateScanner from "@/components/atoms/ExpirationDateScanner";
 import RequiredMark from "@/components/atoms/form/RequiredMark";
@@ -76,6 +78,9 @@ export default function ScanStockPage() {
                     <Message severity="info" text="Crée d'abord un lieu dans la gestion des stocks." />}
             </div>
             {session.error && <Message severity="warn" text={session.error} />}
+            {session.saveBlocked && <Link className="underline p-2" to={routePaths.stocks.stocksManagement}>
+                Vérifier les stocks enregistrés
+            </Link>}
             {(phase === "idle" || phase === "scanning" || phase === "lookup") && <>
                 <BarcodeScanner active={phase === "scanning" && hasLocation} onDetected={code => {
                     setManualBarcode(code);
@@ -159,8 +164,8 @@ export default function ScanStockPage() {
                         </div>
                     </fieldset>
                     <Button type="submit" label="Ajouter au stock" icon="pi pi-check" loading={phase === "saving"}
-                        disabled={processing || !hasLocation || !form.label.trim()} className="min-h-12" />
-                    <Button type="button" label="Annuler / produit suivant" outlined disabled={processing}
+                        disabled={processing || session.saveBlocked || !hasLocation || !form.label.trim()} className="min-h-12" />
+                    <Button type="button" label={session.saveBlocked ? "Recommencer après vérification" : "Annuler / produit suivant"} outlined disabled={processing}
                         onClick={() => { session.reset(); setManualBarcode(""); session.startScanning(); }} />
                 </form>}
         </section>
