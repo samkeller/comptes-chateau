@@ -2,9 +2,9 @@ import { parseApiDate, parseApiDateTime } from "@/utils/DatesUtils";
 import StockItem from "./StockItem";
 import StockLocation from "./StockLocation";
 import { getStockSeverity, type StockSeverity } from "@/utils/stocks/StockSeverity";
+import type { StockUnitUnits } from "@chocosous/shared";
 
-export const STOCK_UNIT_UNITS = ["g", "kg", "ml", "cl", "L", "boite", "pack"] as const;
-export type StockUnitUnits = typeof STOCK_UNIT_UNITS[number];
+export { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
 
 export default class StockUnit {
     id: number = 0;

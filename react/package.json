@@ -19,6 +19,8 @@
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
     "@types/tinycolor2": "^1.4.6",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "axios": "^1.13.6",
     "chart.js": "^4.5.1",
     "date-fns": "^4.1.0",
@@ -31,6 +33,7 @@
     "react-router-dom": "^7.13.1",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.2.1",
+    "tesseract.js": "^7.0.0",
     "tinycolor2": "^1.6.0",
     "typescript": "~5.9.3"
   },
