@@ -62,6 +62,23 @@ describe("OpenFoodFactsClient", () => {
         expect(await client.lookup(barcode)).toMatchObject({ quantity: 250, unit: "g" });
     });
 
+    it.each([undefined, "6 x 100 g", "10 oz", "0 g"])(
+        "preserves a valid structured quantity when its unit is unknown and fallback is unusable: %s",
+        async (fallback) => {
+            productResponse({
+                product_name: "riz", product_quantity: 10, product_quantity_unit: "oz", quantity: fallback,
+            });
+            expect(await client.lookup(barcode)).toMatchObject({ quantity: 10, unit: null });
+        },
+    );
+
+    it("replaces an unknown structured unit with a consistent quantity and unit from textual fallback", async () => {
+        productResponse({
+            product_name: "riz", product_quantity: 10, product_quantity_unit: "oz", quantity: "280 g",
+        });
+        expect(await client.lookup(barcode)).toMatchObject({ quantity: 280, unit: "g" });
+    });
+
     it.each(["6 x 100 g", "500 oz", "0 g", "Infinity kg", "250 g environ", "1e3 g"])(
         "does not guess ambiguous or invalid quantities: %s",
         async (quantity) => {

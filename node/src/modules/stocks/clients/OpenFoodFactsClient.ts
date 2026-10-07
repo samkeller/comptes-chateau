@@ -78,8 +78,13 @@ export default class OpenFoodFactsClient {
             if (quantity === null || mappedUnit === null) {
                 // N'inférer qu'une quantité simple, jamais « 6 x 100 g » ou une unité inconnue.
                 const fallback = text(product.quantity)?.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|ml|cl|l)$/i);
-                quantity = fallback ? positiveQuantity(fallback[1]) : null;
-                mappedUnit = fallback && quantity !== null ? unit(fallback[2]) : null;
+                const fallbackQuantity = fallback ? positiveQuantity(fallback[1]) : null;
+                if (fallback && fallbackQuantity !== null) {
+                    quantity = fallbackQuantity;
+                    mappedUnit = unit(fallback[2]);
+                } else if (quantity === null) {
+                    mappedUnit = null;
+                }
             }
 
             return {
