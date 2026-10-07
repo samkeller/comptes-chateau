@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { StockItemDto } from "@chocosous/shared";
+import type { StockBarcodeLookupResponse, StockItemDto } from "@chocosous/shared";
 import StockBarcodeService from "@/services/stocks/StockBarcodeService";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockUnitsService from "@/services/stocks/StockUnitsService";
@@ -27,6 +27,20 @@ const emptyForm = (): ScanForm => ({
 const barcodeService = new StockBarcodeService();
 const itemsService = new StockItemsService();
 const unitsService = new StockUnitsService();
+
+export function createScanForm(result: StockBarcodeLookupResponse): ScanForm {
+    const item = result.existingItem;
+    const suggestion = result.suggestion;
+    const defaultUnit = item?.defaultUnit ?? suggestion?.unit ?? (suggestion?.quantity ? "" : "pack");
+    return {
+        ...emptyForm(), barcode: result.barcode,
+        label: item ? item.label : suggestion?.label ?? "",
+        defaultUnit, unit: defaultUnit,
+        imageUrl: item ? item.imageUrl ?? "" : suggestion?.imageUrl ?? "",
+        quantity: suggestion?.quantity ?? 1,
+        brand: suggestion?.brand ?? null,
+    };
+}
 
 export function isSafeImageUrl(value: string): boolean {
     if (!value.trim()) return true;
@@ -82,16 +96,11 @@ export function useScanSession() {
             if (!mounted.current) return;
             const item = result.existingItem;
             const suggestion = result.suggestion;
-            const defaultUnit = item?.defaultUnit ?? suggestion?.unit ?? "pack";
             setExistingItem(item);
-            setForm({
-                ...emptyForm(), barcode,
-                label: item ? item.label : suggestion?.label ?? "",
-                defaultUnit, unit: defaultUnit,
-                imageUrl: item ? item.imageUrl ?? "" : suggestion?.imageUrl ?? "",
-                quantity: suggestion?.quantity ?? 1,
-                brand: suggestion?.brand ?? null,
-            });
+            setForm(createScanForm(result));
+            if (!item && suggestion?.quantity && !suggestion.unit) {
+                setError("Quantité suggérée sans unité reconnue : choisis les unités avant de valider.");
+            }
             setPhase("form");
         } catch {
             if (mounted.current) {
@@ -113,7 +122,7 @@ export function useScanSession() {
             || !Number.isInteger(form.copies) || form.copies < 1 || form.copies > 100
             || !Number.isInteger(locationId) || locationId <= 0
             || (form.expirationDate !== null && Number.isNaN(form.expirationDate.getTime()))) {
-            setError("Vérifie le libellé, le code, l'URL de l'image, la quantité et le nombre d'exemplaires (1 à 100).");
+            setError("Vérifie le libellé, le code, l'URL de l'image, les unités, la quantité et le nombre d'exemplaires (1 à 100).");
             return false;
         }
         busy.current = true;

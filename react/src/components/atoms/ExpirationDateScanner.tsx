@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
 import { Button } from "primereact/button";
+import { showGlobalToast } from "../../services/GlobalToast";
 import { parseExpirationDateFromText } from "../../utils/parseExpirationDateFromText";
 import type { ExpirationOcrResult } from "./expirationDateOcr.worker";
 
@@ -11,6 +12,7 @@ interface ExpirationDateScannerProps {
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const SCAN_TIMEOUT_MS = 90_000;
+const MANUAL_ENTRY_MESSAGE = "Date non reconnue, saisis-la à la main";
 
 export function ExpirationDateScanner({
     onDetected, onManualEntry, disabled = false,
@@ -45,29 +47,32 @@ export function ExpirationDateScanner({
         event.target.value = "";
         if (!file || disabled || workerRef.current) return;
         setError(null);
+        const fail = (reason: string = MANUAL_ENTRY_MESSAGE): void => {
+            stop();
+            setScanning(false);
+            setError(reason);
+            showGlobalToast({ severity: "warn", summary: MANUAL_ENTRY_MESSAGE });
+            onManualEntry();
+        };
         if (!file.type.startsWith("image/") || file.size === 0 || file.size > MAX_IMAGE_BYTES) {
-            setError("Choisissez une image de moins de 10 Mo.");
+            fail("Choisissez une image de moins de 10 Mo.");
             return;
         }
         setScanning(true);
-        const fail = (): void => {
-            stop();
-            setScanning(false);
-            setError("Lecture impossible. Réessayez ou saisissez la date manuellement.");
-        };
         try {
             // Le coordinateur permet d'annuler aussi l'initialisation interne de Tesseract.
             const worker = new Worker(new URL("./expirationDateOcr.worker.ts", import.meta.url), { type: "module" });
             workerRef.current = worker;
             timeoutRef.current = setTimeout(fail, SCAN_TIMEOUT_MS);
-            worker.onerror = fail;
+            worker.onerror = () => fail();
             worker.onmessage = (message: MessageEvent<ExpirationOcrResult>): void => {
-                stop();
-                setScanning(false);
                 const result = message.data;
                 const date = "text" in result ? parseExpirationDateFromText(result.text) : null;
-                if (date) onDetected(date);
-                else setError("Aucune date lisible. Réessayez ou saisissez la date manuellement.");
+                if (date) {
+                    stop();
+                    setScanning(false);
+                    onDetected(date);
+                } else fail();
             };
             worker.postMessage(file);
         } catch {

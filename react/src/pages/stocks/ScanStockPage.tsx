@@ -124,7 +124,8 @@ export default function ScanStockPage() {
                         </div>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="product-default-unit">Unité par défaut<RequiredMark /></label>
-                            <Dropdown inputId="product-default-unit" editable options={[...STOCK_UNIT_UNITS]} value={form.defaultUnit}
+                            <Dropdown inputId="product-default-unit" editable placeholder="Choisir l'unité"
+                                options={[...STOCK_UNIT_UNITS]} value={form.defaultUnit}
                                 onChange={event => { if (typeof event.value === "string") changeDefaultUnit(event.value); }} />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -142,7 +143,8 @@ export default function ScanStockPage() {
                         </div>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="scan-unit">Unité de stock<RequiredMark /></label>
-                            <Dropdown inputId="scan-unit" editable options={[...STOCK_UNIT_UNITS]} value={form.unit}
+                            <Dropdown inputId="scan-unit" editable placeholder="Choisir l'unité"
+                                options={[...STOCK_UNIT_UNITS]} value={form.unit}
                                 onChange={event => {
                                     if (typeof event.value === "string") setForm(previous => ({ ...previous, unit: event.value }));
                                 }} />
@@ -164,7 +166,8 @@ export default function ScanStockPage() {
                         </div>
                     </fieldset>
                     <Button type="submit" label="Ajouter au stock" icon="pi pi-check" loading={phase === "saving"}
-                        disabled={processing || session.saveBlocked || !hasLocation || !form.label.trim()} className="min-h-12" />
+                        disabled={processing || session.saveBlocked || !hasLocation || !form.label.trim()
+                            || !form.defaultUnit.trim() || !form.unit.trim()} className="min-h-12" />
                     <Button type="button" label={session.saveBlocked ? "Recommencer après vérification" : "Annuler / produit suivant"} outlined disabled={processing}
                         onClick={() => { session.reset(); setManualBarcode(""); session.startScanning(); }} />
                 </form>}
