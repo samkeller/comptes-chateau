@@ -17,7 +17,7 @@ import StockOverviewBar from "./molecules/StockOverviewBar";
 import StockEntryDialog, { type StockEntryDialogRequest } from "./organisms/StockEntryDialog";
 import StockItemsTable from "./organisms/StockItemsTable";
 import StockLocationsDialog from "./organisms/StockLocationsDialog";
-import StockMovementsCard from "./organisms/StockMovementsCard";
+import StockMovementsDialog from "./organisms/StockMovementsDialog";
 import { Card } from "primereact/card";
 
 const itemsService = new StockItemsService();
@@ -25,6 +25,11 @@ const locationService = new StockLocationService();
 const dashboardService = new StockDashboardService();
 const CONFIRM_GROUP = "stocks-page";
 const SEARCH_DEBOUNCE_MS = 250;
+
+function readLocationFilter(searchParams: URLSearchParams): number | null {
+    const value = Number(searchParams.get("locationId"));
+    return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
 
 function readLastLocationId(): number | null {
     try { return new LocalStorageUtils().getLastStockLocationId(); } catch { return null; }
@@ -45,7 +50,7 @@ export default function StocksPage() {
     const [items, setItems] = useState<StockItemWithLotsDto[] | null>(null);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [locationId, setLocationId] = useState<number | null>(null);
+    const [locationId, setLocationId] = useState<number | null>(() => readLocationFilter(searchParams));
     const [expiryState, setExpiryState] = useState<StockExpiryState | null>(null);
     const [includeEmpty, setIncludeEmpty] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -55,6 +60,7 @@ export default function StocksPage() {
     });
     const [lastLocationId, setLastLocationId] = useState<number | null>(readLastLocationId);
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
+    const [locationHistoryDialogVisible, setLocationHistoryDialogVisible] = useState(false);
 
     const refresh = useCallback(() => setRefreshKey((value) => value + 1), []);
 
@@ -79,6 +85,12 @@ export default function StocksPage() {
             .catch(() => undefined);
         return () => { active = false; };
     }, [refreshKey]);
+
+    useEffect(() => {
+        if (locations && locationId !== null && !locations.some((location) => location.id === locationId)) {
+            setLocationId(null);
+        }
+    }, [locations, locationId]);
 
     useEffect(() => {
         let active = true;
@@ -115,21 +127,40 @@ export default function StocksPage() {
                 <StockLocationsDialog locations={locationList} confirmGroup={CONFIRM_GROUP}
                     onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
             )}
+            {locationHistoryDialogVisible && (
+                <StockMovementsDialog refreshKey={refreshKey} onClose={() => setLocationHistoryDialogVisible(false)} />
+            )}
             <div className="flex flex-col gap-4 pb-20 md:pb-0">
                 <Card
                     title={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="m-0 text-xl">Stocks</h2>
                             <div className="flex flex-wrap items-center gap-2">
-                                <Button icon="pi pi-plus" label="Ajouter" onClick={() => setEntryRequest({})} />
-                                <Button icon="pi pi-barcode" label="Scanner" outlined onClick={() => setEntryRequest({ scan: true })} />
+                                <Button
+                                    icon="pi pi-plus"
+                                    label="Ajouter"
+                                    onClick={() => setEntryRequest({})}
+                                />
+                                <Button
+                                    icon="pi pi-barcode"
+                                    rounded outlined
+                                    tooltip="Scanner"
+                                    tooltipOptions={{ position: "left" }}
+                                    onClick={() => setEntryRequest({ scan: true })}
+                                />
+                                <Button
+                                    icon="pi pi-history"
+                                    rounded text
+                                    tooltip="Historique"
+                                    tooltipOptions={{ position: "left" }}
+                                    onClick={() => setLocationHistoryDialogVisible(true)}
+                                />
                             </div>
                         </div>
                     }
                 >
                     <div className="flex w-full flex-col gap-3">
                         <StockOverviewBar overview={overview} expiryFilter={expiryState} onExpiryFilterChange={setExpiryState} />
-
                         <div className="flex flex-wrap items-center gap-2">
                             <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
                                 onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
@@ -157,16 +188,17 @@ export default function StocksPage() {
                             </div>
                         ) : (
                             <StockItemsTable items={items} locations={locationList}
-                                emptyMessage={hasFilters
-                                    ? "Aucun produit ne correspond à ces filtres."
-                                    : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
+                                emptyMessage={
+                                    hasFilters
+                                        ? "Aucun produit ne correspond à ces filtres."
+                                        : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."
+                                }
                                 onEditItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id })}
                                 onAddToItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id, addLot: true })}
                                 onChanged={refresh} />
                         )}
                     </div>
                 </Card>
-                <StockMovementsCard refreshKey={refreshKey} />
             </div>
         </PageTemplate>
     );

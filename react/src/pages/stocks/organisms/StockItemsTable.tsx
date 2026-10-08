@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Column, type ColumnEditorOptions, type ColumnEvent } from "primereact/column";
@@ -87,6 +88,7 @@ interface StockItemsTableProps {
  */
 export default function StockItemsTable({ items, locations, emptyMessage, onEditItem, onAddToItem, onChanged }: StockItemsTableProps) {
     const rows = toRows(items);
+    const [saving, setSaving] = useState(false);
 
     const saveCell = async (event: ColumnEvent): Promise<void> => {
         const row = event.rowData as StockLotRow;
@@ -97,23 +99,24 @@ export default function StockItemsTable({ items, locations, emptyMessage, onEdit
             showGlobalToast({ severity: "warn", summary: "Valeur refusée", detail: "La quantité et le nombre d'exemplaires doivent être positifs." });
             return;
         }
+        setSaving(true);
         try {
             await entryService.save(editLotEntry(row.item, row.lot, changes));
-            onChanged();
-        } catch {
-            // Erreur affichée par l'intercepteur ; la liste rechargée affichera la valeur en base.
+        } finally {
+            setSaving(false);
             onChanged();
         }
     };
 
     const duplicate = async (row: StockLotRow): Promise<void> => {
         if (!row.lot) return;
+        setSaving(true);
         try {
             await entryService.save(duplicateLotEntry(row.item, row.lot));
             showGlobalToast({ severity: "success", summary: `${row.item.label} : 1 exemplaire ajouté` });
+        } finally {
+            setSaving(false);
             onChanged();
-        } catch {
-            // Erreur affichée par l'intercepteur.
         }
     };
 
@@ -144,9 +147,9 @@ export default function StockItemsTable({ items, locations, emptyMessage, onEdit
     );
 
     return (
-        <DataTable value={rows} dataKey="key" editMode="cell" size="small"
+        <DataTable value={rows} dataKey="key" editMode="cell" size="small" loading={saving}
             rowGroupMode="subheader" groupRowsBy="itemId" rowGroupHeaderTemplate={groupHeader}
-            responsiveLayout="stack" breakpoint="768px" emptyMessage={emptyMessage}>
+            breakpoint="768px" emptyMessage={emptyMessage}>
             <Column field="copies" header="Exemplaires" style={{ width: "8rem" }}
                 body={lotBody((_row, lot) => `${lot.unitIds.length} ×`)}
                 editor={lotEditor((options) => numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" }))}

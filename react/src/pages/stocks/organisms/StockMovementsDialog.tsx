@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
 import type { StockMovementDto } from "@chocosous/shared";
 import StockDashboardService from "@/services/stocks/StockDashboardService";
 import { formatDistanceToNow } from "@/utils/DatesUtils";
@@ -13,10 +13,11 @@ const HISTORY_LIMIT = 50;
 interface StockMovementsCardProps {
     /** Change à chaque modification du stock pour recharger l'historique. */
     refreshKey: number;
+    onClose: () => void;
 }
 
 /** Historique des derniers mouvements (entrées, consommations, suppressions). */
-export default function StockMovementsCard({ refreshKey }: StockMovementsCardProps) {
+export default function StockMovementsDialog({ refreshKey, onClose }: StockMovementsCardProps) {
     const [movements, setMovements] = useState<StockMovementDto[] | null>(null);
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export default function StockMovementsCard({ refreshKey }: StockMovementsCardPro
     }, [refreshKey]);
 
     return (
-        <Card title={<h2 className="m-0 text-xl">Historique</h2>}>
+        <Dialog visible onHide={onClose} header="Historique" style={{ width: "min(32rem, 95vw)" }}>
             <DataTable value={movements ?? []} dataKey="id" loading={movements === null} size="small"
                 paginator rows={10} responsiveLayout="stack" breakpoint="768px"
                 emptyMessage="Aucun mouvement de stock.">
@@ -45,6 +46,6 @@ export default function StockMovementsCard({ refreshKey }: StockMovementsCardPro
                 <Column header="Mouvement" style={{ width: "8rem" }}
                     body={(movement: StockMovementDto) => <StockMovementTypeTag type={movement.type} />} />
             </DataTable>
-        </Card>
+        </Dialog>
     );
 }
