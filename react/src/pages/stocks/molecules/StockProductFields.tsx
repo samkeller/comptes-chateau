@@ -1,7 +1,7 @@
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
-import { isHttpUrl, type StockItemDraft } from "./stockEntryDraft";
+import { isHttpUrl, type StockItemDraft } from "@/utils/stocks/stockEntryDraft";
 
 interface StockProductFieldsProps {
     item: StockItemDraft;

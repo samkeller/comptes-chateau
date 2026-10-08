@@ -1,33 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import type { StockDashboardOverviewDto, StockExpiryState, StockItemWithLotsDto, StockLotDto } from "@chocosous/shared";
+import type { StockDashboardOverviewDto, StockExpiryState, StockItemWithLotsDto } from "@chocosous/shared";
 import InputSearch from "@/components/atoms/primereact/InputSearch";
-import { useGlobalToast } from "@/context/GlobalToastContext";
-import { useScreen } from "@/hooks/useScreen";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import StockDashboardService from "@/services/stocks/StockDashboardService";
-import StockEntryService from "@/services/stocks/StockEntryService";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import StockLocationService from "@/services/stocks/StockLocationService";
-import StockUnitsService from "@/services/stocks/StockUnitsService";
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { PageTemplate } from "../PageTemplate";
-import StockEntryDialog, { type StockEntryDialogRequest } from "./entry/StockEntryDialog";
-import { duplicateLotEntry } from "./entry/stockEntryDraft";
-import StockItemCard from "./list/StockItemCard";
-import StockLocationsDialog from "./locations/StockLocationsDialog";
-import StockMovementsSidebar from "./StockMovementsSidebar";
-import StockOverviewBar from "./StockOverviewBar";
+import StockOverviewBar from "./molecules/StockOverviewBar";
+import StockEntryDialog, { type StockEntryDialogRequest } from "./organisms/StockEntryDialog";
+import StockItemsTable from "./organisms/StockItemsTable";
+import StockLocationsDialog from "./organisms/StockLocationsDialog";
+import StockMovementsCard from "./organisms/StockMovementsCard";
 import { Card } from "primereact/card";
 
 const itemsService = new StockItemsService();
-const entryService = new StockEntryService();
-const unitsService = new StockUnitsService();
 const locationService = new StockLocationService();
 const dashboardService = new StockDashboardService();
 const CONFIRM_GROUP = "stocks-page";
@@ -42,12 +35,10 @@ function rememberLocationId(locationId: number): void {
 }
 
 /**
- * Écran unique des stocks : consulter, filtrer, ajouter (manuel ou scan), cocher et corriger.
+ * Écran unique des stocks : consulter, filtrer, ajouter (manuel ou scan), cocher et corriger directement dans le tableau.
  * `?action=scan` ou `?action=add` ouvre directement la saisie (raccourcis / anciennes routes).
  */
 export default function StocksPage() {
-    const showToast = useGlobalToast();
-    const { isDesktop } = useScreen();
     const [searchParams, setSearchParams] = useSearchParams();
     const [locations, setLocations] = useState<StockLocation[] | null>(null);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
@@ -58,14 +49,12 @@ export default function StocksPage() {
     const [expiryState, setExpiryState] = useState<StockExpiryState | null>(null);
     const [includeEmpty, setIncludeEmpty] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [busyItemId, setBusyItemId] = useState<number | null>(null);
     const [entryRequest, setEntryRequest] = useState<StockEntryDialogRequest | null>(() => {
         const action = searchParams.get("action");
         return action === "scan" || action === "add" ? { scan: action === "scan" } : null;
     });
     const [lastLocationId, setLastLocationId] = useState<number | null>(readLastLocationId);
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
-    const [historyVisible, setHistoryVisible] = useState(false);
 
     const refresh = useCallback(() => setRefreshKey((value) => value + 1), []);
 
@@ -103,36 +92,6 @@ export default function StocksPage() {
     const defaultLocationId = locationId
         ?? (locationList.some((location) => location.id === lastLocationId) ? lastLocationId : locationList[0]?.id ?? null);
 
-    const runOnItem = async (item: StockItemWithLotsDto, action: () => Promise<void>, success: string): Promise<void> => {
-        setBusyItemId(item.id);
-        try {
-            await action();
-            showToast({ severity: "success", summary: success });
-            refresh();
-        } catch {
-            // Erreur affichée par l'intercepteur.
-        } finally {
-            setBusyItemId(null);
-        }
-    };
-
-    const take = (item: StockItemWithLotsDto, lot: StockLotDto): void => {
-        void runOnItem(item, () => unitsService.take(lot.unitIds[0]), `${item.label} : 1 exemplaire pris`);
-    };
-    const duplicate = (item: StockItemWithLotsDto, lot: StockLotDto): void => {
-        void runOnItem(item, async () => { await entryService.save(duplicateLotEntry(item, lot)); }, `${item.label} : 1 exemplaire ajouté`);
-    };
-    const remove = (item: StockItemWithLotsDto, lot: StockLotDto): void => {
-        confirmDialog({
-            group: CONFIRM_GROUP,
-            header: "Supprimer un exemplaire",
-            message: `Supprimer un exemplaire de « ${item.label} » saisi par erreur ? Pour un produit consommé, utilise plutôt « Prendre ».`,
-            icon: "pi pi-exclamation-triangle",
-            acceptClassName: "p-button-danger",
-            accept: () => void runOnItem(item, () => unitsService.delete(lot.unitIds[lot.unitIds.length - 1]), "Exemplaire supprimé"),
-        });
-    };
-
     const closeEntryDialog = useCallback(() => setEntryRequest(null), []);
     const onEntrySaved = useCallback((_item: StockItemWithLotsDto, usedLocationId: number | null) => {
         if (usedLocationId !== null) {
@@ -146,6 +105,7 @@ export default function StocksPage() {
 
     return (
         <PageTemplate pageTitle="Stocks">
+            <ConfirmDialog />
             <ConfirmDialog group={CONFIRM_GROUP} />
             {entryRequest && locations && (
                 <StockEntryDialog request={entryRequest} locations={locations} defaultLocationId={defaultLocationId}
@@ -155,62 +115,59 @@ export default function StocksPage() {
                 <StockLocationsDialog locations={locationList} confirmGroup={CONFIRM_GROUP}
                     onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
             )}
-            <StockMovementsSidebar visible={historyVisible} onHide={() => setHistoryVisible(false)} />
-            <Card>
-                <div className="flex w-full flex-col gap-3 pb-20 md:pb-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button icon="pi pi-plus" label="Ajouter" onClick={() => setEntryRequest({})} />
-                        <Button icon="pi pi-barcode" label="Scanner" outlined onClick={() => setEntryRequest({ scan: true })} />
-                        <Button icon="pi pi-history" outlined severity="secondary" aria-label="Historique des mouvements"
-                            {...(isDesktop ? { label: "Historique" } : { tooltip: "Historique" })}
-                            onClick={() => setHistoryVisible(true)} />
+            <div className="flex flex-col gap-4 pb-20 md:pb-0">
+                <Card
+                    title={
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h2 className="m-0 text-xl">Stocks</h2>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button icon="pi pi-plus" label="Ajouter" onClick={() => setEntryRequest({})} />
+                                <Button icon="pi pi-barcode" label="Scanner" outlined onClick={() => setEntryRequest({ scan: true })} />
+                            </div>
+                        </div>
+                    }
+                >
+                    <div className="flex w-full flex-col gap-3">
+                        <StockOverviewBar overview={overview} expiryFilter={expiryState} onExpiryFilterChange={setExpiryState} />
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
+                                onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
+                            <div className="flex items-center gap-1">
+                                <Dropdown value={locationId} options={locationList} optionValue="id" showClear
+                                    optionLabel="label" placeholder="Tous les lieux" aria-label="Filtrer par lieu"
+                                    itemTemplate={(location: StockLocation) => `${location.label} (${location.stockUnitCount})`}
+                                    onChange={(event) => setLocationId((event.value as number | null) ?? null)} />
+                                <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
+                                    tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }}
+                                    onClick={() => setLocationsDialogVisible(true)} />
+                            </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
+                                Afficher les épuisés
+                            </label>
+                        </div>
+
+                        {items === null ? (
+                            <div className="flex justify-center p-8"><ProgressSpinner /></div>
+                        ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
+                            <div className="flex flex-col items-start gap-2 p-4">
+                                <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
+                                <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />
+                            </div>
+                        ) : (
+                            <StockItemsTable items={items} locations={locationList}
+                                emptyMessage={hasFilters
+                                    ? "Aucun produit ne correspond à ces filtres."
+                                    : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
+                                onEditItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id })}
+                                onAddToItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id, addLot: true })}
+                                onChanged={refresh} />
+                        )}
                     </div>
-
-                    <StockOverviewBar overview={overview} expiryFilter={expiryState} onExpiryFilterChange={setExpiryState} />
-
-                    <div className="flex flex-wrap items-center gap-2">
-                        <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
-                            onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
-                        <div className="flex items-center gap-1">
-                            <Dropdown value={locationId} options={locationList} optionValue="id" showClear
-                                optionLabel="label" placeholder="Tous les lieux" aria-label="Filtrer par lieu"
-                                itemTemplate={(location: StockLocation) => `${location.label} (${location.stockUnitCount})`}
-                                onChange={(event) => setLocationId((event.value as number | null) ?? null)} />
-                            <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
-                                tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }}
-                                onClick={() => setLocationsDialogVisible(true)} />
-                        </div>
-                        <label className="flex items-center gap-2 text-sm">
-                            <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
-                            Afficher les épuisés
-                        </label>
-                    </div>
-
-                    {items === null ? (
-                        <div className="flex justify-center p-8"><ProgressSpinner /></div>
-                    ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
-                        <div className="flex flex-col items-start gap-2 p-4">
-                            <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
-                            <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />
-                        </div>
-                    ) : items.length === 0 ? (
-                        <p className="p-4 text-gray-500">
-                            {hasFilters ? "Aucun produit ne correspond à ces filtres." : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
-                        </p>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
-                            {items.map((item) => (
-                                <StockItemCard key={item.id} item={item} busy={busyItemId === item.id}
-                                    onEdit={() => setEntryRequest({ itemId: item.id })}
-                                    onAdd={() => setEntryRequest({ itemId: item.id, addLot: true })}
-                                    onTake={(lot) => take(item, lot)}
-                                    onDuplicate={(lot) => duplicate(item, lot)}
-                                    onDelete={(lot) => remove(item, lot)} />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </Card>
+                </Card>
+                <StockMovementsCard refreshKey={refreshKey} />
+            </div>
         </PageTemplate>
     );
 }

@@ -9,7 +9,7 @@ Objectif : suivre ce qui est stocké, où, et jusqu'à quand, avec le moins de f
 | Produit | `stock_item` | Catalogue (nom, code-barres, marque, unité par défaut, image). **Jamais supprimé**, même épuisé : il reste retrouvable (filtre « Afficher les épuisés »). |
 | Exemplaire | `stock_unit` | Un objet physique (une boîte, un paquet…) : contenu (`quantity` + `unit`), lieu, péremption facultative. |
 | Lieu | `stock_location` | Frigo, cellier… |
-| Mouvement | `stock_movement` | Journal append-only, sans FK, avec libellés figés : il survit aux suppressions. |
+| Mouvement | `stock_movement` | Journal `IN` / `OUT` / `DELETE` par exemplaire, sans FK, avec libellés figés : il survit aux suppressions. |
 
 La distinction produit / exemplaire est invisible dans l'interface : l'écran manipule des **lots**
 (exemplaires identiques : même lieu, contenu, unité et date), agrégés par le serveur (`StockLotDto`).
@@ -37,10 +37,11 @@ Base des futures statistiques (consommation par produit, listes de courses) : ch
 |---|---|---|
 | `IN` | Entrée en stock | Saisie (`POST /stocks/entries`) |
 | `OUT` | Consommé (« Prendre ») | `POST /stocks/units/:id/take` |
-| `DELETE` | Erreur de saisie retirée | `DELETE /stocks/units/:id`, ou réduction d'un lot dans la saisie |
-| `ADJUST` | Correction d'un exemplaire (lieu, contenu, date) | Modification d'un lot dans la saisie |
+| `DELETE` | Erreur de saisie retirée | `DELETE /stocks/units/:id`, ou réduction d'un lot (saisie ou tableau) |
 
-Les mouvements ne sont jamais modifiés. Pour mesurer une consommation, ne compter que les `OUT`.
+Corriger un exemplaire (contenu, unité, lieu, date) **met à jour son `IN`** au lieu de créer un mouvement de correction :
+c'est voulu, le journal décrit ce qui est réellement entré, sorti ou retiré. La date de péremption n'est pas journalisée.
+Les mouvements ne sont jamais supprimés. Pour mesurer une consommation, ne compter que les `OUT`.
 Les exemplaires se prennent un par un (pas de prise partielle).
 
 ## API
@@ -59,13 +60,16 @@ Les erreurs sont des `AppError` typées ; le front les affiche uniquement via `r
 
 Une seule page, sans onglets :
 
-- actions **Ajouter**, **Scanner** et **Historique** (tiroir des derniers mouvements) ;
+- actions **Ajouter** et **Scanner** ;
 - bandeau d'indicateurs cliquables (Périmés, Bientôt périmés) qui filtrent la liste. Seule une valeur non nulle est colorée ;
 - recherche (nom, marque, code-barres), filtre par lieu (gestion des lieux via l'icône ⚙), « Afficher les épuisés » ;
-- une carte par produit et une ligne par lot : **Prendre**, dupliquer (+1 exemplaire identique), supprimer (erreur de saisie).
+- un tableau groupé par produit, une ligne par lot : exemplaires, contenu, unité, lieu et péremption se **corrigent
+  directement dans la cellule** (enregistré à la validation de la cellule) ; actions **Prendre**, dupliquer
+  (+1 exemplaire identique) et supprimer (erreur de saisie). Réduire le nombre d'exemplaires retire les plus récents ;
+- une carte **Historique** (tableau paginé des derniers mouvements), sous le tableau des stocks.
 
 Un seul `StockEntryDialog` (plein écran sur mobile) sert à l'ajout, à l'ajout rapide sur un produit, à la modification
-et au scan. Rien n'est enregistré avant « Enregistrer » ; « Enregistrer et continuer » enchaîne les saisies.
+et au scan : un produit et tous ses lots s'enregistrent en une fois, rien n'est enregistré avant « Enregistrer ».
 Le dernier lieu utilisé est proposé par défaut. `/stocks?action=scan` ouvre directement le scan
 (l'ancienne route `/stocks/scan` y redirige).
 
@@ -77,7 +81,7 @@ Sources : <https://openfoodfacts.github.io/openfoodfacts-server/api/>, <https://
 
 - Base sous **ODbL**, contenus sous **DbCL**, images sous **CC BY-SA** : citer Open Food Facts quand ses données sont
   affichées (fait dans le dialog quand une suggestion est utilisée). Une base dérivée redistribuée doit rester sous ODbL ;
-  le cache local n'est pas redistribué.
+  les données OFF enregistrées en base ne sont pas redistribuées.
 - Identifier l'application avec un `User-Agent` `NomApp/Version (email)` : `Chocosous/1.0 (dandrieux.keller@gmail.com)`,
   surchargeable par `OPEN_FOOD_FACTS_CONTACT` (`node/.env.example`).
 - Limites documentées : 15 lectures produit / min / IP, 10 recherches / min. Le scraping et
@@ -86,15 +90,15 @@ Sources : <https://openfoodfacts.github.io/openfoodfacts-server/api/>, <https://
 
 ### Implémentation
 
-- Client maison (`node/src/modules/stocks/clients/OpenFoodFactsClient.ts`) sur l'**API v3** (la v2 est dépréciée),
-  champs limités (`fields=`), timeout 3 s.
-- **SDK officiel non retenu** : `@openfoodfacts/openfoodfacts-nodejs` est en version alpha (2.0.0-alpha.x), n'apporte
-  ni cache ni limitation de débit, et nous n'utilisons qu'un endpoint. À réévaluer à sa sortie en version stable.
+- **SDK officiel** `@openfoodfacts/openfoodfacts-nodejs` (`getProductV3`, **API v3**), encapsulé dans
+  `node/src/modules/stocks/clients/OpenFoodFactsClient.ts` : champs limités (`fields`), timeout 3 s. Le SDK impose son
+  propre `User-Agent` : le `fetch` qui lui est fourni le remplace par le nôtre (contactable) et relève le statut HTTP.
+  Version épinglée (le SDK est encore en `2.0.0-alpha`) : vérifier le changelog avant toute montée de version.
 - Protection : 10 appels par minute glissante au maximum côté serveur, et un circuit ouvert 10 min après un `429`
   ou un `503`. Un échec OpenFoodFacts ne bloque jamais la saisie.
-- **Cache local** `open_food_facts_product` : produit brut (`jsonb`) pour réutiliser plus tard d'autres champs
-  (nutriscore, catégories, allergènes…). Durée de vie : 180 jours si trouvé, 7 jours si inconnu ; ancien cache
-  servi si l'API échoue.
+- **Données OFF en base** `open_food_facts_product` : fiche brute (`jsonb`) conservée durablement pour réutiliser plus tard
+  d'autres champs (nutriscore, catégories, allergènes…). Re-synchronisée avec OFF après 180 jours si trouvée, 7 jours si
+  inconnue ; la fiche existante reste utilisée si l'API échoue.
 - **Journal des appels** `open_food_facts_api_call` (déclencheur, résultat, statut HTTP, durée) : suivi de la
   consommation, pour par exemple ajuster un don à l'association selon l'usage.
 - **Rétro-compatibilité** : job nocturne `open-food-facts-sync` (03:30, `node/src/jobs/syncOpenFoodFacts.ts`),

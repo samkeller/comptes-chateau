@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StockItemWithLotsDto } from "@chocosous/shared";
 import {
-    applySuggestion, countNewCopies, duplicateLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
+    applySuggestion, countNewCopies, duplicateLotEntry, editLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
     getEntryDraftError, toSaveStockEntryDto,
 } from "./stockEntryDraft";
 
@@ -82,6 +82,17 @@ describe("stock entry draft", () => {
             item: { id: 4, label: "Lait", defaultUnit: "pièce" },
             lots: [{ unitIds: [], copies: 1, locationId: 1, quantity: 1, unit: "L", expirationDate: "2026-10-20" }],
         });
+    });
+
+    it("edits a single lot inline, keeping its other fields and the other lots untouched", () => {
+        expect(editLotEntry(item, item.lots[0], { quantity: 2 })).toEqual({
+            item: { id: 4, label: "Lait", defaultUnit: "pièce" },
+            lots: [{ unitIds: [10, 11], copies: 2, locationId: 1, quantity: 2, unit: "L", expirationDate: "2026-10-20" }],
+        });
+        expect(editLotEntry(item, item.lots[0], { expirationDate: null, copies: 1 }).lots[0])
+            .toMatchObject({ unitIds: [10, 11], copies: 1, expirationDate: null });
+        expect(editLotEntry(item, item.lots[1], { expirationDate: new Date(2027, 1, 3), locationId: 1 }).lots[0])
+            .toMatchObject({ unitIds: [12], copies: 1, locationId: 1, unit: "cl", expirationDate: "2027-02-03" });
     });
 
     it("keeps pending new lots when switching to an existing product, adopting its content unless edited", () => {

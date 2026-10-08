@@ -5,7 +5,7 @@ import { Dialog } from "primereact/dialog";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import StockLocationService from "@/services/stocks/StockLocationService";
-import StockLocationDialog from "./StockLocationDialog";
+import StockLocationDialog from "../molecules/StockLocationDialog";
 
 const locationService = new StockLocationService();
 

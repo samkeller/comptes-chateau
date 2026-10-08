@@ -14,12 +14,12 @@ import type StockLocation from "@/interfaces/stocks/StockLocation";
 import StockBarcodeService from "@/services/stocks/StockBarcodeService";
 import StockEntryService from "@/services/stocks/StockEntryService";
 import StockItemsService from "@/services/stocks/StockItemsService";
-import StockLotEditor from "./StockLotEditor";
-import StockProductFields from "./StockProductFields";
+import StockLotEditor from "../molecules/StockLotEditor";
+import StockProductFields from "../molecules/StockProductFields";
 import {
     applySuggestion, countNewCopies, emptyEntryDraft, entryDraftFromItem, getEntryDraftError, newLotDraft,
     switchToExistingItem, toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
-} from "./stockEntryDraft";
+} from "@/utils/stocks/stockEntryDraft";
 
 const itemsService = new StockItemsService();
 const entryService = new StockEntryService();
@@ -172,25 +172,23 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         }
     };
 
-    const resetForNext = (): void => {
+    const chooseAnotherItem = (): void => {
         setDraft(emptyEntryDraft(lastLocationId.current));
         setLookupInfo(null);
         setProductExpanded(false);
         if (request.scan) setScanning(true);
     };
 
-    const save = async (keepOpen: boolean): Promise<void> => {
+    const save = async (): Promise<void> => {
         if (!draft || getEntryDraftError(draft)) return;
         setSaving(true);
         try {
             const saved = await entryService.save(toSaveStockEntryDto(draft));
             const usedLots = draft.lots.filter((lot) => lot.copies > 0);
             const usedLocation = usedLots[usedLots.length - 1]?.locationId ?? null;
-            if (usedLocation !== null) lastLocationId.current = usedLocation;
             onSaved(saved, usedLocation);
             showToast({ severity: "success", summary: `${saved.label} enregistré` });
-            if (keepOpen) resetForNext();
-            else onClose();
+            onClose();
         } catch {
             // Erreur affichée par l'intercepteur ; le formulaire reste ouvert pour corriger.
         } finally {
@@ -208,14 +206,9 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
             {draft && draftError && <small className="text-left md:mr-auto" role="alert">{draftError}</small>}
             <div className="flex flex-wrap justify-end gap-2">
                 <Button type="button" label="Annuler" text onClick={onClose} disabled={saving} />
-                {!isEditing && (
-                    <Button type="button" label="Enregistrer et continuer" outlined icon="pi pi-replay"
-                        disabled={!draft || !!draftError || busy} loading={saving}
-                        onClick={() => void save(true)} />
-                )}
                 <Button type="button" label="Enregistrer" icon="pi pi-check"
                     disabled={!draft || !!draftError || busy} loading={saving}
-                    onClick={() => void save(false)} />
+                    onClick={() => void save()} />
             </div>
         </div>
     );
@@ -252,7 +245,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                                     {!request.itemId && (
                                         <Button type="button" icon="pi pi-times" outlined severity="secondary"
                                             aria-label="Choisir un autre produit" tooltip="Choisir un autre produit"
-                                            onClick={() => resetForNext()} />
+                                            onClick={chooseAnotherItem} />
                                     )}
                                 </div>
                             )}

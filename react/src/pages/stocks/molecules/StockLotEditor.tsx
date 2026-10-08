@@ -6,7 +6,7 @@ import { Tag } from "primereact/tag";
 import { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import { getLocalExpiryState, STOCK_EXPIRY_DISPLAY } from "@/utils/stocks/stockExpiry";
-import { type StockLotDraft } from "./stockEntryDraft";
+import { type StockLotDraft } from "@/utils/stocks/stockEntryDraft";
 
 interface StockLotEditorProps {
     lot: StockLotDraft;

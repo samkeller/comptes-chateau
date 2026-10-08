@@ -208,3 +208,34 @@ export function duplicateLotEntry(item: StockItemWithLotsDto, lot: StockItemWith
         }],
     };
 }
+
+/** Champs d'un lot modifiables directement dans le tableau des stocks. */
+export interface StockLotInlineChanges {
+    copies?: number;
+    locationId?: number;
+    quantity?: number;
+    unit?: StockUnitUnits;
+    expirationDate?: Date | null;
+}
+
+/**
+ * Saisie « corriger ce lot » (édition en cellule) : seuls les exemplaires du lot sont concernés,
+ * les autres lots du produit et ses champs facultatifs restent intacts.
+ * Moins d'exemplaires retire les plus récents ; plus en ajoute à l'identique.
+ */
+export function editLotEntry(item: StockItemWithLotsDto, lot: StockItemWithLotsDto["lots"][number], changes: StockLotInlineChanges): SaveStockEntryDto {
+    const expirationDate = changes.expirationDate !== undefined
+        ? (changes.expirationDate ? formatApiDate(changes.expirationDate) : null)
+        : lot.expirationDate;
+    return {
+        item: { id: item.id, label: item.label, defaultUnit: normalizeStockUnit(item.defaultUnit) },
+        lots: [{
+            unitIds: lot.unitIds,
+            copies: changes.copies ?? lot.unitIds.length,
+            locationId: changes.locationId ?? lot.locationId,
+            quantity: changes.quantity ?? lot.quantity,
+            unit: changes.unit ?? normalizeStockUnit(lot.unit),
+            expirationDate,
+        }],
+    };
+}
