@@ -23,6 +23,7 @@ import StockItemCard from "./list/StockItemCard";
 import StockLocationsDialog from "./locations/StockLocationsDialog";
 import StockMovementsSidebar from "./StockMovementsSidebar";
 import StockOverviewBar from "./StockOverviewBar";
+import { Card } from "primereact/card";
 
 const itemsService = new StockItemsService();
 const entryService = new StockEntryService();
@@ -155,60 +156,61 @@ export default function StocksPage() {
                     onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
             )}
             <StockMovementsSidebar visible={historyVisible} onHide={() => setHistoryVisible(false)} />
+            <Card>
+                <div className="flex w-full flex-col gap-3 pb-20 md:pb-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button icon="pi pi-plus" label="Ajouter" onClick={() => setEntryRequest({})} />
+                        <Button icon="pi pi-barcode" label="Scanner" outlined onClick={() => setEntryRequest({ scan: true })} />
+                        <Button icon="pi pi-history" outlined severity="secondary" aria-label="Historique des mouvements"
+                            {...(isDesktop ? { label: "Historique" } : { tooltip: "Historique" })}
+                            onClick={() => setHistoryVisible(true)} />
+                    </div>
 
-            <div className="flex w-full flex-col gap-3 pb-20 md:pb-0">
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button icon="pi pi-plus" label="Ajouter" onClick={() => setEntryRequest({})} />
-                    <Button icon="pi pi-barcode" label="Scanner" outlined onClick={() => setEntryRequest({ scan: true })} />
-                    <Button icon="pi pi-history" outlined severity="secondary" aria-label="Historique des mouvements"
-                        {...(isDesktop ? { label: "Historique" } : { tooltip: "Historique" })}
-                        onClick={() => setHistoryVisible(true)} />
+                    <StockOverviewBar overview={overview} expiryFilter={expiryState} onExpiryFilterChange={setExpiryState} />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
+                            onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
+                        <div className="flex items-center gap-1">
+                            <Dropdown value={locationId} options={locationList} optionValue="id" showClear
+                                optionLabel="label" placeholder="Tous les lieux" aria-label="Filtrer par lieu"
+                                itemTemplate={(location: StockLocation) => `${location.label} (${location.stockUnitCount})`}
+                                onChange={(event) => setLocationId((event.value as number | null) ?? null)} />
+                            <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
+                                tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }}
+                                onClick={() => setLocationsDialogVisible(true)} />
+                        </div>
+                        <label className="flex items-center gap-2 text-sm">
+                            <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
+                            Afficher les épuisés
+                        </label>
+                    </div>
+
+                    {items === null ? (
+                        <div className="flex justify-center p-8"><ProgressSpinner /></div>
+                    ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
+                        <div className="flex flex-col items-start gap-2 p-4">
+                            <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
+                            <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />
+                        </div>
+                    ) : items.length === 0 ? (
+                        <p className="p-4 text-gray-500">
+                            {hasFilters ? "Aucun produit ne correspond à ces filtres." : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+                            {items.map((item) => (
+                                <StockItemCard key={item.id} item={item} busy={busyItemId === item.id}
+                                    onEdit={() => setEntryRequest({ itemId: item.id })}
+                                    onAdd={() => setEntryRequest({ itemId: item.id, addLot: true })}
+                                    onTake={(lot) => take(item, lot)}
+                                    onDuplicate={(lot) => duplicate(item, lot)}
+                                    onDelete={(lot) => remove(item, lot)} />
+                            ))}
+                        </div>
+                    )}
                 </div>
-
-                <StockOverviewBar overview={overview} expiryFilter={expiryState} onExpiryFilterChange={setExpiryState} />
-
-                <div className="flex flex-wrap items-center gap-2">
-                    <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
-                        onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
-                    <div className="flex items-center gap-1">
-                        <Dropdown value={locationId} options={locationList} optionValue="id" showClear
-                            optionLabel="label" placeholder="Tous les lieux" aria-label="Filtrer par lieu"
-                            itemTemplate={(location: StockLocation) => `${location.label} (${location.stockUnitCount})`}
-                            onChange={(event) => setLocationId((event.value as number | null) ?? null)} />
-                        <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
-                            tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }}
-                            onClick={() => setLocationsDialogVisible(true)} />
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                        <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
-                        Afficher les épuisés
-                    </label>
-                </div>
-
-                {items === null ? (
-                    <div className="flex justify-center p-8"><ProgressSpinner /></div>
-                ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
-                    <div className="flex flex-col items-start gap-2 p-4">
-                        <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
-                        <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />
-                    </div>
-                ) : items.length === 0 ? (
-                    <p className="p-4 text-gray-500">
-                        {hasFilters ? "Aucun produit ne correspond à ces filtres." : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
-                    </p>
-                ) : (
-                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
-                        {items.map((item) => (
-                            <StockItemCard key={item.id} item={item} busy={busyItemId === item.id}
-                                onEdit={() => setEntryRequest({ itemId: item.id })}
-                                onAdd={() => setEntryRequest({ itemId: item.id, addLot: true })}
-                                onTake={(lot) => take(item, lot)}
-                                onDuplicate={(lot) => duplicate(item, lot)}
-                                onDelete={(lot) => remove(item, lot)} />
-                        ))}
-                    </div>
-                )}
-            </div>
+            </Card>
         </PageTemplate>
     );
 }

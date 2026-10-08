@@ -1,4 +1,3 @@
-import { addDays, addMonths } from "date-fns";
 import {
     MAX_STOCK_ENTRY_NEW_COPIES,
     normalizeBarcode,
@@ -46,12 +45,6 @@ export interface StockLotDefaults {
     quantity?: number | null;
     unit?: StockUnitUnits;
 }
-
-export const EXPIRATION_SHORTCUTS = [
-    { label: "+3 j", apply: (today: Date) => addDays(today, 3) },
-    { label: "+1 sem.", apply: (today: Date) => addDays(today, 7) },
-    { label: "+1 mois", apply: (today: Date) => addMonths(today, 1) },
-] as const;
 
 let lotSequence = 0;
 

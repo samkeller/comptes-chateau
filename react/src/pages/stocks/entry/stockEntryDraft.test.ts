@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StockItemWithLotsDto } from "@chocosous/shared";
 import {
-    applySuggestion, countNewCopies, duplicateLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem, EXPIRATION_SHORTCUTS,
+    applySuggestion, countNewCopies, duplicateLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
     getEntryDraftError, toSaveStockEntryDto,
 } from "./stockEntryDraft";
 
@@ -75,13 +75,6 @@ describe("stock entry draft", () => {
         draft.item.label = "Riz";
         mutate(draft);
         expect(getEntryDraftError(draft)).toBe(message);
-    });
-
-    it("offers expiration shortcuts relative to today", () => {
-        const today = new Date(2026, 0, 31);
-        expect(EXPIRATION_SHORTCUTS.map((shortcut) => shortcut.apply(today))).toEqual([
-            new Date(2026, 1, 3), new Date(2026, 1, 7), new Date(2026, 1, 28),
-        ]);
     });
 
     it("duplicates one unit of a lot without touching the product fields", () => {

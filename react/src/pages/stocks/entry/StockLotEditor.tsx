@@ -6,7 +6,7 @@ import { Tag } from "primereact/tag";
 import { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import { getLocalExpiryState, STOCK_EXPIRY_DISPLAY } from "@/utils/stocks/stockExpiry";
-import { EXPIRATION_SHORTCUTS, type StockLotDraft } from "./stockEntryDraft";
+import { type StockLotDraft } from "./stockEntryDraft";
 
 interface StockLotEditorProps {
     lot: StockLotDraft;
@@ -84,10 +84,6 @@ export default function StockLotEditor({ lot, index, locations, onChange, onRemo
                         showIcon showButtonBar placeholder="Sans date" className="w-44"
                         touchUI={false}
                         onChange={(event) => onChange({ expirationDate: event.value instanceof Date ? event.value : null })} />
-                    {EXPIRATION_SHORTCUTS.map((shortcut) => (
-                        <Button key={shortcut.label} type="button" label={shortcut.label} size="small" outlined
-                            onClick={() => onChange({ expirationDate: shortcut.apply(new Date()) })} />
-                    ))}
                     {lot.expirationDate && expiry.severity && <Tag value={expiry.label} severity={expiry.severity} />}
                 </div>
             </div>

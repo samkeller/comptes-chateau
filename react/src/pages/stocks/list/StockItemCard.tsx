@@ -1,9 +1,8 @@
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { Tag } from "primereact/tag";
 import type { StockItemWithLotsDto, StockLotDto } from "@chocosous/shared";
-import { parseApiDate, parseDateToDDMMYYYY } from "@/utils/DatesUtils";
-import { STOCK_EXPIRY_DISPLAY } from "@/utils/stocks/stockExpiry";
+import TakeStockUnitButton from "../atoms/TakeStockUnitButton";
+import StockExpiryDateTag from "../atoms/StockExpiryDateTag";
 
 interface StockItemCardProps {
     item: StockItemWithLotsDto;
@@ -15,18 +14,10 @@ interface StockItemCardProps {
     onDelete: (lot: StockLotDto) => void;
 }
 
-function ExpiryTag({ lot }: { lot: StockLotDto }) {
-    const date = parseApiDate(lot.expirationDate);
-    const display = STOCK_EXPIRY_DISPLAY[lot.expiryState];
-    if (!date) return <span className="text-sm text-gray-500">Sans date</span>;
-    const text = parseDateToDDMMYYYY(date);
-    return display.severity
-        ? <Tag severity={display.severity} value={text} title={display.label} />
-        : <span className="text-sm">{text}</span>;
-}
+
 
 /** Un produit et ses lots : cocher, dupliquer ou supprimer un exemplaire en un clic. */
-export default function StockItemCard({ item, busy, onEdit, onAdd, onTake, onDuplicate, onDelete }: StockItemCardProps) {
+export default function StockItemCard({ item, busy, onEdit, onAdd, onDuplicate, onDelete }: StockItemCardProps) {
     return (
         <Card className="light" pt={{ body: { className: "p-3" }, content: { className: "p-0" } }}>
             <div className="flex items-start gap-3">
@@ -57,18 +48,28 @@ export default function StockItemCard({ item, busy, onEdit, onAdd, onTake, onDup
                             <span className="text-sm text-gray-500">
                                 <i className="pi pi-map-marker mr-1 text-xs" aria-hidden="true" />{lot.locationLabel}
                             </span>
-                            <ExpiryTag lot={lot} />
+                            <StockExpiryDateTag lot={lot} />
                             <span className="ml-auto flex gap-1">
-                                <Button icon="pi pi-check" label="Prendre" size="small" outlined disabled={busy}
-                                    aria-label={`Prendre un exemplaire : ${item.label}`} onClick={() => onTake(lot)} />
-                                <Button icon="pi pi-clone" size="small" text rounded disabled={busy}
+                                <TakeStockUnitButton unitId={lot.unitIds[0]} unitLabel={lot.unit} />
+                                <Button
+                                    icon="pi pi-clone"
+                                    size="small"
+                                    rounded text
+                                    disabled={busy}
                                     aria-label={`Ajouter un exemplaire identique : ${item.label}`}
                                     tooltip="Ajouter un exemplaire identique" tooltipOptions={{ position: "top" }}
-                                    onClick={() => onDuplicate(lot)} />
-                                <Button icon="pi pi-trash" size="small" text rounded severity="danger" disabled={busy}
+                                    onClick={() => onDuplicate(lot)}
+                                />
+                                <Button
+                                    icon="pi pi-trash"
+                                    size="small"
+                                    rounded text
+                                    severity="danger"
+                                    disabled={busy}
                                     aria-label={`Supprimer un exemplaire (erreur de saisie) : ${item.label}`}
                                     tooltip="Supprimer un exemplaire (erreur de saisie)" tooltipOptions={{ position: "top" }}
-                                    onClick={() => onDelete(lot)} />
+                                    onClick={() => onDelete(lot)}
+                                />
                             </span>
                         </li>
                     ))}
