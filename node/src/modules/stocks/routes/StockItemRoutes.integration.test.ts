@@ -72,10 +72,15 @@ describe("StockItemRoutes integration", () => {
         expect(response.body).toEqual({ barcode: "0012345678905", existingItem: null, suggestion: null });
     });
 
-    it("GET /stocks/items validates its filters", async () => {
-        expect((await request(app).get("/stocks/items").query({ expiryState: "rotten" })).status).toBe(400);
+    it("GET /stocks/items validates generic filters and stock options without pagination", async () => {
+        expect((await request(app).get("/stocks/items").query({
+            filters: JSON.stringify([{ type: "simple", field: "unknown", matchMode: "equals", value: "x" }]),
+        })).status).toBe(400);
         expect((await request(app).get("/stocks/items").query({ includeEmpty: "yes" })).status).toBe(400);
-        const response = await request(app).get("/stocks/items").query({ includeEmpty: "false", expiryState: "soon" });
+        const response = await request(app).get("/stocks/items").query({
+            includeEmpty: "false",
+            filters: JSON.stringify([{ type: "simple", field: "expiryState", matchMode: "equals", value: "soon" }]),
+        });
         expect(response.status).toBe(200);
         expect(response.body).toEqual([]);
     });

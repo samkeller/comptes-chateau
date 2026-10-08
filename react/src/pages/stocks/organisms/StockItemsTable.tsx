@@ -1,25 +1,42 @@
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Column, type ColumnEditorOptions, type ColumnEvent } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { STOCK_UNIT_UNITS, type StockItemWithLotsDto, type StockLotDto } from "@chocosous/shared";
+import { Column, type ColumnEditorOptions, type ColumnEvent, type ColumnFilterElementTemplateOptions } from "primereact/column";
+import { DataTable, type DataTableFilterMeta } from "primereact/datatable";
+import { Dropdown } from "primereact/dropdown";
+import { FilterMatchMode, type SortOrder } from "primereact/api";
+import { InputSwitch } from "primereact/inputswitch";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { STOCK_UNIT_UNITS, type StockDashboardOverviewDto, type StockExpiryState, type StockItemWithLotsDto, type StockLotDto } from "@chocosous/shared";
 import { dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import InputSearch from "@/components/atoms/primereact/InputSearch";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import { showGlobalToast } from "@/services/GlobalToast";
 import StockEntryService from "@/services/stocks/StockEntryService";
+import StockItemsService from "@/services/stocks/StockItemsService";
+import type { DataTableLazyState } from "@/services/tableQuery/DataTableQueryCodec";
 import { parseApiDate } from "@/utils/DatesUtils";
 import { duplicateLotEntry, editLotEntry, type StockLotInlineChanges } from "@/utils/stocks/stockEntryDraft";
 import DeleteStockUnitButton from "../atoms/DeleteStockUnitButton";
 import StockExpiryDateTag from "../atoms/StockExpiryDateTag";
 import TakeStockUnitButton from "../atoms/TakeStockUnitButton";
+import StockOverviewBar from "../molecules/StockOverviewBar";
 
 const entryService = new StockEntryService();
+const itemsService = new StockItemsService();
+
+const EXPIRY_FILTER_OPTIONS: { label: string; value: StockExpiryState }[] = [
+    { label: "Périmé", value: "expired" },
+    { label: "Bientôt périmé", value: "soon" },
+    { label: "À consommer", value: "ok" },
+    { label: "Sans date", value: "none" },
+];
 
 /** Une ligne par lot ; un produit épuisé garde une ligne (sans lot) pour rester visible. */
 interface StockLotRow {
     key: string;
     itemId: number;
+    label: string;
     item: StockItemWithLotsDto;
     lot: StockLotDto | null;
     copies: number | null;
@@ -27,16 +44,18 @@ interface StockLotRow {
     unit: string | null;
     locationId: number | null;
     expirationDate: Date | null;
+    expiryState: StockExpiryState | null;
 }
 
 type EditableField = "copies" | "quantity" | "unit" | "locationId" | "expirationDate";
 
 function toRows(items: StockItemWithLotsDto[]): StockLotRow[] {
     return items.flatMap((item): StockLotRow[] => item.lots.length === 0
-        ? [{ key: `item-${item.id}`, itemId: item.id, item, lot: null, copies: null, quantity: null, unit: null, locationId: null, expirationDate: null }]
+        ? [{ key: `item-${item.id}`, itemId: item.id, label: item.label, item, lot: null, copies: null, quantity: null, unit: null, locationId: null, expirationDate: null, expiryState: null }]
         : item.lots.map((lot) => ({
             key: `lot-${lot.unitIds[0]}`,
             itemId: item.id,
+            label: item.label,
             item,
             lot,
             copies: lot.unitIds.length,
@@ -44,7 +63,21 @@ function toRows(items: StockItemWithLotsDto[]): StockLotRow[] {
             unit: lot.unit,
             locationId: lot.locationId,
             expirationDate: parseApiDate(lot.expirationDate),
+            expiryState: lot.expiryState,
         })));
+}
+
+function createInitialFilters(locationId: number | null): DataTableFilterMeta {
+    return {
+        global: { value: "", matchMode: FilterMatchMode.CONTAINS },
+        locationId: { value: locationId, matchMode: FilterMatchMode.EQUALS },
+        expiryState: { value: null, matchMode: FilterMatchMode.EQUALS },
+    };
+}
+
+function getFilterValue<T>(filters: DataTableFilterMeta, field: string): T | null {
+    const filter = filters[field];
+    return filter && "value" in filter ? filter.value as T | null : null;
 }
 
 function sameValue(a: unknown, b: unknown): boolean {
@@ -73,11 +106,13 @@ function toInlineChanges(field: EditableField, value: unknown): StockLotInlineCh
 }
 
 interface StockItemsTableProps {
-    items: StockItemWithLotsDto[];
-    locations: StockLocation[];
-    emptyMessage: string;
+    locations: StockLocation[] | null;
+    overview: StockDashboardOverviewDto | null;
+    initialLocationId: number | null;
+    refreshKey: number;
     onEditItem: (item: StockItemWithLotsDto) => void;
-    onAddToItem: (item: StockItemWithLotsDto) => void;
+    onAddToItem: (item: StockItemWithLotsDto, locationId: number | null) => void;
+    onManageLocations: () => void;
     /** Appelé après toute modification du stock (édition en cellule, prise, ajout, suppression). */
     onChanged: () => void;
 }
@@ -86,9 +121,55 @@ interface StockItemsTableProps {
  * Tableau des stocks : un groupe par produit, une ligne par lot.
  * Exemplaires, contenu, unité, lieu et péremption se corrigent directement dans la cellule.
  */
-export default function StockItemsTable({ items, locations, emptyMessage, onEditItem, onAddToItem, onChanged }: StockItemsTableProps) {
-    const rows = toRows(items);
+export default function StockItemsTable({ locations, overview, initialLocationId, refreshKey, onEditItem, onAddToItem, onManageLocations, onChanged }: StockItemsTableProps) {
+    const [items, setItems] = useState<StockItemWithLotsDto[] | null>(null);
+    const [filters, setFilters] = useState<DataTableFilterMeta>(() => createInitialFilters(initialLocationId));
+    const [sortField, setSortField] = useState<string | undefined>();
+    const [sortOrder, setSortOrder] = useState<SortOrder>(1);
+    const [includeEmpty, setIncludeEmpty] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const rows = toRows(items ?? []);
     const [saving, setSaving] = useState(false);
+    const selectedLocationId = getFilterValue<number>(filters, "locationId");
+    const expiryFilter = getFilterValue<StockExpiryState>(filters, "expiryState");
+    const search = getFilterValue<string>(filters, "global") ?? "";
+    const hasFilters = search.trim() !== "" || selectedLocationId !== null || expiryFilter !== null || includeEmpty;
+    const lazyState: DataTableLazyState = {
+        first: 0,
+        rows: 50,
+        page: 1,
+        sortField,
+        sortOrder,
+        filters,
+    };
+
+    useEffect(() => {
+        if (locations && selectedLocationId !== null && !locations.some((location) => location.id === selectedLocationId)) {
+            setFilters((current) => ({
+                ...current,
+                locationId: { value: null, matchMode: FilterMatchMode.EQUALS },
+            }));
+        }
+    }, [locations, selectedLocationId]);
+
+    useEffect(() => {
+        let active = true;
+        const timeout = window.setTimeout(() => {
+            setLoading(true);
+            itemsService.search(lazyState, includeEmpty)
+                .then((loaded) => { if (active) setItems(loaded); })
+                .catch(() => { if (active) setItems((current) => current ?? []); })
+                .finally(() => { if (active) setLoading(false); });
+        }, 250);
+        return () => {
+            active = false;
+            window.clearTimeout(timeout);
+        };
+    }, [filters, includeEmpty, refreshKey, sortField, sortOrder]);
+
+    const setFilter = (field: string, value: unknown, matchMode = FilterMatchMode.EQUALS): void => {
+        setFilters((current) => ({ ...current, [field]: { value, matchMode } }));
+    };
 
     const saveCell = async (event: ColumnEvent): Promise<void> => {
         const row = event.rowData as StockLotRow;
@@ -133,23 +214,50 @@ export default function StockItemsTable({ items, locations, emptyMessage, onEdit
                     className="h-8 w-8 shrink-0 rounded object-contain" />
             )}
             <div className="min-w-0 flex-1">
-                <span className="font-semibold">{row.item.label}</span>
-                <span className="ml-2 text-sm text-gray-500">
+                <span className="text-sm text-gray-500">
                     {row.item.brand && <>{row.item.brand} · </>}
                     {row.item.stockUnitsCount > 0 ? `${row.item.stockUnitsCount} en stock` : "Épuisé"}
                 </span>
             </div>
             <Button icon="pi pi-plus" rounded text aria-label={`Ajouter du stock : ${row.item.label}`}
-                tooltip="Ajouter" tooltipOptions={{ position: "top" }} onClick={() => onAddToItem(row.item)} />
+                tooltip="Ajouter" tooltipOptions={{ position: "top" }} onClick={() => onAddToItem(row.item, selectedLocationId)} />
             <Button icon="pi pi-pencil" rounded text severity="secondary" aria-label={`Modifier ${row.item.label}`}
                 tooltip="Modifier le produit" tooltipOptions={{ position: "top" }} onClick={() => onEditItem(row.item)} />
         </div>
     );
 
     return (
-        <DataTable value={rows} dataKey="key" editMode="cell" size="small" loading={saving}
-            rowGroupMode="subheader" groupRowsBy="itemId" rowGroupHeaderTemplate={groupHeader}
-            breakpoint="768px" emptyMessage={emptyMessage}>
+        <div className="flex flex-col gap-3">
+            <StockOverviewBar overview={overview} expiryFilter={expiryFilter}
+                onExpiryFilterChange={(state) => setFilter("expiryState", state)} />
+            <div className="flex flex-wrap items-center gap-2">
+                <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search}
+                    className="w-full md:w-80" onChange={(event) => setFilter("global", event.target.value, FilterMatchMode.CONTAINS)}
+                    aria-label="Rechercher un produit" />
+                <label className="flex items-center gap-2 text-sm">
+                    <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
+                    Afficher les épuisés
+                </label>
+                <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
+                    tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }} onClick={onManageLocations} />
+            </div>
+            {items === null && loading ? (
+                <div className="flex justify-center p-8"><ProgressSpinner /></div>
+            ) : (
+            <DataTable value={rows} dataKey="key" editMode="cell" size="small" lazy loading={saving || loading}
+                sortMode="single" sortField={sortField} sortOrder={sortOrder} removableSort
+                globalFilterFields={["label", "item.brand", "item.barcode"]}
+                onSort={(event) => {
+                    setSortField(event.sortField || undefined);
+                    setSortOrder(event.sortOrder as SortOrder);
+                }}
+                filterDisplay="row" filters={filters} onFilter={(event) => setFilters(event.filters)}
+                rowGroupMode="subheader" groupRowsBy="itemId" rowGroupHeaderTemplate={groupHeader}
+                breakpoint="768px" emptyMessage={hasFilters ? "Aucun produit ne correspond à ces filtres." : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}>
+            <Column field="label" header="Produit" sortable
+                body={(row: StockLotRow) => !row.lot || row.lot.unitIds[0] === row.item.lots[0]?.unitIds[0]
+                    ? <span className="font-semibold">{row.item.label}</span>
+                    : null} />
             <Column field="copies" header="Exemplaires" style={{ width: "8rem" }}
                 body={lotBody((_row, lot) => `${lot.unitIds.length} ×`)}
                 editor={lotEditor((options) => numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" }))}
@@ -162,12 +270,22 @@ export default function StockItemsTable({ items, locations, emptyMessage, onEdit
                 body={lotBody((_row, lot) => lot.unit)}
                 editor={lotEditor((options) => dropdownEditor(options, [...STOCK_UNIT_UNITS]))}
                 onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="locationId" header="Lieu"
+            <Column field="locationId" header="Lieu" filter showFilterMenu={false}
                 body={lotBody((_row, lot) => lot.locationLabel)}
-                editor={lotEditor((options) => dropdownEditor(options, locations))}
+                filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                    <Dropdown value={options.value ?? null} options={locations ?? []}
+                        optionLabel="label" optionValue="id" showClear placeholder="Tous les lieux"
+                        onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                )}
+                editor={lotEditor((options) => dropdownEditor(options, locations ?? []))}
                 onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="expirationDate" header="Péremption" style={{ width: "11rem" }}
+            <Column field="expirationDate" filterField="expiryState" header="Péremption" style={{ width: "11rem" }} filter showFilterMenu={false}
                 body={lotBody((_row, lot) => <StockExpiryDateTag lot={lot} />)}
+                filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                    <Dropdown value={options.value ?? null} options={EXPIRY_FILTER_OPTIONS}
+                        optionLabel="label" optionValue="value" showClear placeholder="Tous les états"
+                        onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                )}
                 editor={lotEditor((options) => (
                     <Calendar value={options.value as Date | null} dateFormat="dd/mm/yy" showButtonBar placeholder="Sans date"
                         inputClassName="w-28" onChange={(event) => options.editorCallback?.(event.value instanceof Date ? event.value : null)} />
@@ -184,6 +302,8 @@ export default function StockItemsTable({ items, locations, emptyMessage, onEdit
                         afterDeleteUnit={onChanged} />
                 </div>
             ))} />
-        </DataTable>
+            </DataTable>
+            )}
+        </div>
     );
 }

@@ -1,19 +1,19 @@
 import { Brackets, ObjectLiteral, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
-import {
-    ParsedTableFilterConstraint,
-    ParsedTableFilter,
-    ParsedTableOperatorFilter,
-    ParsedTableQuerySort,
-    ParsedTableSimpleFilter
-} from "./parsers/TableQueryParser";
+import type {
+    TableQueryFilter,
+    TableQueryFilterConstraint,
+    TableQueryOperatorFilter,
+    TableQuerySimpleFilter,
+    TableQuerySort,
+} from "@chocosous/shared";
 
 export interface TableSortHandler<TEntity extends ObjectLiteral> {
     apply(qb: SelectQueryBuilder<TEntity>, direction: "ASC" | "DESC"): void;
 }
 
 export interface TableFilterHandler<TEntity extends ObjectLiteral> {
-    applySimple?(qb: SelectQueryBuilder<TEntity>, filter: ParsedTableSimpleFilter): void;
-    applyOperator?(qb: SelectQueryBuilder<TEntity>, filter: ParsedTableOperatorFilter): void;
+    applySimple?(qb: SelectQueryBuilder<TEntity>, filter: TableQuerySimpleFilter): void;
+    applyOperator?(qb: SelectQueryBuilder<TEntity>, filter: TableQueryOperatorFilter): void;
 }
 
 export interface TableQueryMapperConfig<TEntity extends ObjectLiteral> {
@@ -68,7 +68,7 @@ export function createDateSimpleFilterHandler<TEntity extends ObjectLiteral>(
 ): TableFilterHandler<TEntity> {
     const applyDateConstraint = (
         qb: WhereExpressionBuilder,
-        constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
+        constraint: TableQueryFilterConstraint | TableQuerySimpleFilter,
         suffix: string,
         useOr: boolean
     ): void => {
@@ -156,7 +156,7 @@ export function createTextSimpleFilterHandler<TEntity extends ObjectLiteral>(
 ): TableFilterHandler<TEntity> {
     const applyTextConstraint = (
         qb: WhereExpressionBuilder,
-        constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
+        constraint: TableQueryFilterConstraint | TableQuerySimpleFilter,
         suffix: string,
         useOr: boolean
     ): void => {
@@ -255,7 +255,7 @@ export function createNumericEqualsSimpleFilterHandler<TEntity extends ObjectLit
 
     const applyNumericEqualsConstraint = (
         qb: WhereExpressionBuilder,
-        constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
+        constraint: TableQueryFilterConstraint | TableQuerySimpleFilter,
         suffix: string,
         useOr: boolean
     ): void => {
@@ -323,7 +323,7 @@ export function createBooleanSimpleFilterHandler<TEntity extends ObjectLiteral>(
     paramName: string
 ): TableFilterHandler<TEntity> {
     const toBooleanValue = (
-        constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter
+        constraint: TableQueryFilterConstraint | TableQuerySimpleFilter
     ): boolean | null => {
         if (typeof constraint.value === "boolean") {
             return constraint.value;
@@ -354,7 +354,7 @@ export function createBooleanSimpleFilterHandler<TEntity extends ObjectLiteral>(
 
     const applyBooleanConstraint = (
         qb: WhereExpressionBuilder,
-        constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
+        constraint: TableQueryFilterConstraint | TableQuerySimpleFilter,
         suffix: string,
         useOr: boolean
     ): void => {
@@ -392,7 +392,7 @@ export function createBooleanSimpleFilterHandler<TEntity extends ObjectLiteral>(
     };
 }
 
-function toNumericValue(constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter): number | null {
+function toNumericValue(constraint: TableQueryFilterConstraint | TableQuerySimpleFilter): number | null {
     const numericValue = Number(constraint.value);
     return Number.isNaN(numericValue) ? null : numericValue;
 }
@@ -418,7 +418,7 @@ function numericSqlOperator(matchMode: string): string {
 function applyNumericConstraint(
     qb: WhereExpressionBuilder,
     fieldSql: string,
-    constraint: ParsedTableFilterConstraint | ParsedTableSimpleFilter,
+    constraint: TableQueryFilterConstraint | TableQuerySimpleFilter,
     paramName: string,
     useOr: boolean
 ): void {
@@ -525,7 +525,7 @@ export function createNumericComparisonFilterHandler<TEntity extends ObjectLiter
 export default class TableQueryMapper {
     static applySort<TEntity extends ObjectLiteral>(
         qb: SelectQueryBuilder<TEntity>,
-        sort: ParsedTableQuerySort | null,
+        sort: TableQuerySort | null,
         sortHandlers: TableQueryMapperConfig<TEntity>["sortHandlers"],
         defaultSort: TableQueryMapperConfig<TEntity>["defaultSort"]
     ): void {
@@ -541,7 +541,7 @@ export default class TableQueryMapper {
 
     static applyFilters<TEntity extends ObjectLiteral>(
         qb: SelectQueryBuilder<TEntity>,
-        filters: ParsedTableFilter[],
+        filters: TableQueryFilter[],
         filterHandlers: Record<string, TableFilterHandler<TEntity>>
     ): void {
         filters.forEach((filter) => {

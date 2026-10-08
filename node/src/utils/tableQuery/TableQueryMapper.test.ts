@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ObjectLiteral, SelectQueryBuilder } from "typeorm";
 import TableQueryMapper, { TableFilterHandler, TableSortHandler } from "./TableQueryMapper";
-import { ParsedTableFilter, ParsedTableQuerySort } from "./parsers/TableQueryParser";
+import type { TableQueryFilter, TableQuerySort } from "@chocosous/shared";
 
 class MockQueryBuilder<TEntity extends ObjectLiteral> {
     public orderByCalls: Array<{ field: string; direction: "ASC" | "DESC" }> = [];
@@ -35,7 +35,7 @@ describe("TableQueryMapper", () => {
             amount: amountHandler
         };
 
-        const sort: ParsedTableQuerySort = { field: "amount", direction: "ASC" };
+        const sort: TableQuerySort = { field: "amount", direction: "ASC" };
 
         TableQueryMapper.applySort(
             qb as unknown as SelectQueryBuilder<ObjectLiteral>,
@@ -74,7 +74,7 @@ describe("TableQueryMapper", () => {
         const simpleApply = vi.fn();
         const operatorApply = vi.fn();
 
-        const filters: ParsedTableFilter[] = [
+        const filters: TableQueryFilter[] = [
             {
                 type: "simple",
                 field: "label",

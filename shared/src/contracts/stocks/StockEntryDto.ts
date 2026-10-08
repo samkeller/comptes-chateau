@@ -86,13 +86,11 @@ export type StockEntryLotDto = z.infer<typeof StockEntryLotSchema>;
 export type StockEntryItemDto = z.infer<typeof StockEntryItemSchema>;
 export type StockEntryLotInput = z.input<typeof StockEntryLotSchema>;
 
+/** Option métier Stocks; tri et filtres tabulaires sont validés par le parseur générique. */
 export const StockItemsQuerySchema = z.object({
-    search: z.string().trim().max(100).optional(),
-    locationId: z.coerce.number().int().positive().optional(),
-    expiryState: z.enum(STOCK_EXPIRY_STATES).optional(),
     /** Inclut les produits épuisés (jamais supprimés du catalogue). */
     includeEmpty: z.enum(["true", "false"]).transform((value) => value === "true").optional(),
-});
+}).loose();
 
 export type StockItemsQueryDto = z.infer<typeof StockItemsQuerySchema>;
 

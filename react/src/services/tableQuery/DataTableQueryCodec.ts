@@ -4,46 +4,17 @@ import {
     DataTableFilterMetaData,
     DataTableOperatorFilterMetaData
 } from "primereact/datatable";
+import type {
+    TableQuery,
+    TableQueryFilter,
+    TableQueryFilterConstraint,
+    TableQueryPagination,
+    TableQuerySort,
+} from "@chocosous/shared";
 import { formatApiDate } from "../../utils/DatesUtils";
 
-export interface TablePagination {
-    first: number;
-    rows: number;
-    page: number;
-    skip: number;
-    take: number;
-}
-
-export interface TableSort {
-    field: string;
-    direction: "ASC" | "DESC";
-}
-
-export interface TableFilterConstraint {
-    matchMode: string;
-    value: unknown;
-}
-
-export interface TableSimpleFilter {
-    type: "simple";
-    field: string;
-    matchMode: string;
-    value: unknown;
-}
-
-export interface TableOperatorFilter {
-    type: "operator";
-    field: string;
-    operator: "and" | "or";
-    constraints: TableFilterConstraint[];
-}
-
-export type TableFilter = TableSimpleFilter | TableOperatorFilter;
-
-export interface TableQuery {
-    pagination: TablePagination;
-    sort: TableSort | null;
-    filters: TableFilter[];
+export interface DataTableQueryOptions {
+    includePagination?: boolean;
 }
 
 export interface DataTableLazyState {
@@ -62,10 +33,14 @@ export default class DataTableQueryCodec {
     /**
      * Construit le contrat API complet (pagination + tri + filtres)
      * a partir du state lazy PrimeReact.
+     * @param lazyState L'état lazy du DataTable PrimeReact.
+     * @param options Options de construction de la query.
+     * @default {includePagination: true}
+     * @returns Le contrat API complet.
      */
-    static toQuery(lazyState: DataTableLazyState): TableQuery {
+    static toQuery(lazyState: DataTableLazyState, options: DataTableQueryOptions = {}): TableQuery {
         return {
-            pagination: this.toPagination(lazyState),
+            ...(options.includePagination === false ? {} : { pagination: this.toPagination(lazyState) }),
             sort: this.toSort(lazyState),
             filters: this.toFilters(lazyState.filters)
         };
@@ -74,11 +49,8 @@ export default class DataTableQueryCodec {
     /**
      * Extrait la pagination de l'état DataTable.
      */
-    static toPagination(lazyState: DataTableLazyState): TablePagination {
+    static toPagination(lazyState: DataTableLazyState): TableQueryPagination {
         return {
-            first: lazyState.first,
-            rows: lazyState.rows,
-            page: lazyState.page,
             skip: lazyState.first,
             take: lazyState.rows
         };
@@ -87,7 +59,7 @@ export default class DataTableQueryCodec {
     /**
      * Extrait le tri de l'état DataTable.
      */
-    static toSort(lazyState: DataTableLazyState): TableSort | null {
+    static toSort(lazyState: DataTableLazyState): TableQuerySort | null {
         if (!lazyState.sortField) {
             return null;
         }
@@ -105,8 +77,8 @@ export default class DataTableQueryCodec {
         * - Les filtres composés deviennent `type: "operator"`.
         * - Les valeurs vides sont ignorees pour eviter des filtres inutiles.
      */
-    static toFilters(filtersMeta: DataTableFilterMeta): TableFilter[] {
-        const filters: TableFilter[] = [];
+    static toFilters(filtersMeta: DataTableFilterMeta): TableQueryFilter[] {
+        const filters: TableQueryFilter[] = [];
 
         Object.entries(filtersMeta).forEach(([field, rawMeta]) => {
             if (!rawMeta) {
@@ -114,7 +86,7 @@ export default class DataTableQueryCodec {
             }
 
             if (this.isOperatorMeta(rawMeta)) {
-                const constraints = rawMeta.constraints.reduce<TableFilterConstraint[]>((acc, constraint) => {
+                const constraints = rawMeta.constraints.reduce<TableQueryFilterConstraint[]>((acc, constraint) => {
                     const normalizedValue = this.normalizeValue(constraint.value);
 
                     if (this.isEmptyValue(normalizedValue)) {
@@ -166,12 +138,14 @@ export default class DataTableQueryCodec {
         * - `sortField` / `sortOrder`
         * - `filters` (JSON stringifie) si present
      */
-    static toQueryParams(lazyState: DataTableLazyState): URLSearchParams {
-        const query = this.toQuery(lazyState);
+    static toQueryParams(lazyState: DataTableLazyState, options: DataTableQueryOptions = {}): URLSearchParams {
+        const query = this.toQuery(lazyState, options);
         const params = new URLSearchParams();
 
-        params.append("skip", String(query.pagination.skip));
-        params.append("take", String(query.pagination.take));
+        if (query.pagination) {
+            params.append("skip", String(query.pagination.skip));
+            params.append("take", String(query.pagination.take));
+        }
 
         if (query.sort) {
             params.append("sortField", query.sort.field);

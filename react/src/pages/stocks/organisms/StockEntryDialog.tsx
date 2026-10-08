@@ -32,6 +32,8 @@ export interface StockEntryDialogRequest {
     addLot?: boolean;
     /** Ouvre directement la caméra pour scanner un code-barres. */
     scan?: boolean;
+    /** Lieu sélectionné dans le tableau pour préremplir le nouveau lot. */
+    defaultLocationId?: number | null;
 }
 
 interface StockEntryDialogProps {
@@ -52,14 +54,15 @@ type LookupInfo = { severity: "info" | "success"; text: string; fromOpenFoodFact
 export default function StockEntryDialog({ request, locations, defaultLocationId, onClose, onSaved }: StockEntryDialogProps) {
     const { isMobile } = useScreen();
     const showToast = useGlobalToast();
-    const [draft, setDraft] = useState<StockEntryDraft | null>(() => request.itemId ? null : emptyEntryDraft(defaultLocationId));
+    const initialLocationId = request.defaultLocationId ?? defaultLocationId;
+    const [draft, setDraft] = useState<StockEntryDraft | null>(() => request.itemId ? null : emptyEntryDraft(initialLocationId));
     const [scanning, setScanning] = useState(request.scan === true);
     const [lookingUp, setLookingUp] = useState(false);
     const [lookupInfo, setLookupInfo] = useState<LookupInfo | null>(null);
     const [productExpanded, setProductExpanded] = useState(false);
     const [suggestions, setSuggestions] = useState<StockItemWithLotsDto[]>([]);
     const [saving, setSaving] = useState(false);
-    const lastLocationId = useRef(defaultLocationId);
+    const lastLocationId = useRef(initialLocationId);
     const isEditing = request.itemId !== undefined && !request.addLot;
 
     const onCloseRef = useRef(onClose);
@@ -155,7 +158,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
 
     const searchItems = async (query: string): Promise<void> => {
         try {
-            setSuggestions(await itemsService.search({ search: query, includeEmpty: true }));
+            setSuggestions(await itemsService.searchByText(query, true));
         } catch {
             setSuggestions([]);
         }

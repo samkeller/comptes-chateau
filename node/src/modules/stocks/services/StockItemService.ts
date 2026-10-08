@@ -1,17 +1,16 @@
 import { AppDataSource } from "../../../db/dataSource";
-import { ILike, In, IsNull, Not, type EntityManager, type FindOptionsWhere, type Repository } from "typeorm";
+import { In, IsNull, Not, type EntityManager, type Repository } from "typeorm";
+import type { ParsedQs } from "qs";
 import { StockItem } from "../entities/StockItem";
-import type { StockEntryItemDto, StockItemsQueryDto, StockItemWithLotsDto, StockProductSuggestionDto } from "@chocosous/shared";
+import type { StockEntryItemDto, StockItemWithLotsDto, StockProductSuggestionDto, StockExpiryState } from "@chocosous/shared";
 import { barcodeVariants, normalizeBarcode } from "@chocosous/shared";
 import { toStockItemWithLotsDto } from "../mappers/StockItemMapper";
 import { getExpiryBounds, toStockLots } from "../mappers/StockLotMapper";
-import { notFound } from "../../../utils/AppError";
+import { badRequest, notFound } from "../../../utils/AppError";
 import StockUnitService from "./StockUnitService";
-
-/** Échappe les jokers SQL d'une recherche utilisateur. */
-function escapeLike(value: string): string {
-    return value.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
+import TableQueryMapper from "../../../utils/tableQuery/TableQueryMapper";
+import TableQueryParser from "../../../utils/tableQuery/TableQueryParser";
+import { createStockItemsTableQueryConfig } from "../query/stockItemsTableQueryConfig";
 
 /**
  * Catalogue des produits. Un produit n'est jamais supprimé : épuisé, il reste retrouvable.
@@ -25,45 +24,55 @@ export default class StockItemService {
         this.stockUnitService = new StockUnitService(em);
     }
 
-    /**
-     * Liste les produits avec leurs lots en une requête produits + une requête exemplaires.
-     * - `search` : nom, marque ou code-barres ;
-     * - `locationId` : ne garde que les lots de ce lieu ;
-     * - `expiryState` : produits ayant au moins un lot dans cet état ;
-     * - `includeEmpty` : inclut les produits sans lot (épuisés, ou absents du lieu filtré).
-     * Tri : prochaine échéance d'abord, puis nom.
-     */
-    async search(query: StockItemsQueryDto, now: Date = new Date()): Promise<StockItemWithLotsDto[]> {
-        const search = query.search?.trim();
-        let where: FindOptionsWhere<StockItem>[] | undefined;
-        if (search) {
-            const pattern = `%${escapeLike(search)}%`;
-            where = [{ label: ILike(pattern) }, { brand: ILike(pattern) }];
-            const barcode = normalizeBarcode(search);
-            if (barcode) where.push({ barcode: In(barcodeVariants(barcode)) });
-        }
-
-        const items = await this.stockItemRepo.find({ where, order: { label: "ASC", id: "ASC" } });
+    /** Liste les produits selon les filtres/tri PrimeReact et agrège leurs exemplaires en lots côté serveur. */
+    async search(query: ParsedQs, includeEmpty = false, now: Date = new Date()): Promise<StockItemWithLotsDto[]> {
         const bounds = getExpiryBounds(now);
-        const units = await this.stockUnitService.findByItemIds(items.map((item) => item.id), query.locationId);
+        const parserOptions = {
+            pagination: false as const,
+            allowedSortFields: new Set(["label", "brand"]),
+            allowedFilterFields: new Set(["global", "label", "brand", "barcode", "locationId", "expiryState"]),
+        };
+        const parsed = TableQueryParser.parse(query, parserOptions);
+        const locationFilter = parsed.filters.find((filter) => filter.field === "locationId");
+        const locationId = locationFilter?.type === "simple" ? Number(locationFilter.value) : null;
+        const expiryFilter = parsed.filters.find((filter) => filter.field === "expiryState");
+        const expiryState = expiryFilter?.type === "simple" ? expiryFilter.value as StockExpiryState : null;
+        const config = createStockItemsTableQueryConfig({ bounds, includeEmpty, locationId, expiryState });
+        const queryBuilder = this.stockItemRepo.createQueryBuilder("item")
+            .leftJoin("item.units", "filterUnit")
+            .distinct(true);
+
+        if (!includeEmpty) {
+            queryBuilder.andWhere('"filterUnit"."itemId" IS NOT NULL');
+        }
+        TableQueryMapper.applyFilters(queryBuilder, parsed.filters, config.filterHandlers);
+        TableQueryMapper.applySort(queryBuilder, parsed.sort, config.sortHandlers, config.defaultSort);
+
+        const items = await queryBuilder.getMany();
+        const units = await this.stockUnitService.findByItemIds(items.map((item) => item.id), locationId ?? undefined);
 
         const unitsByItem = new Map<number, typeof units>();
         for (const unit of units) {
-            unitsByItem.set(unit.itemId, [...(unitsByItem.get(unit.itemId) ?? []), unit]);
+            const itemUnits = unitsByItem.get(unit.itemId);
+            if (itemUnits) itemUnits.push(unit);
+            else unitsByItem.set(unit.itemId, [unit]);
         }
 
-        return items
-            .map((item) => toStockItemWithLotsDto(item, toStockLots(unitsByItem.get(item.id) ?? [], bounds)))
-            .filter((item) => (query.includeEmpty || item.lots.length > 0)
-                && (!query.expiryState || item.lots.some((lot) => lot.expiryState === query.expiryState)))
-            .sort((a, b) => {
-                if (a.nextStockUnitExpiration !== b.nextStockUnitExpiration) {
-                    if (a.nextStockUnitExpiration === null) return 1;
-                    if (b.nextStockUnitExpiration === null) return -1;
-                    return a.nextStockUnitExpiration < b.nextStockUnitExpiration ? -1 : 1;
-                }
-                return a.label.localeCompare(b.label, "fr");
+        const result = items
+            .map((item) => {
+                const lots = toStockLots(unitsByItem.get(item.id) ?? [], bounds)
+                    .filter((lot) => expiryState === null || lot.expiryState === expiryState);
+                return toStockItemWithLotsDto(item, lots);
             });
+        if (parsed.sort) return result;
+        return result.sort((a, b) => {
+            if (a.nextStockUnitExpiration !== b.nextStockUnitExpiration) {
+                if (a.nextStockUnitExpiration === null) return 1;
+                if (b.nextStockUnitExpiration === null) return -1;
+                return a.nextStockUnitExpiration < b.nextStockUnitExpiration ? -1 : 1;
+            }
+            return a.label.localeCompare(b.label, "fr");
+        });
     }
 
     /** Produit et tous ses lots (tous lieux). */

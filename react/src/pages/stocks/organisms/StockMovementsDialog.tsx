@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import type { StockMovementDto } from "@chocosous/shared";
 import StockDashboardService from "@/services/stocks/StockDashboardService";
 import { formatDistanceToNow, parseDateToDisplay } from "@/utils/DatesUtils";
 import StockMovementTypeTag from "../atoms/StockMovementTypeTag";

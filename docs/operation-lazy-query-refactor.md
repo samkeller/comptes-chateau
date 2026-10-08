@@ -16,6 +16,7 @@ Objectif architectural:
 - Front: un codec unique de serialisation.
 - Back: un parser de validation + un mapper QueryBuilder.
 - Endpoint-specifique: configuration explicite des champs autorises et de leur traduction SQL.
+- Shared: types et schemas Zod du contrat HTTP neutre (`shared/src/contracts/TableQuery.ts`).
 
 ## Flux Bout-En-Bout
 
@@ -27,12 +28,20 @@ Fichier cle: `react/src/services/tableQuery/DataTableQueryCodec.ts`
 - tri: `sortField`, `sortOrder`
 - filtres: `filters` (JSON stringifie), sous forme d'objets `simple` ou `operator`
 
+Les types API (`TableQuery`, tri, filtres et pagination `skip/take`) et le schema des filtres sont definis une seule fois dans
+`shared/src/contracts/TableQuery.ts`. Les types d'etat UI (`first`, `rows`, `page`, `DataTableFilterMeta`) restent dans le front.
+
 Le codec normalise aussi les valeurs:
 - dates -> `YYYY-MM-DD`
 - valeurs vides -> ignorees (pas envoyees)
 
+La pagination est incluse par defaut pour conserver le contrat des tableaux lazy existants. Les tableaux qui
+chargent toute leur liste peuvent appeler `toQueryParams(state, { includePagination: false })` : le codec
+emet alors uniquement le tri et les filtres. Cote backend, `TableQueryParser` accepte le meme mode avec
+`pagination: false`; les allowlists de tri et de filtres restent obligatoires.
+
 ### 2) Contrat API -> Parse/Validation (back)
-Fichier cle: `node/src/modules/accounts/services/queryMappers/parsers/TableQueryParser.ts`
+Fichier cle: `node/src/utils/tableQuery/TableQueryParser.ts`
 
 `TableQueryParser.parse(req.query, options)` valide:
 - `skip`, `take` (bornes)
@@ -42,7 +51,7 @@ Fichier cle: `node/src/modules/accounts/services/queryMappers/parsers/TableQuery
 Le parseur retourne un objet type `ParsedTableQuery` utilisable par le mapper.
 
 ### 3) ParsedQuery -> QueryBuilder SQL (back)
-Fichier cle: `node/src/modules/accounts/services/queryMappers/TableQueryMapper.ts`
+Fichier cle: `node/src/utils/tableQuery/TableQueryMapper.ts`
 
 `TableQueryMapper` applique:
 - les filtres via handlers (`applySimple` / `applyOperator`)
@@ -170,8 +179,8 @@ Tests a verifier a chaque evolution:
 
 Fichiers qui portent le contrat et doivent rester documentes:
 - `react/src/services/tableQuery/DataTableQueryCodec.ts`
-- `node/src/modules/accounts/services/queryMappers/parsers/TableQueryParser.ts`
-- `node/src/modules/accounts/services/queryMappers/TableQueryMapper.ts`
+- `node/src/utils/tableQuery/TableQueryParser.ts`
+- `node/src/utils/tableQuery/TableQueryMapper.ts`
 - `node/src/modules/accounts/services/queryMappers/parsers/QueryParamsParser.ts`
 
 Regle: toute methode publique de parsing/serialisation doit conserver un JSDoc qui precise:

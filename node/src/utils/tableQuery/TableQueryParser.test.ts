@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import TableQueryParser from "./TableQueryParser";
-import { AppError } from "../../../../../utils/AppError";
+import { AppError } from "../AppError";
 
 describe("TableQueryParser", () => {
     const options = {
@@ -51,6 +51,20 @@ describe("TableQueryParser", () => {
         expect(parsed.pagination).toEqual({ skip: 0, take: 50 });
         expect(parsed.sort).toBeNull();
         expect(parsed.filters).toEqual([]);
+    });
+
+    it("parses sort and filters without pagination when configured", () => {
+        const parsed = TableQueryParser.parse({
+            sortField: "amount",
+            sortOrder: "DESC",
+            filters: JSON.stringify([{ type: "simple", field: "label", matchMode: "contains", value: "riz" }])
+        }, { ...options, pagination: false });
+
+        expect(parsed).toEqual({
+            sort: { field: "amount", direction: "DESC" },
+            filters: [{ type: "simple", field: "label", matchMode: "contains", value: "riz" }]
+        });
+        expect("pagination" in parsed).toBe(false);
     });
 
     it("falls back to ASC for unknown sortOrder", () => {

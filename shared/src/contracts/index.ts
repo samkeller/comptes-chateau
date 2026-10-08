@@ -1,4 +1,5 @@
 export * from "./stocks";
+export * from "./TableQuery";
 
 export {
     SaveNatureSchema,

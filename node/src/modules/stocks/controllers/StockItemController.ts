@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import type { ParsedQs } from "qs";
 import type { StockItemsQueryDto } from "@chocosous/shared";
 import StockItemService from "../services/StockItemService";
 import StockBarcodeLookupService from "../services/StockBarcodeLookupService";
@@ -12,7 +13,8 @@ export default class StockItemController {
     };
 
     search = async (req: Request, res: Response) => {
-        res.status(200).json(await this.stockItemService.search(req.query as unknown as StockItemsQueryDto));
+        const { includeEmpty } = req.query as StockItemsQueryDto;
+        res.status(200).json(await this.stockItemService.search(req.query as ParsedQs, includeEmpty ?? false));
     };
 
     getOne = async (req: Request, res: Response) => {

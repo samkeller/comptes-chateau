@@ -1,30 +1,26 @@
 import axios from "axios";
-import type { StockExpiryState, StockItemWithLotsDto } from "@chocosous/shared";
+import { FilterMatchMode } from "primereact/api";
+import type { DataTableFilterMeta } from "primereact/datatable";
+import type { StockItemWithLotsDto } from "@chocosous/shared";
 import BaseService from "../BaseService";
-
-export interface StockItemsFilters {
-    search?: string;
-    locationId?: number | null;
-    expiryState?: StockExpiryState | null;
-    /** Inclut les produits épuisés (jamais supprimés du catalogue). */
-    includeEmpty?: boolean;
-}
+import DataTableQueryCodec, { type DataTableLazyState } from "../tableQuery/DataTableQueryCodec";
 
 export default class StockItemsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/items`;
 
-    /** Produits et lots agrégés côté serveur, filtrés et triés par prochaine péremption. */
-    async search(filters: StockItemsFilters = {}): Promise<StockItemWithLotsDto[]> {
-        const search = filters.search?.trim();
-        const response = await axios.get<StockItemWithLotsDto[]>(this.stocksApiUrl, {
-            params: {
-                ...(search ? { search } : {}),
-                ...(filters.locationId ? { locationId: filters.locationId } : {}),
-                ...(filters.expiryState ? { expiryState: filters.expiryState } : {}),
-                ...(filters.includeEmpty ? { includeEmpty: "true" } : {}),
-            },
-        });
+    /** Produits et lots filtrés/triés par le backend via le contrat DataTable générique. */
+    async search(state: DataTableLazyState, includeEmpty = false): Promise<StockItemWithLotsDto[]> {
+        const params = DataTableQueryCodec.toQueryParams(state, { includePagination: false });
+        if (includeEmpty) params.set("includeEmpty", "true");
+        const response = await axios.get<StockItemWithLotsDto[]>(this.stocksApiUrl, { params });
         return response.data;
+    }
+
+    async searchByText(search: string, includeEmpty = false): Promise<StockItemWithLotsDto[]> {
+        const filters: DataTableFilterMeta = {
+            global: { value: search, matchMode: FilterMatchMode.CONTAINS },
+        };
+        return this.search({ first: 0, rows: 50, page: 1, sortOrder: 1, filters }, includeEmpty);
     }
 
     async getOne(id: number): Promise<StockItemWithLotsDto> {

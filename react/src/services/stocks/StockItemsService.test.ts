@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
+import { FilterMatchMode } from "primereact/api";
 import type { SaveStockEntryDto, StockItemWithLotsDto } from "@chocosous/shared";
 import StockItemsService from "./StockItemsService";
 import StockEntryService from "./StockEntryService";
@@ -16,17 +17,36 @@ const item: StockItemWithLotsDto = {
 describe("stock services", () => {
     beforeEach(() => { vi.clearAllMocks(); });
 
-    it("sends only the active filters when searching items", async () => {
+    it("serializes DataTable filters and sort without pagination when searching items", async () => {
         vi.mocked(axios.get).mockResolvedValueOnce({ data: [item] });
-        expect(await new StockItemsService().search({ search: "  riz ", locationId: 2, expiryState: "soon", includeEmpty: true }))
+        const state = {
+            first: 0, rows: 50, page: 1, sortField: "label", sortOrder: 1 as const,
+            filters: {
+                global: { value: "riz", matchMode: FilterMatchMode.CONTAINS },
+                locationId: { value: 2, matchMode: FilterMatchMode.EQUALS },
+                expiryState: { value: "soon", matchMode: FilterMatchMode.EQUALS },
+            },
+        };
+        expect(await new StockItemsService().search(state, true))
             .toEqual([item]);
         expect(axios.get).toHaveBeenCalledWith("/api/stocks/items", {
-            params: { search: "riz", locationId: 2, expiryState: "soon", includeEmpty: "true" },
+            params: new URLSearchParams({
+                sortField: "label",
+                sortOrder: "ASC",
+                filters: JSON.stringify([
+                    { type: "simple", field: "global", matchMode: "contains", value: "riz" },
+                    { type: "simple", field: "locationId", matchMode: "equals", value: 2 },
+                    { type: "simple", field: "expiryState", matchMode: "equals", value: "soon" },
+                ]),
+                includeEmpty: "true",
+            }),
         });
 
         vi.mocked(axios.get).mockResolvedValueOnce({ data: [] });
-        await new StockItemsService().search({ search: " ", locationId: null, expiryState: null, includeEmpty: false });
-        expect(axios.get).toHaveBeenLastCalledWith("/api/stocks/items", { params: {} });
+        await new StockItemsService().searchByText(" ", true);
+        expect(axios.get).toHaveBeenLastCalledWith("/api/stocks/items", {
+            params: new URLSearchParams({ includeEmpty: "true" }),
+        });
     });
 
     it("loads one item with its lots", async () => {
