@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StockItemWithLotsDto } from "@chocosous/shared";
 import {
-    applySuggestion, countNewCopies, duplicateLotEntry, emptyEntryDraft, entryDraftFromItem, EXPIRATION_SHORTCUTS,
+    applySuggestion, countNewCopies, duplicateLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem, EXPIRATION_SHORTCUTS,
     getEntryDraftError, toSaveStockEntryDto,
 } from "./stockEntryDraft";
 
@@ -89,5 +89,22 @@ describe("stock entry draft", () => {
             item: { id: 4, label: "Lait", defaultUnit: "pièce" },
             lots: [{ unitIds: [], copies: 1, locationId: 1, quantity: 1, unit: "L", expirationDate: "2026-10-20" }],
         });
+    });
+
+    it("keeps pending new lots when switching to an existing product, adopting its content unless edited", () => {
+        const draft = emptyEntryDraft(2);
+        draft.lots[0].expirationDate = new Date(2026, 11, 1);
+        draft.lots.push({ ...draft.lots[0], key: "edited", quantity: 3, unit: "pièce", contentEdited: true });
+
+        const switched = switchToExistingItem(draft, item, 2);
+        expect(switched.item.id).toBe(4);
+        expect(switched.lots.map(({ unitIds, quantity, unit }) => ({ unitIds, quantity, unit }))).toEqual([
+            { unitIds: [10, 11], quantity: 1, unit: "L" },
+            { unitIds: [12], quantity: 50, unit: "cl" },
+            { unitIds: [], quantity: 1, unit: "L" },
+            { unitIds: [], quantity: 3, unit: "pièce" },
+        ]);
+        expect(switched.lots[2].expirationDate).toEqual(new Date(2026, 11, 1));
+        expect(switchToExistingItem({ ...draft, lots: [] }, item, 1).lots).toHaveLength(3);
     });
 });

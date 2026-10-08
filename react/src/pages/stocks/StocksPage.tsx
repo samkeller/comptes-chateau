@@ -48,7 +48,7 @@ export default function StocksPage() {
     const showToast = useGlobalToast();
     const { isDesktop } = useScreen();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [locations, setLocations] = useState<StockLocation[]>([]);
+    const [locations, setLocations] = useState<StockLocation[] | null>(null);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
     const [items, setItems] = useState<StockItemWithLotsDto[] | null>(null);
     const [search, setSearch] = useState("");
@@ -98,8 +98,9 @@ export default function StocksPage() {
         return () => { active = false; };
     }, [debouncedSearch, locationId, expiryState, includeEmpty, refreshKey]);
 
+    const locationList = locations ?? [];
     const defaultLocationId = locationId
-        ?? (locations.some((location) => location.id === lastLocationId) ? lastLocationId : locations[0]?.id ?? null);
+        ?? (locationList.some((location) => location.id === lastLocationId) ? lastLocationId : locationList[0]?.id ?? null);
 
     const runOnItem = async (item: StockItemWithLotsDto, action: () => Promise<void>, success: string): Promise<void> => {
         setBusyItemId(item.id);
@@ -145,12 +146,12 @@ export default function StocksPage() {
     return (
         <PageTemplate pageTitle="Stocks">
             <ConfirmDialog group={CONFIRM_GROUP} />
-            {entryRequest && (
+            {entryRequest && locations && (
                 <StockEntryDialog request={entryRequest} locations={locations} defaultLocationId={defaultLocationId}
                     onClose={closeEntryDialog} onSaved={onEntrySaved} />
             )}
             {locationsDialogVisible && (
-                <StockLocationsDialog locations={locations} confirmGroup={CONFIRM_GROUP}
+                <StockLocationsDialog locations={locationList} confirmGroup={CONFIRM_GROUP}
                     onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
             )}
             <StockMovementsSidebar visible={historyVisible} onHide={() => setHistoryVisible(false)} />
@@ -170,7 +171,7 @@ export default function StocksPage() {
                     <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search} className="w-full md:w-80"
                         onChange={(event) => setSearch(event.target.value)} aria-label="Rechercher un produit" />
                     <div className="flex items-center gap-1">
-                        <Dropdown value={locationId} options={locations} optionValue="id" showClear
+                        <Dropdown value={locationId} options={locationList} optionValue="id" showClear
                             optionLabel="label" placeholder="Tous les lieux" aria-label="Filtrer par lieu"
                             itemTemplate={(location: StockLocation) => `${location.label} (${location.stockUnitCount})`}
                             onChange={(event) => setLocationId((event.value as number | null) ?? null)} />
@@ -186,7 +187,7 @@ export default function StocksPage() {
 
                 {items === null ? (
                     <div className="flex justify-center p-8"><ProgressSpinner /></div>
-                ) : locations.length === 0 && overview?.stockUnitCount === 0 ? (
+                ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
                     <div className="flex flex-col items-start gap-2 p-4">
                         <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
                         <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />

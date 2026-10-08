@@ -32,6 +32,8 @@ export interface StockLotDraft {
     quantity: number | null;
     unit: StockUnitUnits;
     expirationDate: Date | null;
+    /** Contenu (quantité / unité) modifié à la main : il n'est plus prérempli automatiquement. */
+    contentEdited?: boolean;
 }
 
 export interface StockEntryDraft {
@@ -122,10 +124,28 @@ export function applySuggestion(draft: StockEntryDraft, barcode: string, suggest
         imageUrl: draft.item.imageUrl.trim() ? draft.item.imageUrl : suggestion?.imageUrl ?? "",
         defaultUnit: suggestion?.unit ?? draft.item.defaultUnit,
     };
-    const lots = draft.lots.map((lot) => lot.unitIds.length > 0 || !suggestion?.unit
+    const lots = draft.lots.map((lot) => lot.unitIds.length > 0 || lot.contentEdited || !suggestion?.unit
         ? lot
         : { ...lot, unit: suggestion.unit!, quantity: suggestion.quantity ?? lot.quantity });
     return { item, lots };
+}
+
+/**
+ * Bascule sur un produit existant en conservant les nouveaux lots déjà saisis.
+ * Leur contenu reprend celui du produit tant qu'il n'a pas été modifié à la main.
+ */
+export function switchToExistingItem(current: StockEntryDraft, item: StockItemWithLotsDto, newLotLocationId: number | null): StockEntryDraft {
+    const pendingLots = current.lots.filter((lot) => lot.unitIds.length === 0 && lot.copies > 0);
+    const loaded = entryDraftFromItem(item, newLotLocationId);
+    if (pendingLots.length === 0) return loaded;
+    const model = loaded.lots[loaded.lots.length - 1];
+    return {
+        ...loaded,
+        lots: [
+            ...loaded.lots.filter((lot) => lot.unitIds.length > 0),
+            ...pendingLots.map((lot) => lot.contentEdited ? lot : { ...lot, quantity: model.quantity, unit: model.unit }),
+        ],
+    };
 }
 
 export function isHttpUrl(value: string): boolean {

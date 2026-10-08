@@ -18,7 +18,7 @@ import StockLotEditor from "./StockLotEditor";
 import StockProductFields from "./StockProductFields";
 import {
     applySuggestion, countNewCopies, emptyEntryDraft, entryDraftFromItem, getEntryDraftError, newLotDraft,
-    toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
+    switchToExistingItem, toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
 } from "./stockEntryDraft";
 
 const itemsService = new StockItemsService();
@@ -83,7 +83,16 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
     const updateLot = (key: string, changes: Partial<StockLotDraft>): void => {
         setDraft((current) => current && {
             ...current,
-            lots: current.lots.map((lot) => lot.key === key ? { ...lot, ...changes } : lot),
+            lots: current.lots.map((lot) => lot.key === key
+                ? {
+                    ...lot,
+                    ...changes,
+                    // InputNumber notifie aussi des valeurs inchangées : seule une vraie modification compte.
+                    contentEdited: lot.contentEdited
+                        || ("quantity" in changes && changes.quantity !== lot.quantity)
+                        || ("unit" in changes && changes.unit !== lot.unit),
+                }
+                : lot),
         });
     };
     const removeLot = (lot: StockLotDraft): void => {
@@ -108,13 +117,10 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         });
     };
 
-    /** Bascule sur un produit existant en conservant les nouveaux lots déjà saisis. */
     const switchToItem = (item: StockItemWithLotsDto, info: LookupInfo | null): void => {
-        setDraft((current) => {
-            const pendingLots = current?.lots.filter((lot) => lot.unitIds.length === 0 && lot.copies > 0) ?? [];
-            const loaded = entryDraftFromItem(item, pendingLots.length > 0 ? undefined : lastLocationId.current);
-            return { ...loaded, lots: [...loaded.lots, ...pendingLots] };
-        });
+        setDraft((current) => current
+            ? switchToExistingItem(current, item, lastLocationId.current)
+            : entryDraftFromItem(item, lastLocationId.current));
         setLookupInfo(info);
     };
 
