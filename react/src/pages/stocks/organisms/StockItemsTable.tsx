@@ -238,7 +238,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                         <div className="flex flex-col gap-4 font-normal">
                             <StockOverviewBar overview={overview} expiryFilter={expiryFilter}
                                 onExpiryFilterChange={(state) => setFilter("expiryState", state)} />
-                            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr))]">
+                            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr)_minmax(10rem,1fr))]">
                                 <div className="flex min-w-0 flex-col gap-1 sm:col-span-2 lg:col-span-1">
                                     <InputSearch id="stock-search" placeholder="Nom, marque ou code-barres" value={search}
                                         className="w-full"
@@ -247,7 +247,6 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                                 </div>
                                 <div className="flex min-w-0 flex-col gap-1">
                                     <FloatLabel>
-
                                         <Dropdown inputId="stock-location-filter" value={selectedLocationId} options={locations ?? []}
                                             optionLabel="label" optionValue="id" showClear placeholder="Tous les lieux"
                                             className="w-full"
@@ -255,19 +254,27 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                                         <label htmlFor="stock-location-filter" className="text-sm font-medium"><i className="pi pi-map-marker" />&nbsp;Lieu</label>
                                     </FloatLabel>
                                 </div>
-                            </div>
-                            <div className="flex items-center justify-between gap-3 border-t border-surface pt-3">
-                                <label htmlFor="stock-include-empty" className="flex items-center gap-2 text-sm">
-                                    <InputSwitch inputId="stock-include-empty" checked={includeEmpty}
-                                        onChange={(event) => setIncludeEmpty(event.value === true)} />
-                                    Afficher les épuisés
-                                </label>
-                                {hasFilters && <Button icon="pi pi-filter-slash" text size="small" severity="secondary"
-                                    aria-label="Réinitialiser les filtres" tooltip="Réinitialiser les filtres"
-                                    onClick={() => {
-                                        setFilters(createInitialFilters(null));
-                                        setIncludeEmpty(false);
-                                    }} />}
+                                <div className="flex gap-1">
+                                    <label htmlFor="stock-include-empty" className="flex items-center gap-2 text-sm">
+                                        <InputSwitch inputId="stock-include-empty" checked={includeEmpty}
+                                            onChange={(event) => setIncludeEmpty(event.value === true)} />
+                                        Afficher les épuisés
+                                    </label>
+                                    {hasFilters && (
+                                        <Button
+                                            icon="pi pi-filter-slash"
+                                            rounded text
+                                            size="small"
+                                            severity="secondary"
+                                            aria-label="Réinitialiser les filtres" 
+                                            tooltip="Réinitialiser les filtres"
+                                            tooltipOptions={{position: "left"}}
+                                            onClick={() => {
+                                                setFilters(createInitialFilters(null));
+                                                setIncludeEmpty(false);
+                                            }} />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -314,7 +321,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                         header="Quantité"
                         style={{ width: "10rem" }}
                         className="cursor-pointer" // Modifiable via editor
-                        body={(row: StockLotRow) => `${row.lot!.quantity} ${row.lot!.unit}`}
+                        body={(row: StockLotRow) => row.lot && `${row.lot!.quantity} ${row.lot!.unit}`}
                         editor={
                             (options) => (
                                 options.rowData as StockLotRow).lot
