@@ -1,182 +1,108 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import OpenFoodFactsClient from "./OpenFoodFactsClient";
+import OpenFoodFactsClient, { OPEN_FOOD_FACTS_FIELDS, OPEN_FOOD_FACTS_MAX_CALLS_PER_MINUTE, OpenFoodFactsThrottle } from "./OpenFoodFactsClient";
 
 describe("OpenFoodFactsClient", () => {
     const fetchMock = vi.fn<typeof fetch>();
-    const client = new OpenFoodFactsClient();
-    const barcode = "0012345678901";
+    const barcode = "0012345678905";
+    let throttle: OpenFoodFactsThrottle;
+    let client: OpenFoodFactsClient;
 
     beforeEach(() => {
         fetchMock.mockReset();
         vi.stubGlobal("fetch", fetchMock);
+        throttle = new OpenFoodFactsThrottle();
+        client = new OpenFoodFactsClient(throttle);
     });
     afterEach(() => {
         vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
         vi.useRealTimers();
     });
 
-    function productResponse(product: Record<string, unknown>): void {
-        fetchMock.mockResolvedValue(Response.json({ status: 1, product }));
+    function sentRequest(callIndex = 0): { url: string; userAgent: string | null } {
+        const [input, init] = fetchMock.mock.calls[callIndex];
+        const url = input instanceof Request ? input.url : String(input);
+        return { url, userAgent: new Headers(init?.headers).get("User-Agent") };
     }
 
-    it("requests only the fixed OFF fields with an identifying User-Agent", async () => {
-        productResponse({
-            product_name: "  chocolat Noir  ",
-            brands: "  Choco  ",
-            image_front_small_url: " https://images.openfoodfacts.org/choco.jpg ",
-            product_quantity: 100,
-            product_quantity_unit: "g",
+    it("calls the v3 product API through the official SDK with the stored fields and a contactable User-Agent", async () => {
+        fetchMock.mockResolvedValue(Response.json({ status: "success", product: { product_name: "Riz" } }));
+
+        expect(await client.fetchProduct(barcode)).toMatchObject({
+            outcome: "found", httpStatus: 200, product: { product_name: "Riz" },
         });
-        expect(await client.lookup(barcode)).toEqual({
-            label: "Chocolat Noir",
-            brand: "Choco",
-            imageUrl: "https://images.openfoodfacts.org/choco.jpg",
-            quantity: 100,
-            unit: "g",
-        });
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,brands,image_front_small_url,product_quantity,product_quantity_unit,quantity`,
-            {
-                headers: { "User-Agent": "Chocosous/1.0 (https://github.com/samkeller/comptes-chateau)" },
-                signal: expect.any(AbortSignal),
-            },
-        );
+        const { url, userAgent } = sentRequest();
+        const parsed = new URL(url);
+        expect(`${parsed.origin}${parsed.pathname}`).toBe(`https://world.openfoodfacts.org/api/v3/product/${barcode}`);
+        expect(parsed.searchParams.get("fields")).toBe(OPEN_FOOD_FACTS_FIELDS.join(","));
+        expect(userAgent).toBe("Chocosous/1.0 (dandrieux.keller@gmail.com)");
+        expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it("lets the contact be configured by environment", async () => {
+        vi.stubEnv("OPEN_FOOD_FACTS_CONTACT", "ops@example.org");
+        fetchMock.mockResolvedValue(Response.json({ status: "success", product: {} }));
+        await client.fetchProduct(barcode);
+        expect(sentRequest().userAgent).toBe("Chocosous/1.0 (ops@example.org)");
     });
 
     it.each([
-        ["g", "g"], ["kg", "kg"], ["ml", "ml"], ["cl", "cl"], ["l", "L"], ["L", "L"],
-    ])("maps the unit %s to %s", async (input, expected) => {
-        productResponse({ product_name: "lait", product_quantity: "1.5", product_quantity_unit: input });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: 1.5, unit: expected });
+        [new Response("{}", { status: 404 }), "not_found", 404],
+        [Response.json({ status: "failure", product: {} }), "not_found", 200],
+        [new Response("oops", { status: 500 }), "http_error", 500],
+        [new Response("not json"), "http_error", 200],
+    ])("classifies responses without throwing (%#)", async (response, outcome, httpStatus) => {
+        fetchMock.mockResolvedValue(response);
+        expect(await client.fetchProduct(barcode)).toMatchObject({ outcome, httpStatus, product: null });
     });
 
-    it.each([" 1,5 L ", "1.5 l"])("uses a simple textual quantity fallback: %s", async (quantity) => {
-        productResponse({ product_name: "lait", quantity });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: 1.5, unit: "L" });
-    });
-
-    it("prefers structured quantity and falls back when it is invalid", async () => {
-        productResponse({ product_name: "riz", product_quantity: -1, product_quantity_unit: "g", quantity: "500 g" });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: 500, unit: "g" });
-        productResponse({ product_name: "riz", product_quantity: 250, product_quantity_unit: "g", quantity: "500 g" });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: 250, unit: "g" });
-    });
-
-    it.each([undefined, "6 x 100 g", "10 oz", "0 g"])(
-        "preserves a valid structured quantity when its unit is unknown and fallback is unusable: %s",
-        async (fallback) => {
-            productResponse({
-                product_name: "riz", product_quantity: 10, product_quantity_unit: "oz", quantity: fallback,
-            });
-            expect(await client.lookup(barcode)).toMatchObject({ quantity: 10, unit: null });
-        },
-    );
-
-    it("replaces an unknown structured unit with a consistent quantity and unit from textual fallback", async () => {
-        productResponse({
-            product_name: "riz", product_quantity: 10, product_quantity_unit: "oz", quantity: "280 g",
-        });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: 280, unit: "g" });
-    });
-
-    it.each(["6 x 100 g", "500 oz", "0 g", "Infinity kg", "250 g environ", "1e3 g"])(
-        "does not guess ambiguous or invalid quantities: %s",
-        async (quantity) => {
-            productResponse({ product_name: "riz", quantity });
-            expect(await client.lookup(barcode)).toEqual({
-                label: "Riz", brand: null, imageUrl: null, quantity: null, unit: null,
-            });
-        },
-    );
-
-    it.each([0, -1, Number.POSITIVE_INFINITY, "NaN", {}, true])("rejects invalid structured quantities: %s", async (quantity) => {
-        productResponse({ product_name: "riz", product_quantity: quantity, product_quantity_unit: "g" });
-        expect(await client.lookup(barcode)).toMatchObject({ quantity: null, unit: null });
-    });
-
-    it("normalizes absent or malformed optional fields without losing the product", async () => {
-        productResponse({ product_name: "  é".repeat(200), brands: 123, image_front_small_url: "javascript:alert(1)" });
-        const result = await client.lookup(barcode);
-        expect(result?.label).toHaveLength(255);
-        expect(result?.label?.startsWith("É")).toBe(true);
-        expect(result).toMatchObject({ brand: null, imageUrl: null, quantity: null, unit: null });
-    });
-
-    it.each([
-        { status: 0 },
-        { status: 1 },
-        { status: 1, product: null },
-        null,
-    ])("returns null for unknown or malformed products: %s", async (payload) => {
-        fetchMock.mockResolvedValue(Response.json(payload));
-        expect(await client.lookup(barcode)).toBeNull();
-    });
-
-    it.each([undefined, "", "  ", null, 10])(
-        "preserves suggestions with a null label for absent or invalid product names: %s",
-        async (productName) => {
-            productResponse({
-                product_name: productName,
-                brands: " Choco ",
-                image_front_small_url: "https://images.openfoodfacts.org/choco.jpg",
-                quantity: "100 g",
-            });
-            expect(await client.lookup(barcode)).toEqual({
-                label: null,
-                brand: "Choco",
-                imageUrl: "https://images.openfoodfacts.org/choco.jpg",
-                quantity: 100,
-                unit: "g",
-            });
-        },
-    );
-
-    it("preserves a known product even when all suggestion fields are missing", async () => {
-        productResponse({});
-        expect(await client.lookup(barcode)).toEqual({
-            label: null, brand: null, imageUrl: null, quantity: null, unit: null,
-        });
-    });
-
-    it("returns null for non-OK HTTP responses", async () => {
-        fetchMock.mockResolvedValue(new Response("unavailable", { status: 503 }));
-        expect(await client.lookup(barcode)).toBeNull();
-    });
-
-    it("returns null for invalid JSON and network errors", async () => {
-        fetchMock.mockResolvedValue(new Response("not json"));
-        expect(await client.lookup(barcode)).toBeNull();
+    it("reports network errors", async () => {
         fetchMock.mockRejectedValue(new Error("network unavailable"));
-        expect(await client.lookup(barcode)).toBeNull();
+        expect(await client.fetchProduct(barcode)).toMatchObject({ outcome: "network_error", httpStatus: null });
     });
 
-    it("aborts a slow fetch after exactly three seconds and clears its timer", async () => {
+    it.each([429, 503])("opens the circuit for 10 minutes after HTTP %i", async (status) => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        fetchMock.mockResolvedValue(new Response("slow down", { status }));
+        expect(await client.fetchProduct(barcode)).toMatchObject({ outcome: "rate_limited", httpStatus: status });
+
+        expect(await client.fetchProduct(barcode)).toBeNull();
+        vi.advanceTimersByTime(10 * 60 * 1000);
+        expect(await client.fetchProduct(barcode)).not.toBeNull();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("never exceeds the local per-minute budget", async () => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        fetchMock.mockImplementation(async () => Response.json({ status: "success", product: {} }));
+        for (let index = 0; index < OPEN_FOOD_FACTS_MAX_CALLS_PER_MINUTE; index++) {
+            expect(await client.fetchProduct(barcode)).not.toBeNull();
+        }
+        expect(await client.fetchProduct(barcode)).toBeNull();
+        vi.advanceTimersByTime(60_000);
+        expect(await client.fetchProduct(barcode)).not.toBeNull();
+        expect(fetchMock).toHaveBeenCalledTimes(OPEN_FOOD_FACTS_MAX_CALLS_PER_MINUTE + 1);
+    });
+
+    it("aborts a slow fetch after three seconds and clears its timer", async () => {
         vi.useFakeTimers();
         let signal: AbortSignal | null = null;
         fetchMock.mockImplementation((_url, options) => new Promise((_resolve, reject) => {
             signal = options?.signal ?? null;
             signal?.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
         }));
-        const pending = client.lookup(barcode);
+        const pending = client.fetchProduct(barcode);
         await vi.advanceTimersByTimeAsync(2999);
         expect(signal?.aborted).toBe(false);
         await vi.advanceTimersByTimeAsync(1);
-        expect(await pending).toBeNull();
-        expect(signal?.aborted).toBe(true);
-        expect(vi.getTimerCount()).toBe(0);
-    });
-
-    it("clears the timeout on success", async () => {
-        vi.useFakeTimers();
-        productResponse({ product_name: "riz" });
-        expect(await client.lookup(barcode)).not.toBeNull();
+        expect(await pending).toMatchObject({ outcome: "network_error" });
         expect(vi.getTimerCount()).toBe(0);
     });
 
     it.each(["1234567", "123456789012345", "1234abcd", "../12345678", " 12345678"])(
         "never sends invalid barcodes to OFF: %s",
         async (invalid) => {
-            expect(await client.lookup(invalid)).toBeNull();
+            expect(await client.fetchProduct(invalid)).toBeNull();
             expect(fetchMock).not.toHaveBeenCalled();
         },
     );

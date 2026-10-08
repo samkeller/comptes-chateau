@@ -13,31 +13,13 @@ Objectif Copilot: proposer du code simple, type, compatible avec la structure ex
 - Front: React, TypeScript, PrimeReact, Tailwind, Vite
 - Back: Node.js, TypeScript, TypeORM, PostgreSQL
 
-## Structure Attendue
-
-### Frontend (`./react/src`)
-
-- `pages/` pour les ecrans
-- `components/` pour l'UI reutilisable
-- `services/` pour les appels HTTP
-- `interfaces/` pour les types metier/DTO
-- `utils/` pour helpers purs
-
-### Backend (`./node/src`)
-
-- `controllers/` pour HTTP + validation d'entree
-- `services/` pour la logique metier
-- `entities/` pour le mapping DB TypeORM
-- `db/migrations/` pour l'historique de schema
-- `utils/` pour helpers transverses
-
 ## Core Rules
 
 - TypeScript strict: pas de `any` sauf cas exceptionnel justifie
 - Composants React fonctionnels + hooks
 - Props, retours de fonctions, DTOs explicitement types
 - Nommage: `PascalCase` (composants/classes), `camelCase` (fonctions/variables), `UPPER_SNAKE_CASE` (constantes)
-- Utiliser PrimeReact avant de creer des composants UI custom
+- Utiliser PrimeReact avant de creer des composants UI custom. La documentation est trouvable sur D:\dev\ressources-documentaires\primereact-v10\components\doc\*.tsx, Toujours consulter avant de chercher sur internet
 - Utiliser Tailwind avant de creer des classes CSS custom
 - Controlleurs fins, logique metier dans les services
 - Validation des entrees a la frontiere API

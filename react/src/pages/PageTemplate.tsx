@@ -104,7 +104,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         showChangelogDialog &&
         <ChangelogDialog hideDialog={() => setShowChangelogDialog(false)} />
       }
-      <header className="flex items-center justify-between px-4 md:px-12 py-4 md:py-6 border-b border-surface">
+      <header className="flex items-center justify-between px-2 md:px-12 py-2 md:py-6 border-b border-surface">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
             <Button
@@ -195,7 +195,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
         </Sidebar>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6">
+        <main className="flex-1 min-h-0 overflow-y-auto px-2 md:px-4 py-2 md:py-4">
           {children}
         </main>
       </div>

@@ -1,47 +1,30 @@
 import axios from "axios";
+import { FilterMatchMode } from "primereact/api";
+import type { DataTableFilterMeta } from "primereact/datatable";
+import type { StockItemWithLotsDto } from "@chocosous/shared";
 import BaseService from "../BaseService";
-import StockItem from "@/interfaces/stocks/StockItem";
-import { SaveStockItemPayload } from "./dto/CreateStockItemDto";
+import DataTableQueryCodec, { type DataTableLazyState } from "../tableQuery/DataTableQueryCodec";
 
 export default class StockItemsService extends BaseService {
     private readonly stocksApiUrl = `${this.apiUrl}/stocks/items`;
 
-    /**
-     * Récupère tous les stockItems, éventuellement filtrés.
-     * @param locationId 
-     * @returns 
-     */
-    getAllStockItems(locationId?: number): Promise<StockItem[]> {
-        return axios.get(`${this.stocksApiUrl}`, {
-            params: {
-                ...(locationId ? { locationId } : {}),
-            },
-        }).then((res) =>
-            res.data.map((item: Partial<StockItem>) => new StockItem(item))
-        );
+    /** Produits et lots filtrés/triés par le backend via le contrat DataTable générique. */
+    async search(state: DataTableLazyState, includeEmpty = false): Promise<StockItemWithLotsDto[]> {
+        const params = DataTableQueryCodec.toQueryParams(state, { includePagination: false });
+        if (includeEmpty) params.set("includeEmpty", "true");
+        const response = await axios.get<StockItemWithLotsDto[]>(this.stocksApiUrl, { params });
+        return response.data;
     }
 
-    /**
-     * Crée un nouveau stockItem.
-     * @param payload 
-     * @returns 
-     */
-    create(payload: SaveStockItemPayload): Promise<StockItem> {
-        return axios.post(`${this.stocksApiUrl}`, payload)
-            .then((res) => new StockItem(res.data));
+    async searchByText(search: string, includeEmpty = false): Promise<StockItemWithLotsDto[]> {
+        const filters: DataTableFilterMeta = {
+            global: { value: search, matchMode: FilterMatchMode.CONTAINS },
+        };
+        return this.search({ first: 0, rows: 50, page: 1, sortOrder: 1, filters }, includeEmpty);
     }
 
-    /**
-     * Met à jour un stockItem existant.
-     * @param id 
-     * @param payload 
-     * @returns 
-     */
-    update(
-        id: number,
-        payload: SaveStockItemPayload
-    ): Promise<StockItem> {
-        return axios.patch(`${this.stocksApiUrl}/${id}`, payload)
-            .then((res) => new StockItem(res.data));
+    async getOne(id: number): Promise<StockItemWithLotsDto> {
+        const response = await axios.get<StockItemWithLotsDto>(`${this.stocksApiUrl}/${id}`);
+        return response.data;
     }
 }

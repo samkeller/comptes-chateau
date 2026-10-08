@@ -1,24 +1,20 @@
-import StockUnit from "@/interfaces/stocks/StockUnit";
-import BaseService from "../BaseService";
 import axios from "axios";
-import type { StockDashboardOverviewDto, StockMovementDto } from "@chocosous/shared";
+import type { StockDashboardOverviewDto } from "@chocosous/shared";
+import BaseService from "../BaseService";
+import StockMovement from "@/interfaces/stocks/StockMovement";
 
 export default class StockDashboardService extends BaseService {
     private readonly stocksDashboardUrl = `${this.apiUrl}/stocks/dashboard`;
 
-    public getExpiringItems(): Promise<StockUnit[]> {
-        return axios.get(`${this.stocksDashboardUrl}/expiring-items`).then((res) =>
-            res.data.map((unit: Partial<StockUnit>) => new StockUnit(unit))
-        );
-    }
-    
-    public async getOverview(): Promise<StockDashboardOverviewDto> {
+    async getOverview(): Promise<StockDashboardOverviewDto> {
         const response = await axios.get<StockDashboardOverviewDto>(`${this.stocksDashboardUrl}/overview`);
         return response.data;
     }
 
-    public async getLastMovements(): Promise<StockMovementDto[]> {
-        const response = await axios.get<StockMovementDto[]>(`${this.stocksDashboardUrl}/last-movements`);
-        return response.data;
+    async getLastMovements(limit?: number): Promise<StockMovement[]> {
+        const params = limit ? { limit } : {};
+        return axios
+            .get(`${this.stocksDashboardUrl}/last-movements`, { params })
+            .then(r => r.data.map((v: Partial<StockMovement>) => new StockMovement(v)));
     }
 }

@@ -57,6 +57,17 @@ Commandes equivalentes:
 - Front uniquement: `npm run dev-front`
 - Back uniquement: `npm run dev-back`
 
+### Tester la caméra (scan des stocks) depuis un téléphone
+
+La caméra n'est accessible que dans un contexte sécurisé (HTTPS ou `localhost`).
+`http://<ip-du-pc>:5173` ne l'est pas : le bouton « Scanner » affiche alors « Caméra indisponible ».
+
+- **HTTPS local** (recommandé) : `cd react && npm run start:https`, puis ouvrir `https://<ip-du-pc>:5173`
+  sur le téléphone (même Wi-Fi) et accepter le certificat auto-signé. Le proxy `/api` vers le back est inchangé.
+- **Android en USB, sans certificat** : `adb reverse tcp:5173 tcp:5173`, puis ouvrir `http://localhost:5173`
+  sur le téléphone (`localhost` est un contexte sécurisé).
+- La saisie manuelle du code-barres reste toujours disponible.
+
 Port node déjà utilisé (windows)
 ```bash
 netstat -ano | findstr :8000

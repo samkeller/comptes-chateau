@@ -8,7 +8,7 @@ import {
     createOrderBySortHandler,
     createTextSimpleFilterHandler,
     TableQueryMapperConfig
-} from "./TableQueryMapper";
+} from "../../../../utils/tableQuery/TableQueryMapper";
 import { parseApiDateString } from "../../../../utils/ApiDateUtils";
 
 const AMOUNT_SQL = "(al.credit - al.debit)";

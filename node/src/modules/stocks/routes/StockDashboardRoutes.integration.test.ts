@@ -32,6 +32,7 @@ describe("StockDashboardRoutes integration", () => {
             inStockItemCount: 0,
             stockUnitCount: 0,
             datedUnitCount: 0,
+            expiredUnitCount: 0,
             expiringSoonUnitCount: 0,
         });
     });
@@ -65,6 +66,7 @@ describe("StockDashboardRoutes integration", () => {
             inStockItemCount: 2,
             stockUnitCount: 5,
             datedUnitCount: 4,
+            expiredUnitCount: 1,
             expiringSoonUnitCount: 2,
         });
     });
@@ -76,7 +78,7 @@ describe("StockDashboardRoutes integration", () => {
         expect(response.body).toEqual([]);
     });
 
-    it("returns only the 10 newest movements with deterministic ties and historical labels", async () => {
+    it("returns only the newest movements (limit) with deterministic ties and historical labels", async () => {
         const repo = testDataSource.getRepository(StockMovement);
         const movements = [];
         for (let index = 0; index < 12; index++) {
@@ -93,7 +95,7 @@ describe("StockDashboardRoutes integration", () => {
             }));
         }
 
-        const response = await request(app).get("/stocks/dashboard/last-movements");
+        const response = await request(app).get("/stocks/dashboard/last-movements").query({ limit: 10 });
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(10);
@@ -111,6 +113,18 @@ describe("StockDashboardRoutes integration", () => {
             type: "DELETE",
             createdAt: "2026-10-06T10:00:00.000Z",
         });
+    });
+
+    it("returns 20 movements by default and rejects an out-of-range limit", async () => {
+        const repo = testDataSource.getRepository(StockMovement);
+        for (let index = 0; index < 25; index++) {
+            await repo.save({
+                itemId: 1, itemLabel: "P", unitId: index + 1, quantity: 1, unit: "g",
+                locationId: 1, locationLabel: "L", type: "IN",
+            });
+        }
+        expect((await request(app).get("/stocks/dashboard/last-movements")).body).toHaveLength(20);
+        expect((await request(app).get("/stocks/dashboard/last-movements").query({ limit: 101 })).status).toBe(400);
     });
 
     it.each(["overview", "last-movements"])("propagates %s failures through the error middleware", async (endpoint) => {

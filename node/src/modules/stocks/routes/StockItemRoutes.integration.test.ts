@@ -1,6 +1,10 @@
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestApp } from "../../../tests/testApp";
+import { testDataSource } from "../../../tests/testDbSetup";
+import { StockItem } from "../entities/StockItem";
+import { OpenFoodFactsApiCall } from "../entities/OpenFoodFactsApiCall";
+import { openFoodFactsThrottle } from "../clients/OpenFoodFactsClient";
 
 describe("StockItemRoutes integration", () => {
     let app: ReturnType<typeof createTestApp>;
@@ -12,7 +16,10 @@ describe("StockItemRoutes integration", () => {
         app = createTestApp("/stocks", stockRoutes);
     });
 
-    afterEach(() => vi.unstubAllGlobals());
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        openFoodFactsThrottle.reset();
+    });
 
     it.each(["1234567", "123456789012345", "1234567a", "1234%205678"])(
         "rejects an invalid barcode before calling OFF: %s",
@@ -26,83 +33,66 @@ describe("StockItemRoutes integration", () => {
         },
     );
 
-    it("looks up existing items without contacting OFF", async () => {
+    it("looks up existing items (with lots, any barcode form) without contacting OFF", async () => {
         const fetchMock = vi.fn();
         vi.stubGlobal("fetch", fetchMock);
-        const barcode = "0012345678901";
-        const created = await request(app).post("/stocks/items").send({ label: "Riz", defaultUnit: "g", barcode });
-        const response = await request(app).get(`/stocks/items/lookup/${barcode}`);
+        const item = await testDataSource.getRepository(StockItem).save({ label: "Riz", defaultUnit: "g", barcode: "012345678905" });
+
+        const response = await request(app).get("/stocks/items/lookup/0012345678905");
+
         expect(response.status).toBe(200);
-        expect(response.body).toEqual({ barcode, existingItem: created.body, suggestion: null });
+        expect(response.body).toMatchObject({ barcode: "0012345678905", existingItem: { id: item.id, lots: [] }, suggestion: null });
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it.each(["12345678", "12345678901234"])("accepts barcode length boundaries: %s", async (barcode) => {
-        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
-            status: 1, product: { product_name: "riz", quantity: "500 g" },
-        })));
-        const response = await request(app).get(`/stocks/items/lookup/${barcode}`);
-        expect(response.status).toBe(200);
-        expect(response.body).toEqual({
-            barcode, existingItem: null,
-            suggestion: { label: "Riz", brand: null, imageUrl: null, quantity: 500, unit: "g" },
-        });
+    it("stores OFF answers in database: a second lookup does not call the API again", async () => {
+        const fetchMock = vi.fn().mockResolvedValue(Response.json({
+            status: "success", product: { product_name: "riz", quantity: "500 g" },
+        }));
+        vi.stubGlobal("fetch", fetchMock);
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const response = await request(app).get("/stocks/items/lookup/12345678");
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({
+                barcode: "12345678", existingItem: null,
+                suggestion: { label: "Riz", brand: null, imageUrl: null, quantity: 500, unit: "g" },
+            });
+        }
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(await testDataSource.getRepository(OpenFoodFactsApiCall).find()).toEqual([
+            expect.objectContaining({ barcode: "12345678", trigger: "lookup", outcome: "found", httpStatus: 200 }),
+        ]);
     });
 
     it("returns 200 with no suggestion when OFF is unavailable", async () => {
         vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("OFF unavailable")));
-        const response = await request(app).get("/stocks/items/lookup/0012345678901");
+        const response = await request(app).get("/stocks/items/lookup/0012345678905");
         expect(response.status).toBe(200);
-        expect(response.body).toEqual({ barcode: "0012345678901", existingItem: null, suggestion: null });
+        expect(response.body).toEqual({ barcode: "0012345678905", existingItem: null, suggestion: null });
     });
 
-    it("GET /stocks/items retourne les stock items", async () => {
-        const response = await request(app)
-            .get("/stocks/items");
-
+    it("GET /stocks/items validates generic filters and stock options without pagination", async () => {
+        expect((await request(app).get("/stocks/items").query({
+            filters: JSON.stringify([{ type: "simple", field: "unknown", matchMode: "equals", value: "x" }]),
+        })).status).toBe(400);
+        expect((await request(app).get("/stocks/items").query({ includeEmpty: "yes" })).status).toBe(400);
+        const response = await request(app).get("/stocks/items").query({
+            includeEmpty: "false",
+            filters: JSON.stringify([{ type: "simple", field: "expiryState", matchMode: "equals", value: "soon" }]),
+        });
         expect(response.status).toBe(200);
         expect(response.body).toEqual([]);
     });
 
-    it("POST /stocks/items crée un stock item", async () => {
-        const response = await request(app)
-            .post("/stocks/items")
-            .send({
-                label: "Pâtes",
-                defaultUnit: "paquet",
-                units: [],
-            });
+    it("GET /stocks/items/:id returns the item with all its lots, or a typed 404", async () => {
+        const item = await testDataSource.getRepository(StockItem).save({ label: "Riz", defaultUnit: "g" });
+        const ok = await request(app).get(`/stocks/items/${item.id}`);
+        expect(ok.status).toBe(200);
+        expect(ok.body).toMatchObject({ id: item.id, label: "Riz", lots: [], stockUnitsCount: 0 });
 
-        expect(response.status).toBe(201);
-        expect(response.body).toMatchObject({
-            label: "Pâtes",
-            defaultUnit: "paquet",
-            stockUnitsCount: 0,
-        });
-    });
-
-    it("PATCH /stocks/items/:id met à jour un stock item", async () => {
-        const created = await request(app)
-            .post("/stocks/items")
-            .send({
-                label: "Pâtes",
-                defaultUnit: "paquet",
-                units: [],
-            });
-
-        const response = await request(app)
-            .patch(`/stocks/items/${created.body.id}`)
-            .send({
-                label: "Riz",
-                defaultUnit: "sachet",
-                units: [],
-            });
-
-        expect(response.status).toBe(200);
-        expect(response.body).toMatchObject({
-            id: created.body.id,
-            label: "Riz",
-            defaultUnit: "sachet",
-        });
+        const missing = await request(app).get("/stocks/items/999");
+        expect(missing.status).toBe(404);
+        expect(missing.body.code).toBe("STOCK_ITEM_NOT_FOUND");
     });
 });
