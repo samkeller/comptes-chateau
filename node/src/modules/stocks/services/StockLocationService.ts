@@ -1,3 +1,5 @@
+import type { EntityManager, Repository } from "typeorm";
+import { In } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
 import { notFound } from "../../../utils/AppError";
 import StockUnitService from "./StockUnitService";
@@ -11,10 +13,14 @@ import { StockLocation } from "../entities/StockLocation";
 import { StockLocationNotEmptyError } from "./errors/StockLocationNotEmptyError";
 
 export default class StockLocationService {
-    private readonly stockLocationRepo = AppDataSource.getRepository(StockLocation);
-    private readonly stockUnitService: StockUnitService = new StockUnitService();
+    private readonly stockLocationRepo: Repository<StockLocation>;
+    private readonly stockUnitService: StockUnitService;
 
-    
+    constructor(em: EntityManager = AppDataSource.manager) {
+        this.stockLocationRepo = em.getRepository(StockLocation);
+        this.stockUnitService = new StockUnitService(em);
+    }
+
     async listLocations(): Promise<StockLocationDto[]> {
         const locations = await this.stockLocationRepo.find({
             order: {
@@ -25,12 +31,28 @@ export default class StockLocationService {
         return locations.map(toStockLocationDto);
     }
 
+    /**
+     * Charge les lieux demandés, indexés par id.
+     * @throws 404 STOCK_LOCATION_NOT_FOUND si l'un d'eux n'existe pas.
+     */
+    async findByIdsOrThrow(ids: number[]): Promise<Map<number, StockLocation>> {
+        const uniqueIds = [...new Set(ids)];
+        const locations = uniqueIds.length > 0
+            ? await this.stockLocationRepo.findBy({ id: In(uniqueIds) })
+            : [];
+        if (locations.length !== uniqueIds.length) {
+            throw notFound("STOCK_LOCATION_NOT_FOUND", "Lieu de stockage introuvable");
+        }
+        return new Map(locations.map((location) => [location.id, location]));
+    }
+
     async createLocation(dto: CreateStockLocationDto): Promise<StockLocationDto> {
         const location = this.stockLocationRepo.create({
             label: dto.label.trim(),
         });
 
-        return toStockLocationDto(await this.stockLocationRepo.save(location));
+        const saved = await this.stockLocationRepo.save(location);
+        return toStockLocationDto({ ...saved, stockUnitCount: saved.stockUnitCount ?? 0 });
     }
 
     async updateLocation(id: number, dto: UpdateStockLocationDto): Promise<StockLocationDto> {

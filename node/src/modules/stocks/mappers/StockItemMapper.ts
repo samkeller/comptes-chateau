@@ -1,23 +1,30 @@
-import type { StockItemDto } from "@chocosous/shared";
+import type { StockItemDto, StockItemWithLotsDto, StockLotDto } from "@chocosous/shared";
+import { normalizeStockUnit } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
 
-export function toStockItemDto(item: StockItem): StockItemDto {
-
-    const units = item.units || []; // Safe car typeorm peut retourner undefined
-
-    const nextExpirationDate = units
-        .map(u => u.expirationDate)
-        .filter((d): d is string => d != null)  // Filtrage explicite
-        .sort()[0];  // Déjà une string ISO, prêt à utiliser
+/**
+ * Convertit un produit en DTO.
+ * @param lots Lots en stock du produit (déjà filtrés) ; servent au décompte et à la prochaine échéance.
+ */
+export function toStockItemDto(item: StockItem, lots: StockLotDto[]): StockItemDto {
+    const nextExpirationDate = lots
+        .map((lot) => lot.expirationDate)
+        .filter((date): date is string => date !== null)
+        .sort()[0];
 
     return {
         id: item.id,
         label: item.label,
         barcode: item.barcode,
-        defaultUnit: item.defaultUnit,
+        brand: item.brand ?? null,
+        defaultUnit: normalizeStockUnit(item.defaultUnit),
         imageUrl: item.imageUrl ?? null,
-        stockUnitsCount: item.units?.length ?? 0,
+        stockUnitsCount: lots.reduce((count, lot) => count + lot.unitIds.length, 0),
         nextStockUnitExpiration: nextExpirationDate ?? null,
         createdAt: item.createdAt.toISOString(),
     };
+}
+
+export function toStockItemWithLotsDto(item: StockItem, lots: StockLotDto[]): StockItemWithLotsDto {
+    return { ...toStockItemDto(item, lots), lots };
 }

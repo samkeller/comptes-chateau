@@ -20,10 +20,7 @@ import AddRecurringExpenseDialog from "@/pages/budget/recurringExpenses/AddRecur
 import BudgetItemsTable from "@/pages/budget/BudgetItemsTable";
 import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
-import Stocks from "@/pages/stocks/Stocks";
-import StocksManagementPage from "@/pages/stocks/stocksManagement/StocksManagementPage";
-import ProductManagementPage from "@/pages/stocks/productsManagement/ProductManagementPage";
-import ScanStockPage from "@/pages/stocks/ScanStockPage";
+import StocksPage from "@/pages/stocks/StocksPage";
 import NotesPage from "@/pages/notes/NotesPage";
 
 const router = createBrowserRouter([
@@ -107,30 +104,17 @@ const router = createBrowserRouter([
       },
       {
         path: routePaths.stocks.index,
-        element: <Stocks />,
+        element: <StocksPage />,
         handle: { navKey: "stocks" },
-        children: [
-          {
-            index: true,
-            element: <Navigate to="stocksManagement" replace />,
-          },
-          {
-            path: "stocksManagement",
-            element: <StocksManagementPage />,
-          },
-          {
-            path: "stocksManagement/:locationId",
-            element: <StocksManagementPage />,
-          },
-          {
-            path: "productManagement",
-            element: <ProductManagementPage />,
-          },
-          {
-            path: "scan",
-            element: <ScanStockPage />,
-          },
-        ],
+      },
+      {
+        // Anciennes routes (onglets) : le scan ouvre directement la saisie.
+        path: routePaths.stocks.scan,
+        element: <Navigate to={`${routePaths.stocks.index}?action=scan`} replace />,
+      },
+      {
+        path: `${routePaths.stocks.index}/*`,
+        element: <Navigate to={routePaths.stocks.index} replace />,
       },
       {
         path: routePaths.kanban,

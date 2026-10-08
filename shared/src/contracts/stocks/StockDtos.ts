@@ -1,3 +1,4 @@
+import type { StockExpiryState } from "./StockExpiry";
 import type { StockMovementType } from "./StockMovementTypes";
 
 /** Lieu de stockage tel que renvoyé par l'API. */
@@ -8,11 +9,12 @@ export interface StockLocationDto {
     stockUnitCount: number;
 }
 
-/** Produit en stock tel que renvoyé par l'API. */
+/** Produit du catalogue tel que renvoyé par l'API. Un produit n'est jamais supprimé, même épuisé. */
 export interface StockItemDto {
     id: number;
     label: string;
     barcode: string | null;
+    brand: string | null;
     defaultUnit: string;
     imageUrl: string | null;
     stockUnitsCount: number;
@@ -20,16 +22,24 @@ export interface StockItemDto {
     createdAt: string;
 }
 
-/** Unité de produit en stock telle que renvoyée par l'API. */
-export interface StockUnitDto {
-    id: number;
-    itemId: number;
-    item: StockItemDto;
+/**
+ * Lot : exemplaires identiques (même lieu, quantité, unité et date) d'un produit.
+ * Agrégé côté serveur ; `unitIds` permet de cocher/supprimer un exemplaire du lot.
+ */
+export interface StockLotDto {
     locationId: number;
-    location: StockLocationDto;
+    locationLabel: string;
     quantity: number;
     unit: string;
     expirationDate: string | null;
+    expiryState: StockExpiryState;
+    /** Exemplaires du lot, du plus ancien au plus récent. */
+    unitIds: number[];
+}
+
+/** Produit et ses lots en stock (filtrés par lieu le cas échéant). */
+export interface StockItemWithLotsDto extends StockItemDto {
+    lots: StockLotDto[];
 }
 
 /** Mouvement de stock tel que renvoyé par l'API. */
@@ -46,10 +56,13 @@ export interface StockMovementDto {
     createdAt: string;
 }
 
-/** Synthèse des lots actuellement présents, sans additionner des unités de mesure différentes. */
+/** Synthèse des exemplaires actuellement présents, sans additionner des unités de mesure différentes. */
 export interface StockDashboardOverviewDto {
     inStockItemCount: number;
     stockUnitCount: number;
     datedUnitCount: number;
+    /** Exemplaires dont la date est strictement passée. */
+    expiredUnitCount: number;
+    /** Exemplaires non périmés expirant d'ici 30 jours inclus. */
     expiringSoonUnitCount: number;
 }

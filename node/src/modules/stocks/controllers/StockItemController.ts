@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import type { CreateStockItemDto } from "@chocosous/shared";
+import type { StockItemsQueryDto } from "@chocosous/shared";
 import StockItemService from "../services/StockItemService";
-import requireUserId from "../../accounts/utils/requireUserId";
 import StockBarcodeLookupService from "../services/StockBarcodeLookupService";
 
 export default class StockItemController {
@@ -12,27 +11,11 @@ export default class StockItemController {
         res.status(200).json(await this.stockBarcodeLookupService.lookup(req.params.barcode));
     };
 
-    getAll = async (req: Request, res: Response) => {
-        res.status(200).json(
-            await this.stockItemService.getAll(req.query)
-        );
+    search = async (req: Request, res: Response) => {
+        res.status(200).json(await this.stockItemService.search(req.query as unknown as StockItemsQueryDto));
     };
 
-    create = async (req: Request, res: Response) => {
-        const body = req.body as CreateStockItemDto;
-        const connectedUserId = requireUserId(req);
-
-        res.status(201).json(
-            await this.stockItemService.create(body, connectedUserId)
-        );
-    };
-
-    patch = async (req: Request, res: Response) => {
-        const stockItemId = Number(req.params.id);
-        const body = req.body as CreateStockItemDto;
-
-        res.status(200).json(
-            await this.stockItemService.update(stockItemId, body)
-        );
+    getOne = async (req: Request, res: Response) => {
+        res.status(200).json(await this.stockItemService.getWithLots(Number(req.params.id)));
     };
 }

@@ -1,47 +1,37 @@
-import type { StockBarcodeLookupResponse, StockItemDto } from "@chocosous/shared";
 import { describe, expect, it, vi } from "vitest";
+import type { StockItemWithLotsDto } from "@chocosous/shared";
 import StockBarcodeLookupService from "./StockBarcodeLookupService";
+import type { StockItem } from "../entities/StockItem";
 
 describe("StockBarcodeLookupService", () => {
-    const barcode = "0012345678901";
-    const item: StockItemDto = {
-        id: 1, label: "Chocolat", barcode, defaultUnit: "g", imageUrl: null,
-        stockUnitsCount: 2, nextStockUnitExpiration: "2027-01-01", createdAt: "2026-01-01T00:00:00.000Z",
-    };
-    const suggestion: StockBarcodeLookupResponse["suggestion"] = {
-        label: "Chocolat", brand: "Choco", imageUrl: null, quantity: 100, unit: "g",
-    };
+    const existing = { id: 7, label: "Riz", lots: [] } as unknown as StockItemWithLotsDto;
+    const suggestion = { label: "Riz", brand: null, imageUrl: null, quantity: 1, unit: "kg" as const };
 
-    it("returns the existing item without calling OFF", async () => {
-        const findByBarcode = vi.fn().mockResolvedValue(item);
-        const lookup = vi.fn().mockResolvedValue(suggestion);
-        const service = new StockBarcodeLookupService({ findByBarcode }, { lookup });
-        expect(await service.lookup(barcode)).toEqual({ barcode, existingItem: item, suggestion: null });
-        expect(findByBarcode).toHaveBeenCalledWith(barcode);
-        expect(lookup).not.toHaveBeenCalled();
+    function build(found: boolean) {
+        const itemService = {
+            findByBarcode: vi.fn().mockResolvedValue(found ? ({ id: 7 } as StockItem) : null),
+            getWithLots: vi.fn().mockResolvedValue(existing),
+        };
+        const offService = { getSuggestion: vi.fn().mockResolvedValue(suggestion) };
+        return { itemService, offService, service: new StockBarcodeLookupService(itemService, offService) };
+    }
+
+    it("returns the existing item with its lots without calling OFF", async () => {
+        const { service, offService } = build(true);
+        expect(await service.lookup("12345678")).toEqual({ barcode: "12345678", existingItem: existing, suggestion: null });
+        expect(offService.getSuggestion).not.toHaveBeenCalled();
     });
 
-    it("returns an OFF suggestion when no item exists", async () => {
-        const lookup = vi.fn().mockResolvedValue(suggestion);
-        const service = new StockBarcodeLookupService({ findByBarcode: vi.fn().mockResolvedValue(null) }, { lookup });
-        expect(await service.lookup(barcode)).toEqual({ barcode, existingItem: null, suggestion });
-        expect(lookup).toHaveBeenCalledWith(barcode);
-    });
-
-    it("returns both nulls when OFF fails or does not know the barcode", async () => {
-        const service = new StockBarcodeLookupService(
-            { findByBarcode: vi.fn().mockResolvedValue(null) },
-            { lookup: vi.fn().mockResolvedValue(null) },
-        );
-        expect(await service.lookup(barcode)).toEqual({ barcode, existingItem: null, suggestion: null });
+    it("normalizes UPC-A codes before searching and asking OFF", async () => {
+        const { service, itemService, offService } = build(false);
+        expect(await service.lookup("012345678905")).toEqual({ barcode: "0012345678905", existingItem: null, suggestion });
+        expect(itemService.findByBarcode).toHaveBeenCalledWith("0012345678905");
+        expect(offService.getSuggestion).toHaveBeenCalledWith("0012345678905", "lookup");
     });
 
     it("does not mask database errors as unknown products", async () => {
-        const lookup = vi.fn();
-        const service = new StockBarcodeLookupService(
-            { findByBarcode: vi.fn().mockRejectedValue(new Error("database unavailable")) }, { lookup },
-        );
-        await expect(service.lookup(barcode)).rejects.toThrow("database unavailable");
-        expect(lookup).not.toHaveBeenCalled();
+        const { service, itemService } = build(false);
+        itemService.findByBarcode.mockRejectedValue(new Error("db down"));
+        await expect(service.lookup("12345678")).rejects.toThrow("db down");
     });
 });

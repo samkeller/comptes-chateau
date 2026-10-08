@@ -1,86 +1,138 @@
-import { beforeAll, describe, expect, it } from "vitest";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
-import type { Repository } from "typeorm";
+import { beforeEach, describe, expect, it } from "vitest";
+import { testDataSource } from "../../../tests/testDbSetup";
 import { StockItem } from "../entities/StockItem";
+import { StockLocation } from "../entities/StockLocation";
+import { StockUnit } from "../entities/StockUnit";
 import StockItemService from "./StockItemService";
-import { User } from "../../core/entities/User";
-import { UserXpActionsPoints } from "../../core/utils/UserXPUtils";
 
-describe("StockItemService.create", () => {
+describe("StockItemService", () => {
+    const now = new Date(2026, 9, 6, 12);
+    let service: StockItemService;
+    let kitchen: StockLocation;
+    let cellar: StockLocation;
 
-    let stockItemService: StockItemService;
-    let stockItemRepo: Repository<StockItem>;
-    let userRepo: Repository<User>;
-
-    beforeAll(() => {
-        stockItemService = new StockItemService(testDataSource.manager);
-        stockItemRepo = testDataSource.manager.getRepository(StockItem);
-        userRepo = testDataSource.manager.getRepository(User);
+    beforeEach(async () => {
+        service = new StockItemService(testDataSource.manager);
+        [kitchen, cellar] = await testDataSource.getRepository(StockLocation).save([{ label: "Cuisine" }, { label: "Cave" }]);
     });
 
-    it("should create a new stock item", async () => {
-        await stockItemService.create({
-            label: "Test Item",
-            defaultUnit: "pcs",
-            barcode: "123456789",
-        }, TEST_USER_ID);
-
-        const createdItem = await stockItemRepo.findOne({
-            where: {
-                label: "Test Item",
-            },
-        });
-
-        // Assert
-        expect(createdItem).toBeDefined();
-        expect(createdItem).not.toBeNull();
-        expect(createdItem!.label).toBe("Test Item");
-        expect(createdItem!.defaultUnit).toBe("pcs");
-        expect(createdItem!.barcode).toBe("123456789");
-    });
-
-    it("should give the user XP", async () => {
-        const userBefore = await userRepo.findOne({
-            where: {
-                id: TEST_USER_ID,
-            },
-        });
-
-        const createdItem = await stockItemService.create({
-            label: "Test Item",
-            defaultUnit: "pcs",
-            barcode: "123456789",
-        }, TEST_USER_ID);
-
-
-        const userXPAfter = (await userRepo.findOne({
-            where: {
-                id: TEST_USER_ID,
-            },
-        }))?.totalXp;
-
-        expect(userBefore?.id).toBe(1);
-        expect(createdItem.id).toBe(1);
-        expect(userXPAfter).toBeDefined();
-        expect(userXPAfter).toEqual(userBefore!.totalXp + UserXpActionsPoints.STOCK_ITEM_CREATED);
-    });
-
-    it("returns null when no item matches the barcode", async () => {
-        expect(await stockItemService.findByBarcode("0012345678901")).toBeNull();
-    });
-
-    it("selects the latest createdAt then the highest id for duplicate barcodes", async () => {
-        const barcode = "0012345678901";
-        await stockItemRepo.save([
-            { label: "Old", defaultUnit: "g", barcode, createdAt: new Date("2025-01-01") },
-            { label: "Newest first", defaultUnit: "g", barcode, createdAt: new Date("2026-01-01") },
-            { label: "Newest last", defaultUnit: "g", barcode, createdAt: new Date("2026-01-01") },
-            { label: "Old last", defaultUnit: "g", barcode, createdAt: new Date("2024-01-01") },
+    async function seed() {
+        const [rice, milk, empty] = await testDataSource.getRepository(StockItem).save([
+            { label: "Riz", defaultUnit: "kg", barcode: "0012345678905", brand: "Taureau" },
+            { label: "Lait", defaultUnit: "L" },
+            { label: "Farine épuisée", defaultUnit: "kg" },
         ]);
-        expect(await stockItemService.findByBarcode(barcode)).toEqual({
-            id: 3, label: "Newest last", barcode, defaultUnit: "g", imageUrl: null,
-            stockUnitsCount: 0, nextStockUnitExpiration: null, createdAt: "2026-01-01T00:00:00.000Z",
+        await testDataSource.getRepository(StockUnit).save([
+            { itemId: rice.id, locationId: kitchen.id, quantity: 1, unit: "kg", expirationDate: "2026-12-01" },
+            { itemId: rice.id, locationId: kitchen.id, quantity: 1, unit: "kg", expirationDate: "2026-12-01" },
+            { itemId: rice.id, locationId: cellar.id, quantity: 1, unit: "kg", expirationDate: null },
+            { itemId: milk.id, locationId: kitchen.id, quantity: 1, unit: "l", expirationDate: "2026-10-05" },
+            { itemId: milk.id, locationId: kitchen.id, quantity: 1, unit: "L", expirationDate: "2026-10-05" },
+        ]);
+        return { rice, milk, empty };
+    }
+
+    describe("search", () => {
+        it("returns in-stock items with server-side lots, nearest expiration first", async () => {
+            const { rice, milk } = await seed();
+            const result = await service.search({}, now);
+
+            expect(result.map((item) => item.id)).toEqual([milk.id, rice.id]);
+            // Les unités historiques « l » et « L » forment un seul lot.
+            expect(result[0].lots).toEqual([{
+                locationId: kitchen.id, locationLabel: "Cuisine", quantity: 1, unit: "L",
+                expirationDate: "2026-10-05", expiryState: "expired", unitIds: expect.any(Array),
+            }]);
+            expect(result[0].lots[0].unitIds).toHaveLength(2);
+            expect(result[1]).toMatchObject({ stockUnitsCount: 3, nextStockUnitExpiration: "2026-12-01", brand: "Taureau" });
+            expect(result[1].lots.map((lot) => [lot.locationLabel, lot.expirationDate, lot.unitIds.length, lot.expiryState]))
+                .toEqual([["Cuisine", "2026-12-01", 2, "ok"], ["Cave", null, 1, "none"]]);
+        });
+
+        it("keeps empty items findable on demand", async () => {
+            const { empty } = await seed();
+            expect((await service.search({}, now)).some((item) => item.id === empty.id)).toBe(false);
+            const all = await service.search({ includeEmpty: true }, now);
+            expect(all.find((item) => item.id === empty.id)).toMatchObject({ stockUnitsCount: 0, lots: [] });
+        });
+
+        it("filters by location, keeping only the lots of that location", async () => {
+            const { rice } = await seed();
+            const result = await service.search({ locationId: cellar.id }, now);
+            expect(result).toHaveLength(1);
+            expect(result[0]).toMatchObject({ id: rice.id, stockUnitsCount: 1, nextStockUnitExpiration: null });
+        });
+
+        it("filters by expiry state", async () => {
+            const { milk, rice } = await seed();
+            expect((await service.search({ expiryState: "expired" }, now)).map((item) => item.id)).toEqual([milk.id]);
+            expect((await service.search({ expiryState: "none" }, now)).map((item) => item.id)).toEqual([rice.id]);
+            expect(await service.search({ expiryState: "soon" }, now)).toEqual([]);
+        });
+
+        it("searches by name, brand or barcode (any historical form) and escapes SQL wildcards", async () => {
+            const { rice } = await seed();
+            expect((await service.search({ search: "riz" }, now)).map((item) => item.id)).toEqual([rice.id]);
+            expect((await service.search({ search: "taur" }, now)).map((item) => item.id)).toEqual([rice.id]);
+            expect((await service.search({ search: "012345678905" }, now)).map((item) => item.id)).toEqual([rice.id]);
+            expect(await service.search({ search: "%" }, now)).toEqual([]);
         });
     });
 
+    describe("findByBarcode", () => {
+        it("returns null when no item matches the barcode", async () => {
+            expect(await service.findByBarcode("12345678")).toBeNull();
+        });
+
+        it("matches legacy non-normalized barcodes", async () => {
+            const legacy = await testDataSource.getRepository(StockItem).save({ label: "UPC", defaultUnit: "g", barcode: "012345678905" });
+            expect((await service.findByBarcode("0012345678905"))?.id).toBe(legacy.id);
+        });
+
+        it("selects the latest createdAt then the highest id for duplicate barcodes", async () => {
+            const repo = testDataSource.getRepository(StockItem);
+            await repo.save({ label: "Old", defaultUnit: "g", barcode: "12345678", createdAt: new Date("2026-01-01") });
+            const sameDateLow = await repo.save({ label: "Low", defaultUnit: "g", barcode: "12345678", createdAt: new Date("2026-02-01") });
+            const sameDateHigh = await repo.save({ label: "High", defaultUnit: "g", barcode: "12345678", createdAt: new Date("2026-02-01") });
+            expect(sameDateHigh.id).toBeGreaterThan(sameDateLow.id);
+            expect((await service.findByBarcode("12345678"))?.label).toBe("High");
+        });
+    });
+
+    describe("save", () => {
+        it("creates then updates an item, keeping omitted optional fields", async () => {
+            const { item, created } = await service.save({ label: "Pâtes", defaultUnit: "g", barcode: "12345678", brand: "Panz", imageUrl: null });
+            expect(created).toBe(true);
+            const updated = await service.save({ id: item.id, label: "Pâtes complètes", defaultUnit: "kg" });
+            expect(updated.created).toBe(false);
+            expect(await testDataSource.getRepository(StockItem).findOneByOrFail({ id: item.id }))
+                .toMatchObject({ label: "Pâtes complètes", defaultUnit: "kg", barcode: "12345678", brand: "Panz" });
+        });
+
+        it("throws a typed 404 for an unknown item", async () => {
+            await expect(service.save({ id: 999, label: "X", defaultUnit: "g" }))
+                .rejects.toMatchObject({ statusCode: 404, code: "STOCK_ITEM_NOT_FOUND" });
+        });
+    });
+
+    describe("OpenFoodFacts backfill helpers", () => {
+        it("normalizes legacy barcodes idempotently", async () => {
+            const item = await testDataSource.getRepository(StockItem).save({ label: "UPC", defaultUnit: "g", barcode: "012345678905" });
+            expect(await service.normalizeBarcode(item)).toBe(true);
+            expect(await service.normalizeBarcode(item)).toBe(false);
+            expect((await testDataSource.getRepository(StockItem).findOneByOrFail({ id: item.id })).barcode).toBe("0012345678905");
+        });
+
+        it("fills missing brand and image without overwriting user values", async () => {
+            const repo = testDataSource.getRepository(StockItem);
+            const blank = await repo.save({ label: "A", defaultUnit: "g" });
+            const typed = await repo.save({ label: "B", defaultUnit: "g", brand: "Mine", imageUrl: "https://mine/img.jpg" });
+            const suggestion = { label: "OFF", brand: "OffBrand", imageUrl: "https://off/img.jpg", quantity: null, unit: null };
+
+            expect(await service.enrichFromSuggestion(blank, suggestion)).toBe(true);
+            expect(await service.enrichFromSuggestion(typed, suggestion)).toBe(false);
+            expect(await repo.findOneByOrFail({ id: blank.id })).toMatchObject({ label: "A", brand: "OffBrand", imageUrl: "https://off/img.jpg" });
+            expect(await repo.findOneByOrFail({ id: typed.id })).toMatchObject({ brand: "Mine", imageUrl: "https://mine/img.jpg" });
+        });
+    });
 });
