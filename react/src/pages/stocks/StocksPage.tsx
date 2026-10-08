@@ -102,48 +102,39 @@ export default function StocksPage() {
                 <Card
                     title={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <h2 className="m-0 text-xl">Stocks</h2>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="m-0 text-xl font-semibold">Stocks</h2>
+                            <nav aria-label="Actions des stocks" className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                                 <Button
                                     icon="pi pi-plus"
                                     label="Ajouter"
+                                    className="col-span-2 sm:order-last"
                                     onClick={() => setEntryRequest({})}
                                 />
                                 <Button
-                                    icon="pi pi-barcode"
-                                    rounded outlined
-                                    tooltip="Scanner"
-                                    tooltipOptions={{ position: "left" }}
-                                    onClick={() => setEntryRequest({ scan: true })}
-                                />
-                                <Button
                                     icon="pi pi-history"
-                                    rounded text
                                     tooltip="Historique"
-                                    tooltipOptions={{ position: "left" }}
+                                    outlined
+                                    rounded text
+                                    severity="secondary"
                                     onClick={() => setLocationHistoryDialogVisible(true)}
+                                />                                <Button
+                                    icon="pi pi-map-marker"
+                                    label="Lieux"
+                                    outlined severity="secondary"
+                                    onClick={() => setLocationsDialogVisible(true)}
                                 />
-                            </div>
+
+                            </nav>
                         </div>
                     }
                 >
                     <div className="flex w-full flex-col gap-3">
-                        {locations === null || overview === null ? (
-                            <div className="flex justify-center p-8"><ProgressSpinner /></div>
-                        ) : locations?.length === 0 && overview?.stockUnitCount === 0 ? (
-                            <div className="flex flex-col items-start gap-2 p-4">
-                                <p className="m-0">Commence par créer un lieu de stockage (frigo, cellier…).</p>
-                                <Button icon="pi pi-map-marker" label="Créer un lieu" onClick={() => setLocationsDialogVisible(true)} />
-                            </div>
-                        ) : (
-                            <StockItemsTable locations={locations} overview={overview}
-                                initialLocationId={readLocationFilter(searchParams)} refreshKey={refreshKey}
-                                onEditItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id })}
-                                onAddToItem={(item: StockItemWithLotsDto, selectedLocationId: number | null) =>
-                                    setEntryRequest({ itemId: item.id, addLot: true, defaultLocationId: selectedLocationId })}
-                                onManageLocations={() => setLocationsDialogVisible(true)}
-                                onChanged={refresh} />
-                        )}
+                        <StockItemsTable locations={locations} overview={overview}
+                            initialLocationId={readLocationFilter(searchParams)} refreshKey={refreshKey}
+                            onEditItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id })}
+                            onAddToItem={(item: StockItemWithLotsDto, selectedLocationId: number | null) =>
+                                setEntryRequest({ itemId: item.id, addLot: true, defaultLocationId: selectedLocationId })}
+                            onChanged={refresh} />
                     </div>
                 </Card>
             </div>

@@ -21,6 +21,7 @@ import StockExpiryDateTag from "../atoms/StockExpiryDateTag";
 import TakeStockUnitButton from "../atoms/TakeStockUnitButton";
 import StockOverviewBar from "../molecules/StockOverviewBar";
 import { useResponsiveDataTable } from "@/components/atoms/primereact/datatable/useResponsiveDataTable";
+import { FloatLabel } from "primereact/floatlabel";
 
 const entryService = new StockEntryService();
 const itemsService = new StockItemsService();
@@ -112,7 +113,6 @@ interface StockItemsTableProps {
     refreshKey: number;
     onEditItem: (item: StockItemWithLotsDto) => void;
     onAddToItem: (item: StockItemWithLotsDto, locationId: number | null) => void;
-    onManageLocations: () => void;
     /** Appelé après toute modification du stock (édition en cellule, prise, ajout, suppression). */
     onChanged: () => void;
 }
@@ -121,7 +121,7 @@ interface StockItemsTableProps {
  * Tableau des stocks : un groupe par produit, une ligne par lot.
  * Exemplaires, contenu, unité, lieu et péremption se corrigent directement dans la cellule.
  */
-export default function StockItemsTable({ locations, overview, initialLocationId, refreshKey, onEditItem, onAddToItem, onManageLocations, onChanged }: StockItemsTableProps) {
+export default function StockItemsTable({ locations, overview, initialLocationId, refreshKey, onEditItem, onAddToItem, onChanged }: StockItemsTableProps) {
     const responsiveTableProps = useResponsiveDataTable<StockLotRow[]>();
     const [items, setItems] = useState<StockItemWithLotsDto[] | null>(null);
     const [filters, setFilters] = useState<DataTableFilterMeta>(() => createInitialFilters(initialLocationId));
@@ -224,10 +224,6 @@ export default function StockItemsTable({ locations, overview, initialLocationId
 
     return (
         <div className="flex flex-col gap-3">
-            <StockOverviewBar overview={overview} expiryFilter={expiryFilter}
-                onExpiryFilterChange={(state) => setFilter("expiryState", state)} />
-            <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
-                tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }} onClick={onManageLocations} />
             {items === null && loading ? (
                 <div className="flex justify-center p-8"><ProgressSpinner /></div>
             ) : (
@@ -239,23 +235,40 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                     lazy
                     loading={saving || loading}
                     header={(
-                        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
-                            <label className="flex items-center gap-2">
-                                <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
-                                Afficher les épuisés
-                            </label>
-                            <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search}
-                                className="w-full md:w-80"
-                                onChange={(event) => setFilter("global", event.target.value, FilterMatchMode.CONTAINS)}
-                                aria-label="Rechercher un produit" />
-                            <Dropdown value={selectedLocationId} options={locations ?? []}
-                                optionLabel="label" optionValue="id" showClear placeholder="Tous les lieux"
-                                className="w-full md:w-auto"
-                                onChange={(event) => setFilter("locationId", event.value ?? null)} />
-                            <Dropdown value={expiryFilter} options={EXPIRY_FILTER_OPTIONS}
-                                optionLabel="label" optionValue="value" showClear placeholder="Toutes les péremptions"
-                                className="w-full md:w-auto"
-                                onChange={(event) => setFilter("expiryState", event.value ?? null)} />
+                        <div className="flex flex-col gap-4 font-normal">
+                            <StockOverviewBar overview={overview} expiryFilter={expiryFilter}
+                                onExpiryFilterChange={(state) => setFilter("expiryState", state)} />
+                            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr))]">
+                                <div className="flex min-w-0 flex-col gap-1 sm:col-span-2 lg:col-span-1">
+                                    <InputSearch id="stock-search" placeholder="Nom, marque ou code-barres" value={search}
+                                        className="w-full"
+                                        onChange={(event) => setFilter("global", event.target.value, FilterMatchMode.CONTAINS)}
+                                        aria-label="Rechercher un produit" />
+                                </div>
+                                <div className="flex min-w-0 flex-col gap-1">
+                                    <FloatLabel>
+
+                                        <Dropdown inputId="stock-location-filter" value={selectedLocationId} options={locations ?? []}
+                                            optionLabel="label" optionValue="id" showClear placeholder="Tous les lieux"
+                                            className="w-full"
+                                            onChange={(event) => setFilter("locationId", event.value ?? null)} />
+                                        <label htmlFor="stock-location-filter" className="text-sm font-medium"><i className="pi pi-map-marker" />&nbsp;Lieu</label>
+                                    </FloatLabel>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-3 border-t border-surface pt-3">
+                                <label htmlFor="stock-include-empty" className="flex items-center gap-2 text-sm">
+                                    <InputSwitch inputId="stock-include-empty" checked={includeEmpty}
+                                        onChange={(event) => setIncludeEmpty(event.value === true)} />
+                                    Afficher les épuisés
+                                </label>
+                                {hasFilters && <Button icon="pi pi-filter-slash" text size="small" severity="secondary"
+                                    aria-label="Réinitialiser les filtres" tooltip="Réinitialiser les filtres"
+                                    onClick={() => {
+                                        setFilters(createInitialFilters(null));
+                                        setIncludeEmpty(false);
+                                    }} />}
+                            </div>
                         </div>
                     )}
 
@@ -281,7 +294,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                     {...responsiveTableProps}
                     emptyMessage={hasFilters
                         ? "Aucun produit ne correspond à ces filtres."
-                        : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
+                        : "Aucun produit en stock."}
                 >
                     <Column
                         field="copies"
