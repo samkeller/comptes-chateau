@@ -195,7 +195,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
           </div>
         </Sidebar>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-2 md:px-8 py-2">
+        <main className="flex-1 min-h-0 overflow-y-auto px-2 md:px-4 py-2 md:py-4">
           {children}
         </main>
       </div>
