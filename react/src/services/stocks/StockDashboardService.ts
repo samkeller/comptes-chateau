@@ -1,6 +1,7 @@
 import axios from "axios";
-import type { StockDashboardOverviewDto, StockMovementDto } from "@chocosous/shared";
+import type { StockDashboardOverviewDto } from "@chocosous/shared";
 import BaseService from "../BaseService";
+import StockMovement from "@/interfaces/stocks/StockMovement";
 
 export default class StockDashboardService extends BaseService {
     private readonly stocksDashboardUrl = `${this.apiUrl}/stocks/dashboard`;
@@ -10,10 +11,10 @@ export default class StockDashboardService extends BaseService {
         return response.data;
     }
 
-    async getLastMovements(limit?: number): Promise<StockMovementDto[]> {
-        const response = await axios.get<StockMovementDto[]>(`${this.stocksDashboardUrl}/last-movements`, {
-            params: limit ? { limit } : {},
-        });
-        return response.data;
+    async getLastMovements(limit?: number): Promise<StockMovement[]> {
+        const params = limit ? { limit } : {};
+        return axios
+            .get(`${this.stocksDashboardUrl}/last-movements`, { params })
+            .then(r => r.data.map((v: Partial<StockMovement>) => new StockMovement(v)));
     }
 }
