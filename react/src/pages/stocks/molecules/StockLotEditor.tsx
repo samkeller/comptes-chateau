@@ -36,7 +36,7 @@ export default function StockLotEditor({ lot, index, locations, onChange, onRemo
     }
 
     return (
-        <div role="group" aria-label={`Lot ${index + 1}`} className="flex flex-col gap-3 rounded-lg border border-gray-300 p-3">
+        <div role="group" aria-label={`Lot ${index + 1}`} className="flex flex-col gap-3 rounded-lg border border-surface p-3">
             <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold">
                     {existing ? `En stock : ${lot.unitIds.length} exemplaire(s)` : "Nouveau lot"}

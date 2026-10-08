@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { StockItemWithLotsDto } from "@chocosous/shared";
 import {
-    applySuggestion, countNewCopies, duplicateLotEntry, editLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
-    getEntryDraftError, toSaveStockEntryDto,
+    applySuggestion, duplicateLotEntry, editLotEntry, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
+    toSaveStockEntryDto,
 } from "./stockEntryDraft";
 
 const item: StockItemWithLotsDto = {
@@ -22,7 +22,6 @@ describe("stock entry draft", () => {
         draft.lots[0] = { ...draft.lots[0], copies: 2, quantity: 500, unit: "g", expirationDate: new Date(2027, 0, 31) };
         draft.lots.push({ ...draft.lots[0], key: "other", copies: 1, expirationDate: null });
 
-        expect(getEntryDraftError(draft)).toBeNull();
         expect(toSaveStockEntryDto(draft)).toEqual({
             item: { label: "Riz", barcode: "012345678905", brand: null, defaultUnit: "pièce", imageUrl: null },
             lots: [
@@ -49,7 +48,6 @@ describe("stock entry draft", () => {
         draft.lots[0].copies = 0;
         draft.lots[2].copies = 0;
         expect(toSaveStockEntryDto(draft).lots.map((lot) => [lot.unitIds, lot.copies])).toEqual([[[10, 11], 0], [[12], 1]]);
-        expect(countNewCopies(draft.lots)).toBe(0);
     });
 
     it("prefills from OpenFoodFacts without overwriting typed values", () => {
@@ -61,20 +59,6 @@ describe("stock entry draft", () => {
         expect(prefilled.item).toMatchObject({ label: "Mon chocolat", brand: "Ferrero", barcode: "3017620422003", defaultUnit: "g" });
         expect(prefilled.lots[0]).toMatchObject({ quantity: 400, unit: "g" });
         expect(applySuggestion(draft, "12345678", null).item).toMatchObject({ label: "Mon chocolat", barcode: "12345678" });
-    });
-
-    it.each([
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.item.label = " "; }, "Le nom du produit est obligatoire."],
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.item.barcode = "12"; }, "Le code-barres doit contenir 8 à 14 chiffres."],
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.item.imageUrl = "javascript:alert(1)"; }, "L'image doit être une adresse http(s)."],
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.lots[0].locationId = null; }, "Choisis un lieu pour chaque lot."],
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.lots[0].quantity = 0; }, "La quantité de chaque lot doit être positive."],
-        [(d: ReturnType<typeof emptyEntryDraft>) => { d.lots[0].copies = 101; }, "100 nouveaux exemplaires au maximum par saisie."],
-    ])("reports blocking errors", (mutate, message) => {
-        const draft = emptyEntryDraft(1);
-        draft.item.label = "Riz";
-        mutate(draft);
-        expect(getEntryDraftError(draft)).toBe(message);
     });
 
     it("duplicates one unit of a lot without touching the product fields", () => {

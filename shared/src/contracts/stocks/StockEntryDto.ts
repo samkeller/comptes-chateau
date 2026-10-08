@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { STOCK_EXPIRY_STATES } from "./StockExpiry";
 import { normalizeBarcode } from "./StockBarcode";
 import { StockUnitUnitSchema } from "./StockUnits";
 

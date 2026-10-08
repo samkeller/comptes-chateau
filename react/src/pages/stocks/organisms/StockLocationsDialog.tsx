@@ -53,25 +53,50 @@ export default function StockLocationsDialog({ locations, confirmGroup, onClose,
     };
 
     return (
-        <Dialog visible onHide={onClose} header="Lieux de stockage" style={{ width: "min(32rem, 95vw)" }}>
+        <Dialog
+            visible onHide={onClose}
+            header="Lieux de stockage"
+            style={{ width: "min(32rem, 95vw)" }}
+            footer={
+                <div className="flex justify-end gap-2">
+                    <Button className="mt-3" icon="pi pi-plus" label="Ajouter un lieu" onClick={() => setEditing("new")} />
+                </div>
+            }
+
+        >
             {editing && (
                 <StockLocationDialog visible location={editing === "new" ? null : editing}
                     onHide={() => setEditing(null)} onSubmit={submit} />
             )}
             <ul className="m-0 flex list-none flex-col gap-1 p-0">
                 {locations.map((location) => (
-                    <li key={location.id} className="flex items-center gap-2 border-b border-gray-200 py-1">
+                    <li key={location.id} className="flex items-center gap-2 py-1">
                         <span className="flex-1 min-w-0 truncate">{location.label}</span>
-                        <span className="text-sm text-gray-500">{location.stockUnitCount} exemplaire(s)</span>
-                        <Button icon="pi pi-pencil" rounded text aria-label={`Renommer ${location.label}`}
-                            onClick={() => setEditing(location)} />
-                        <Button icon="pi pi-trash" rounded text severity="danger" aria-label={`Supprimer ${location.label}`}
-                            onClick={() => requestDelete(location)} />
+                        <span className="text-sm text-gray-500">{
+                            location.stockUnitCount > 0 ?
+                                `${location.stockUnitCount} produits`
+                                : "-"
+                        }</span>
+                        <Button
+                            icon="pi pi-pencil"
+                            rounded text
+                            aria-label={`Renommer ${location.label}`}
+                            tooltip="Renommer"
+                            onClick={() => setEditing(location)}
+                        />
+                        <Button
+                            icon="pi pi-trash"
+                            rounded text
+                            severity="danger"
+                            aria-label={`Supprimer ${location.label}`}
+                            tooltip="Supprimer"
+                            onClick={() => requestDelete(location)}
+                        />
                     </li>
                 ))}
                 {locations.length === 0 && <li className="text-gray-500">Aucun lieu pour le moment.</li>}
             </ul>
-            <Button className="mt-3" icon="pi pi-plus" label="Ajouter un lieu" onClick={() => setEditing("new")} />
+            <div></div>
         </Dialog>
     );
 }

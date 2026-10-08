@@ -1,6 +1,4 @@
 import {
-    MAX_STOCK_ENTRY_NEW_COPIES,
-    normalizeBarcode,
     normalizeStockUnit,
     type SaveStockEntryDto,
     type StockItemWithLotsDto,
@@ -147,26 +145,6 @@ export function isHttpUrl(value: string): boolean {
     } catch {
         return false;
     }
-}
-
-export function countNewCopies(lots: StockLotDraft[]): number {
-    return lots.reduce((total, lot) => total + Math.max(0, lot.copies - lot.unitIds.length), 0);
-}
-
-/** Première erreur bloquante du brouillon, en français, ou `null` si la saisie est enregistrable. */
-export function getEntryDraftError(draft: StockEntryDraft): string | null {
-    if (!draft.item.label.trim()) return "Le nom du produit est obligatoire.";
-    if (draft.item.barcode.trim() && !normalizeBarcode(draft.item.barcode)) return "Le code-barres doit contenir 8 à 14 chiffres.";
-    if (draft.item.imageUrl.trim() && !isHttpUrl(draft.item.imageUrl)) return "L'image doit être une adresse http(s).";
-    for (const lot of draft.lots) {
-        if (lot.unitIds.length === 0 && lot.copies < 1) continue;
-        if (lot.locationId === null) return "Choisis un lieu pour chaque lot.";
-        if (lot.quantity === null || lot.quantity <= 0) return "La quantité de chaque lot doit être positive.";
-    }
-    if (countNewCopies(draft.lots) > MAX_STOCK_ENTRY_NEW_COPIES) {
-        return `${MAX_STOCK_ENTRY_NEW_COPIES} nouveaux exemplaires au maximum par saisie.`;
-    }
-    return null;
 }
 
 /** Contrat envoyé à `POST /stocks/entries`. Les nouveaux lots vides sont ignorés. */

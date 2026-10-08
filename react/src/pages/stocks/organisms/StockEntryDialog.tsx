@@ -17,7 +17,7 @@ import StockItemsService from "@/services/stocks/StockItemsService";
 import StockLotEditor from "../molecules/StockLotEditor";
 import StockProductFields from "../molecules/StockProductFields";
 import {
-    applySuggestion, countNewCopies, emptyEntryDraft, entryDraftFromItem, getEntryDraftError, newLotDraft,
+    applySuggestion, emptyEntryDraft, entryDraftFromItem, newLotDraft,
     switchToExistingItem, toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
 } from "@/utils/stocks/stockEntryDraft";
 
@@ -45,7 +45,7 @@ interface StockEntryDialogProps {
     onSaved: (item: StockItemWithLotsDto, lastLocationId: number | null) => void;
 }
 
-type LookupInfo = { severity: "info" | "success"; text: string; fromOpenFoodFacts: boolean };
+type LookupInfo = { severity: "info" | "success"; text: string };
 
 /**
  * Dialog unique de saisie du stock : ajout (manuel ou par scan), ajout rapide d'exemplaires et modification.
@@ -54,7 +54,9 @@ type LookupInfo = { severity: "info" | "success"; text: string; fromOpenFoodFact
 export default function StockEntryDialog({ request, locations, defaultLocationId, onClose, onSaved }: StockEntryDialogProps) {
     const { isMobile } = useScreen();
     const showToast = useGlobalToast();
+
     const initialLocationId = request.defaultLocationId ?? defaultLocationId;
+
     const [draft, setDraft] = useState<StockEntryDraft | null>(() => request.itemId ? null : emptyEntryDraft(initialLocationId));
     const [scanning, setScanning] = useState(request.scan === true);
     const [lookingUp, setLookingUp] = useState(false);
@@ -63,6 +65,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
     const [suggestions, setSuggestions] = useState<StockItemWithLotsDto[]>([]);
     const [saving, setSaving] = useState(false);
     const lastLocationId = useRef(initialLocationId);
+
     const isEditing = request.itemId !== undefined && !request.addLot;
 
     const onCloseRef = useRef(onClose);
@@ -140,12 +143,12 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         try {
             const result = await barcodeService.lookup(code);
             if (result.existingItem) {
-                switchToItem(result.existingItem, { severity: "success", text: "Produit déjà connu : ses lots en stock sont affichés.", fromOpenFoodFacts: false });
+                switchToItem(result.existingItem, { severity: "success", text: "Produit déjà connu : ses lots en stock sont affichés." });
             } else {
                 setDraft((current) => current && applySuggestion(current, result.barcode, result.suggestion));
                 setLookupInfo(result.suggestion
-                    ? { severity: "info", text: "Nouveau produit prérempli : vérifie les informations.", fromOpenFoodFacts: true }
-                    : { severity: "info", text: "Produit inconnu : saisis son nom.", fromOpenFoodFacts: false });
+                    ? { severity: "info", text: "Nouveau produit prérempli : vérifie les informations." }
+                    : { severity: "info", text: "Produit inconnu : saisis son nom." });
                 if (result.suggestion) setProductExpanded(true);
             }
         } catch {
@@ -183,7 +186,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
     };
 
     const save = async (): Promise<void> => {
-        if (!draft || getEntryDraftError(draft)) return;
+        if (!draft) return;
         setSaving(true);
         try {
             const saved = await entryService.save(toSaveStockEntryDto(draft));
@@ -199,18 +202,15 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         }
     };
 
-    const draftError = draft ? getEntryDraftError(draft) : null;
-    const newCopies = draft ? countNewCopies(draft.lots) : 0;
     const busy = saving || lookingUp;
     const isNewItem = draft?.item.id === undefined;
 
     const footer = (
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
-            {draft && draftError && <small className="text-left md:mr-auto" role="alert">{draftError}</small>}
             <div className="flex flex-wrap justify-end gap-2">
                 <Button type="button" label="Annuler" text onClick={onClose} disabled={saving} />
                 <Button type="button" label="Enregistrer" icon="pi pi-check"
-                    disabled={!draft || !!draftError || busy} loading={saving}
+                    disabled={!draft || busy} loading={saving}
                     onClick={() => void save()} />
             </div>
         </div>
@@ -243,12 +243,23 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                                     onSelect={(event) => void selectExistingItem((event.value as StockItemWithLotsDto).id)} />
                             ) : (
                                 <div className="flex gap-2">
-                                    <InputText id="stock-entry-label" value={draft.item.label} maxLength={255} className="flex-1 min-w-0"
-                                        onChange={(event) => updateItem({ label: event.target.value })} />
+                                    <InputText
+                                        id="stock-entry-label"
+                                        value={draft.item.label}
+                                        maxLength={255}
+                                        className="flex-1 min-w-0"
+                                        onChange={(event) => updateItem({ label: event.target.value })}
+                                    />
                                     {!request.itemId && (
-                                        <Button type="button" icon="pi pi-times" outlined severity="secondary"
-                                            aria-label="Choisir un autre produit" tooltip="Choisir un autre produit"
-                                            onClick={chooseAnotherItem} />
+                                        <Button
+                                            type="button"
+                                            icon="pi pi-times"
+                                            rounded text
+                                            aria-label="Choisir un autre produit"
+                                            tooltip="Choisir un autre produit"
+                                            tooltipOptions={{ position: 'left' }}
+                                            onClick={chooseAnotherItem}
+                                        />
                                     )}
                                 </div>
                             )}
@@ -266,15 +277,27 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                                         void lookupBarcode(draft.item.barcode);
                                     }} />
                                 {isNewItem && (
-                                    <Button type="button" icon="pi pi-search" outlined aria-label="Rechercher ce code-barres"
-                                        tooltip="Rechercher ce code-barres" loading={lookingUp}
+                                    <Button
+                                        type="button"
+                                        icon="pi pi-search"
+                                        outlined
+                                        aria-label="Rechercher ce code-barres"
+                                        tooltip="Rechercher ce code-barres"
+                                        tooltipOptions={{ position: 'left' }}
+                                        loading={lookingUp}
                                         disabled={busy || !draft.item.barcode.trim()}
-                                        onClick={() => void lookupBarcode(draft.item.barcode)} />
+                                        onClick={() => void lookupBarcode(draft.item.barcode)}
+                                    />
                                 )}
-                                <Button type="button" icon={scanning ? "pi pi-times" : "pi pi-camera"} outlined
+                                <Button
+                                    type="button"
+                                    icon={scanning ? "pi pi-times" : "pi pi-camera"}
+                                    rounded
                                     aria-label={scanning ? "Arrêter le scan" : "Scanner le code-barres"}
                                     tooltip={scanning ? "Arrêter le scan" : "Scanner (ou rescanner) le code-barres"}
-                                    disabled={busy} onClick={() => setScanning((value) => !value)} />
+                                    disabled={busy}
+                                    onClick={() => setScanning((value) => !value)}
+                                />
                             </div>
                             <BarcodeScanner active={scanning} onDetected={(code) => void lookupBarcode(code)}
                                 onCancel={() => setScanning(false)} />
@@ -284,9 +307,6 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                             <Message severity={lookupInfo.severity} className="justify-start" text={(
                                 <span>
                                     {lookupInfo.text}
-                                    {lookupInfo.fromOpenFoodFacts && (
-                                        <> Données <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer" className="underline">Open Food Facts</a> (ODbL).</>
-                                    )}
                                 </span>
                             )} />
                         )}
@@ -306,7 +326,6 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                     </section>
 
                     <section className="flex flex-col gap-3" aria-label="Exemplaires">
-                        <h3 className="m-0 font-semibold">Exemplaires</h3>
                         {locations.length === 0 && (
                             <Message severity="info" className="justify-start" text="Crée d'abord un lieu de stockage." />
                         )}
@@ -314,12 +333,16 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                             <StockLotEditor key={lot.key} lot={lot} index={index} locations={locations}
                                 onChange={(changes) => updateLot(lot.key, changes)} onRemove={() => removeLot(lot)} />
                         ))}
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Button type="button" label="Ajouter un lot (autre date, lieu…)" icon="pi pi-plus" outlined size="small"
-                                onClick={addLot} />
-                            {newCopies > 0 && <span className="text-sm">{newCopies} nouvel(s) exemplaire(s)</span>}
-                        </div>
                     </section>
+                    <div className="flex justify-end">
+                        <Button
+                            type="button"
+                            label="Ajouter"
+                            icon="pi pi-plus"
+                            size="small"
+                            onClick={addLot}
+                        />
+                    </div>
                 </div>
             )}
         </Dialog>

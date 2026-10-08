@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "primereact/button";
 import { ConfirmDialog } from "primereact/confirmdialog";
-import { ProgressSpinner } from "primereact/progressspinner";
 import type { StockDashboardOverviewDto, StockItemWithLotsDto } from "@chocosous/shared";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import StockDashboardService from "@/services/stocks/StockDashboardService";
@@ -41,10 +40,7 @@ export default function StocksPage() {
     const [locations, setLocations] = useState<StockLocation[] | null>(null);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [entryRequest, setEntryRequest] = useState<StockEntryDialogRequest | null>(() => {
-        const action = searchParams.get("action");
-        return action === "scan" || action === "add" ? { scan: action === "scan" } : null;
-    });
+    const [showEntryDialog, setShowEntryDialog] = useState(false);
     const [lastLocationId, setLastLocationId] = useState<number | null>(readLastLocationId);
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
     const [locationHistoryDialogVisible, setLocationHistoryDialogVisible] = useState(false);
@@ -73,7 +69,7 @@ export default function StocksPage() {
         ? lastLocationId
         : locationList[0]?.id ?? null;
 
-    const closeEntryDialog = useCallback(() => setEntryRequest(null), []);
+    const closeEntryDialog = useCallback(() => setShowEntryDialog(false), []);
     const onEntrySaved = useCallback((_item: StockItemWithLotsDto, usedLocationId: number | null) => {
         if (usedLocationId !== null) {
             rememberLocationId(usedLocationId);
@@ -86,9 +82,9 @@ export default function StocksPage() {
         <PageTemplate pageTitle="Stocks">
             <ConfirmDialog />
             <ConfirmDialog group={CONFIRM_GROUP} />
-            {entryRequest && locations && (
-                <StockEntryDialog request={entryRequest} locations={locations}
-                    defaultLocationId={entryRequest.defaultLocationId ?? defaultLocationId}
+            {showEntryDialog && locations && (
+                <StockEntryDialog request={{}} locations={locations}
+                    defaultLocationId={defaultLocationId}
                     onClose={closeEntryDialog} onSaved={onEntrySaved} />
             )}
             {locationsDialogVisible && (
@@ -108,7 +104,7 @@ export default function StocksPage() {
                                     icon="pi pi-plus"
                                     label="Ajouter"
                                     className="col-span-2 sm:order-last"
-                                    onClick={() => setEntryRequest({})}
+                                    onClick={() => setShowEntryDialog(true)}
                                 />
                                 <Button
                                     icon="pi pi-history"
@@ -131,9 +127,9 @@ export default function StocksPage() {
                     <div className="flex w-full flex-col gap-3">
                         <StockItemsTable locations={locations} overview={overview}
                             initialLocationId={readLocationFilter(searchParams)} refreshKey={refreshKey}
-                            onEditItem={(item: StockItemWithLotsDto) => setEntryRequest({ itemId: item.id })}
+                            onEditItem={(item: StockItemWithLotsDto) => setShowEntryDialog(true)}
                             onAddToItem={(item: StockItemWithLotsDto, selectedLocationId: number | null) =>
-                                setEntryRequest({ itemId: item.id, addLot: true, defaultLocationId: selectedLocationId })}
+                                setShowEntryDialog(true)}
                             onChanged={refresh} />
                     </div>
                 </Card>
