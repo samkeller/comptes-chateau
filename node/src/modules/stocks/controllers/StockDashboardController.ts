@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import type { StockMovementsQueryDto } from "@chocosous/shared";
 import StockUnitService from "../services/StockUnitService";
 import StockMovementService from "../services/StockMovementService";
 
@@ -10,14 +11,8 @@ export default class StockDashboardController {
         res.status(200).json(await this.stockUnitService.getOverview());
     };
 
-    getLastMovements = async (_req: Request, res: Response): Promise<void> => {
-        res.status(200).json(await this.stockMovementService.getLastMovements());
+    getLastMovements = async (req: Request, res: Response): Promise<void> => {
+        const { limit } = req.query as unknown as StockMovementsQueryDto;
+        res.status(200).json(await this.stockMovementService.getLastMovements(limit));
     };
-
-    getExpiringItems = async (req: Request, res: Response) => {
-        res.status(200).json(
-            await this.stockUnitService.getExpiringItems()
-        );
-    };
-
 }

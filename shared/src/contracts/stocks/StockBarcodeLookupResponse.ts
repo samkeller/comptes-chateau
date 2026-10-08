@@ -1,21 +1,23 @@
 import { z } from "zod";
-import type { StockItemDto } from "./StockDtos";
-
-export const STOCK_UNIT_UNITS = ["g", "kg", "ml", "cl", "L", "boite", "pack"] as const;
-export type StockUnitUnits = typeof STOCK_UNIT_UNITS[number];
+import type { StockItemWithLotsDto } from "./StockDtos";
+import type { StockUnitUnits } from "./StockUnits";
 
 export const StockBarcodeParamsSchema = z.object({
     barcode: z.string().regex(/^\d{8,14}$/),
 });
 
+/** Données OpenFoodFacts proposées pour préremplir un nouveau produit. */
+export interface StockProductSuggestionDto {
+    label: string | null;
+    brand: string | null;
+    imageUrl: string | null;
+    quantity: number | null;
+    unit: StockUnitUnits | null;
+}
+
 export interface StockBarcodeLookupResponse {
+    /** Code-barres normalisé (EAN-13 pour un UPC-A). */
     barcode: string;
-    existingItem: StockItemDto | null;
-    suggestion: {
-        label: string | null;
-        brand: string | null;
-        imageUrl: string | null;
-        quantity: number | null;
-        unit: StockUnitUnits | null;
-    } | null;
+    existingItem: StockItemWithLotsDto | null;
+    suggestion: StockProductSuggestionDto | null;
 }
