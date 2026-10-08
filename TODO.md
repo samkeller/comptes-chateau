@@ -13,6 +13,7 @@ Project Description
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines) - données qui changent peu ou batch quotidien. (node-cache obsolète ???)  
 - [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
 - [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
+- [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
 
 ### In Progress
 
