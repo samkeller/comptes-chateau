@@ -10,7 +10,7 @@ interface StockExpiryDateTagProps {
 export default function StockExpiryDateTag({ lot }: StockExpiryDateTagProps) {
 
     const date = parseApiDate(lot.expirationDate);
-    if (!date) return <span className="text-sm text-gray-500">-</span>;
+    if (!date) return <></>;
 
     const display = STOCK_EXPIRY_DISPLAY[lot.expiryState];
 

@@ -8,7 +8,7 @@ import { FilterMatchMode, type SortOrder } from "primereact/api";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { STOCK_UNIT_UNITS, type StockDashboardOverviewDto, type StockExpiryState, type StockItemWithLotsDto, type StockLotDto } from "@chocosous/shared";
-import { dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
+import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/primereact/datatable/DatatableEditors";
 import InputSearch from "@/components/atoms/primereact/InputSearch";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import { showGlobalToast } from "@/services/GlobalToast";
@@ -208,6 +208,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                     className="h-8 w-8 shrink-0 rounded object-contain" />
             )}
             <div className="min-w-0 flex-1">
+                <h4>{row.label}</h4>
                 <span className="text-sm text-gray-500">
                     {row.item.brand && <>{row.item.brand} · </>}
                     {row.item.stockUnitsCount > 0 ? `${row.item.stockUnitsCount} en stock` : "Épuisé"}
@@ -276,37 +277,30 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                         : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
                 >
                     <Column
-                        field="label"
-                        header="Produit"
-                        sortable
-                        body={(row: StockLotRow) => !row.lot || row.lot.unitIds[0] === row.item.lots[0]?.unitIds[0]
-                            ? <span className="font-semibold">{row.item.label}</span>
-                            : null} />
-                    <Column
                         field="copies"
-                        header="Exemplaires"
+                        header="Compte"
                         style={{ width: "8rem" }}
                         className="cursor-pointer"
                         body={(row: StockLotRow) => row.lot ? `${row.lot.unitIds.length} ×` : <span className="text-gray-500">—</span>}
-                        editor={(options) => (options.rowData as StockLotRow).lot
-                            ? numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" })
-                            : <span className="text-gray-500">—</span>}
+                        editor={(options) => (
+                            options.rowData as StockLotRow).lot
+                            && numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" }
+                            )
+                        }
                         onCellEditComplete={(event) => void saveCell(event)}
                     />
                     <Column
                         field="quantity"
-                        header="Contenu"
+                        header="Quantité"
                         style={{ width: "10rem" }}
                         className="cursor-pointer" // Modifiable via editor
-                        body={(row: StockLotRow) => row.lot
-                            ? `${row.lot.quantity} ${row.lot.unit}`
-                            : <span className="text-gray-500">—</span>}
-                        editor={(options) => {
-                            const row = options.rowData as StockLotRow;
-                            return row.lot
-                                ? numberEditor(options, { min: 0, maxFractionDigits: 3, suffix: ` ${row.lot.unit}`, inputClassName: "w-24" })
-                                : <span className="text-gray-500">—</span>;
-                        }}
+                        body={(row: StockLotRow) => `${row.lot!.quantity} ${row.lot!.unit}`}
+                        editor={
+                            (options) => (
+                                options.rowData as StockLotRow).lot
+                                && numberEditor(options, { min: 0, maxFractionDigits: 3, suffix: ` ${(options.rowData as StockLotRow).lot!.unit}`, inputClassName: "w-24" }
+                                )
+                        }
                         onCellEditComplete={(event) => void saveCell(event)}
                     />
                     <Column
@@ -316,14 +310,14 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                         showFilterMenu={false}
                         className="cursor-pointer"
                         body={(row: StockLotRow) => row.lot ? row.lot.locationLabel : <span className="text-gray-500">—</span>}
-                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
-                            <Dropdown value={options.value ?? null} options={locations ?? []}
-                                optionLabel="label" optionValue="id" placeholder="Tous les lieux"
-                                onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
-                        )}
-                        editor={(options) => (options.rowData as StockLotRow).lot
-                            ? dropdownEditor(options, locations ?? [])
-                            : <span className="text-gray-500">—</span>}
+                        filterElement={
+                            (options: ColumnFilterElementTemplateOptions) => (
+                                <Dropdown value={options.value ?? null} options={locations ?? []}
+                                    optionLabel="label" optionValue="id" placeholder="Tous les lieux"
+                                    onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                            )
+                        }
+                        editor={(options) => dropdownEditor(options, locations ?? [])}
                         onCellEditComplete={(event) => void saveCell(event)} />
                     <Column
                         field="expirationDate"
@@ -333,26 +327,14 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                         filter
                         showFilterMenu={false}
                         className="cursor-pointer"
-                        body={(row: StockLotRow) => row.lot
-                            ? <StockExpiryDateTag lot={row.lot} />
-                            : <span className="text-gray-500">—</span>
-                        }
-                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
-                            <Dropdown value={options.value ?? null} options={EXPIRY_FILTER_OPTIONS}
-                                optionLabel="label" optionValue="value" placeholder="Tous les états"
-                                onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
-                        )}
-                        editor={(options) => (options.rowData as StockLotRow).lot
-                            ? (
-                                <Calendar
-                                    value={options.value as Date | null}
-                                    dateFormat="dd/mm/yy"
-                                    showButtonBar
-                                    placeholder="Sans date"
-                                    inputClassName="w-28" onChange={(event) => options.editorCallback?.(event.value instanceof Date ? event.value : null)} />
-                            )
-                            : <span className="text-gray-500">—</span>
-                        }
+                        body={(row: StockLotRow) => row.lot && <StockExpiryDateTag lot={row.lot} />}
+                        filterElement={
+                            (options: ColumnFilterElementTemplateOptions) => (
+                                <Dropdown value={options.value ?? null} options={EXPIRY_FILTER_OPTIONS}
+                                    optionLabel="label" optionValue="value" placeholder="Tous les états"
+                                    onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                            )}
+                        editor={dateEditor}
                         onCellEditComplete={(event) => void saveCell(event)}
                     />
                     <Column
