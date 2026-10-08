@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Column, type ColumnEditorOptions, type ColumnEvent, type ColumnFilterElementTemplateOptions } from "primereact/column";
+import { Column, type ColumnEvent, type ColumnFilterElementTemplateOptions } from "primereact/column";
 import { DataTable, type DataTableFilterMeta } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
 import { FilterMatchMode, type SortOrder } from "primereact/api";
@@ -201,12 +201,6 @@ export default function StockItemsTable({ locations, overview, initialLocationId
         }
     };
 
-    const lotEditor = (render: (options: ColumnEditorOptions) => React.ReactNode) => (options: ColumnEditorOptions) =>
-        (options.rowData as StockLotRow).lot ? render(options) : <span className="text-gray-500">—</span>;
-
-    const lotBody = (render: (row: StockLotRow, lot: StockLotDto) => React.ReactNode) => (row: StockLotRow) =>
-        row.lot ? render(row, row.lot) : <span className="text-gray-500">—</span>;
-
     const groupHeader = (row: StockLotRow) => (
         <div className="flex items-center gap-3">
             {row.item.imageUrl && (
@@ -230,79 +224,155 @@ export default function StockItemsTable({ locations, overview, initialLocationId
         <div className="flex flex-col gap-3">
             <StockOverviewBar overview={overview} expiryFilter={expiryFilter}
                 onExpiryFilterChange={(state) => setFilter("expiryState", state)} />
-            <div className="flex flex-wrap items-center gap-2">
-                <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search}
-                    className="w-full md:w-80" onChange={(event) => setFilter("global", event.target.value, FilterMatchMode.CONTAINS)}
-                    aria-label="Rechercher un produit" />
-                <label className="flex items-center gap-2 text-sm">
-                    <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
-                    Afficher les épuisés
-                </label>
-                <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
-                    tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }} onClick={onManageLocations} />
-            </div>
+            <Button icon="pi pi-cog" text rounded severity="secondary" aria-label="Gérer les lieux de stockage"
+                tooltip="Gérer les lieux" tooltipOptions={{ position: "top" }} onClick={onManageLocations} />
             {items === null && loading ? (
                 <div className="flex justify-center p-8"><ProgressSpinner /></div>
             ) : (
-            <DataTable value={rows} dataKey="key" editMode="cell" size="small" lazy loading={saving || loading}
-                sortMode="single" sortField={sortField} sortOrder={sortOrder} removableSort
-                globalFilterFields={["label", "item.brand", "item.barcode"]}
-                onSort={(event) => {
-                    setSortField(event.sortField || undefined);
-                    setSortOrder(event.sortOrder as SortOrder);
-                }}
-                filterDisplay="row" filters={filters} onFilter={(event) => setFilters(event.filters)}
-                rowGroupMode="subheader" groupRowsBy="itemId" rowGroupHeaderTemplate={groupHeader}
-                breakpoint="768px" emptyMessage={hasFilters ? "Aucun produit ne correspond à ces filtres." : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}>
-            <Column field="label" header="Produit" sortable
-                body={(row: StockLotRow) => !row.lot || row.lot.unitIds[0] === row.item.lots[0]?.unitIds[0]
-                    ? <span className="font-semibold">{row.item.label}</span>
-                    : null} />
-            <Column field="copies" header="Exemplaires" style={{ width: "8rem" }}
-                body={lotBody((_row, lot) => `${lot.unitIds.length} ×`)}
-                editor={lotEditor((options) => numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" }))}
-                onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="quantity" header="Contenu" style={{ width: "9rem" }}
-                body={lotBody((_row, lot) => lot.quantity)}
-                editor={lotEditor((options) => numberEditor(options, { min: 0, maxFractionDigits: 3, inputClassName: "w-24" }))}
-                onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="unit" header="Unité" style={{ width: "8rem" }}
-                body={lotBody((_row, lot) => lot.unit)}
-                editor={lotEditor((options) => dropdownEditor(options, [...STOCK_UNIT_UNITS]))}
-                onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="locationId" header="Lieu" filter showFilterMenu={false}
-                body={lotBody((_row, lot) => lot.locationLabel)}
-                filterElement={(options: ColumnFilterElementTemplateOptions) => (
-                    <Dropdown value={options.value ?? null} options={locations ?? []}
-                        optionLabel="label" optionValue="id" showClear placeholder="Tous les lieux"
-                        onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
-                )}
-                editor={lotEditor((options) => dropdownEditor(options, locations ?? []))}
-                onCellEditComplete={(event) => void saveCell(event)} />
-            <Column field="expirationDate" filterField="expiryState" header="Péremption" style={{ width: "11rem" }} filter showFilterMenu={false}
-                body={lotBody((_row, lot) => <StockExpiryDateTag lot={lot} />)}
-                filterElement={(options: ColumnFilterElementTemplateOptions) => (
-                    <Dropdown value={options.value ?? null} options={EXPIRY_FILTER_OPTIONS}
-                        optionLabel="label" optionValue="value" showClear placeholder="Tous les états"
-                        onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
-                )}
-                editor={lotEditor((options) => (
-                    <Calendar value={options.value as Date | null} dateFormat="dd/mm/yy" showButtonBar placeholder="Sans date"
-                        inputClassName="w-28" onChange={(event) => options.editorCallback?.(event.value instanceof Date ? event.value : null)} />
-                ))}
-                onCellEditComplete={(event) => void saveCell(event)} />
-            <Column header="" style={{ width: "9rem" }} body={lotBody((row, lot) => (
-                <div className="flex justify-end">
-                    <TakeStockUnitButton unitId={lot.unitIds[0]} unitLabel={row.item.label} afterTakeUnit={onChanged} />
-                    <Button icon="pi pi-clone" rounded text
-                        aria-label={`Ajouter un exemplaire identique : ${row.item.label}`}
-                        tooltip="Ajouter un exemplaire identique" tooltipOptions={{ position: "top" }}
-                        onClick={() => void duplicate(row)} />
-                    <DeleteStockUnitButton itemLabel={row.item.label} unitId={lot.unitIds[lot.unitIds.length - 1]}
-                        afterDeleteUnit={onChanged} />
-                </div>
-            ))} />
-            </DataTable>
+                <DataTable
+                    value={rows}
+                    dataKey="key"
+                    editMode="cell"
+                    size="small"
+                    lazy
+                    loading={saving || loading}
+                    header={(
+                        <div className="flex justify-end">
+                            <label className="flex items-center gap-2">
+                                <InputSwitch checked={includeEmpty} onChange={(event) => setIncludeEmpty(event.value === true)} />
+                                Afficher les épuisés
+                            </label>
+                            <InputSearch placeholder="Rechercher (nom, marque, code-barres)" value={search}
+                                className="w-full md:w-80"
+                                onChange={(event) => setFilter("global", event.target.value, FilterMatchMode.CONTAINS)}
+                                aria-label="Rechercher un produit" />
+                        </div>
+                    )}
+
+                    // Sort
+                    globalFilterFields={["label", "item.brand", "item.barcode"]}
+                    onSort={(event) => {
+                        setSortField(event.sortField || undefined);
+                        setSortOrder(event.sortOrder as SortOrder);
+                    }}
+                    sortMode="single"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    removableSort
+
+                    // Filtres
+                    filterDisplay="row"
+                    filters={filters}
+                    onFilter={(event) => setFilters(event.filters)}
+
+                    // Group
+                    rowGroupMode="subheader"
+                    groupRowsBy="itemId"
+                    rowGroupHeaderTemplate={groupHeader}
+
+                    breakpoint="768px"
+                    emptyMessage={hasFilters
+                        ? "Aucun produit ne correspond à ces filtres."
+                        : "Aucun produit en stock. Ajoute-en avec « Ajouter » ou « Scanner »."}
+                >
+                    <Column
+                        field="label"
+                        header="Produit"
+                        sortable
+                        body={(row: StockLotRow) => !row.lot || row.lot.unitIds[0] === row.item.lots[0]?.unitIds[0]
+                            ? <span className="font-semibold">{row.item.label}</span>
+                            : null} />
+                    <Column
+                        field="copies"
+                        header="Exemplaires"
+                        style={{ width: "8rem" }}
+                        className="cursor-pointer"
+                        body={(row: StockLotRow) => row.lot ? `${row.lot.unitIds.length} ×` : <span className="text-gray-500">—</span>}
+                        editor={(options) => (options.rowData as StockLotRow).lot
+                            ? numberEditor(options, { min: 1, max: 1000, inputClassName: "w-20" })
+                            : <span className="text-gray-500">—</span>}
+                        onCellEditComplete={(event) => void saveCell(event)}
+                    />
+                    <Column
+                        field="quantity"
+                        header="Contenu"
+                        style={{ width: "10rem" }}
+                        className="cursor-pointer" // Modifiable via editor
+                        body={(row: StockLotRow) => row.lot
+                            ? `${row.lot.quantity} ${row.lot.unit}`
+                            : <span className="text-gray-500">—</span>}
+                        editor={(options) => {
+                            const row = options.rowData as StockLotRow;
+                            return row.lot
+                                ? numberEditor(options, { min: 0, maxFractionDigits: 3, suffix: ` ${row.lot.unit}`, inputClassName: "w-24" })
+                                : <span className="text-gray-500">—</span>;
+                        }}
+                        onCellEditComplete={(event) => void saveCell(event)}
+                    />
+                    <Column
+                        field="locationId"
+                        header="Lieu"
+                        filter
+                        showFilterMenu={false}
+                        className="cursor-pointer"
+                        body={(row: StockLotRow) => row.lot ? row.lot.locationLabel : <span className="text-gray-500">—</span>}
+                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                            <Dropdown value={options.value ?? null} options={locations ?? []}
+                                optionLabel="label" optionValue="id" placeholder="Tous les lieux"
+                                onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                        )}
+                        editor={(options) => (options.rowData as StockLotRow).lot
+                            ? dropdownEditor(options, locations ?? [])
+                            : <span className="text-gray-500">—</span>}
+                        onCellEditComplete={(event) => void saveCell(event)} />
+                    <Column
+                        field="expirationDate"
+                        filterField="expiryState"
+                        header="Péremption"
+                        style={{ width: "11rem" }}
+                        filter
+                        showFilterMenu={false}
+                        className="cursor-pointer"
+                        body={(row: StockLotRow) => row.lot
+                            ? <StockExpiryDateTag lot={row.lot} />
+                            : <span className="text-gray-500">—</span>
+                        }
+                        filterElement={(options: ColumnFilterElementTemplateOptions) => (
+                            <Dropdown value={options.value ?? null} options={EXPIRY_FILTER_OPTIONS}
+                                optionLabel="label" optionValue="value" placeholder="Tous les états"
+                                onChange={(event) => options.filterApplyCallback(event.value ?? null)} />
+                        )}
+                        editor={(options) => (options.rowData as StockLotRow).lot
+                            ? (
+                                <Calendar
+                                    value={options.value as Date | null}
+                                    dateFormat="dd/mm/yy"
+                                    showButtonBar
+                                    placeholder="Sans date"
+                                    inputClassName="w-28" onChange={(event) => options.editorCallback?.(event.value instanceof Date ? event.value : null)} />
+                            )
+                            : <span className="text-gray-500">—</span>
+                        }
+                        onCellEditComplete={(event) => void saveCell(event)}
+                    />
+                    <Column
+                        header=""
+                        style={{ width: "9rem" }}
+                        body={(row: StockLotRow) => row.lot
+                            ? (
+                                <div className="flex justify-end">
+                                    <TakeStockUnitButton unitId={row.lot.unitIds[0]} unitLabel={row.item.label} afterTakeUnit={onChanged} />
+                                    <Button icon="pi pi-clone" rounded text
+                                        aria-label={`Ajouter un exemplaire identique : ${row.item.label}`}
+                                        tooltip="Ajouter un exemplaire identique" tooltipOptions={{ position: "top" }}
+                                        onClick={() => void duplicate(row)} />
+                                    <DeleteStockUnitButton itemLabel={row.item.label} unitId={row.lot.unitIds[row.lot.unitIds.length - 1]}
+                                        afterDeleteUnit={onChanged} />
+                                </div>
+                            )
+                            : null
+                        } />
+                </DataTable>
             )}
         </div>
     );
