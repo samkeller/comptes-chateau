@@ -22,7 +22,7 @@ describe("syncOpenFoodFacts", () => {
         productService = new OpenFoodFactsProductService(testDataSource.manager, { fetchProduct });
     });
 
-    it("normalizes barcodes, fills the cache and enriches existing items without overwriting user data", async () => {
+    it("normalizes barcodes, stores OFF products and enriches existing items without overwriting user data", async () => {
         const repo = testDataSource.getRepository(StockItem);
         const legacy = await repo.save({ label: "Mon riz", defaultUnit: "g", barcode: "012345678905" });
         const typed = await repo.save({ label: "Mes pâtes", defaultUnit: "g", barcode: "12345678", brand: "Maison" });

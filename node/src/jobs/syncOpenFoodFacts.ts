@@ -26,7 +26,7 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 /**
  * Rétro-compatibilité OpenFoodFacts pour les produits existants, idempotente et limitée en débit :
  * 1. normalise les codes-barres historiques ;
- * 2. remplit / rafraîchit le cache local OFF (au plus `maxCalls` appels) ;
+ * 2. enregistre / re-synchronise les fiches OFF en base (au plus `maxCalls` appels) ;
  * 3. complète marque et image des produits sans jamais écraser une saisie utilisateur.
  */
 export async function syncOpenFoodFacts(manager: EntityManager, options: SyncOpenFoodFactsOptions = {}): Promise<SyncOpenFoodFactsResult> {
@@ -52,7 +52,7 @@ export async function syncOpenFoodFacts(manager: EntityManager, options: SyncOpe
         }
 
         for (const item of items) {
-            const suggestion = item.barcode ? await productService.getCachedSuggestion(item.barcode) : null;
+            const suggestion = item.barcode ? await productService.getStoredSuggestion(item.barcode) : null;
             if (suggestion && await itemService.enrichFromSuggestion(item, suggestion)) result.enrichedItems++;
         }
 

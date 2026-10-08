@@ -4,7 +4,7 @@ export const OPEN_FOOD_FACTS_PRODUCT_STATUSES = ["found", "not_found"] as const;
 export type OpenFoodFactsProductStatus = typeof OPEN_FOOD_FACTS_PRODUCT_STATUSES[number];
 
 /**
- * Cache local des fiches OpenFoodFacts, partagé par tous les produits ayant le même code-barres.
+ * Fiches OpenFoodFacts enregistrées en base, partagées par tous les produits ayant le même code-barres.
  * Les données brutes (sous-ensemble de champs, licence ODbL) sont conservées pour pouvoir
  * faire évoluer l'affichage sans rappeler l'API.
  */

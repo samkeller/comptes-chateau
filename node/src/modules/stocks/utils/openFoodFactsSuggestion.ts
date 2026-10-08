@@ -33,7 +33,7 @@ function httpUrl(value: unknown): string | null {
 }
 
 /**
- * Projette les champs OFF bruts (cache local) en suggestion de saisie.
+ * Projette les champs OFF bruts (enregistrés en base) en suggestion de saisie.
  * Les valeurs absentes ou incohérentes deviennent `null` sans invalider le reste.
  */
 export function toProductSuggestion(product: Record<string, unknown>): StockProductSuggestionDto {

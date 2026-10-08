@@ -8,10 +8,14 @@ import { OpenFoodFactsProduct } from "../entities/OpenFoodFactsProduct";
 import { toProductSuggestion } from "../utils/openFoodFactsSuggestion";
 import OpenFoodFactsApiCallService from "./OpenFoodFactsApiCallService";
 
-/** Une fiche trouvée est réutilisée 6 mois, un code inconnu est retenté après 7 jours. */
-export const OFF_FOUND_TTL_DAYS = 180;
-export const OFF_NOT_FOUND_TTL_DAYS = 7;
+/** Une fiche trouvée est re-synchronisée après 6 mois, un code inconnu est retenté après 7 jours. */
+export const OFF_FOUND_REFRESH_DAYS = 180;
+export const OFF_NOT_FOUND_REFRESH_DAYS = 7;
 
+/**
+ * Données OpenFoodFacts enregistrées en base (table `open_food_facts_product`) : une copie locale durable,
+ * synchronisée périodiquement avec OFF, et réutilisable pour enrichir l'application plus tard.
+ */
 export default class OpenFoodFactsProductService {
     private readonly productRepo: Repository<OpenFoodFactsProduct>;
     private readonly apiCallService: OpenFoodFactsApiCallService;
@@ -25,30 +29,30 @@ export default class OpenFoodFactsProductService {
     }
 
     /**
-     * Suggestion de saisie pour un code-barres normalisé : cache local d'abord, API OFF si absent ou périmé.
-     * Une panne OFF n'est jamais bloquante : on retombe sur le cache, même ancien, ou `null`.
+     * Suggestion de saisie pour un code-barres normalisé : données en base d'abord, API OFF si absentes ou à re-synchroniser.
+     * Une panne OFF n'est jamais bloquante : on retombe sur les données en base, même anciennes, ou `null`.
      */
     async getSuggestion(barcode: string, trigger: OpenFoodFactsCallTrigger, now: Date = new Date()): Promise<StockProductSuggestionDto | null> {
-        const cached = await this.productRepo.findOneBy({ barcode });
-        const entry = cached && this.isFresh(cached, now) ? cached : await this.refresh(barcode, trigger, now) ?? cached;
+        const stored = await this.productRepo.findOneBy({ barcode });
+        const entry = stored && this.isUpToDate(stored, now) ? stored : await this.refresh(barcode, trigger, now) ?? stored;
         return entry?.status === "found" && entry.product ? toProductSuggestion(entry.product) : null;
     }
 
-    /** Suggestion issue du cache local uniquement (aucun appel réseau). */
-    async getCachedSuggestion(barcode: string): Promise<StockProductSuggestionDto | null> {
-        const cached = await this.productRepo.findOneBy({ barcode });
-        return cached?.status === "found" && cached.product ? toProductSuggestion(cached.product) : null;
+    /** Suggestion issue des données en base uniquement (aucun appel réseau). */
+    async getStoredSuggestion(barcode: string): Promise<StockProductSuggestionDto | null> {
+        const stored = await this.productRepo.findOneBy({ barcode });
+        return stored?.status === "found" && stored.product ? toProductSuggestion(stored.product) : null;
     }
 
-    /** Indique si le cache doit être (re)chargé pour ce code-barres. */
+    /** Indique si la fiche de ce code-barres doit être (re)synchronisée avec OFF. */
     async needsRefresh(barcode: string, now: Date = new Date()): Promise<boolean> {
-        const cached = await this.productRepo.findOneBy({ barcode });
-        return !cached || !this.isFresh(cached, now);
+        const stored = await this.productRepo.findOneBy({ barcode });
+        return !stored || !this.isUpToDate(stored, now);
     }
 
     /**
-     * Interroge OFF et met à jour le cache. Les erreurs transitoires ne remplacent pas un cache existant.
-     * @returns l'entrée de cache à jour, ou `null` si OFF n'a pas pu répondre.
+     * Interroge OFF et enregistre la fiche en base. Les erreurs transitoires ne remplacent pas une fiche existante.
+     * @returns la fiche à jour, ou `null` si OFF n'a pas pu répondre.
      */
     async refresh(barcode: string, trigger: OpenFoodFactsCallTrigger, now: Date = new Date()): Promise<OpenFoodFactsProduct | null> {
         const result = await this.client.fetchProduct(barcode);
@@ -65,8 +69,8 @@ export default class OpenFoodFactsProductService {
         return this.productRepo.save(entry);
     }
 
-    private isFresh(entry: OpenFoodFactsProduct, now: Date): boolean {
-        const ttl = entry.status === "found" ? OFF_FOUND_TTL_DAYS : OFF_NOT_FOUND_TTL_DAYS;
-        return addDays(entry.fetchedAt, ttl) > now;
+    private isUpToDate(entry: OpenFoodFactsProduct, now: Date): boolean {
+        const refreshDays = entry.status === "found" ? OFF_FOUND_REFRESH_DAYS : OFF_NOT_FOUND_REFRESH_DAYS;
+        return addDays(entry.fetchedAt, refreshDays) > now;
     }
 }

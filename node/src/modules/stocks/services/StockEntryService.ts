@@ -30,7 +30,7 @@ export default class StockEntryService {
     /**
      * Crée ou met à jour un produit et ses lots dans une seule transaction.
      * - produit sans `id` : créé (XP `STOCK_ITEM_CREATED`) ;
-     * - lot existant : ses exemplaires sont corrigés (`ADJUST`), complétés (`IN`) ou retirés (`DELETE`, les plus récents d'abord) ;
+     * - lot existant : ses exemplaires sont corrigés (leur `IN` est mis à jour), complétés (`IN`) ou retirés (`DELETE`, les plus récents d'abord) ;
      * - nouveau lot : `copies` exemplaires créés (`IN`) ;
      * - les exemplaires non cités sont laissés intacts (pas de suppression implicite).
      * Un seul crédit d'XP par saisie, proportionnel au nombre d'exemplaires ajoutés.
@@ -70,9 +70,9 @@ export default class StockEntryService {
                 const kept = lotUnits.slice(0, lot.copies);
                 const removed = lotUnits.slice(lot.copies);
 
-                const adjusted = kept.filter((unit) => !sameFields(unit, fields));
-                await unitService.updateMany(adjusted.map((unit) => unit.id), fields);
-                movements.push(...adjusted.map((unit) => toMovement({ ...unit, ...fields }, labels, "ADJUST")));
+                const adjustedIds = kept.filter((unit) => !sameFields(unit, fields)).map((unit) => unit.id);
+                await unitService.updateMany(adjustedIds, fields);
+                await movementService.updateInMovements(adjustedIds, { ...fields, locationLabel: labels.locationLabel });
 
                 await unitService.removeMany(removed);
                 movements.push(...removed.map((unit) => toMovement(

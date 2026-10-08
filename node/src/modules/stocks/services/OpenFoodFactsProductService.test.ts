@@ -4,7 +4,7 @@ import { testDataSource } from "../../../tests/testDbSetup";
 import type { OpenFoodFactsFetchResult } from "../clients/OpenFoodFactsClient";
 import { OpenFoodFactsApiCall } from "../entities/OpenFoodFactsApiCall";
 import { OpenFoodFactsProduct } from "../entities/OpenFoodFactsProduct";
-import OpenFoodFactsProductService, { OFF_FOUND_TTL_DAYS, OFF_NOT_FOUND_TTL_DAYS } from "./OpenFoodFactsProductService";
+import OpenFoodFactsProductService, { OFF_FOUND_REFRESH_DAYS, OFF_NOT_FOUND_REFRESH_DAYS } from "./OpenFoodFactsProductService";
 
 describe("OpenFoodFactsProductService", () => {
     const now = new Date("2026-10-08T10:00:00Z");
@@ -29,23 +29,23 @@ describe("OpenFoodFactsProductService", () => {
         expect(await testDataSource.getRepository(OpenFoodFactsApiCall).count()).toBe(1);
     });
 
-    it("remembers unknown products and retries them after the not-found TTL", async () => {
+    it("remembers unknown products and retries them after the not-found refresh delay", async () => {
         fetchProduct.mockResolvedValue({ outcome: "not_found", httpStatus: 404, durationMs: 5, product: null });
         expect(await service.getSuggestion("12345678", "lookup", now)).toBeNull();
-        expect(await service.getSuggestion("12345678", "lookup", addDays(now, OFF_NOT_FOUND_TTL_DAYS - 1))).toBeNull();
+        expect(await service.getSuggestion("12345678", "lookup", addDays(now, OFF_NOT_FOUND_REFRESH_DAYS - 1))).toBeNull();
         expect(fetchProduct).toHaveBeenCalledTimes(1);
 
         fetchProduct.mockResolvedValue(found);
-        expect(await service.getSuggestion("12345678", "lookup", addDays(now, OFF_NOT_FOUND_TTL_DAYS))).toMatchObject({ label: "Riz" });
+        expect(await service.getSuggestion("12345678", "lookup", addDays(now, OFF_NOT_FOUND_REFRESH_DAYS))).toMatchObject({ label: "Riz" });
         expect(fetchProduct).toHaveBeenCalledTimes(2);
     });
 
-    it("keeps serving a stale cache when OFF fails, and logs the failed call", async () => {
+    it("keeps using the stored product when OFF fails, and logs the failed call", async () => {
         fetchProduct.mockResolvedValueOnce(found);
         await service.getSuggestion("12345678", "lookup", now);
 
         fetchProduct.mockResolvedValueOnce({ outcome: "http_error", httpStatus: 500, durationMs: 5, product: null });
-        const later = addDays(now, OFF_FOUND_TTL_DAYS + 1);
+        const later = addDays(now, OFF_FOUND_REFRESH_DAYS + 1);
         expect(await service.needsRefresh("12345678", later)).toBe(true);
         expect(await service.getSuggestion("12345678", "lookup", later)).toMatchObject({ label: "Riz" });
         expect((await testDataSource.getRepository(OpenFoodFactsApiCall).find({ order: { id: "ASC" } })).map((call) => call.outcome))
@@ -56,6 +56,6 @@ describe("OpenFoodFactsProductService", () => {
         fetchProduct.mockResolvedValue(null);
         expect(await service.getSuggestion("12345678", "lookup", now)).toBeNull();
         expect(await testDataSource.getRepository(OpenFoodFactsApiCall).count()).toBe(0);
-        expect(await service.getCachedSuggestion("12345678")).toBeNull();
+        expect(await service.getStoredSuggestion("12345678")).toBeNull();
     });
 });

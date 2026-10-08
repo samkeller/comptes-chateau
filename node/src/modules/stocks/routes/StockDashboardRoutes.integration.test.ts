@@ -120,7 +120,7 @@ describe("StockDashboardRoutes integration", () => {
         for (let index = 0; index < 25; index++) {
             await repo.save({
                 itemId: 1, itemLabel: "P", unitId: index + 1, quantity: 1, unit: "g",
-                locationId: 1, locationLabel: "L", type: "ADJUST",
+                locationId: 1, locationLabel: "L", type: "IN",
             });
         }
         expect((await request(app).get("/stocks/dashboard/last-movements")).body).toHaveLength(20);

@@ -1,8 +1,7 @@
 import { StockBarcodeParamsSchema } from "@chocosous/shared";
-import { z } from "zod";
+import { OpenFoodFacts } from "@openfoodfacts/openfoodfacts-nodejs";
 import type { OpenFoodFactsCallOutcome } from "../entities/OpenFoodFactsApiCall";
 
-const OFF_BASE_URL = "https://world.openfoodfacts.org/api/v3/product";
 const DEFAULT_CONTACT = "dandrieux.keller@gmail.com";
 const TIMEOUT_MS = 3000;
 
@@ -45,10 +44,11 @@ export interface OpenFoodFactsFetchResult {
     product: Record<string, unknown> | null;
 }
 
-const productResponseSchema = z.object({
-    status: z.string().optional(),
-    product: z.record(z.string(), z.unknown()),
-});
+type ProductFieldKey = NonNullable<Parameters<OpenFoodFacts["getProductV3"]>[1]>["fields"];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 /**
  * Garde-fou partagé par toutes les instances du client (un seul process Node) :
@@ -85,8 +85,9 @@ export function openFoodFactsUserAgent(): string {
 }
 
 /**
- * Client HTTP minimal de l'API produit OFF v3 (lecture seule).
- * Le SDK officiel n'est pas utilisé : voir docs/stocks-openfoodfacts.md.
+ * Lecture de l'API produit OFF v3 via le SDK officiel `@openfoodfacts/openfoodfacts-nodejs`.
+ * Le SDK impose son propre User-Agent : on l'écrase pour rester contactable (exigence OFF),
+ * et on ajoute un délai maximal. Le statut HTTP (non exposé par le SDK) est relevé au passage pour le journal d'appels.
  */
 export default class OpenFoodFactsClient {
     constructor(private readonly throttle: OpenFoodFactsThrottle = openFoodFactsThrottle) {}
@@ -102,32 +103,36 @@ export default class OpenFoodFactsClient {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
         const startedAt = Date.now();
-        const result = (outcome: OpenFoodFactsCallOutcome, httpStatus: number | null, product: Record<string, unknown> | null = null): OpenFoodFactsFetchResult => ({
+        let httpStatus: number | null = null;
+        const result = (outcome: OpenFoodFactsCallOutcome, product: Record<string, unknown> | null = null): OpenFoodFactsFetchResult => ({
             outcome, httpStatus, product, durationMs: Date.now() - startedAt,
         });
 
-        try {
-            const response = await fetch(
-                `${OFF_BASE_URL}/${barcode}?fields=${OPEN_FOOD_FACTS_FIELDS.join(",")}`,
-                {
-                    headers: { "User-Agent": openFoodFactsUserAgent() },
-                    signal: controller.signal,
-                },
-            );
-            if (response.status === 404) return result("not_found", 404);
-            if (response.status === 429 || response.status === 503) {
-                this.throttle.openCircuit();
-                return result("rate_limited", response.status);
-            }
-            if (!response.ok) return result("http_error", response.status);
+        const contactableFetch: typeof fetch = async (input, init) => {
+            const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+            headers.set("User-Agent", openFoodFactsUserAgent());
+            const response = await globalThis.fetch(input, { ...init, headers, signal: controller.signal });
+            httpStatus = response.status;
+            return response;
+        };
 
-            const payload: unknown = await response.json().catch(() => null);
-            if (payload === null) return result("http_error", response.status);
-            const parsed = productResponseSchema.safeParse(payload);
-            if (!parsed.success || parsed.data.status === "failure") return result("not_found", response.status);
-            return result("found", response.status, parsed.data.product);
+        try {
+            const client = new OpenFoodFacts(contactableFetch);
+            const { data } = await client.getProductV3(barcode, {
+                fields: [...OPEN_FOOD_FACTS_FIELDS] as unknown as ProductFieldKey,
+            });
+            const status = httpStatus as number | null;
+            if (status === 404) return result("not_found");
+            if (status === 429 || status === 503) {
+                this.throttle.openCircuit();
+                return result("rate_limited");
+            }
+            if (status === null || status < 200 || status >= 300) return result("http_error");
+            if (!data) return result("http_error");
+            if (data.status === "failure" || !("product" in data) || !isRecord(data.product)) return result("not_found");
+            return result("found", data.product);
         } catch {
-            return result("network_error", null);
+            return result(httpStatus === null ? "network_error" : "http_error");
         } finally {
             clearTimeout(timeout);
         }

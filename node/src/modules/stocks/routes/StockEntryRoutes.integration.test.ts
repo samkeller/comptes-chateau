@@ -66,10 +66,10 @@ describe("StockEntryRoutes integration", () => {
         expect(await testDataSource.getRepository(StockItem).count()).toBe(1);
     });
 
-    it("edits existing lots: adds, removes newest copies, adjusts fields, never mutating IN movements", async () => {
+    it("edits existing lots: adds, removes newest copies and reports corrections on the IN movements", async () => {
         const rice = await createRice();
         const [dated, undated] = rice.lots as { unitIds: number[] }[];
-        const inBefore = await testDataSource.getRepository(StockMovement).findBy({ type: "IN" });
+        const movementCountBefore = (await movements()).length;
 
         const response = await request(app).post("/stocks/entries").send({
             item: { id: rice.id, label: "Riz basmati", defaultUnit: "g" },
@@ -85,13 +85,15 @@ describe("StockEntryRoutes integration", () => {
             .toEqual([["Cuisine", 500, [dated.unitIds[0]]], ["Cave", 1, [undated.unitIds[0], expect.any(Number)]]]);
 
         const all = await movements();
+        // Seuls les retraits (DELETE) et l'ajout (IN) créent des mouvements : la correction ne fait que mettre à jour l'IN.
+        expect(all).toHaveLength(movementCountBefore + dated.unitIds.length - 1 + 1);
         expect(all.filter((m) => m.type === "DELETE").map((m) => m.unitId)).toEqual(dated.unitIds.slice(1));
-        expect(all.filter((m) => m.type === "ADJUST")).toEqual([
-            expect.objectContaining({ unitId: undated.unitIds[0], locationLabel: "Cave", quantity: 1, unit: "kg", itemLabel: "Riz basmati" }),
+        expect(all.filter((m) => m.type === "IN" && m.unitId === undated.unitIds[0])).toEqual([
+            expect.objectContaining({ locationId: cellar.id, locationLabel: "Cave", quantity: 1, unit: "kg", itemLabel: "Riz" }),
         ]);
-        expect(all.filter((m) => m.type === "IN")).toHaveLength(5);
-        expect(await testDataSource.getRepository(StockMovement).findBy({ type: "IN", id: inBefore[0].id }))
-            .toEqual([inBefore[0]]);
+        expect(all.filter((m) => m.type === "IN" && m.unitId === dated.unitIds[0])).toEqual([
+            expect.objectContaining({ locationLabel: "Cuisine", quantity: 500, unit: "g" }),
+        ]);
     });
 
     it("removes a whole lot with copies = 0 and keeps the product findable", async () => {

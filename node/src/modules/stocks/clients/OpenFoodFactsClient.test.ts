@@ -19,26 +19,31 @@ describe("OpenFoodFactsClient", () => {
         vi.useRealTimers();
     });
 
-    it("calls the v3 product API with the stored fields and a contactable User-Agent", async () => {
+    function sentRequest(callIndex = 0): { url: string; userAgent: string | null } {
+        const [input, init] = fetchMock.mock.calls[callIndex];
+        const url = input instanceof Request ? input.url : String(input);
+        return { url, userAgent: new Headers(init?.headers).get("User-Agent") };
+    }
+
+    it("calls the v3 product API through the official SDK with the stored fields and a contactable User-Agent", async () => {
         fetchMock.mockResolvedValue(Response.json({ status: "success", product: { product_name: "Riz" } }));
 
         expect(await client.fetchProduct(barcode)).toMatchObject({
             outcome: "found", httpStatus: 200, product: { product_name: "Riz" },
         });
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://world.openfoodfacts.org/api/v3/product/${barcode}?fields=${OPEN_FOOD_FACTS_FIELDS.join(",")}`,
-            {
-                headers: { "User-Agent": "Chocosous/1.0 (dandrieux.keller@gmail.com)" },
-                signal: expect.any(AbortSignal),
-            },
-        );
+        const { url, userAgent } = sentRequest();
+        const parsed = new URL(url);
+        expect(`${parsed.origin}${parsed.pathname}`).toBe(`https://world.openfoodfacts.org/api/v3/product/${barcode}`);
+        expect(parsed.searchParams.get("fields")).toBe(OPEN_FOOD_FACTS_FIELDS.join(","));
+        expect(userAgent).toBe("Chocosous/1.0 (dandrieux.keller@gmail.com)");
+        expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
     });
 
     it("lets the contact be configured by environment", async () => {
         vi.stubEnv("OPEN_FOOD_FACTS_CONTACT", "ops@example.org");
         fetchMock.mockResolvedValue(Response.json({ status: "success", product: {} }));
         await client.fetchProduct(barcode);
-        expect(fetchMock.mock.calls[0][1]?.headers).toEqual({ "User-Agent": "Chocosous/1.0 (ops@example.org)" });
+        expect(sentRequest().userAgent).toBe("Chocosous/1.0 (ops@example.org)");
     });
 
     it.each([

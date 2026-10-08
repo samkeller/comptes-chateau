@@ -11,7 +11,7 @@ export default class StockBarcodeLookupService {
     ) {}
 
     /**
-     * Produit connu pour ce code-barres (avec ses lots), sinon suggestion OpenFoodFacts (cache local d'abord).
+     * Produit connu pour ce code-barres (avec ses lots), sinon suggestion OpenFoodFacts (données en base d'abord).
      */
     async lookup(rawBarcode: string): Promise<StockBarcodeLookupResponse> {
         const barcode = normalizeBarcode(rawBarcode);

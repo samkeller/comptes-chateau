@@ -45,7 +45,7 @@ describe("StockItemRoutes integration", () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it("caches OFF answers: a second lookup does not call the API again", async () => {
+    it("stores OFF answers in database: a second lookup does not call the API again", async () => {
         const fetchMock = vi.fn().mockResolvedValue(Response.json({
             status: "success", product: { product_name: "riz", quantity: "500 g" },
         }));
