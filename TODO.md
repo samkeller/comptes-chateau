@@ -11,10 +11,11 @@ Project Description
 - [ ] Les boutons "Supprimer" "Renommer" etc devraient être factorisés dans composants/atoms pour permettre l'homogénéité graphique dans toute l'appli. Globalement dans 90% des cas on utilise qu'une icone + tooltip en fonction de ou on est dans la page mais parfois il y a le label. On peut faire des atoms "DeleteButton", "EditButton" etc (tout ce qui apparait + de trois fois dans l'application) & permettre de passer des ButtonProps au composants si besoin d'overrides (normalement cela devrait être minimal).  
 - [ ] De plus, on pourrait de cette manière ajouter les actions clavier (touche entrée pour valider, echap pour annuler) de manière uniforme dans toute l'application.  
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines) - données qui changent peu ou batch quotidien. (node-cache obsolète ???)  
+- [ ] [MEDIUM] Fixer une fois dans toute l'application la taille des dialogues en fonction de la taille de l'écran.
+- [ ] [MEDIUM] Utiliser `useResponsiveDataTable` dans toutes les datatabes pour le responsive -> Va permettre de supprimer pas mal de code mort
 - [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
 - [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
 - [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
-- [ ] [MEDIUM] Fixer une fois dans toute l'application la taille des dialogues en fonction de la taille de l'écran.
 - [ ] [LOW] Repasser les icones liées à un input (utiliser primereact Iconfield>InputIcon en parallèle de l'Input)
  
 ### In Progress

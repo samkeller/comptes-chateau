@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
  * - Tablette : >= 768px et < 1024px
  * - Desktop : >= 1024px
  */
-const BREAKPOINTS = {
+export const BREAKPOINTS = {
   mobile: 768,
   tablet: 1024,
 } as const;
