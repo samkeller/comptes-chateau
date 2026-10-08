@@ -254,7 +254,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                                         <label htmlFor="stock-location-filter" className="text-sm font-medium"><i className="pi pi-map-marker" />&nbsp;Lieu</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 align-middle w-full h-full">
                                     <label htmlFor="stock-include-empty" className="flex items-center gap-2 text-sm">
                                         <InputSwitch inputId="stock-include-empty" checked={includeEmpty}
                                             onChange={(event) => setIncludeEmpty(event.value === true)} />
