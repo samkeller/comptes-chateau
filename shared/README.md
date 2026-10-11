@@ -71,6 +71,15 @@ function createItem(payload: CreateStockItemDto) {
 
 Les déclarations générées dans `shared/dist` fournissent le typage au frontend sans exposer directement les sources du package.
 
+## Unités de stock
+
+`STOCK_UNIT_UNITS` définit les valeurs acceptées par l'API et proposées dans les sélecteurs :
+`pièce`, `g`, `kg`, `ml`, `cl`, `L`, `boite` et `pack`.
+Les conditionnements historiques `boite` et `pack` restent acceptés sans conversion des quantités,
+pour permettre la modification des produits et lots existants. Aucun changement de schéma ni
+migration de données n'est nécessaire. Les variantes non listées (par exemple `Boîte` ou `paquet`)
+restent rejetées.
+
 ## Build et développement
 
 Depuis la racine :

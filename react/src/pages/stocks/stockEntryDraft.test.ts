@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StockItemWithLotsDto } from "@chocosous/shared";
+import { SaveStockEntrySchema, STOCK_UNIT_UNITS, type StockItemWithLotsDto } from "@chocosous/shared";
 import {
     applySuggestion, switchToExistingItem, emptyEntryDraft, entryDraftFromItem,
     toSaveStockEntryDto,
@@ -41,6 +41,25 @@ describe("stock entry draft", () => {
         ]);
         expect(draft.lots[0].expirationDate).toEqual(new Date(2026, 9, 20));
         expect(entryDraftFromItem(item).lots).toHaveLength(2);
+    });
+
+    it.each(["boite", "pack"])("preserves historical unit %s when editing and adding a lot", (unit) => {
+        const historicalItem: StockItemWithLotsDto = {
+            ...item,
+            defaultUnit: unit,
+            lots: [{ ...item.lots[0], quantity: 2, unit }],
+        };
+        const draft = entryDraftFromItem(historicalItem, 2);
+        draft.item.label = "Lait entier";
+        const dto = toSaveStockEntryDto(draft);
+
+        expect(STOCK_UNIT_UNITS).toContain(unit);
+        expect(dto.item).toMatchObject({ label: "Lait entier", defaultUnit: unit });
+        expect(dto.lots).toEqual([
+            expect.objectContaining({ unitIds: [10, 11], quantity: 2, unit }),
+            expect.objectContaining({ unitIds: [], quantity: 2, unit }),
+        ]);
+        expect(SaveStockEntrySchema.parse(dto)).toEqual(dto);
     });
 
     it("keeps emptied existing lots (deletion) and drops empty new lots", () => {

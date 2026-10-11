@@ -165,7 +165,30 @@ describe("StockEntryRoutes integration", () => {
         expect(response.body.lots[0].unit).toBe("pièce");
     });
 
-    it.each(["boite", "Boîte", "paquet", "pack", "l"])("rejects the unit alias %s without writing any stock", async (unit) => {
+    it.each(["boite", "pack"])("edits a stored product using historical unit %s without changing its quantity", async (unit) => {
+        const item = await testDataSource.getRepository(StockItem).save({ label: "Biscuits", defaultUnit: unit });
+        const storedUnit = await testDataSource.getRepository(StockUnit).save({
+            itemId: item.id, locationId: kitchen.id, quantity: 2, unit, expirationDate: null,
+        });
+
+        const response = await request(app).post("/stocks/entries").send({
+            item: { id: item.id, label: "Biscuits chocolat", defaultUnit: unit },
+            lots: [lot({ unitIds: [storedUnit.id], copies: 1, unit, quantity: 2 })],
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ label: "Biscuits chocolat", defaultUnit: unit, stockUnitsCount: 1 });
+        expect(response.body.lots).toEqual([
+            expect.objectContaining({ unitIds: [storedUnit.id], unit, quantity: 2 }),
+        ]);
+        expect(await testDataSource.getRepository(StockItem).findOneByOrFail({ id: item.id }))
+            .toMatchObject({ label: "Biscuits chocolat", defaultUnit: unit });
+        expect(await testDataSource.getRepository(StockUnit).findOneByOrFail({ id: storedUnit.id }))
+            .toMatchObject({ unit, quantity: 2 });
+        expect(await movements()).toEqual([]);
+    });
+
+    it.each(["Boîte", "paquet", "l"])("rejects the unit alias %s without writing any stock", async (unit) => {
         for (const body of [
             { item: { label: "Biscuits", defaultUnit: unit }, lots: [lot()] },
             { item: { label: "Biscuits", defaultUnit: "pièce" }, lots: [lot({ unit })] },

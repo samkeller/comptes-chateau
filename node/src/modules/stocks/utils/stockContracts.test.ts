@@ -32,7 +32,11 @@ describe("stock shared contracts", () => {
         expect(StockUnitUnitSchema.parse(unit)).toBe(unit);
     });
 
-    it.each(["boite", "Boîte", "paquet", "pack", "pcs", "piece", "l", " G ", "brouette", "", null, 1])(
+    it.each(["boite", "pack"])("keeps the historical unit %s unchanged", (unit) => {
+        expect(StockUnitUnitSchema.parse(unit)).toBe(unit);
+    });
+
+    it.each(["Boîte", "paquet", "pcs", "piece", "l", " G ", "brouette", "", null, 1])(
         "rejects non-canonical units: %j",
         (unit) => {
             expect(StockUnitUnitSchema.safeParse(unit).success).toBe(false);
