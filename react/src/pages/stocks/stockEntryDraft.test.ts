@@ -6,10 +6,10 @@ import {
 } from "./stockEntryDraft";
 
 const item: StockItemWithLotsDto = {
-    id: 4, label: "Lait", barcode: "3017620422003", brand: null, defaultUnit: "boite", imageUrl: null,
+    id: 4, label: "Lait", barcode: "3017620422003", brand: null, defaultUnit: "pièce", imageUrl: null,
     stockUnitsCount: 3, nextStockUnitExpiration: "2026-10-20", createdAt: "2026-10-01T00:00:00.000Z",
     lots: [
-        { locationId: 1, locationLabel: "Cellier", quantity: 1, unit: "l", expirationDate: "2026-10-20", expiryState: "soon", unitIds: [10, 11] },
+        { locationId: 1, locationLabel: "Cellier", quantity: 1, unit: "L", expirationDate: "2026-10-20", expiryState: "soon", unitIds: [10, 11] },
         { locationId: 2, locationLabel: "Frigo", quantity: 50, unit: "cl", expirationDate: null, expiryState: "none", unitIds: [12] },
     ],
 };
@@ -31,7 +31,7 @@ describe("stock entry draft", () => {
         });
     });
 
-    it("loads existing lots (legacy units normalized) and can append a quick-add lot", () => {
+    it("loads existing lots with canonical units and can append a quick-add lot", () => {
         const draft = entryDraftFromItem(item, 2);
         expect(draft.item).toMatchObject({ id: 4, defaultUnit: "pièce", barcode: "3017620422003", brand: "" });
         expect(draft.lots.map(({ unitIds, copies, unit, locationId }) => ({ unitIds, copies, unit, locationId }))).toEqual([

@@ -10,5 +10,5 @@ import { z } from "zod";
 export const STOCK_UNIT_UNITS = ["pièce", "g", "kg", "ml", "cl", "L"] as const;
 export type StockUnitUnits = typeof STOCK_UNIT_UNITS[number];
 
-/** Validation d'entrée : accepte les alias connus, refuse les unités inconnues. */
-export const StockUnitUnitSchema = z.enum(STOCK_UNIT_UNITS)
+/** Validation d'entrée : seules les unités canoniques sont acceptées, sans alias. */
+export const StockUnitUnitSchema = z.enum(STOCK_UNIT_UNITS);

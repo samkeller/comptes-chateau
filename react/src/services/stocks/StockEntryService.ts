@@ -1,5 +1,5 @@
 import axios from "axios";
-import { normalizeStockUnit, type SaveStockEntryDto, type StockItemWithLotsDto, type StockLotDto, type StockUnitUnits } from "@chocosous/shared";
+import { type SaveStockEntryDto, type StockItemWithLotsDto, type StockLotDto, type StockUnitUnits } from "@chocosous/shared";
 import { formatApiDate } from "@/utils/DatesUtils";
 import BaseService from "../BaseService";
 
@@ -29,13 +29,17 @@ export default class StockEntryService extends BaseService {
             ? lot.expirationDate
             : changes.expirationDate === null ? null : formatApiDate(changes.expirationDate);
         return this.save({
-            item: { id: item.id, label: item.label, defaultUnit: normalizeStockUnit(item.defaultUnit) },
+            item: {
+                id: item.id,
+                label: item.label,
+                defaultUnit: item.defaultUnit as StockUnitUnits
+            },
             lots: [{
                 unitIds: lot.unitIds,
                 copies: changes.copies ?? lot.unitIds.length,
                 locationId: changes.locationId ?? lot.locationId,
                 quantity: changes.quantity ?? lot.quantity,
-                unit: changes.unit ?? normalizeStockUnit(lot.unit),
+                unit: changes.unit ?? lot.unit as StockUnitUnits,
                 expirationDate,
             }],
         });

@@ -1,5 +1,5 @@
 import type { StockProductSuggestionDto, StockUnitUnits } from "@chocosous/shared";
-import { parseStockUnit } from "@chocosous/shared";
+import { StockUnitUnitSchema } from "@chocosous/shared";
 
 const MEASURE_UNITS: ReadonlySet<StockUnitUnits> = new Set(["g", "kg", "ml", "cl", "L"]);
 
@@ -11,8 +11,8 @@ function text(value: unknown): string | null {
 
 function measureUnit(value: unknown): StockUnitUnits | null {
     const candidate = text(value);
-    const parsed = candidate ? parseStockUnit(candidate) : null;
-    return parsed && MEASURE_UNITS.has(parsed) ? parsed : null;
+    const parsed = StockUnitUnitSchema.safeParse(candidate === "l" ? "L" : candidate);
+    return parsed.success && MEASURE_UNITS.has(parsed.data) ? parsed.data : null;
 }
 
 function positiveQuantity(value: unknown): number | null {

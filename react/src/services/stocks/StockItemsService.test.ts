@@ -67,7 +67,7 @@ describe("stock services", () => {
 
     it("duplicates a lot using one new copy and preserves optional product fields", async () => {
         vi.mocked(axios.post).mockResolvedValueOnce({ data: item });
-        await new StockEntryService().duplicateLot(item, { ...item.lots[0], unit: "l" });
+        await new StockEntryService().duplicateLot(item, { ...item.lots[0], unit: "L" });
 
         expect(axios.post).toHaveBeenCalledWith("/api/stocks/entries", {
             item: { id: 1, label: "Riz", defaultUnit: "g" },
@@ -85,9 +85,13 @@ describe("stock services", () => {
             lots: [{ unitIds: [9, 10], copies: 2, locationId: 2, quantity: 2, unit: "g", expirationDate: "2026-12-01" }],
         });
         await service.editLot(item, lot, { expirationDate: null, copies: 1 });
-        expect(vi.mocked(axios.post).mock.lastCall?.[1].lots[0]).toMatchObject({ unitIds: [9, 10], copies: 1, expirationDate: null });
+        expect(axios.post).toHaveBeenLastCalledWith("/api/stocks/entries", expect.objectContaining({
+            lots: [expect.objectContaining({ unitIds: [9, 10], copies: 1, expirationDate: null })],
+        }));
         await service.editLot(item, lot, { expirationDate: new Date(2027, 1, 3), locationId: 1 });
-        expect(vi.mocked(axios.post).mock.lastCall?.[1].lots[0]).toMatchObject({ locationId: 1, expirationDate: "2027-02-03" });
+        expect(axios.post).toHaveBeenLastCalledWith("/api/stocks/entries", expect.objectContaining({
+            lots: [expect.objectContaining({ locationId: 1, expirationDate: "2027-02-03" })],
+        }));
         expect(lot).toMatchObject({ locationId: 2, quantity: 500, unitIds: [9, 10], expirationDate: "2026-12-01" });
     });
 

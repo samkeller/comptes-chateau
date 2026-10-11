@@ -1,5 +1,4 @@
 import {
-    normalizeStockUnit,
     type SaveStockEntryDto,
     type StockItemWithLotsDto,
     type StockProductSuggestionDto,
@@ -71,14 +70,13 @@ export function emptyEntryDraft(locationId: number | null): StockEntryDraft {
  * @param newLotLocationId Si défini, ajoute un nouveau lot vide (ajout rapide d'exemplaires).
  */
 export function entryDraftFromItem(item: StockItemWithLotsDto, newLotLocationId?: number | null): StockEntryDraft {
-    const defaultUnit = normalizeStockUnit(item.defaultUnit);
     const lots: StockLotDraft[] = item.lots.map((lot) => ({
         key: `lot-${lot.unitIds[0]}`,
         unitIds: lot.unitIds,
         copies: lot.unitIds.length,
         locationId: lot.locationId,
         quantity: lot.quantity,
-        unit: normalizeStockUnit(lot.unit),
+        unit: lot.unit as StockUnitUnits,
         expirationDate: parseApiDate(lot.expirationDate),
     }));
     if (newLotLocationId !== undefined) {
@@ -86,7 +84,7 @@ export function entryDraftFromItem(item: StockItemWithLotsDto, newLotLocationId?
         lots.push(newLotDraft({
             locationId: newLotLocationId,
             quantity: model?.quantity ?? 1,
-            unit: model ? normalizeStockUnit(model.unit) : defaultUnit,
+            unit: model ? model.unit as StockUnitUnits : item.defaultUnit as StockUnitUnits,
         }));
     }
     return {
@@ -95,7 +93,7 @@ export function entryDraftFromItem(item: StockItemWithLotsDto, newLotLocationId?
             label: item.label,
             barcode: item.barcode ?? "",
             brand: item.brand ?? "",
-            defaultUnit,
+            defaultUnit: item.defaultUnit as StockUnitUnits,
             imageUrl: item.imageUrl ?? "",
         },
         lots,

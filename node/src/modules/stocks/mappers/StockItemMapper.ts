@@ -1,5 +1,4 @@
 import type { StockItemDto, StockItemWithLotsDto, StockLotDto } from "@chocosous/shared";
-import { normalizeStockUnit } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
 
 /**
@@ -17,7 +16,7 @@ export function toStockItemDto(item: StockItem, lots: StockLotDto[]): StockItemD
         label: item.label,
         barcode: item.barcode,
         brand: item.brand ?? null,
-        defaultUnit: normalizeStockUnit(item.defaultUnit),
+        defaultUnit: item.defaultUnit,
         imageUrl: item.imageUrl ?? null,
         stockUnitsCount: lots.reduce((count, lot) => count + lot.unitIds.length, 0),
         nextStockUnitExpiration: nextExpirationDate ?? null,

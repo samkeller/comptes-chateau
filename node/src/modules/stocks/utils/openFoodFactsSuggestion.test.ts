@@ -19,7 +19,7 @@ describe("toProductSuggestion", () => {
         });
     });
 
-    it.each([["g", "g"], ["kg", "kg"], ["ml", "ml"], ["cl", "cl"], ["l", "L"], ["L", "L"]])(
+    it.each([["g", "g"], ["kg", "kg"], ["ml", "ml"], ["cl", "cl"], ["l", "L"], ["L", "L"], [" l ", "L"]])(
         "maps the unit %s to %s",
         (input, expected) => {
             expect(toProductSuggestion({ product_quantity: "1.5", product_quantity_unit: input }))
@@ -41,6 +41,11 @@ describe("toProductSuggestion", () => {
         expect(toProductSuggestion({ product_quantity: 4, product_quantity_unit: "oz" })).toMatchObject({ quantity: null, unit: null });
         // « pièce » n'est pas une unité de contenu OFF.
         expect(toProductSuggestion({ product_quantity: 6, product_quantity_unit: "pcs" })).toMatchObject({ quantity: null, unit: null });
+    });
+
+    it.each(["boite", "paquet", "pack", "pièce"])("does not infer an OFF measure from %s", (unit) => {
+        expect(toProductSuggestion({ product_quantity: 1, product_quantity_unit: unit }))
+            .toMatchObject({ quantity: null, unit: null });
     });
 
     it("drops non-http images and malformed values without losing the product", () => {

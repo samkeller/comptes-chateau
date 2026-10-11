@@ -1,5 +1,5 @@
 import type { StockLotDto } from "@chocosous/shared";
-import { getStockExpiryState, normalizeStockUnit, STOCK_EXPIRING_SOON_DAYS } from "@chocosous/shared";
+import { getStockExpiryState, STOCK_EXPIRING_SOON_DAYS } from "@chocosous/shared";
 import { addDays } from "date-fns";
 import { formatApiDate } from "../../../utils/DateUtils";
 import type { StockUnit } from "../entities/StockUnit";
@@ -19,7 +19,6 @@ export function getExpiryBounds(now: Date = new Date()): ExpiryBounds {
 
 /**
  * Regroupe les exemplaires identiques (même lieu, quantité, unité et date) en lots.
- * Les unités historiques (« boite », « pack »…) sont normalisées avant regroupement.
  * Tri : date la plus proche d'abord, sans date en dernier, puis lieu.
  *
  * @param units Exemplaires d'un même produit, avec leur lieu chargé.
@@ -29,7 +28,7 @@ export function toStockLots(units: StockUnit[], bounds: ExpiryBounds): StockLotD
     const sortedUnits = [...units].sort((a, b) => a.id - b.id);
 
     for (const unit of sortedUnits) {
-        const unitLabel = normalizeStockUnit(unit.unit);
+        const unitLabel = unit.unit;
         const key = [unit.locationId, unit.quantity, unitLabel, unit.expirationDate ?? ""].join("|");
         const lot = lots.get(key);
         if (lot) {

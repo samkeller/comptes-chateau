@@ -155,13 +155,27 @@ describe("StockEntryRoutes integration", () => {
         expect(response.body.code).toBe("VALIDATION_ERROR");
     });
 
-    it("accepts legacy unit aliases and stores the canonical unit", async () => {
+    it("accepts canonical content units and stores them unchanged", async () => {
         const response = await request(app).post("/stocks/entries").send({
-            item: { label: "Biscuits", defaultUnit: "paquet" },
-            lots: [lot({ unit: "boite", quantity: 1 })],
+            item: { label: "Biscuits", defaultUnit: "pièce" },
+            lots: [lot({ unit: "pièce", quantity: 1 })],
         });
         expect(response.status).toBe(201);
         expect(response.body.defaultUnit).toBe("pièce");
         expect(response.body.lots[0].unit).toBe("pièce");
+    });
+
+    it.each(["boite", "Boîte", "paquet", "pack", "l"])("rejects the unit alias %s without writing any stock", async (unit) => {
+        for (const body of [
+            { item: { label: "Biscuits", defaultUnit: unit }, lots: [lot()] },
+            { item: { label: "Biscuits", defaultUnit: "pièce" }, lots: [lot({ unit })] },
+        ]) {
+            const response = await request(app).post("/stocks/entries").send(body);
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe("VALIDATION_ERROR");
+        }
+        expect(await testDataSource.getRepository(StockItem).count()).toBe(0);
+        expect(await testDataSource.getRepository(StockUnit).count()).toBe(0);
+        expect(await movements()).toEqual([]);
     });
 });

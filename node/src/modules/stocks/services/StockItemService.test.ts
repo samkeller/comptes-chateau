@@ -33,7 +33,7 @@ describe("StockItemService", () => {
             { itemId: rice.id, locationId: kitchen.id, quantity: 1, unit: "kg", expirationDate: "2026-12-01" },
             { itemId: rice.id, locationId: kitchen.id, quantity: 1, unit: "kg", expirationDate: "2026-12-01" },
             { itemId: rice.id, locationId: cellar.id, quantity: 1, unit: "kg", expirationDate: null },
-            { itemId: milk.id, locationId: kitchen.id, quantity: 1, unit: "l", expirationDate: "2026-10-05" },
+            { itemId: milk.id, locationId: kitchen.id, quantity: 1, unit: "L", expirationDate: "2026-10-05" },
             { itemId: milk.id, locationId: kitchen.id, quantity: 1, unit: "L", expirationDate: "2026-10-05" },
         ]);
         return { rice, milk, empty };
@@ -45,7 +45,6 @@ describe("StockItemService", () => {
             const result = await service.search({}, false, now);
 
             expect(result.map((item) => item.id)).toEqual([milk.id, rice.id]);
-            // Les unités historiques « l » et « L » forment un seul lot.
             expect(result[0].lots).toEqual([{
                 locationId: kitchen.id, locationLabel: "Cuisine", quantity: 1, unit: "L",
                 expirationDate: "2026-10-05", expiryState: "expired", unitIds: expect.any(Array),

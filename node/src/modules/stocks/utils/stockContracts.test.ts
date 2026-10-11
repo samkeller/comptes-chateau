@@ -3,9 +3,9 @@ import {
     barcodeVariants,
     getStockExpiryState,
     normalizeBarcode,
-    normalizeStockUnit,
-    parseStockUnit,
     SaveStockEntrySchema,
+    STOCK_UNIT_UNITS,
+    StockUnitUnitSchema,
 } from "@chocosous/shared";
 
 /** Contrats partagés front/back du module stocks. */
@@ -28,12 +28,16 @@ describe("stock shared contracts", () => {
         expect(barcodeVariants("oops")).toEqual([]);
     });
 
-    it("maps unit aliases and keeps unknown legacy units readable", () => {
-        expect(parseStockUnit(" l ")).toBe("L");
-        expect(parseStockUnit("Boîte")).toBe("pièce");
-        expect(parseStockUnit("brouette")).toBeNull();
-        expect(normalizeStockUnit("brouette")).toBe("pièce");
+    it.each(STOCK_UNIT_UNITS)("keeps the canonical unit %s unchanged", (unit) => {
+        expect(StockUnitUnitSchema.parse(unit)).toBe(unit);
     });
+
+    it.each(["boite", "Boîte", "paquet", "pack", "pcs", "piece", "l", " G ", "brouette", "", null, 1])(
+        "rejects non-canonical units: %j",
+        (unit) => {
+            expect(StockUnitUnitSchema.safeParse(unit).success).toBe(false);
+        },
+    );
 
     it.each([
         [null, "none"],
