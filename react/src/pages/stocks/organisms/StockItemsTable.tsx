@@ -11,11 +11,10 @@ import { dateEditor, dropdownEditor, numberEditor } from "@/components/atoms/pri
 import InputSearch from "@/components/atoms/primereact/InputSearch";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import { showGlobalToast } from "@/services/GlobalToast";
-import StockEntryService from "@/services/stocks/StockEntryService";
+import StockEntryService, { type StockLotInlineChanges } from "@/services/stocks/StockEntryService";
 import StockItemsService from "@/services/stocks/StockItemsService";
 import type { DataTableLazyState } from "@/services/tableQuery/DataTableQueryCodec";
 import { parseApiDate } from "@/utils/DatesUtils";
-import { duplicateLotEntry, editLotEntry, type StockLotInlineChanges } from "@/utils/stocks/stockEntryDraft";
 import DeleteStockUnitButton from "../atoms/DeleteStockUnitButton";
 import StockExpiryDateTag from "../atoms/StockExpiryDateTag";
 import TakeStockUnitButton from "../atoms/TakeStockUnitButton";
@@ -25,13 +24,6 @@ import { FloatLabel } from "primereact/floatlabel";
 
 const entryService = new StockEntryService();
 const itemsService = new StockItemsService();
-
-const EXPIRY_FILTER_OPTIONS: { label: string; value: StockExpiryState }[] = [
-    { label: "Périmé", value: "expired" },
-    { label: "Bientôt périmé", value: "soon" },
-    { label: "À consommer", value: "ok" },
-    { label: "Sans date", value: "none" },
-];
 
 /** Une ligne par lot ; un produit épuisé garde une ligne (sans lot) pour rester visible. */
 interface StockLotRow {
@@ -183,7 +175,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
         }
         setSaving(true);
         try {
-            await entryService.save(editLotEntry(row.item, row.lot, changes));
+            await entryService.editLot(row.item, row.lot, changes);
         } finally {
             setSaving(false);
             onChanged();
@@ -194,7 +186,7 @@ export default function StockItemsTable({ locations, overview, initialLocationId
         if (!row.lot) return;
         setSaving(true);
         try {
-            await entryService.save(duplicateLotEntry(row.item, row.lot));
+            await entryService.duplicateLot(row.item, row.lot);
             showGlobalToast({ severity: "success", summary: `${row.item.label} : 1 exemplaire ajouté` });
         } finally {
             setSaving(false);

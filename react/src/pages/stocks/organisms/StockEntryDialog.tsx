@@ -19,25 +19,17 @@ import StockProductFields from "../molecules/StockProductFields";
 import {
     applySuggestion, emptyEntryDraft, entryDraftFromItem, newLotDraft,
     switchToExistingItem, toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
-} from "@/utils/stocks/stockEntryDraft";
+} from "../stockEntryDraft";
 
 const itemsService = new StockItemsService();
 const entryService = new StockEntryService();
 const barcodeService = new StockBarcodeService();
 
-export interface StockEntryDialogRequest {
+interface StockEntryDialogProps {
     /** Produit à modifier ; absent pour une nouvelle saisie. */
     itemId?: number;
     /** Ajoute un nouveau lot au produit (ajout rapide d'exemplaires). */
     addLot?: boolean;
-    /** Ouvre directement la caméra pour scanner un code-barres. */
-    scan?: boolean;
-    /** Lieu sélectionné dans le tableau pour préremplir le nouveau lot. */
-    defaultLocationId?: number | null;
-}
-
-interface StockEntryDialogProps {
-    request: StockEntryDialogRequest;
     locations: StockLocation[];
     /** Lieu proposé pour les nouveaux lots (dernier utilisé ou filtre courant). */
     defaultLocationId: number | null;
@@ -51,37 +43,35 @@ type LookupInfo = { severity: "info" | "success"; text: string };
  * Dialog unique de saisie du stock : ajout (manuel ou par scan), ajout rapide d'exemplaires et modification.
  * Le produit et ses exemplaires sont enregistrés ensemble, en une seule requête.
  */
-export default function StockEntryDialog({ request, locations, defaultLocationId, onClose, onSaved }: StockEntryDialogProps) {
+export default function StockEntryDialog({ itemId, addLot = false, locations, defaultLocationId, onClose, onSaved }: StockEntryDialogProps) {
     const { isMobile } = useScreen();
     const showToast = useGlobalToast();
 
-    const initialLocationId = request.defaultLocationId ?? defaultLocationId;
-
-    const [draft, setDraft] = useState<StockEntryDraft | null>(() => request.itemId ? null : emptyEntryDraft(initialLocationId));
-    const [scanning, setScanning] = useState(request.scan === true);
+    const [draft, setDraft] = useState<StockEntryDraft | null>(() => itemId ? null : emptyEntryDraft(defaultLocationId));
+    const [scanning, setScanning] = useState(false);
     const [lookingUp, setLookingUp] = useState(false);
     const [lookupInfo, setLookupInfo] = useState<LookupInfo | null>(null);
     const [productExpanded, setProductExpanded] = useState(false);
     const [suggestions, setSuggestions] = useState<StockItemWithLotsDto[]>([]);
     const [saving, setSaving] = useState(false);
-    const lastLocationId = useRef(initialLocationId);
+    const lastLocationId = useRef(defaultLocationId);
 
-    const isEditing = request.itemId !== undefined && !request.addLot;
+    const isEditing = itemId !== undefined && !addLot;
 
     const onCloseRef = useRef(onClose);
     useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
     useEffect(() => {
-        if (!request.itemId) return;
+        if (!itemId) return;
         let active = true;
-        itemsService.getOne(request.itemId)
+        itemsService.getOne(itemId)
             .then((item) => {
-                if (active) setDraft(entryDraftFromItem(item, request.addLot ? lastLocationId.current : undefined));
+            if (active) setDraft(entryDraftFromItem(item, addLot ? lastLocationId.current : undefined));
             })
             // Erreur affichée par l'intercepteur : rien à modifier.
             .catch(() => { if (active) onCloseRef.current(); });
         return () => { active = false; };
-    }, [request.itemId, request.addLot]);
+    }, [itemId, addLot]);
 
     const updateItem = (changes: Partial<StockItemDraft>): void => {
         setDraft((current) => current && { ...current, item: { ...current.item, ...changes } });
@@ -108,7 +98,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         }
         setDraft((current) => current && { ...current, lots: current.lots.filter((entry) => entry.key !== lot.key) });
     };
-    const addLot = (): void => {
+    const appendLot = (): void => {
         setDraft((current) => {
             if (!current) return current;
             const model = current.lots[current.lots.length - 1];
@@ -167,10 +157,10 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         }
     };
 
-    const selectExistingItem = async (itemId: number): Promise<void> => {
+    const selectExistingItem = async (selectedItemId: number): Promise<void> => {
         setLookingUp(true);
         try {
-            switchToItem(await itemsService.getOne(itemId), null);
+            switchToItem(await itemsService.getOne(selectedItemId), null);
         } catch {
             // Erreur affichée par l'intercepteur.
         } finally {
@@ -182,7 +172,6 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
         setDraft(emptyEntryDraft(lastLocationId.current));
         setLookupInfo(null);
         setProductExpanded(false);
-        if (request.scan) setScanning(true);
     };
 
     const save = async (): Promise<void> => {
@@ -250,7 +239,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                                         className="flex-1 min-w-0"
                                         onChange={(event) => updateItem({ label: event.target.value })}
                                     />
-                                    {!request.itemId && (
+                                    {itemId === undefined && (
                                         <Button
                                             type="button"
                                             icon="pi pi-times"
@@ -340,7 +329,7 @@ export default function StockEntryDialog({ request, locations, defaultLocationId
                             label="Ajouter"
                             icon="pi pi-plus"
                             size="small"
-                            onClick={addLot}
+                            onClick={appendLot}
                         />
                     </div>
                 </div>

@@ -8,7 +8,7 @@ import { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
 import type StockLocation from "@/interfaces/stocks/StockLocation";
 import Optional from "@/components/atoms/form/Optional";
 import { getLocalExpiryState, STOCK_EXPIRY_DISPLAY } from "@/utils/stocks/stockExpiry";
-import { type StockLotDraft } from "@/utils/stocks/stockEntryDraft";
+import { type StockLotDraft } from "../stockEntryDraft";
 
 interface StockLotEditorProps {
     lot: StockLotDraft;

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Button } from "primereact/button";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import type { StockDashboardOverviewDto, StockItemWithLotsDto } from "@chocosous/shared";
@@ -8,7 +7,7 @@ import StockDashboardService from "@/services/stocks/StockDashboardService";
 import StockLocationService from "@/services/stocks/StockLocationService";
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import { PageTemplate } from "../PageTemplate";
-import StockEntryDialog, { type StockEntryDialogRequest } from "./organisms/StockEntryDialog";
+import StockEntryDialog from "./organisms/StockEntryDialog";
 import StockItemsTable from "./organisms/StockItemsTable";
 import StockLocationsDialog from "./organisms/StockLocationsDialog";
 import StockMovementsDialog from "./organisms/StockMovementsDialog";
@@ -17,11 +16,6 @@ import { Card } from "primereact/card";
 const locationService = new StockLocationService();
 const dashboardService = new StockDashboardService();
 const CONFIRM_GROUP = "stocks-page";
-
-function readLocationFilter(searchParams: URLSearchParams): number | null {
-    const value = Number(searchParams.get("locationId"));
-    return Number.isSafeInteger(value) && value > 0 ? value : null;
-}
 
 function readLastLocationId(): number | null {
     try { return new LocalStorageUtils().getLastStockLocationId(); } catch { return null; }
@@ -36,21 +30,18 @@ function rememberLocationId(locationId: number): void {
  * `?action=scan` ou `?action=add` ouvre directement la saisie (raccourcis / anciennes routes).
  */
 export default function StocksPage() {
-    const [searchParams, setSearchParams] = useSearchParams();
     const [locations, setLocations] = useState<StockLocation[] | null>(null);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [showEntryDialog, setShowEntryDialog] = useState(false);
+    const [entryItemId, setEntryItemId] = useState<number | undefined>();
+    const [addLot, setAddLot] = useState(false);
+    const [entryLocationId, setEntryLocationId] = useState<number | null>(null);
     const [lastLocationId, setLastLocationId] = useState<number | null>(readLastLocationId);
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
     const [locationHistoryDialogVisible, setLocationHistoryDialogVisible] = useState(false);
 
     const refresh = useCallback(() => setRefreshKey((value) => value + 1), []);
-
-    useEffect(() => {
-        // L'action n'est jouée qu'une fois : elle ne doit pas se rouvrir au rechargement.
-        if (searchParams.has("action")) setSearchParams({}, { replace: true });
-    }, [searchParams, setSearchParams]);
 
     useEffect(() => {
         let active = true;
@@ -70,6 +61,19 @@ export default function StocksPage() {
         : locationList[0]?.id ?? null;
 
     const closeEntryDialog = useCallback(() => setShowEntryDialog(false), []);
+
+    /**
+     * Ouvre la boîte de dialogue d'entrée de stock.
+     * @param itemId Identifiant du produit à modifier ; absent pour une nouvelle saisie.
+     * @param addNewLot Indique s'il faut ajouter un nouveau lot au produit.
+     * @param locationId Identifiant de l'emplacement par défaut pour le lot.
+     */
+    const openEntryDialog = (itemId?: number, addNewLot = false, locationId: number | null = null): void => {
+        setEntryItemId(itemId);
+        setAddLot(addNewLot);
+        setEntryLocationId(locationId);
+        setShowEntryDialog(true);
+    };
     const onEntrySaved = useCallback((_item: StockItemWithLotsDto, usedLocationId: number | null) => {
         if (usedLocationId !== null) {
             rememberLocationId(usedLocationId);
@@ -83,8 +87,10 @@ export default function StocksPage() {
             <ConfirmDialog />
             <ConfirmDialog group={CONFIRM_GROUP} />
             {showEntryDialog && locations && (
-                <StockEntryDialog request={{}} locations={locations}
-                    defaultLocationId={defaultLocationId}
+                <StockEntryDialog locations={locations}
+                    itemId={entryItemId}
+                    addLot={addLot}
+                    defaultLocationId={entryLocationId ?? defaultLocationId}
                     onClose={closeEntryDialog} onSaved={onEntrySaved} />
             )}
             {locationsDialogVisible && (
@@ -104,7 +110,7 @@ export default function StocksPage() {
                                     icon="pi pi-plus"
                                     label="Ajouter"
                                     className="col-span-2 sm:order-last"
-                                    onClick={() => setShowEntryDialog(true)}
+                                    onClick={() => openEntryDialog()}
                                 />
                                 <Button
                                     icon="pi pi-history"
@@ -126,10 +132,10 @@ export default function StocksPage() {
                 >
                     <div className="flex w-full flex-col gap-3">
                         <StockItemsTable locations={locations} overview={overview}
-                            initialLocationId={readLocationFilter(searchParams)} refreshKey={refreshKey}
-                            onEditItem={(item: StockItemWithLotsDto) => setShowEntryDialog(true)}
+                            initialLocationId={entryLocationId ?? defaultLocationId} refreshKey={refreshKey}
+                            onEditItem={(item: StockItemWithLotsDto) => openEntryDialog(item.id)}
                             onAddToItem={(item: StockItemWithLotsDto, selectedLocationId: number | null) =>
-                                setShowEntryDialog(true)}
+                                openEntryDialog(item.id, true, selectedLocationId)}
                             onChanged={refresh} />
                     </div>
                 </Card>

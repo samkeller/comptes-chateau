@@ -12,7 +12,6 @@ export function useResponsiveDataTable<T extends DataTableValueArray>(): DataTab
             rowGroupHeaderName: { className: "col-span-full block w-full" },
             column: {
                 bodyCell: ({ props }: ColumnPassThroughMethodOptions) => {
-                    console.log(props);
                     return {
                         className: [
                             "grid! w-full! items-center! justify-start! gap-x-3",
@@ -23,7 +22,6 @@ export function useResponsiveDataTable<T extends DataTableValueArray>(): DataTab
                     };
                 },
                 columnTitle: ({ props }: ColumnPassThroughMethodOptions) => {
-                    console.log(props);
                     return props && props.header === ""
                         ? { className: "hidden!" }
                         : undefined;

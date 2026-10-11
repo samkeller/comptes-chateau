@@ -1,8 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { newLotDraft } from "@/utils/stocks/stockEntryDraft";
-import type { StockLotDraft } from "@/utils/stocks/stockEntryDraft";
+import { newLotDraft, type StockLotDraft } from "../stockEntryDraft";
 import StockLotEditor from "./StockLotEditor";
 
 function renderLot(lot: StockLotDraft): string {

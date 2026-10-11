@@ -65,6 +65,32 @@ describe("stock services", () => {
         expect(axios.post).toHaveBeenCalledWith("/api/stocks/entries", entry);
     });
 
+    it("duplicates a lot using one new copy and preserves optional product fields", async () => {
+        vi.mocked(axios.post).mockResolvedValueOnce({ data: item });
+        await new StockEntryService().duplicateLot(item, { ...item.lots[0], unit: "l" });
+
+        expect(axios.post).toHaveBeenCalledWith("/api/stocks/entries", {
+            item: { id: 1, label: "Riz", defaultUnit: "g" },
+            lots: [{ unitIds: [], copies: 1, locationId: 2, quantity: 500, unit: "L", expirationDate: null }],
+        });
+    });
+
+    it("edits only the selected lot, preserving untouched fields and converting dates", async () => {
+        vi.mocked(axios.post).mockResolvedValue({ data: item });
+        const service = new StockEntryService();
+        const lot = { ...item.lots[0], unitIds: [9, 10], expirationDate: "2026-12-01" };
+        await service.editLot(item, lot, { quantity: 2 });
+        expect(axios.post).toHaveBeenLastCalledWith("/api/stocks/entries", {
+            item: { id: 1, label: "Riz", defaultUnit: "g" },
+            lots: [{ unitIds: [9, 10], copies: 2, locationId: 2, quantity: 2, unit: "g", expirationDate: "2026-12-01" }],
+        });
+        await service.editLot(item, lot, { expirationDate: null, copies: 1 });
+        expect(vi.mocked(axios.post).mock.lastCall?.[1].lots[0]).toMatchObject({ unitIds: [9, 10], copies: 1, expirationDate: null });
+        await service.editLot(item, lot, { expirationDate: new Date(2027, 1, 3), locationId: 1 });
+        expect(vi.mocked(axios.post).mock.lastCall?.[1].lots[0]).toMatchObject({ locationId: 1, expirationDate: "2027-02-03" });
+        expect(lot).toMatchObject({ locationId: 2, quantity: 500, unitIds: [9, 10], expirationDate: "2026-12-01" });
+    });
+
     it("takes and deletes one unit", async () => {
         vi.mocked(axios.post).mockResolvedValueOnce({ status: 204, data: "" });
         vi.mocked(axios.delete).mockResolvedValueOnce({ status: 204, data: "" });
