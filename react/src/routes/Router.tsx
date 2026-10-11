@@ -108,11 +108,6 @@ const router = createBrowserRouter([
         handle: { navKey: "stocks" },
       },
       {
-        // Anciennes routes (onglets) : le scan ouvre directement la saisie.
-        path: routePaths.stocks.scan,
-        element: <Navigate to={`${routePaths.stocks.index}?action=scan`} replace />,
-      },
-      {
         path: `${routePaths.stocks.index}/*`,
         element: <Navigate to={routePaths.stocks.index} replace />,
       },

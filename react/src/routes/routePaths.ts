@@ -33,7 +33,5 @@ export const routePaths = {
     notes: "/notes",
     stocks: {
         index: "/stocks",
-        /** Ancienne route du scan rapide, redirigée vers `/stocks?action=scan`. */
-        scan: "/stocks/scan",
     },
 } as const;
