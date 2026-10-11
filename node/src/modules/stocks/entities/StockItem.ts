@@ -15,8 +15,13 @@ export class StockItem {
     @Column({ type: "varchar", length: 255 })
     label: string;
 
+    /** Code-barres normalisé (EAN-13 pour un UPC-A). Non unique. */
     @Column({ type: "varchar", length: 64, nullable: true })
     barcode: string | null;
+
+    /** Marque, saisie ou proposée par OpenFoodFacts ; une saisie utilisateur n'est jamais écrasée. */
+    @Column({ type: "varchar", length: 255, nullable: true })
+    brand: string | null;
 
     @Column({ type: "varchar", length: 64 })
     defaultUnit: string;

@@ -21,11 +21,13 @@ export default function TakeStockUnitButton({ unitId, unitLabel, afterTakeUnit }
             acceptLabel: "Prendre",
             rejectLabel: "Annuler",
             accept: () => {
-                stockUnitsService.takeUnit(unitId)
+                stockUnitsService.take(unitId)
                     .then(() => {
                         showGlobalToast({ severity: "success", summary: "C'est juste coché en fait" });
                         afterTakeUnit?.();
                     })
+                    // Erreur affichée par l'intercepteur.
+                    .catch(() => undefined);
             },
         });
     }

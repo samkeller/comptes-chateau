@@ -17,6 +17,7 @@ describe("StockDashboardService", () => {
             inStockItemCount: 2,
             stockUnitCount: 5,
             datedUnitCount: 4,
+            expiredUnitCount: 1,
             expiringSoonUnitCount: 2,
         };
         vi.mocked(axios.get).mockResolvedValueOnce({ data: overview });
@@ -40,8 +41,8 @@ describe("StockDashboardService", () => {
         };
         vi.mocked(axios.get).mockResolvedValueOnce({ data: [movement] });
 
-        expect(await service.getLastMovements()).toEqual([movement]);
-        expect(axios.get).toHaveBeenCalledWith("/api/stocks/dashboard/last-movements");
+        expect(await service.getLastMovements(50)).toEqual([movement]);
+        expect(axios.get).toHaveBeenCalledWith("/api/stocks/dashboard/last-movements", { params: { limit: 50 } });
     });
 
     it("preserves an empty movement list", async () => {

@@ -8,7 +8,9 @@
 
 ### Added
 - Scan rapide mobile des produits en stock : code-barres, suggestions Open Food Facts, lieu mémorisé et ajout de plusieurs exemplaires.
-- Lecture locale des dates de péremption par photo, avec correction et saisie manuelle.
+
+### Changed
+- Écran des stocks unifié : ajout, modification et gestion des exemplaires depuis une page et un dialogue communs.
 
 ## [1.0.0 - 02/08/2026]
 

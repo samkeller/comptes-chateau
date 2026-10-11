@@ -2,11 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
+// `npm run start:https` (mode « https ») sert le front en HTTPS avec un certificat auto-signé :
+// la caméra (scan) exige un contexte sécurisé, ce que n'est pas http://<ip-du-pc> depuis un téléphone.
+export default defineConfig(({ mode }) => ({
   plugins: [
+    ...(mode === 'https' ? [basicSsl({ name: 'chocosous-dev' })] : []),
     react(),
     tailwindcss(),
     VitePWA({
@@ -64,7 +68,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
-        globIgnores: ['**/tesseract/**', '**/assets/*ocr*.js', '**/assets/*Ocr*.js', '**/assets/*tesseract*.js'],
         maximumFileSizeToCacheInBytes: 5242880,
         runtimeCaching: [
           {
@@ -92,15 +95,7 @@ export default defineConfig({
     })
   ],
   optimizeDeps: {
-    exclude: ["@chocosous/shared", "tesseract.js"]
-  },
-  worker: {
-    format: 'es',
-    rollupOptions: {
-      output: {
-        chunkFileNames: 'assets/ocr-[name]-[hash].js',
-      },
-    },
+    exclude: ["@chocosous/shared"]
   },
   resolve: {
     preserveSymlinks: true,
@@ -118,4 +113,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

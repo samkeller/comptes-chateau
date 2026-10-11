@@ -8,7 +8,7 @@ import { ProgressBar } from "primereact/progressbar";
 export default function ConnectedUserCard() {
     const { connectedUser, loading } = useConnectedUser();
     const { pulseType, lastGainedXp } = useXpFeedbackPulse();
-    const { isMobile } = useScreen();
+    const { isMobile, isDesktop } = useScreen();
 
     if (loading || !connectedUser) {
         return (
@@ -30,8 +30,12 @@ export default function ConnectedUserCard() {
         >
             <UserAvatar user={connectedUser} />
             <div className="min-w-0 sm:w-44" title={levelTooltip}>
-                <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold truncate">{connectedUser.username}</span>
+                <div className="flex items-center justify-start gap-2">
+                    {
+                        isDesktop && (
+                            <span className="text-sm font-semibold truncate">{connectedUser.username}</span>
+                        )
+                    }
                     <span className="text-xs font-bold">Lv {progress.level}</span>
                 </div>
                 {!isMobile &&
@@ -46,8 +50,9 @@ export default function ConnectedUserCard() {
                 }
                 <div className="mt-1 text-[11px] text-muted-color">
                     <div className="flex flex-row flex-wrap items-center gap-1 text-[11px] font-semibold">
-                        <span className="mr-1">{progress.totalXp} XP ({Math.round(progress.progressPercent)}%)</span>
-
+                        <span className="mr-1">{progress.totalXp} XP
+                            {isDesktop && ` ${Math.round(progress.progressPercent)} %`}
+                        </span>
                         {
                             pulseType === "level-up" &&
                             <div className="text-yellow-300 motion-safe:animate-bounce motion-reduce:animate-none">Level up ✨</div>
