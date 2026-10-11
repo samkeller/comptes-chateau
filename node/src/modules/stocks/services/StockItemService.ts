@@ -6,7 +6,7 @@ import type { StockEntryItemDto, StockItemWithLotsDto, StockProductSuggestionDto
 import { barcodeVariants, normalizeBarcode } from "@chocosous/shared";
 import { toStockItemWithLotsDto } from "../mappers/StockItemMapper";
 import { getExpiryBounds, toStockLots } from "../mappers/StockLotMapper";
-import { badRequest, notFound } from "../../../utils/AppError";
+import { notFound } from "../../../utils/AppError";
 import StockUnitService from "./StockUnitService";
 import TableQueryMapper from "../../../utils/tableQuery/TableQueryMapper";
 import TableQueryParser from "../../../utils/tableQuery/TableQueryParser";

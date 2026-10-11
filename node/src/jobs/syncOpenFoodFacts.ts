@@ -30,12 +30,19 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
  * 3. complète marque et image des produits sans jamais écraser une saisie utilisateur.
  */
 export async function syncOpenFoodFacts(manager: EntityManager, options: SyncOpenFoodFactsOptions = {}): Promise<SyncOpenFoodFactsResult> {
-    const { maxCalls = 20, delayMs = 6500, now = new Date(), sleep = defaultSleep } = options;
+    const {
+        maxCalls = 20,
+        delayMs = 6500,
+        now = new Date(),
+        sleep = defaultSleep
+    }: SyncOpenFoodFactsOptions = options;
+
     const itemService = new StockItemService(manager);
     const productService = options.productService ?? new OpenFoodFactsProductService(manager);
     const logService = new JobExecutionLogService(manager);
 
     const result: SyncOpenFoodFactsResult = { normalizedBarcodes: 0, fetchedBarcodes: 0, enrichedItems: 0 };
+    
     try {
         const items = await itemService.findAllWithBarcode();
         for (const item of items) {
