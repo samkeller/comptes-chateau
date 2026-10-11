@@ -57,12 +57,6 @@ Commandes equivalentes:
 - Front uniquement: `npm run dev-front`
 - Back uniquement: `npm run dev-back`
 
-Port node déjà utilisé (windows)
-```bash
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-```
-
 ## Build et execution
 
 Build front + back depuis la racine:

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import type { StockDashboardOverviewDto, StockMovementDto } from "@chocosous/shared";
 import StockDashboardService from "./StockDashboardService";
+import StockMovement from "@/interfaces/stocks/StockMovement";
 
 vi.mock("axios");
 
@@ -17,6 +18,7 @@ describe("StockDashboardService", () => {
             inStockItemCount: 2,
             stockUnitCount: 5,
             datedUnitCount: 4,
+            expiredUnitCount: 1,
             expiringSoonUnitCount: 2,
         };
         vi.mocked(axios.get).mockResolvedValueOnce({ data: overview });
@@ -40,8 +42,15 @@ describe("StockDashboardService", () => {
         };
         vi.mocked(axios.get).mockResolvedValueOnce({ data: [movement] });
 
-        expect(await service.getLastMovements()).toEqual([movement]);
-        expect(axios.get).toHaveBeenCalledWith("/api/stocks/dashboard/last-movements");
+        const result = await service.getLastMovements(50);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]).toBeInstanceOf(StockMovement);
+        expect(result[0]).toMatchObject({
+            ...movement,
+            createdAt: new Date(movement.createdAt),
+        });
+        expect(axios.get).toHaveBeenCalledWith("/api/stocks/dashboard/last-movements", { params: { limit: 50 } });
     });
 
     it("preserves an empty movement list", async () => {

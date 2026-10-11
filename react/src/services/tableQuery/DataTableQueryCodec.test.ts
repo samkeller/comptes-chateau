@@ -26,9 +26,6 @@ describe("DataTableQueryCodec", () => {
         const query = DataTableQueryCodec.toQuery(state);
 
         expect(query.pagination).toEqual({
-            first: 40,
-            rows: 20,
-            page: 2,
             skip: 40,
             take: 20
         });
@@ -143,5 +140,23 @@ describe("DataTableQueryCodec", () => {
                 }
             ])
         );
+    });
+
+    it("serializes sort and filters without pagination when requested", () => {
+        const state = buildLazyState({
+            sortField: "label",
+            sortOrder: -1,
+            filters: { label: { value: "riz", matchMode: "contains" } }
+        });
+
+        const params = DataTableQueryCodec.toQueryParams(state, { includePagination: false });
+
+        expect(params.has("skip")).toBe(false);
+        expect(params.has("take")).toBe(false);
+        expect(params.get("sortField")).toBe("label");
+        expect(params.get("sortOrder")).toBe("DESC");
+        expect(params.get("filters")).toBe(JSON.stringify([
+            { type: "simple", field: "label", matchMode: "contains", value: "riz" }
+        ]));
     });
 });

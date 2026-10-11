@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { CreateStockItemSchema, StockBarcodeParamsSchema, StockItemsQuerySchema } from "@chocosous/shared";
+import { StockBarcodeParamsSchema, StockItemsQuerySchema } from "@chocosous/shared";
 import StockItemController from "../controllers/StockItemController";
-import { IdParamSchema, validateBody, validateParams, validateQuery } from "../../core/middlewares/validate";
+import { IdParamSchema, validateParams, validateQuery } from "../../core/middlewares/validate";
 
 const StockItemRoutes = Router();
 const stockItemController = new StockItemController();
 
-StockItemRoutes.get("/", validateQuery(StockItemsQuerySchema), stockItemController.getAll);
+/** Produits et leurs lots, filtrés côté serveur (recherche, lieu, péremption, épuisés). */
+StockItemRoutes.get("/", validateQuery(StockItemsQuerySchema), stockItemController.search);
 StockItemRoutes.get("/lookup/:barcode", validateParams(StockBarcodeParamsSchema), stockItemController.lookup);
-StockItemRoutes.post("/", validateBody(CreateStockItemSchema), stockItemController.create);
-StockItemRoutes.patch("/:id", validateParams(IdParamSchema), validateBody(CreateStockItemSchema), stockItemController.patch);
+/** Un produit et tous ses lots, tous lieux confondus. */
+StockItemRoutes.get("/:id", validateParams(IdParamSchema), stockItemController.getOne);
 
 export default StockItemRoutes;
