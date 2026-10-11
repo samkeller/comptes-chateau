@@ -18,22 +18,18 @@ const dashboardService = new StockDashboardService();
 const localStorageUtils = new LocalStorageUtils();
 const CONFIRM_GROUP = "stocks-page";
 
-
-/**
- * Écran unique des stocks : consulter, filtrer, ajouter (manuel ou scan), cocher et corriger directement dans le tableau.
- * `?action=scan` ou `?action=add` ouvre directement la saisie (raccourcis / anciennes routes).
- */
 export default function StocksPage() {
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
+
     const [refreshKey, setRefreshKey] = useState(0);
-    const [showEntryDialog, setShowEntryDialog] = useState(false);
     const [entryItemId, setEntryItemId] = useState<number | undefined>();
     const [addLot, setAddLot] = useState(false);
     const [entryLocationId, setEntryLocationId] = useState<number | null>(null);
     const [currentLocationId, setCurrentLocationId] = useState<number | null>(localStorageUtils.getLastStockLocationId());
 
     // Dialogs
+    const [showEntryDialog, setShowEntryDialog] = useState(false);
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
     const [locationHistoryDialogVisible, setLocationHistoryDialogVisible] = useState(false);
 
@@ -82,18 +78,25 @@ export default function StocksPage() {
     return (
         <PageTemplate pageTitle="Stocks">
             <ConfirmDialog />
-            <ConfirmDialog group={CONFIRM_GROUP} />
+            <ConfirmDialog
+                group={CONFIRM_GROUP}
+            />
             {showEntryDialog && locations && (
                 <StockEntryDialog
                     locations={locations}
                     itemId={entryItemId}
                     addLot={addLot}
                     defaultLocationId={entryLocationId ?? currentLocationId}
-                    onClose={closeEntryDialog} onSaved={onEntrySaved} />
+                    onClose={closeEntryDialog}
+                    onSaved={onEntrySaved} />
             )}
             {locationsDialogVisible && (
-                <StockLocationsDialog locations={locations} confirmGroup={CONFIRM_GROUP}
-                    onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
+                <StockLocationsDialog
+                    locations={locations}
+                    confirmGroup={CONFIRM_GROUP}
+                    onClose={() => setLocationsDialogVisible(false)}
+                    onChanged={refresh}
+                />
             )}
             {locationHistoryDialogVisible && (
                 <StockMovementsDialog refreshKey={refreshKey} onClose={() => setLocationHistoryDialogVisible(false)} />
@@ -117,13 +120,13 @@ export default function StocksPage() {
                                     rounded text
                                     severity="secondary"
                                     onClick={() => setLocationHistoryDialogVisible(true)}
-                                />                                <Button
+                                />
+                                <Button
                                     icon="pi pi-map-marker"
                                     label="Lieux"
                                     outlined severity="secondary"
                                     onClick={() => setLocationsDialogVisible(true)}
                                 />
-
                             </nav>
                         </div>
                     }
