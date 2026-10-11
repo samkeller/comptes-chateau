@@ -2,7 +2,6 @@ const serverStart = performance.now();
 import express, { Router } from 'express';
 import session from 'express-session';
 import { AppDataSource } from './db/dataSource';
-import getPgSessionStoreInstance from './config/PGSession';
 import { errorMiddleware } from './modules/core/middlewares/errorMiddleware';
 
 import AuthRoutes from './modules/core/controllers/AuthController';
@@ -26,7 +25,19 @@ AppDataSource.initialize().then(() => {
 
     app.use(session(EXPRESS_SESSION_CONFIG));
 
-    app.use(helmet()); // Headers de sécurité
+    // Headers de sécurité
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                imgSrc: [
+                    "'self'",
+                    "data:",
+                    "https://images.openfoodfacts.org",
+                ],
+            },
+        },
+    }));
+
     app.use(cors({
         origin: true,
         credentials: true
