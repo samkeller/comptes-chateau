@@ -15,29 +15,25 @@ import { Card } from "primereact/card";
 
 const locationService = new StockLocationService();
 const dashboardService = new StockDashboardService();
+const localStorageUtils = new LocalStorageUtils();
 const CONFIRM_GROUP = "stocks-page";
 
-function readLastLocationId(): number | null {
-    try { return new LocalStorageUtils().getLastStockLocationId(); } catch { return null; }
-}
-
-function rememberLocationId(locationId: number): void {
-    try { new LocalStorageUtils().setLastStockLocationId(locationId); } catch { /* Stockage local facultatif. */ }
-}
 
 /**
  * Écran unique des stocks : consulter, filtrer, ajouter (manuel ou scan), cocher et corriger directement dans le tableau.
  * `?action=scan` ou `?action=add` ouvre directement la saisie (raccourcis / anciennes routes).
  */
 export default function StocksPage() {
-    const [locations, setLocations] = useState<StockLocation[] | null>(null);
+    const [locations, setLocations] = useState<StockLocation[]>([]);
     const [overview, setOverview] = useState<StockDashboardOverviewDto | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [showEntryDialog, setShowEntryDialog] = useState(false);
     const [entryItemId, setEntryItemId] = useState<number | undefined>();
     const [addLot, setAddLot] = useState(false);
     const [entryLocationId, setEntryLocationId] = useState<number | null>(null);
-    const [lastLocationId, setLastLocationId] = useState<number | null>(readLastLocationId);
+    const [currentLocationId, setCurrentLocationId] = useState<number | null>(localStorageUtils.getLastStockLocationId());
+
+    // Dialogs
     const [locationsDialogVisible, setLocationsDialogVisible] = useState(false);
     const [locationHistoryDialogVisible, setLocationHistoryDialogVisible] = useState(false);
 
@@ -55,10 +51,12 @@ export default function StocksPage() {
         return () => { active = false; };
     }, [refreshKey]);
 
-    const locationList = locations ?? [];
-    const defaultLocationId = locationList.some((location) => location.id === lastLocationId)
-        ? lastLocationId
-        : locationList[0]?.id ?? null;
+    useEffect(() => {
+        if (currentLocationId !== null) {
+            localStorageUtils.setLastStockLocationId(currentLocationId);
+        }
+    }, [currentLocationId]);
+
 
     const closeEntryDialog = useCallback(() => setShowEntryDialog(false), []);
 
@@ -76,8 +74,7 @@ export default function StocksPage() {
     };
     const onEntrySaved = useCallback((_item: StockItemWithLotsDto, usedLocationId: number | null) => {
         if (usedLocationId !== null) {
-            rememberLocationId(usedLocationId);
-            setLastLocationId(usedLocationId);
+            setCurrentLocationId(usedLocationId);
         }
         refresh();
     }, [refresh]);
@@ -87,14 +84,15 @@ export default function StocksPage() {
             <ConfirmDialog />
             <ConfirmDialog group={CONFIRM_GROUP} />
             {showEntryDialog && locations && (
-                <StockEntryDialog locations={locations}
+                <StockEntryDialog
+                    locations={locations}
                     itemId={entryItemId}
                     addLot={addLot}
-                    defaultLocationId={entryLocationId ?? defaultLocationId}
+                    defaultLocationId={entryLocationId ?? currentLocationId}
                     onClose={closeEntryDialog} onSaved={onEntrySaved} />
             )}
             {locationsDialogVisible && (
-                <StockLocationsDialog locations={locationList} confirmGroup={CONFIRM_GROUP}
+                <StockLocationsDialog locations={locations} confirmGroup={CONFIRM_GROUP}
                     onClose={() => setLocationsDialogVisible(false)} onChanged={refresh} />
             )}
             {locationHistoryDialogVisible && (
@@ -131,8 +129,11 @@ export default function StocksPage() {
                     }
                 >
                     <div className="flex w-full flex-col gap-3">
-                        <StockItemsTable locations={locations} overview={overview}
-                            initialLocationId={entryLocationId ?? defaultLocationId} refreshKey={refreshKey}
+                        <StockItemsTable
+                            locations={locations}
+                            overview={overview}
+                            filterLocationId={entryLocationId ?? currentLocationId}
+                            refreshKey={refreshKey}
                             onEditItem={(item: StockItemWithLotsDto) => openEntryDialog(item.id)}
                             onAddToItem={(item: StockItemWithLotsDto, selectedLocationId: number | null) =>
                                 openEntryDialog(item.id, true, selectedLocationId)}

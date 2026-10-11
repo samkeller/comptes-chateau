@@ -43,21 +43,34 @@ interface StockLotRow {
 type EditableField = "copies" | "quantity" | "unit" | "locationId" | "expirationDate";
 
 function toRows(items: StockItemWithLotsDto[]): StockLotRow[] {
-    return items.flatMap((item): StockLotRow[] => item.lots.length === 0
-        ? [{ key: `item-${item.id}`, itemId: item.id, label: item.label, item, lot: null, copies: null, quantity: null, unit: null, locationId: null, expirationDate: null, expiryState: null }]
-        : item.lots.map((lot) => ({
-            key: `lot-${lot.unitIds[0]}`,
-            itemId: item.id,
-            label: item.label,
-            item,
-            lot,
-            copies: lot.unitIds.length,
-            quantity: lot.quantity,
-            unit: lot.unit,
-            locationId: lot.locationId,
-            expirationDate: parseApiDate(lot.expirationDate),
-            expiryState: lot.expiryState,
-        })));
+    return items.flatMap((item): StockLotRow[] =>
+        item.lots.length === 0
+            ? [{
+                key: `item-${item.id}`,
+                itemId: item.id,
+                label: item.label,
+                item,
+                lot: null,
+                copies: null,
+                quantity: null,
+                unit: null,
+                locationId: null,
+                expirationDate: null,
+                expiryState: null
+            }]
+            : item.lots.map((lot) => ({
+                key: `lot-${lot.unitIds[0]}`,
+                itemId: item.id,
+                label: item.label,
+                item,
+                lot,
+                copies: lot.unitIds.length,
+                quantity: lot.quantity,
+                unit: lot.unit,
+                locationId: lot.locationId,
+                expirationDate: parseApiDate(lot.expirationDate),
+                expiryState: lot.expiryState,
+            })));
 }
 
 function createInitialFilters(locationId: number | null): DataTableFilterMeta {
@@ -101,7 +114,7 @@ function toInlineChanges(field: EditableField, value: unknown): StockLotInlineCh
 interface StockItemsTableProps {
     locations: StockLocation[] | null;
     overview: StockDashboardOverviewDto | null;
-    initialLocationId: number | null;
+    filterLocationId: number | null;
     refreshKey: number;
     onEditItem: (item: StockItemWithLotsDto) => void;
     onAddToItem: (item: StockItemWithLotsDto, locationId: number | null) => void;
@@ -113,10 +126,10 @@ interface StockItemsTableProps {
  * Tableau des stocks : un groupe par produit, une ligne par lot.
  * Exemplaires, contenu, unité, lieu et péremption se corrigent directement dans la cellule.
  */
-export default function StockItemsTable({ locations, overview, initialLocationId, refreshKey, onEditItem, onAddToItem, onChanged }: StockItemsTableProps) {
+export default function StockItemsTable({ locations, overview, filterLocationId, refreshKey, onEditItem, onAddToItem, onChanged }: StockItemsTableProps) {
     const responsiveTableProps = useResponsiveDataTable<StockLotRow[]>();
     const [items, setItems] = useState<StockItemWithLotsDto[] | null>(null);
-    const [filters, setFilters] = useState<DataTableFilterMeta>(() => createInitialFilters(initialLocationId));
+    const [filters, setFilters] = useState<DataTableFilterMeta>(() => createInitialFilters(filterLocationId));
     const [sortField, setSortField] = useState<string | undefined>();
     const [sortOrder, setSortOrder] = useState<SortOrder>(1);
     const [includeEmpty, setIncludeEmpty] = useState(false);
@@ -258,9 +271,9 @@ export default function StockItemsTable({ locations, overview, initialLocationId
                                             rounded text
                                             size="small"
                                             severity="secondary"
-                                            aria-label="Réinitialiser les filtres" 
+                                            aria-label="Réinitialiser les filtres"
                                             tooltip="Réinitialiser les filtres"
-                                            tooltipOptions={{position: "left"}}
+                                            tooltipOptions={{ position: "left" }}
                                             onClick={() => {
                                                 setFilters(createInitialFilters(null));
                                                 setIncludeEmpty(false);
