@@ -28,7 +28,46 @@ export function parseApiDate(value: string | Date | null | undefined): Date | nu
     return new Date(year, month - 1, day);
 }
 
-export function parseApiDateTime(value: string | Date | null | undefined): Date | null {
+
+/**
+ * Parses an API date-time value into a Date object.
+ * Accepts a date string, an existing Date object, or null/undefined.
+ * @param value - The date-time value to parse.
+ * @returns The parsed Date object, or null if the input is missing or invalid.
+ * 
+ * @example
+ * // Parse an ISO 8601 string in UTC.
+ * parseApiDateTime("2026-10-11T10:30:00.000Z");
+ * // Returns: Date object representing 2026-10-11T10:30:00.000Z
+ * 
+ * @example
+ * // Parse a Unix timestamp in milliseconds.
+ * parseApiDateTime(1791714600000);
+ * // Returns: Date object representing the corresponding instant
+
+* @example
+ * // Pass an existing Date object.
+ * const date = new Date("2026-10-11T10:30:00.000Z");
+ * parseApiDateTime(date);
+ * // Returns: the same Date object
+ * 
+ * @example
+ * // Handle a missing value.
+ * parseApiDateTime(null); // Returns: null
+ * parseApiDateTime(undefined); // Returns: null
+ * parseApiDateTime(""); // Returns: null
+ * 
+ * @example
+ * // Handle an invalid date string.
+ * parseApiDateTime("not-a-date");
+ * // Returns: null
+ * 
+ * @example
+ * // Handle an invalid Date object.
+ * parseApiDateTime(new Date("invalid"));
+ * // Returns: the invalid Date object (not null)
+*/
+export function parseApiDateTime(value: string | number | Date | null | undefined): Date | null {
     if (!value) {
         return null;
     }
@@ -38,7 +77,9 @@ export function parseApiDateTime(value: string | Date | null | undefined): Date 
     }
 
     const parsedDate = new Date(value);
-    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+    return Number.isNaN(parsedDate.getTime())
+        ? null
+        : parsedDate;
 }
 
 /**

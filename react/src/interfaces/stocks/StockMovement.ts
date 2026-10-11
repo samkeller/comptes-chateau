@@ -1,4 +1,4 @@
-import { parseApiDate } from "@/utils/DatesUtils";
+import { parseApiDateTime } from "@/utils/DatesUtils";
 import { StockMovementType } from "../../../../shared/dist/contracts";
 
 export default class StockMovement {
@@ -18,7 +18,7 @@ export default class StockMovement {
         Object.assign(this, partial);
 
         if (partial.createdAt) {
-            const parsedDateOperation = parseApiDate(partial.createdAt)
+            const parsedDateOperation = parseApiDateTime(partial.createdAt)
             if (parsedDateOperation) {
                 this.createdAt = parsedDateOperation
             }
