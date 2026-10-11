@@ -19,9 +19,13 @@ interface StockMovementsCardProps {
 /** Historique des derniers mouvements (entrées, consommations, suppressions). */
 export default function StockMovementsDialog({ refreshKey, onClose }: StockMovementsCardProps) {
     const [movements, setMovements] = useState<StockMovement[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        dashboardService.getLastMovements(HISTORY_LIMIT).then(setMovements);
+        setLoading(true);
+        dashboardService.getLastMovements(HISTORY_LIMIT)
+            .then(setMovements)
+            .finally(() => setLoading(false));
     }, [refreshKey]);
 
     return (
@@ -29,7 +33,7 @@ export default function StockMovementsDialog({ refreshKey, onClose }: StockMovem
             <DataTable
                 value={movements}
                 dataKey="id"
-                loading={movements.length === 0}
+                loading={loading}
                 size="small"
                 paginator rows={10}
                 breakpoint="768px"
