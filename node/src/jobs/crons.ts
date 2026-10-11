@@ -40,9 +40,7 @@ async function runJob() {
         });
 
         // Synchronisation OpenFoodFacts des produits existants
-        await AppDataSource.transaction(async (manager) => {
-            await syncOpenFoodFacts(manager);
-        });
+        await syncOpenFoodFacts(AppDataSource.manager);
 
         // Backup the database
         await backupDb(currentDate);
