@@ -13,9 +13,9 @@
     "build:shared": "npm --workspace @chocosous/shared run build",
     "build:react": "npm --prefix react run build",
     "build:node": "npm --prefix node run build",
+    "tests": "npm run tests:front && npm run tests:back",
     "tests:front": "npm --prefix react run tests",
-    "tests:back": "npm --prefix node run tests",
-    "tests": "npm run tests:front && npm run tests:back"
+    "tests:back": "npm --prefix node run tests"
   },
   "workspaces": [
     "node",
