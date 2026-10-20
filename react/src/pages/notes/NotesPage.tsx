@@ -7,9 +7,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import { PageTemplate } from "@/pages/PageTemplate";
 import NotesService from "@/services/notes/NotesService";
-import { MarkdownRenderer } from "@/components/atoms/MarkdownRenderer";
 import NoteEditorDialog from "./NoteEditorDialog";
 import { useScreen } from "@/hooks/useScreen";
+import CheckListRenderContent from "./molecules/CheckListRenderContent";
+import TextRenderContent from "./molecules/TextRenderContent";
 
 const notesService = new NotesService();
 export default function NotesPage() {
@@ -153,51 +154,6 @@ export default function NotesPage() {
         showToast({ severity: "success", summary: "Note supprimée." });
     }
 
-    function renderTextContent(note: NoteDto) {
-        return note.content ? (
-            <div className="mt-2 max-h-32 overflow-hidden text-sm text-surface-500">
-                <MarkdownRenderer>{note.content}</MarkdownRenderer>
-            </div>
-        ) : (
-            <span className="mt-2 block text-sm italic text-surface-500">Note vide</span>
-        );
-    }
-
-    function renderChecklistContent(note: NoteDto) {
-        return (
-            <div className="mt-2 flex flex-col">
-                {note.items.length === 0 && (
-                    <span className="py-2 text-sm italic text-surface-500">-</span>
-                )}
-                {note.items.slice(0, 5).map((item) => (
-                    <label
-                        key={item.id}
-                        className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1 ${note.isArchived ? "cursor-default" : "hover:bg-surface-100"
-                            }`}
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={item.isChecked}
-                            disabled={note.isArchived}
-                            onChange={() => void toggleItem(note, item)}
-                            className="h-5 w-5 shrink-0 accent-teal-400"
-                            aria-label={`${item.isChecked ? "Décocher" : "Cocher"} ${item.label}`}
-                        />
-                        <span className={`line-clamp-2 text-sm ${item.isChecked ? "line-through opacity-60" : ""}`}>
-                            {item.label}
-                        </span>
-                    </label>
-                ))}
-                {note.items.length > 5 && (
-                    <span className="mt-2 text-sm text-surface-500">
-                        + {note.items.length - 5} autres éléments
-                    </span>
-                )}
-            </div>
-        );
-    }
-
     return (
         <PageTemplate pageTitle="Notes">
             <div className="flex flex-col gap-4">
@@ -276,8 +232,9 @@ export default function NotesPage() {
                                         )}
                                     </div>
                                     {note.type === "text"
-                                        ? renderTextContent(note)
-                                        : renderChecklistContent(note)}
+                                        ? <TextRenderContent note={note} />
+                                        : <CheckListRenderContent note={note} toggleItem={toggleItem} />
+                                    }
                                 </Card>
                             </article>
                         ))}
