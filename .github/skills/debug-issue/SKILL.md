@@ -1,9 +1,7 @@
-<!-- Based on/Inspired by: https://github.com/github/awesome-copilot/blob/main/agents/debug.agent.md -->
 ---
-agent: 'agent'
-model: GPT-5.3-Codex
-tools: ['codebase', 'search', 'problems', 'testFailure', 'runCommands']
+name: debug-issue
 description: 'Diagnose and fix an issue using a structured debug workflow'
+disable-model-invocation: true
 ---
 # Debug Issue
 

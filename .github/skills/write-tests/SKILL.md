@@ -1,9 +1,7 @@
-<!-- Based on/Inspired by: https://github.com/github/awesome-copilot/blob/main/instructions/prompt.instructions.md -->
 ---
-agent: 'agent'
-model: GPT-5.3-Codex
-tools: ['codebase', 'search', 'findTestFiles']
+name: write-tests
 description: 'Generate or update tests for changed behavior in frontend or backend'
+disable-model-invocation: true
 ---
 # Write Tests
 

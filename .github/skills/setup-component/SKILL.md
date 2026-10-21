@@ -1,9 +1,7 @@
-<!-- Based on/Inspired by: https://github.com/github/awesome-copilot/blob/main/instructions/prompt.instructions.md -->
 ---
-agent: 'agent'
-model: GPT-5.3-Codex
-tools: ['codebase', 'search', 'usages']
+name: setup-component
 description: 'Create a new React component or Node module following repository conventions'
+disable-model-invocation: true
 ---
 # Setup Component or Module
 
