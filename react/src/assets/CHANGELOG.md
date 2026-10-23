@@ -4,13 +4,6 @@
 
 -->
 
-## [Non publié]
-
-### Added
-- Scan rapide mobile des produits en stock : code-barres, suggestions Open Food Facts, lieu mémorisé et ajout de plusieurs exemplaires.
-
-### Changed
-- Écran des stocks unifié : ajout, modification et gestion des exemplaires depuis une page et un dialogue communs.
 
 ## [1.0.0 - 02/08/2026]
 
@@ -108,3 +101,14 @@
 
 ### Fixes
 - Affichage plus simple des tâches /kanban (nombre de commentaires, moins de fioritures, etc) - Mobile & desktop
+
+## [1.2.6 - 21/10/2026]
+
+### Added
+- Notes façon Google Keep : enregistrement automatique, titre ou contenu suffisant, checklists markdown (- [ ]) utilisables partout et cochables directement depuis la liste des notes.
+- Scan rapide mobile des produits en stock : code-barres, suggestions Open Food Facts, lieu mémorisé et ajout de plusieurs exemplaires.
+
+### Changed
+- Les notes n'ont plus de type (texte / checklist) : tout est du markdown ; les anciennes checklists sont converties automatiquement.
+- Un seul moteur markdown (TipTap) pour l'édition et l'affichage ; suppression de react-markdown et remark-gfm.
+- Écran des stocks unifié : ajout, modification et gestion des exemplaires depuis une page et un dialogue communs.

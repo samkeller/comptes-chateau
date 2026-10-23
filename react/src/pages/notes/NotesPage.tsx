@@ -1,16 +1,15 @@
-import type { NoteDto, NoteItemDto, NoteType } from "@chocosous/shared";
+import type { NoteDto } from "@chocosous/shared";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import InputSearch from "@/components/atoms/primereact/InputSearch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGlobalToast } from "@/context/GlobalToastContext";
 import { PageTemplate } from "@/pages/PageTemplate";
 import NotesService from "@/services/notes/NotesService";
 import NoteEditorDialog from "./NoteEditorDialog";
 import { useScreen } from "@/hooks/useScreen";
-import CheckListRenderContent from "./molecules/CheckListRenderContent";
-import TextRenderContent from "./molecules/TextRenderContent";
+import NoteCardContent from "./molecules/NoteCardContent";
 
 const notesService = new NotesService();
 export default function NotesPage() {
@@ -20,24 +19,21 @@ export default function NotesPage() {
     const view = showArchived ? "archived" : "active";
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
-    const [editingNote, setEditingNote] = useState<NoteDto | null>(null);
-    const [creatingType, setCreatingType] = useState<NoteType | null>(null);
-    const mutationVersions = useRef(new Map<string, number>());
+    /**
+     * État du dialogue d'édition de note.
+     * Contient la note en cours d'édition ou `null` si aucun dialogue n'est ouvert.
+     */
+    const [editor, setEditor] = useState<{ note: NoteDto | null } | null>(null);
     const { width, isMobile } = useScreen()
-    const noteMinWidth = 300; // Valeur arbitraire pour la largeur minimale d'une note
+    const noteMinWidth = 300;
     const noteColumnCount = Math.max(1, Math.floor(width / noteMinWidth));
 
     useEffect(() => {
         let isCurrentRequest = true;
         void notesService.getAll(showArchived)
-            .then(
-                (data) => {
-                    if (isCurrentRequest) setNotes(data);
-                },
-                () => {
-                    // L'intercepteur Axios affiche déjà l'erreur à l'utilisateur.
-                }
-            )
+            .then((data) => {
+                if (isCurrentRequest) setNotes(data);
+            })
             .finally(() => {
                 if (isCurrentRequest) setLoading(false);
             });
@@ -53,7 +49,6 @@ export default function NotesPage() {
             .filter((note) => !normalizedSearch || [
                 note.title,
                 note.content ?? "",
-                ...note.items.map((item) => item.label),
             ].some((value) => value.toLocaleLowerCase().includes(normalizedSearch)))
             .sort((left, right) => {
                 if (view === "active" && left.isPinned !== right.isPinned) return left.isPinned ? -1 : 1;
@@ -65,82 +60,40 @@ export default function NotesPage() {
         setNotes((current) => [...current.filter((note) => note.id !== updatedNote.id), updatedNote]);
     }
 
-    function updateItemInState(noteId: number, item: NoteItemDto): void {
-        setNotes((current) => current.map((note) => note.id === noteId
-            ? {
-                ...note,
-                items: note.items.some((currentItem) => currentItem.id === item.id)
-                    ? note.items.map((currentItem) => currentItem.id === item.id ? item : currentItem)
-                    : [...note.items, item].sort((left, right) => left.sortOrder - right.sortOrder || left.id - right.id),
-            }
-            : note));
-        setEditingNote((current) => current?.id === noteId
-            ? {
-                ...current,
-                items: current.items.some((currentItem) => currentItem.id === item.id)
-                    ? current.items.map((currentItem) => currentItem.id === item.id ? item : currentItem)
-                    : [...current.items, item].sort((left, right) => left.sortOrder - right.sortOrder || left.id - right.id),
-            }
-            : current);
-    }
-
-    function deleteItemFromState(noteId: number, itemId: number): void {
-        setNotes((current) => current.map((note) => note.id === noteId
-            ? { ...note, items: note.items.filter((item) => item.id !== itemId) }
-            : note));
-        setEditingNote((current) => current?.id === noteId
-            ? { ...current, items: current.items.filter((item) => item.id !== itemId) }
-            : current);
-    }
-
-    async function toggleItem(note: NoteDto, item: NoteItemDto): Promise<void> {
-        const key = `${note.id}:${item.id}`;
-        const version = (mutationVersions.current.get(key) ?? 0) + 1;
-        mutationVersions.current.set(key, version);
-        const optimisticItem = { ...item, isChecked: !item.isChecked };
-        updateItemInState(note.id, optimisticItem);
-
+    async function updateChecklistContent(note: NoteDto, newContent: string): Promise<void> {
+        // Mise à jour optimiste : la case reste cochée sans attendre le serveur.
+        replaceNote({ ...note, content: newContent });
         try {
-            await notesService.updateItem(note.id, item.id, { isChecked: optimisticItem.isChecked });
+            const updatedNote = await notesService.update(note.id, {
+                title: note.title,
+                content: newContent,
+            });
+            // On garde l'ancienne date pour que la carte ne saute pas pendant qu'on coche plusieurs items.
+            replaceNote({ ...updatedNote, updatedAt: note.updatedAt });
         } catch {
-            if (mutationVersions.current.get(key) === version) {
-                updateItemInState(note.id, item);
-                showToast({ severity: "error", summary: "Impossible de cocher cet élément. Réessayez." });
-            }
+            replaceNote(note); // Rollback
         }
     }
 
     async function togglePin(note: NoteDto): Promise<void> {
-        try {
-            const updatedNote = await notesService.update(note.id, {
-                title: note.title,
-                isPinned: !note.isPinned,
-            });
-            replaceNote(updatedNote);
-        } catch {
-            showToast({ severity: "error", summary: "Impossible de modifier l’épinglage." });
-        }
+        const updatedNote = await notesService.update(note.id, {
+            title: note.title,
+            content: note.content,
+            isPinned: !note.isPinned,
+        });
+        replaceNote(updatedNote);
     }
 
     async function toggleArchive(note: NoteDto): Promise<void> {
-        try {
-            const updatedNote = note.isArchived
-                ? await notesService.unarchive(note.id)
-                : await notesService.archive(note.id);
-            setNotes((current) => current.filter((currentNote) => currentNote.id !== updatedNote.id));
-            setEditingNote(null);
-            showToast({
-                severity: "success",
-                summary: updatedNote.isArchived ? "Note archivée." : "Note désarchivée.",
-            });
-        } catch {
-            showToast({ severity: "error", summary: "Impossible de modifier l’archivage." });
-        }
-    }
-
-    function saveNote(note: NoteDto): void {
-        replaceNote(note);
-        setCreatingType(null);
+        const updatedNote = note.isArchived
+            ? await notesService.unarchive(note.id)
+            : await notesService.archive(note.id);
+        setNotes((current) => current.filter((currentNote) => currentNote.id !== updatedNote.id));
+        setEditor(null);
+        showToast({
+            severity: "success",
+            summary: updatedNote.isArchived ? "Note archivée." : "Note désarchivée.",
+        });
     }
 
     function changeArchiveView(): void {
@@ -150,24 +103,14 @@ export default function NotesPage() {
 
     function removeNote(noteId: number): void {
         setNotes((current) => current.filter((note) => note.id !== noteId));
-        setEditingNote(null);
+        setEditor(null);
         showToast({ severity: "success", summary: "Note supprimée." });
     }
 
     return (
         <PageTemplate pageTitle="Notes">
             <div className="flex flex-col gap-4">
-                <div className="flex justify-end">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button
-                            label="Nouvelle note"
-                            icon="pi pi-plus"
-                            onClick={() => setCreatingType("text")}
-                        />
-                    </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <InputSearch
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
@@ -184,7 +127,13 @@ export default function NotesPage() {
                         onClick={changeArchiveView}
                         {...(isMobile && { tooltip: "Afficher les notes archivées", tooltipOptions: { position: "bottom" } })}
                     />
-
+                    <Button
+                        label="Nouvelle note"
+                        icon="pi pi-plus"
+                        size="small"
+                        className="shrink-0"
+                        onClick={() => setEditor({ note: null })}
+                    />
                 </div>
 
                 {loading ? (
@@ -193,7 +142,7 @@ export default function NotesPage() {
                     <div className="rounded-xl border border-dashed border-surface p-10 text-center text-surface-500">
                         {search ? "Aucune note ne correspond à la recherche." : view === "archived"
                             ? "Aucune note archivée."
-                            : "Aucune note pour le moment. Créez une note ou une checklist."}
+                            : "Aucune note pour le moment. Créez votre première note."}
                     </div>
                 ) : (
                     <div
@@ -205,25 +154,36 @@ export default function NotesPage() {
                                 key={note.id}
                                 tabIndex={0}
                                 aria-label={`Ouvrir la note ${note.title}`}
-                                onClick={() => setEditingNote(note)}
+                                onClick={() => setEditor({ note })}
                                 onKeyDown={(event) => {
                                     if (event.target !== event.currentTarget) return;
                                     if (event.key === "Enter" || event.key === " ") {
                                         event.preventDefault();
-                                        setEditingNote(note);
+                                        setEditor({ note });
                                     }
                                 }}
                                 className="mb-3 inline-block w-full break-inside-avoid cursor-pointer rounded-xl focus-visible:outline focus-visible:outline-primary"
                             >
-                                <Card className="w-full border border-surface shadow-sm transition-colors hover:border-primary">
-                                    <div className="flex min-w-0 items-start justify-between gap-2">
-                                        <span className="min-w-0 flex-1 truncate text-lg font-semibold">{note.title}</span>
+                                <Card
+                                    className="w-full border border-surface shadow-sm transition-colors hover:border-primary"
+                                    pt={{
+                                        content: {
+                                            className: "py-2"
+                                        }
+                                    }}
+                                >
+                                    <div className="flex min-w-0 items-center justify-end gap-2">
+                                        {note.title && (
+                                            <span className="min-w-0 flex-1 truncate text-lg font-semibold">{note.title}</span>
+                                        )}
                                         {view === "active" && (
                                             <Button
                                                 icon={note.isPinned ? "pi pi-bookmark-fill" : "pi pi-bookmark"}
                                                 rounded
                                                 text
                                                 aria-label={note.isPinned ? "Désépingler" : "Épingler"}
+                                                size="small"
+                                                className="p-0 h-6 w-6"
                                                 onClick={(event) => {
                                                     event.stopPropagation();
                                                     void togglePin(note);
@@ -231,10 +191,10 @@ export default function NotesPage() {
                                             />
                                         )}
                                     </div>
-                                    {note.type === "text"
-                                        ? <TextRenderContent note={note} />
-                                        : <CheckListRenderContent note={note} toggleItem={toggleItem} />
-                                    }
+                                    <NoteCardContent
+                                        note={note}
+                                        onContentChange={(newContent) => void updateChecklistContent(note, newContent)}
+                                    />
                                 </Card>
                             </article>
                         ))}
@@ -242,19 +202,13 @@ export default function NotesPage() {
                 )}
             </div>
 
-            {(editingNote || creatingType) && (
+            {editor !== null && (
                 <NoteEditorDialog
-                    note={editingNote}
-                    initialType={creatingType ?? "text"}
-                    onClose={() => {
-                        setEditingNote(null);
-                        setCreatingType(null);
-                    }}
-                    onSaved={saveNote}
+                    note={editor.note}
+                    onClose={() => setEditor(null)}
+                    onSaved={replaceNote}
                     onDeleted={removeNote}
                     onArchive={(note) => void toggleArchive(note)}
-                    onItemChanged={updateItemInState}
-                    onItemDeleted={deleteItemFromState}
                 />
             )}
         </PageTemplate>

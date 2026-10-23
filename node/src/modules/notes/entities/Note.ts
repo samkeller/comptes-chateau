@@ -5,14 +5,11 @@ import {
     Index,
     JoinColumn,
     ManyToOne,
-    OneToMany,
     PrimaryGeneratedColumn,
     Relation,
     UpdateDateColumn,
 } from "typeorm";
-import { NOTE_TYPES, type NoteType } from "@chocosous/shared";
 import { User } from "../../core/entities/User";
-import { NoteItem } from "./NoteItem";
 
 @Entity("note")
 @Index(["isArchived", "isPinned", "updatedAt"])
@@ -22,9 +19,6 @@ export class Note {
 
     @Column({ type: "varchar", length: 255 })
     title: string;
-
-    @Column({ type: "enum", enum: NOTE_TYPES, enumName: "note_type_enum" })
-    type: NoteType;
 
     @Column({ type: "text", nullable: true })
     content: string | null;
@@ -44,9 +38,6 @@ export class Note {
     @ManyToOne(() => User, { nullable: false, onDelete: "NO ACTION" })
     @JoinColumn({ name: "authorId" })
     author: Relation<User>;
-
-    @OneToMany(() => NoteItem, (item) => item.note, { cascade: ["remove"] })
-    items: Relation<NoteItem>[];
 
     @CreateDateColumn()
     createdAt: Date;

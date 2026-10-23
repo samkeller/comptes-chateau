@@ -25,27 +25,19 @@ describe("NotesService", () => {
         expect(axios.get).toHaveBeenCalledWith("/api/notes", { params: { archived: true } });
     });
 
-    it("uses the item endpoint for an independent optimistic checkbox update", async () => {
-        vi.mocked(axios.patch).mockResolvedValue({ data: { id: 5, isChecked: true } });
-
-        await service.updateItem(2, 5, { isChecked: true });
-
-        expect(axios.patch).toHaveBeenCalledWith("/api/notes/2/items/5", { isChecked: true });
-    });
-
     it("supports note CRUD and archive endpoints", async () => {
         vi.mocked(axios.post).mockResolvedValue({ data: {} });
         vi.mocked(axios.put).mockResolvedValue({ data: {} });
         vi.mocked(axios.patch).mockResolvedValue({ data: {} });
         vi.mocked(axios.delete).mockResolvedValue({});
 
-        await service.create({ title: "Courses", type: "checklist" });
+        await service.create({ title: "Courses", content: "- [ ] Pain\n- [ ] Lait" });
         await service.update(3, { title: "Courses" });
         await service.archive(3);
         await service.unarchive(3);
         await service.delete(3);
 
-        expect(axios.post).toHaveBeenCalledWith("/api/notes", { title: "Courses", type: "checklist" });
+        expect(axios.post).toHaveBeenCalledWith("/api/notes", { title: "Courses", content: "- [ ] Pain\n- [ ] Lait" });
         expect(axios.put).toHaveBeenCalledWith("/api/notes/3", { title: "Courses" });
         expect(axios.patch).toHaveBeenNthCalledWith(1, "/api/notes/3/archive");
         expect(axios.patch).toHaveBeenNthCalledWith(2, "/api/notes/3/unarchive");

@@ -1,11 +1,7 @@
 import axios from "axios";
 import type {
-    CreateNoteItemInput,
-    CreateNoteRequest,
-    NoteDto,
-    NoteItemDto,
-    PatchNoteItemRequest,
     UpdateNoteRequest,
+    NoteDto,
 } from "@chocosous/shared";
 import BaseService from "../BaseService";
 
@@ -16,7 +12,7 @@ export default class NotesService extends BaseService {
         return axios.get<NoteDto[]>(this.notesApiUrl, { params: { archived } }).then((response) => response.data);
     }
 
-    create(payload: CreateNoteRequest): Promise<NoteDto> {
+    create(payload: UpdateNoteRequest): Promise<NoteDto> {
         return axios.post<NoteDto>(this.notesApiUrl, payload).then((response) => response.data);
     }
 
@@ -34,20 +30,5 @@ export default class NotesService extends BaseService {
 
     delete(id: number): Promise<void> {
         return axios.delete(`${this.notesApiUrl}/${id}`);
-    }
-
-    addItem(noteId: number, payload: CreateNoteItemInput): Promise<NoteItemDto> {
-        return axios.post<NoteItemDto>(`${this.notesApiUrl}/${noteId}/items`, payload).then((response) => response.data);
-    }
-
-    updateItem(noteId: number, itemId: number, payload: PatchNoteItemRequest): Promise<NoteItemDto> {
-        return axios.patch<NoteItemDto>(
-            `${this.notesApiUrl}/${noteId}/items/${itemId}`,
-            payload
-        ).then((response) => response.data);
-    }
-
-    deleteItem(noteId: number, itemId: number): Promise<void> {
-        return axios.delete(`${this.notesApiUrl}/${noteId}/items/${itemId}`);
     }
 }

@@ -1,15 +1,8 @@
-export { NOTE_TYPES } from "./NoteTypes";
-export type { NoteType } from "./NoteTypes";
-export type { CreateNoteItemInput, NoteDto, NoteItemDto } from "./NoteDtos";
+export type { NoteDto } from "./NoteDtos";
 export {
-    CreateNoteItemSchema,
-    CreateNoteSchema,
     NotesArchiveQuerySchema,
-    PatchNoteItemSchema,
-    UpdateNoteSchema,
+    NoteBodySchema,
 } from "./NoteSchemas";
 export type {
-    CreateNoteRequest,
-    PatchNoteItemRequest,
     UpdateNoteRequest,
 } from "./NoteSchemas";

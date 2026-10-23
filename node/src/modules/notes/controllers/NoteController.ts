@@ -1,8 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import {
-    CreateNoteSchema,
+    NoteBodySchema,
     NotesArchiveQuerySchema,
-    UpdateNoteSchema,
 } from "@chocosous/shared";
 import requireUserId from "../../accounts/utils/requireUserId";
 import { validateBody, validateParams, validateQuery, IdParamSchema } from "../../core/middlewares/validate";
@@ -22,12 +21,12 @@ NoteRoutes.get("/:id", validateParams(IdParamSchema), async (req: Request, res: 
     res.json(await noteService.getById(Number(req.params.id)));
 });
 
-NoteRoutes.post("/", validateBody(CreateNoteSchema), async (req: Request, res: Response) => {
+NoteRoutes.post("/", validateBody(NoteBodySchema), async (req: Request, res: Response) => {
     const note = await noteService.create(req.body, requireUserId(req));
     res.status(201).json(note);
 });
 
-NoteRoutes.put("/:id", validateParams(IdParamSchema), validateBody(UpdateNoteSchema), async (
+NoteRoutes.put("/:id", validateParams(IdParamSchema), validateBody(NoteBodySchema), async (
     req: Request,
     res: Response
 ) => {
