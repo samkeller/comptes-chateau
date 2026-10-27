@@ -61,6 +61,31 @@ Use these specialized instruction files with this root guidance:
 - Entites TypeORM alignees au schema + migrations via CLI
 - Tests front/back centres sur les regles metier et regressions
 
+## Gestion des tâches
+
+Il existe deux fichiers de suivi distincts :
+
+- `TODO.md` : backlog personnel du développeur. Ne JAMAIS le modifier, ni le lire pour décider des actions. Il n'est pas accessible à l'agent.
+- `TODO_agent.md` : backlog de l'agent. Seul fichier de tâches que tu peux écrire.
+
+### Quand écrire dans TODO_agent.md
+
+Si tu identifies pendant ton travail une amélioration, un bug adjacent, un refactoring ou une dette technique hors du périmètre de la tâche en cours, ne l'implémente pas : ajoute-la dans `TODO_agent.md`.
+
+### Format des entrées
+
+- Une entrée = une action atomique, à l'infinitif, en français.
+- Préfixe de priorité entre crochets : [HIGH], [MEDIUM] ou [LOW].
+  Règles : sécurité/bug bloquant/cassure UX = HIGH; dette technique, homogénéité, perf = MEDIUM ; cosmétique/nice-to-have = LOW.
+- Contexte utile en fin de ligne : fichier(s) concerné(s), bibliothèque suggérée, effort estimé — sur une seule ligne.
+- Exemple :`- [ ] [MEDIUM] Factoriser les boutons Supprimer/Renommer en atoms DeleteButton/EditButton — cible : composants/atoms, garder compat ButtonProps`
+
+### Déplacement dans les colonnes
+
+- Nouvelle entrée : toujours dans "Todo".
+- Tu PEUX déplacer une entrée de "Todo" vers "Review" si, après avoir travaillé dessus, tu veux que le développeur valide ton travail.
+- Tu NE peux pas déplacer une entrée vers "Done ✓", ni la supprimer, ni la cocher : seul le développeur clos les tâches.
+  
 ## Avoid
 
 - `any` non justifie

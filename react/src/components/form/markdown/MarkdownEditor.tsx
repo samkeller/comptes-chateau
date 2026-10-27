@@ -1,54 +1,30 @@
-import { Editor } from '@tiptap/core'
 import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import { Markdown } from '@tiptap/markdown'
+import { useEffect, useMemo } from 'react';
+import { createMarkdownExtensions } from '@/components/atoms/markdown/markdownExtensions';
 import MarkdownToolbar from "./MarkdownToolbar";
-import { useEffect } from 'react';
-import { TabPanel, TabView } from 'primereact/tabview';
-import { MarkdownRenderer } from '@/components/atoms/MarkdownRenderer';
 
 interface MarkdownEditorProps {
     value: string,
     onChange: (value: string) => void,
 }
 
-type MarkdownStorage = {
-    manager?: {
-        serialize: (doc: object) => string,
-    },
-}
-
-function getEditorMarkdown(editor: Editor): string {
-    const editorWithMarkdown = editor as Editor & { getMarkdown?: () => string };
-    if (typeof editorWithMarkdown.getMarkdown === "function") {
-        return editorWithMarkdown.getMarkdown();
-    }
-
-    const markdownStorage = editor.storage.markdown as MarkdownStorage | undefined;
-    if (markdownStorage?.manager) {
-        return markdownStorage.manager.serialize(editor.getJSON());
-    }
-
-    return editor.getText();
-}
-
+/**
+ * Éditeur WYSIWYG dont la valeur est du markdown GFM (listes, checklists `- [ ]`, titres...).
+ */
 export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
+    const extensions = useMemo(() => createMarkdownExtensions(), []);
+
     const editor = useEditor({
-        extensions: [StarterKit, Markdown],
+        extensions,
         content: value,
         contentType: "markdown",
         onUpdate: ({ editor }) => {
-            onChange(getEditorMarkdown(editor));
+            onChange(editor.getMarkdown());
         },
     });
 
     useEffect(() => {
-        if (!editor) {
-            return;
-        }
-
-        const currentValue = getEditorMarkdown(editor);
-        if (currentValue === value) {
+        if (!editor || editor.getMarkdown() === value) {
             return;
         }
 
@@ -57,26 +33,17 @@ export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps)
 
     return (
         <div className="flex flex-col gap-2">
-            <TabView
-                panelContainerClassName='px-0'
-            >
-                <TabPanel header="Editeur">
-                    <div className="sticky top-0 z-20 bg-card pb-2">
-                        <MarkdownToolbar editor={editor} />
-                    </div>
-                    <div className="px-2">
-                        <EditorContent
-                            editor={editor}
-                            className="mt-2 markdown-editor-surface rounded-border bg-gray-900 p-4 min-h-[12rem] focus-within:ring-2 focus-within:ring-teal-400/30 focus-within:border-teal-400 transition-all cursor-text"
-                            style={{ border: "1px solid #424b57" }}
-                            onClick={() => editor?.chain().focus().run()}
-                        />
-                    </div>
-                </TabPanel>
-                <TabPanel header="Aperçu">
-                    <MarkdownRenderer>{value}</MarkdownRenderer>
-                </TabPanel>
-            </TabView>
+            <div className="sticky top-0 z-20 bg-card pb-2">
+                <MarkdownToolbar editor={editor} />
+            </div>
+                <EditorContent
+                    editor={editor}
+                    className="markdown-editor-surface rounded-border bg-gray-900 p-4 min-h-[12rem] focus-within:ring-2 focus-within:ring-teal-400/30 focus-within:border-teal-400 transition-all cursor-text"
+                    style={{ border: "1px solid #424b57" }}
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget) editor?.commands.focus("end");
+                    }}
+                />
         </div>
     );
 }

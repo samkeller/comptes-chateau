@@ -1,9 +1,7 @@
-<!-- Based on/Inspired by: https://github.com/github/awesome-copilot/blob/main/instructions/code-review-generic.instructions.md -->
 ---
-agent: 'agent'
-model: GPT-5.3-Codex
-tools: ['codebase', 'search', 'changes', 'problems']
+name: code-review-assistant
 description: 'Review code changes with priority on correctness, security, and regressions'
+disable-model-invocation: true
 ---
 # Code Review Assistant
 

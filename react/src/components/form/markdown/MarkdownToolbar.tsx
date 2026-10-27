@@ -10,11 +10,18 @@ interface MarkdownToolbarProps {
 
 type HeadingLevel = 1 | 2 | 3;
 
-const HEADING_OPTIONS: SelectItem[] = [
-    { value: 0, label: "Paragraphe" },
-    { value: 1, label: "Titre 1" },
-    { value: 2, label: "Titre 2" },
-    { value: 3, label: "Titre 3" },
+type HeadingOption = SelectItem & {
+    /**
+     * On ajoute une propriété `tag` pour indiquer le type de balise HTML correspondant.
+     */
+    tag: "p" | "h1" | "h2" | "h3";
+};
+
+const HEADING_OPTIONS: HeadingOption[] = [
+    { value: 0, label: "Paragraphe", tag: "p" },
+    { value: 1, label: "Titre 1", tag: "h1" },
+    { value: 2, label: "Titre 2", tag: "h2" },
+    { value: 3, label: "Titre 3", tag: "h3" },
 ];
 
 function getActiveHeadingLevel(editor: Editor): number {
@@ -42,6 +49,27 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
         chain.setHeading({ level: level as HeadingLevel }).run();
     }
 
+    /**
+     * Associe chaque option de titre à son rendu HTML correspondant pour l'afficher tel que le .css le rendra.
+     * @param option 
+     * @returns 
+     */
+    const styledDropdownItemTemplate = (option: HeadingOption) => {
+        switch (option.tag) {
+            case "p":
+                return <p>{option.label}</p>
+            case "h1":
+                return <h1>{option.label}</h1>
+            case "h2":
+                return <h2>{option.label}</h2>
+            case "h3":
+                return <h3>{option.label}</h3>
+
+            default:
+                return <span>{option.label}</span>
+        }
+    }
+
     const btnProps: (isActive: boolean) => ButtonProps = (isActive) => ({
         size: "small",
         type: "button",
@@ -57,10 +85,12 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
             <Dropdown
                 value={getActiveHeadingLevel(editor)}
                 options={HEADING_OPTIONS}
+                itemTemplate={styledDropdownItemTemplate}
                 onChange={e => onHeadingChange(e.value as number)}
                 className={`w-[9rem] p-2 h-8`}
                 pt={{
                     input: { className: "p-0 text-[11px]" },
+                    itemLabel: { className: "tiptap" }
                 }}
             />
             <Button
@@ -93,9 +123,16 @@ export default function MarkdownToolbar({ editor }: MarkdownToolbarProps) {
 
             <Button
                 {...btnProps(editor.isActive("orderedList"))}
-                icon="pi pi-list-check"
+                label="1."
                 tooltip="Liste numérotée"
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            />
+
+            <Button
+                {...btnProps(editor.isActive("taskList"))}
+                icon="pi pi-check-square"
+                tooltip="Checklist"
+                onClick={() => editor.chain().focus().toggleTaskList().run()}
             />
 
             <Button

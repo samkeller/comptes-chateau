@@ -1,140 +1,96 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { CreateNoteRequest } from "@chocosous/shared";
+import type { UpdateNoteRequest } from "@chocosous/shared";
 import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
 import { User } from "../../core/entities/User";
 import { Note } from "../entities/Note";
-import { NoteItem } from "../entities/NoteItem";
 import NoteService from "./NoteService";
-import NoteItemService from "./NoteItemService";
 
 describe("NoteService", () => {
     let service: NoteService;
-    let itemService: NoteItemService;
 
     beforeEach(() => {
         service = new NoteService(testDataSource.manager);
-        itemService = new NoteItemService(service, testDataSource.manager);
     });
 
-    it("creates a checklist with ordered unchecked items", async () => {
-        const input: CreateNoteRequest = {
-            title: "Courses",
-            type: "checklist",
-            items: [{ label: "Pain" }, { label: "Lait", isChecked: true }],
-        };
+    it("creates a text note with content", async () => {
+            const input: UpdateNoteRequest = {
+                title: "Courses",
+                content: "Acheter du pain",
+            };
 
-        const note = await service.create(input, TEST_USER_ID);
+            const note = await service.create(input, TEST_USER_ID);
 
-        expect(note).toMatchObject({
-            title: "Courses",
-            type: "checklist",
-            content: null,
-            items: [
-                { label: "Pain", isChecked: false, sortOrder: 0 },
-                { label: "Lait", isChecked: true, sortOrder: 1 },
-            ],
-        });
-    });
-
-    it("archives and restores a note with a consistent archivedAt value", async () => {
-        const note = await service.create({ title: "Note", type: "text" }, TEST_USER_ID);
-
-        const archived = await service.archive(note.id);
-        expect(archived.isArchived).toBe(true);
-        expect(archived.archivedAt).not.toBeNull();
-        expect(await service.list(true)).toHaveLength(1);
-
-        const restored = await service.unarchive(note.id);
-        expect(restored).toMatchObject({ isArchived: false, archivedAt: null });
-        expect(await service.list(false)).toHaveLength(1);
-    });
-
-    it("allows shared edits but only the author can permanently delete", async () => {
-        const note = await service.create({ title: "Partagée", type: "text" }, TEST_USER_ID);
-        const otherUser = await testDataSource.getRepository(User).save({
-            username: "second-user",
-            avatar: "default-avatar.png",
-            passwordHash: "testpasswordhash",
-            totalXp: 0,
+            expect(note).toMatchObject({
+                title: "Courses",
+                content: "Acheter du pain",
+            });
         });
 
-        await expect(service.update(note.id, { title: "Modifiée" })).resolves.toMatchObject({ title: "Modifiée" });
-        await expect(service.delete(note.id, otherUser.id)).rejects.toMatchObject({
-            statusCode: 403,
-            code: "NOTE_FORBIDDEN",
-        });
-        await expect(testDataSource.getRepository(Note).findOneBy({ id: note.id })).resolves.not.toBeNull();
+        it("creates a checklist note with markdown content", async () => {
+            const input: UpdateNoteRequest = {
+                title: "Courses",
+                content: "- [ ] Pain\n- [x] Lait",
+            };
 
-        await service.delete(note.id, TEST_USER_ID);
-        await expect(testDataSource.getRepository(Note).findOneBy({ id: note.id })).resolves.toBeNull();
-    });
+            const note = await service.create(input, TEST_USER_ID);
 
-    it("appends items and updates checked state without replacing the note", async () => {
-        const note = await service.create({ title: "Courses", type: "checklist" }, TEST_USER_ID);
-        const item = await itemService.add(note.id, { label: "Pommes" });
-
-        expect(item.sortOrder).toBe(0);
-        await itemService.patch(note.id, item.id, { isChecked: true });
-
-        await expect(testDataSource.getRepository(NoteItem).findOneByOrFail({ id: item.id }))
-            .resolves.toMatchObject({ label: "Pommes", isChecked: true });
-        await expect(service.getById(note.id)).resolves.toMatchObject({ title: "Courses", items: [{ isChecked: true }] });
-    });
-
-    it("deletes checklist items through the note foreign-key cascade", async () => {
-        const note = await service.create({
-            title: "Courses",
-            type: "checklist",
-            items: [{ label: "Pain" }],
-        }, TEST_USER_ID);
-        const itemId = note.items[0].id;
-
-        await service.delete(note.id, TEST_USER_ID);
-
-        await expect(testDataSource.getRepository(NoteItem).findOneBy({ id: itemId })).resolves.toBeNull();
-    });
-
-    it("converts text content into unchecked checklist items", async () => {
-        const note = await service.create({
-            title: "Courses",
-            type: "text",
-            content: "Pain\nLait",
-        }, TEST_USER_ID);
-
-        const converted = await service.update(note.id, {
-            title: note.title,
-            type: "checklist",
-            items: [{ label: "Pain" }, { label: "Lait" }],
+            expect(note).toMatchObject({
+                title: "Courses",
+                content: "- [ ] Pain\n- [x] Lait",
+            });
         });
 
-        expect(converted).toMatchObject({
-            type: "checklist",
-            content: null,
-            items: [
-                { label: "Pain", isChecked: false, sortOrder: 0 },
-                { label: "Lait", isChecked: false, sortOrder: 1 },
-            ],
-        });
-    });
-
-    it("converts checklist items into Markdown and removes the structured items", async () => {
-        const note = await service.create({
-            title: "Courses",
-            type: "checklist",
-            items: [{ label: "Pain", isChecked: true }, { label: "Lait" }],
-        }, TEST_USER_ID);
-
-        const converted = await service.update(note.id, {
-            title: note.title,
-            type: "text",
-            content: "- [x] Pain\n- [ ] Lait",
+        it("creates a note with only a title", async () => {
+            const note = await service.create({ title: "Rappel" }, TEST_USER_ID);
+            expect(note).toMatchObject({ title: "Rappel", content: null });
         });
 
-        expect(converted).toMatchObject({
-            type: "text",
-            content: "- [x] Pain\n- [ ] Lait",
-            items: [],
+        it("archives and restores a note with a consistent archivedAt value", async () => {
+            const note = await service.create({ title: "Note" }, TEST_USER_ID);
+
+            const archived = await service.archive(note.id);
+            expect(archived.isArchived).toBe(true);
+            expect(archived.archivedAt).not.toBeNull();
+            expect(await service.list(true)).toHaveLength(1);
+
+            const restored = await service.unarchive(note.id);
+            expect(restored).toMatchObject({ isArchived: false, archivedAt: null });
+            expect(await service.list(false)).toHaveLength(1);
         });
-        expect(await testDataSource.getRepository(NoteItem).countBy({ noteId: note.id })).toBe(0);
-    });
+
+        it("allows shared edits but only the author can permanently delete", async () => {
+            const note = await service.create({ title: "Partagée" }, TEST_USER_ID);
+            const otherUser = await testDataSource.getRepository(User).save({
+                username: "second-user",
+                avatar: "default-avatar.png",
+                passwordHash: "testpasswordhash",
+                totalXp: 0,
+            });
+
+            await expect(service.update(note.id, { title: "Modifiée" })).resolves.toMatchObject({ title: "Modifiée" });
+            await expect(service.delete(note.id, otherUser.id)).rejects.toMatchObject({
+                statusCode: 403,
+                code: "NOTE_FORBIDDEN",
+            });
+            await expect(testDataSource.getRepository(Note).findOneBy({ id: note.id })).resolves.not.toBeNull();
+
+            await service.delete(note.id, TEST_USER_ID);
+            await expect(testDataSource.getRepository(Note).findOneBy({ id: note.id })).resolves.toBeNull();
+        });
+
+        it("updates note content", async () => {
+            const note = await service.create({
+                title: "Courses",
+                content: "Pain\nLait",
+            }, TEST_USER_ID);
+
+            const updated = await service.update(note.id, {
+                title: note.title,
+                content: "- [ ] Pain\n- [ ] Lait",
+            });
+
+            expect(updated).toMatchObject({
+                content: "- [ ] Pain\n- [ ] Lait",
+            });
+        });
 });

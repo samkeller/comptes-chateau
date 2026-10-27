@@ -92,20 +92,11 @@ export type {
 } from "./externals";
 
 export {
-    NOTE_TYPES,
-    CreateNoteItemSchema,
-    CreateNoteSchema,
     NotesArchiveQuerySchema,
-    PatchNoteItemSchema,
-    UpdateNoteSchema,
+    NoteBodySchema,
 } from "./notes";
 export type {
-    CreateNoteItemInput,
-    CreateNoteRequest,
     NoteDto,
-    NoteItemDto,
-    PatchNoteItemRequest,
-    NoteType,
     UpdateNoteRequest,
 } from "./notes";
 

@@ -1,9 +1,7 @@
-<!-- Based on/Inspired by: https://github.com/github/awesome-copilot/blob/main/instructions/prompt.instructions.md -->
 ---
-agent: 'agent'
-model: GPT-5.3-Codex
-tools: ['codebase', 'search', 'usages', 'changes']
+name: refactor-code
 description: 'Refactor code safely while preserving behavior and project conventions'
+disable-model-invocation: true
 ---
 # Refactor Code
 
