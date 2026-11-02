@@ -17,6 +17,7 @@ Project Description
 - [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
 - [ ] [LOW] Repasser les icones liées à un input (utiliser primereact Iconfield>InputIcon en parallèle de l'Input)
 - [ ] [LOW] /shared - simplifier les exports pour permettre de n'importe que le type voulu et non pas tout depuis '@chocosous/shared' (nécessaire ?) 
+- [ ] [LOW] /npm run lint renvoie des erreurs à corriger
 
 ### In Progress
 
