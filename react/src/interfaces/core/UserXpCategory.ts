@@ -1,4 +1,4 @@
-import {USER_XP_CATEGORIES } from "@chocosous/shared";
+import { USER_XP_CATEGORIES } from "@chocosous/shared";
 
 type UserXpCategoryKey = keyof typeof USER_XP_CATEGORIES;
 
@@ -31,3 +31,4 @@ function buildFromCategoryKey(category: UserXpCategoryKey): UserXpCategory {
 }
 
 export { buildFromCategoryKey };
+export type { UserXpCategoryKey }

@@ -37,7 +37,7 @@ export default function XpLogsList({ logs }: XpLogsListProps) {
                             body={(log: UserXpLog) => (
                                 <Tag
                                     value={log.category.label}
-                                    severity={log.category.color as any}
+                                    severity={log.category.color}
                                 />
                             )}
                         />

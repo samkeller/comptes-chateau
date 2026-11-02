@@ -1,6 +1,6 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { UserXpLogDto } from "@chocosous/shared";
+import { UserXpActionDto, UserXpLogDto } from "@chocosous/shared";
 import { UserXpLog } from "../interfaces/core/UserXpLog";
 import { UserXpAction } from "@/interfaces/core/UserXpAction";
 
@@ -13,7 +13,7 @@ class UserXpService extends BaseService {
     }
 
     getActions(): Promise<UserXpAction[]> {
-        return axios.get(this.baseUrl + "/actions").then((r) => r.data.map((action: any) => new UserXpAction(action)))
+        return axios.get(this.baseUrl + "/actions").then((r) => r.data.map((action: UserXpActionDto) => new UserXpAction(action)))
     }
 }
 
