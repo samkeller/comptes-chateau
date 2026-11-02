@@ -1,6 +1,6 @@
 
 import type { KanbanTaskPriority } from "@chocosous/shared";
-import { User } from "../User";
+import { User } from "../core/User";
 
 export default class KanbanTask {
     

@@ -112,3 +112,12 @@
 - Les notes n'ont plus de type (texte / checklist) : tout est du markdown ; les anciennes checklists sont converties automatiquement.
 - Un seul moteur markdown (TipTap) pour l'édition et l'affichage ; suppression de react-markdown et remark-gfm.
 - Écran des stocks unifié : ajout, modification et gestion des exemplaires depuis une page et un dialogue communs.
+
+## [1.2.7 - 02/11/2026]
+
+### Added
+- Log des gains d'xp en db
+- Ecran leaderboard : déplacement des classements XP, affichage des barèmes de ce qui rapporte de l'xp, ajout d'un "log" des derniers gains d'xp (nouvelle table db ?)
+
+### Changes
+- /automatisations ne contient plus de leaderboard

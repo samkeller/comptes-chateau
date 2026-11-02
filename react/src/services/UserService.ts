@@ -1,6 +1,6 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { User } from "../interfaces/User";
+import { User } from "../interfaces/core/User";
 import type { UserDto, AvatarPayload } from "@chocosous/shared";
 
 class UserService extends BaseService {

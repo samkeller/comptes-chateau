@@ -34,4 +34,5 @@ export const routePaths = {
     stocks: {
         index: "/stocks",
     },
+    xpLeaderboard: "/xpLeaderboard",
 } as const;

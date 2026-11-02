@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import UserService from "../services/UserService";
-import { User } from "../interfaces/User";
+import { User } from "../interfaces/core/User";
 
 interface ConnectedUserContextValue {
     connectedUser: User | null;

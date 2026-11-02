@@ -7,7 +7,7 @@ import MarkdownEditor from "../../../components/form/markdown/MarkdownEditor";
 import { AutoComplete } from "primereact/autocomplete";
 import KanbanTagDisplay from "../atoms/KanbanTagDisplay";
 import { MultiSelect } from "primereact/multiselect";
-import { User } from "../../../interfaces/User";
+import { User } from "../../../interfaces/core/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
 import { SelectItem } from "primereact/selectitem";
 import { useMemo, useState } from "react";

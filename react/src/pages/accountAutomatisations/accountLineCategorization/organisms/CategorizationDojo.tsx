@@ -7,7 +7,6 @@ import ChocoKarate from "@assets/images/chocokarate_flip.png"
 import ChocoKarateVsRobot from "@assets/images/chocokaratevsrobot.png"
 import type { UnmappedAccountLineRuleResponse } from "@chocosous/shared"
 import { getUserFullProgress } from "@/utils/levelProgress"
-import DojoXpLeaderboard from "./DojoXpLeaderboard"
 import { useConnectedUser } from "@/context/ConnectedUserContext"
 import { ColoredLabel } from "@/components/datatableBodys/ColoredLabel"
 import { Skeleton } from "primereact/skeleton"
@@ -238,7 +237,6 @@ export default function CategorizationDojo({ unmapped, onConfirm }: Categorizati
                         )}
                     </div>
                 </div>
-                <DojoXpLeaderboard />
             </Card>
 
         </>
