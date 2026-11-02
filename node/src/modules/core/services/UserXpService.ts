@@ -7,6 +7,7 @@ import { xpEventBus } from "../events/XpEventBus";
 import { USER_XP_ACTIONS, UserXpActionDto, type UserXpActionsPointsKeys, type XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 import { UserXpLog } from "../entities/UserXpLog";
+import { runInTransaction } from "../../../utils/transaction";
 
 type XpEventPublisher = (event: XpUpdatedEvent) => void;
 
@@ -32,7 +33,7 @@ export default class UserXpService {
         const gainedXp = actionXp * multiplicator;
 
         // Transaction : Log XP et update user vont de pair.
-        const { updatedUser } = await this.manager.transaction(async (manager) => {
+        const { updatedUser } = await runInTransaction(this.manager, async (manager) => {
             const userXpLogRepo = manager.getRepository(UserXpLog);
             const userRepo = manager.getRepository(User);
 

@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 import { User } from "../../core/entities/User";
-import { UserXpActionsPoints } from "../../core/utils/UserXPUtils";
+import { USER_XP_ACTIONS } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
@@ -40,7 +40,7 @@ describe("StockUnitRoutes integration", () => {
             expect.objectContaining({ type: "OUT", unitId: unit.id, itemLabel: "Pâtes", locationLabel: "Cuisine", quantity: 500 }),
         ]);
         expect((await testDataSource.getRepository(User).findOneByOrFail({ id: TEST_USER_ID })).totalXp)
-            .toBe(xpBefore + UserXpActionsPoints.STOCK_UNIT_TAKE);
+            .toBe(xpBefore + USER_XP_ACTIONS.STOCK_UNIT_TAKE.xp);
     });
 
     it("DELETE /:id removes the unit with a DELETE movement", async () => {

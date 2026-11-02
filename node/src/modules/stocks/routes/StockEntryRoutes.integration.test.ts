@@ -3,7 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 import { User } from "../../core/entities/User";
-import { UserXpActionsPoints } from "../../core/utils/UserXPUtils";
+import { USER_XP_ACTIONS } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
 import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
@@ -52,7 +52,7 @@ describe("StockEntryRoutes integration", () => {
         expect((await movements()).map((m) => [m.type, m.itemLabel, m.locationLabel])).toEqual(
             Array(4).fill(["IN", "Riz", "Cuisine"]),
         );
-        expect(await totalXp()).toBe(xpBefore + UserXpActionsPoints.STOCK_ITEM_CREATED + 4 * UserXpActionsPoints.STOCK_UNIT_CREATED);
+        expect(await totalXp()).toBe(xpBefore + USER_XP_ACTIONS.STOCK_ITEM_CREATED.xp + 4 * USER_XP_ACTIONS.STOCK_UNIT_CREATED.xp);
     });
 
     it("adds copies to an existing product without re-creating it", async () => {
