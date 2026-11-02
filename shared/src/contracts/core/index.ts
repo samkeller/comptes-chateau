@@ -13,3 +13,5 @@ export type { ApiErrorBody } from "./ApiErrorDto";
 
 export { USER_XP_ACTIONS, USER_XP_CATEGORIES } from "./UserXpActions";
 export type { UserXpActionsPointsKeys } from "./UserXpActions";
+
+export type { UserXpActionDto, UserXpLogDto } from "./UserXpDto";

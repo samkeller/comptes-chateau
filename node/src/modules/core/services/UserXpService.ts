@@ -4,7 +4,7 @@ import type { Repository } from "typeorm";
 import { randomUUID } from "crypto";
 import { User } from "../entities/User";
 import { xpEventBus } from "../events/XpEventBus";
-import { USER_XP_ACTIONS, type UserXpActionsPointsKeys, type XpUpdatedEvent } from "@chocosous/shared";
+import { USER_XP_ACTIONS, UserXpActionDto, type UserXpActionsPointsKeys, type XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 import { UserXpLog } from "../entities/UserXpLog";
 
@@ -27,7 +27,7 @@ export default class UserXpService {
 
         if (!userId || !user) throw new UserNotFoundError(`User with id ${userId} not found`);
 
-        const actionXp = USER_XP_ACTIONS[action].xp; 
+        const actionXp = USER_XP_ACTIONS[action].xp;
         const previousTotalXp = user.totalXp;
         const gainedXp = actionXp * multiplicator;
 
@@ -73,5 +73,18 @@ export default class UserXpService {
 
     getAll(): Promise<UserXpLog[]> {
         return this.userXpLogRepo.find();
+    }
+
+    /**
+     * Renvoies USER_XP_ACTIONS sous forme de tableau structuré (dto)
+     * @returns 
+     */
+    getActions(): UserXpActionDto[] {
+        return Object.entries(USER_XP_ACTIONS).map(
+            ([key, value]) => ({
+                key: key as UserXpActionsPointsKeys,
+                ...value,
+            })
+        );
     }
 }
