@@ -33,5 +33,5 @@ Project Description
 - [x] Refaire écran :accountId/budget/overview en clarifiant les recettes et les dépenses et avec un graphique plus clair que ce long tableau ()  
 - [x] [Mobile] - Le formulaire de création/modification d'une opération ne permet pas les valeurs négatives (android)  
 - [x] Ajouter "se rappeler du device" pour n'avoir à se logger que tous les 60 jours
-- [ ] [MEDIUM] Ecran leaderboard - Déplacer les classements XP, afficher les barèmes de ce qui rapporte de l'xp, ajouter un "log" des dernier gains d'xp (new table db ?)  
+- [x] [MEDIUM] Ecran leaderboard - Déplacer les classements XP, afficher les barèmes de ce qui rapporte de l'xp, ajouter un "log" des dernier gains d'xp (new table db ?)  
 
