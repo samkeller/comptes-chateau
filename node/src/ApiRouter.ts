@@ -6,6 +6,7 @@ import NatureRoutes from './modules/accounts/controllers/NatureController'
 import KanbanRoutes from './modules/kanban/routes/KanbanRoutes'
 import StockRoutes from './modules/stocks/routes/StockRoutes'
 import UserRoutes from "./modules/core/controllers/UserController";
+import UserXpRoutes from "./modules/core/controllers/UserXpController";
 import JobRoutes from "./modules/core/controllers/JobController";
 import AccountLineCategorizationRoutes from "./modules/automatisations/controllers/AccountLineCategorizationController";
 import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
@@ -25,6 +26,7 @@ ApiRouter.use('/kanban', KanbanRoutes)
 ApiRouter.use('/notes', NoteRoutes)
 ApiRouter.use('/stocks', StockRoutes)
 ApiRouter.use('/users', UserRoutes)
+ApiRouter.use('/users/xp', UserXpRoutes);
 ApiRouter.use('/jobs', JobRoutes)
 ApiRouter.use('/categorization', AccountLineCategorizationRoutes)
 ApiRouter.use('/events', EventStreamRoutes)

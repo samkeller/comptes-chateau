@@ -1,112 +1,20 @@
 export * from "./stocks";
 export * from "./TableQuery";
 
-export {
-    SaveNatureSchema,
-    SavePosteSchema,
-    SaveBudgetItemSchema,
-    SaveOperationSchema,
-    OperationBatchCheckSchema,
-    RECURRING_EXPENSE_FREQUENCIES,
-    SaveRecurringExpenseSchema,
-    DashboardMonthlyByPosteQuerySchema,
-    } from "./accounts";
+export * from "./accounts";
+export type * from "./accounts";
 
-export type {
-    AccountDto,
-    SaveNaturePayload,
-    AccountLineNatureDto,
-    SavePostePayload,
-    AccountLinePosteDto,
-    SaveBudgetItemPayload,
-    BudgetPosteDto,
-    BudgetItemDto,
-    UnifiedBudgetLine,
-    SaveOperationPayload,
-    OperationBatchCheckInput,
-    OperationBatchCheckOutput,
-    RecurringExpenseFrequency,
-    SaveRecurringExpensePayload,
-    DashboardOverview,
-    MonthlyAggregateByPoste,
-    BudgetByPoste,
-    DashboardMonthlyByPosteQuery,
-    RecurringExpenseDto
-} from "./accounts";
+export * from "./automatisations";
+export type * from "./automatisations";
 
-export {
-    SaveAccountLineRuleSchema,
-    SearchAccountLineRulePatternSchema,
-} from "./automatisations";
-export type {
-    SaveAccountLineRuleRequest,
-    SearchAccountLineRulePatternRequest,
-    UnmappedAccountLineRuleResponse,
-} from "./automatisations";
+export * from "./core";
+export type * from "./core";
 
-export {
-    LoginSchema,
-    AvatarSchema,
-    ApiErrorSchema,
-} from "./core";
-export type {
-    LoginRequest,
-    LoginResponse,
-    UserDto,
-    AvatarPayload,
-    RunRecurringExpensesJobResponse,
-    BackupDatabaseJobResponse,
-    XpEventType,
-    XpUpdatedEvent,
-    XpRealtimeEvent,
-    ApiErrorBody,
-} from "./core";
+export * from "./kanban";
+export type * from "./kanban";
 
-export {
-    KANBAN_TASK_PRIORITIES,
-    CreateKanbanTaskSchema,
-    UpdateKanbanTaskSchema,
-    CreateKanbanCommentSchema,
-} from "./kanban";
+export * from "./externals";
+export type * from "./externals";
 
-export type {
-    KanbanTaskPriority,
-    CreateKanbanTaskRequest,
-    UpdateKanbanTaskRequest,
-    CreateKanbanCommentRequest,
-    KanbanCommentResponse,
-    KanbanColumnResponse,
-    KanbanTaskResponse,
-    KanbanBoardResponse,
-} from "./kanban";
-
-export type {
-    BanquePostaleCsvData,
-    BanquePostaleCsvOperation,
-    BanquePostaleCsvDataMetadata,
-    BanquePostaleImportPayload,
-    BanquePostaleImportResultPayload,
-    BanquePostaleOperationImportDto,
-    BanquePostaleMatchedResultPayload,
-    BanquePostaleAmbiguousResultPayload,
-} from "./externals";
-
-export {
-    NotesArchiveQuerySchema,
-    NoteBodySchema,
-} from "./notes";
-export type {
-    NoteDto,
-    UpdateNoteRequest,
-} from "./notes";
-
-export {
-    BanquePostaleCsvDataSchema,
-    BanquePostaleCsvOperationSchema,
-    BanquePostaleCsvDataMetadataSchema,
-    BanquePostaleImportSchema,
-    BanquePostaleImportResultSchema,
-    BanquePostaleAmbiguousResultSchema,
-    BanquePostaleMatchedResultSchema,
-    BanquePostaleOperationImportDtoSchema,
-} from "./externals";
+export * from "./notes";
+export type * from "./notes";

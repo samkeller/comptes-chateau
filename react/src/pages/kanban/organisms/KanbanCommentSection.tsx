@@ -6,7 +6,7 @@ import MarkdownEditor from "../../../components/form/markdown/MarkdownEditor";
 import UserAvatar from "../../../components/atoms/UserAvatar";
 import type { KanbanCommentResponse } from "@chocosous/shared";
 import { useConnectedUser } from "../../../context/ConnectedUserContext";
-import { User } from "@/interfaces/User";
+import { User } from "@/interfaces/core/User";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
 import { ScrollPanel } from "primereact/scrollpanel";
 

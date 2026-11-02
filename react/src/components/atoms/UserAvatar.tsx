@@ -1,5 +1,5 @@
 import { Avatar, AvatarProps as PRAvatarProps } from "primereact/avatar";
-import { User } from "../../interfaces/User";
+import { User } from "../../interfaces/core/User";
 
 const avatarUrlsByFileName = Object.fromEntries(
     Object.entries(

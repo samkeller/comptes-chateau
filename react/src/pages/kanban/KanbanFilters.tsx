@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "primereact/button";
 import { MultiSelect } from "primereact/multiselect";
 import KanbanTagDisplay from "./atoms/KanbanTagDisplay";
-import { User } from "@/interfaces/User";
+import { User } from "@/interfaces/core/User";
 import UserAvatar from "@/components/atoms/UserAvatar";
 import { useScreen } from "@/hooks/useScreen";
 

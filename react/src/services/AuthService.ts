@@ -1,6 +1,6 @@
 import axios from "axios";
 import BaseService from "./BaseService";
-import { User } from "../interfaces/User";
+import { User } from "../interfaces/core/User";
 import type { LoginRequest, LoginResponse } from "@chocosous/shared";
 
 class AuthService extends BaseService {

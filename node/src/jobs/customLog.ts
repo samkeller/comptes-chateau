@@ -1,3 +1,5 @@
+import { TestLogger } from "@chocosous/shared";
+
 const colors = {
     reset: "\x1b[0m",
     gray: "\x1b[90m",
@@ -25,9 +27,7 @@ function customLog(
         DEBUG: colors.cyan,
     };
 
-    console.log(
-        `${colors.gray}${colors.reset}${colorMap[level]}[${level}][${source}]${colors.reset} ${message}`
-    );
+    TestLogger.info( `${colors.gray}${colors.reset}${colorMap[level]}[${level}][${source}]${colors.reset} ${message}`);
 }
 
 export default customLog;

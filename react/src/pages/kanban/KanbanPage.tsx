@@ -17,7 +17,7 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import KanbanTaskCard from "./KanbanTaskCard";
-import { User } from "../../interfaces/User";
+import { User } from "../../interfaces/core/User";
 import KanbanFilters, { KanbanFiltersData } from "./KanbanFilters";
 import type { UpdateKanbanTaskRequest } from "@chocosous/shared";
 import { useScreen } from "@/hooks/useScreen";

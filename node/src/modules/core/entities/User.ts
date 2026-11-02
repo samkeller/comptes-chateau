@@ -1,5 +1,6 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { KanbanTask } from "../../kanban/entities/KanbanTask";
+import type { UserXpLog } from "./UserXpLog";
 
 @Entity("user")
 @Unique(["username"])
@@ -22,4 +23,6 @@ export class User {
   @ManyToMany(() => KanbanTask, task => task.assignees)
   kanbanAssignedTasks: KanbanTask[];
 
+  @OneToMany("UserXpLog", (userXpLog: UserXpLog) => userXpLog.user)
+  userXpLogs: UserXpLog[];
 }

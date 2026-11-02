@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "primereact/card";
 import UserAvatar from "../../../components/atoms/UserAvatar";
-import { User } from "../../../interfaces/User";
+import { User } from "../../../interfaces/core/User";
 
 const inspiringQuotes = [
     "Un budget équilibré est le reflet d'une vie équilibrée. Ou d'un mensonge bien tenu.",

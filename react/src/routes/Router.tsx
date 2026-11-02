@@ -22,6 +22,7 @@ import ProtectedLayout from "./ProtectedLayout";
 import { routePaths } from "./routePaths";
 import StocksPage from "@/pages/stocks/StocksPage";
 import NotesPage from "@/pages/notes/NotesPage";
+import XpLeaderboardPage from "@/pages/xpLeaderboard/XpLeaderboardPage";
 
 const router = createBrowserRouter([
   {
@@ -120,6 +121,11 @@ const router = createBrowserRouter([
         path: routePaths.notes,
         element: <NotesPage />,
         handle: { navKey: "notes" },
+      },
+      {
+        path: routePaths.xpLeaderboard,
+        element: <XpLeaderboardPage />,
+        handle: { navKey: "xpLeaderboard" },
       },
       {
         path: "*",

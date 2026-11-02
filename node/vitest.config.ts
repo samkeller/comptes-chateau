@@ -1,8 +1,10 @@
 import { defineConfig } from "vitest/config";
+import path from "path";
+import dotenv from "dotenv";
 
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '.env.test' });
+// Niveau de log partagé back/front (racine), puis variables propres au back.
+dotenv.config({ path: path.resolve(__dirname, "../.env.test"), quiet: true });
+dotenv.config({ path: path.resolve(__dirname, ".env.test"), quiet: true });
 
 export default defineConfig({
     test: {

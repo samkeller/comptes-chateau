@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import UserXpService from "./UserXpService";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
-import { UserXpActionsPoints } from "../utils/UserXPUtils";
+import { USER_XP_ACTIONS } from "@chocosous/shared";
 import { xpEventBus } from "../events/XpEventBus";
 import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
 import { User } from "../entities/User";
@@ -76,6 +76,6 @@ describe("UserXpService.addXPForUser", () => {
         );
 
         const user = await testDataSource.getRepository(User).findOneByOrFail({ id: TEST_USER_ID });
-        expect(user.totalXp).toBe(100 + UserXpActionsPoints.KANBAN_TASK_COMPLETED);
+        expect(user.totalXp).toBe(100 + USER_XP_ACTIONS.KANBAN_TASK_COMPLETED.xp);
     });
 });

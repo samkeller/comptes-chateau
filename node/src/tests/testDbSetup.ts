@@ -6,6 +6,7 @@ import { afterAll, beforeAll, beforeEach, vi } from "vitest";
 import { User } from "../modules/core/entities/User";
 import { Account } from "../modules/accounts/entities/Account";
 import { applyVirtualColumnOverrides, registerTestFunctions } from "./testsFunctions";
+import { TestLogger } from "@chocosous/shared";
 import "reflect-metadata";
 
 export const TEST_USER_ID = 1;
@@ -19,7 +20,7 @@ const entityModules = import.meta.glob("../modules/**/entities/*.ts", {
 }) as Record<string, Record<string, unknown>>;
 
 function collectEntities(): Function[] {
-    console.info("[testDbSetup] Collecting entities...");
+    TestLogger.info("[testDbSetup] Collecting entities...");
     const entities: Function[] = [];
     for (const mod of Object.values(entityModules)) {
         for (const exported of Object.values(mod)) {
@@ -30,7 +31,7 @@ function collectEntities(): Function[] {
             }
         }
     }
-    console.info(`[testDbSetup] Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
+    TestLogger.info(`[testDbSetup] Collected ${entities.length} entities.`, JSON.stringify(entities.map(e => e.name)));
     return entities;
 }
 
@@ -66,7 +67,7 @@ let db: IMemoryDb;
 let cleanDatabase: ReturnType<IMemoryDb["backup"]>;
 
 beforeAll(async () => {
-    console.info("[testDbSetup] Initializing test database...");
+    TestLogger.info("[testDbSetup] Initializing test database...");
     db = newDb({ autoCreateForeignKeyIndices: true });
 
     registerTestFunctions(db);
@@ -107,8 +108,8 @@ beforeEach(async () => {
     if (seededUser.id !== TEST_USER_ID) {
         throw new Error(`Expected test user id ${TEST_USER_ID}, received ${seededUser.id}`);
     }
-    console.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
-    
+    TestLogger.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
+
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     await testDataSource.getRepository(Account).save({
@@ -117,11 +118,11 @@ beforeEach(async () => {
         baseLineAmount: 0,
         baseLineEffectiveDate: oneYearAgo
     })
-    console.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
+    TestLogger.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
 });
 
 afterAll(async () => {
-    console.info("[testDbSetup] Destroying test DataSource...");
+    TestLogger.info("[testDbSetup] Destroying test DataSource...");
     if (testDataSource?.isInitialized) {
         await testDataSource.destroy();
     }

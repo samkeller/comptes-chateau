@@ -24,7 +24,8 @@ type NavKey =
     | "setup"
     | "stocks"
     | "kanban"
-    | "notes";
+    | "notes"
+    | "xp-leaderboard";
 
 interface NavHandle {
     navKey?: NavKey;
@@ -186,6 +187,12 @@ export default function AppNavigationMenu({
             icon: "pi pi-th-large",
             className: activeNavKey === "kanban" ? "bg-surface-200" : undefined,
             command: () => navigateTo("/kanban")
+        },
+        {
+            label: "Leaderboard XP",
+            icon: "pi pi-trophy",
+            className: activeNavKey === "xp-leaderboard" ? "bg-surface-200" : undefined,
+            command: () => navigateTo(routePaths.xpLeaderboard)
         },
     ]
 

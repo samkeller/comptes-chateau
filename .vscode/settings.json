@@ -28,8 +28,29 @@
     "**/dist": true
   },
   "chat.tools.terminal.autoApprove": {
-    "npm tests": true,
-    "npx vitest": true,
-    "npm --prefix react": true
+    // Tests
+    "/^npm run tests(:front|:back)?$/": true,
+    // Builds
+    "/^npm run build(:shared|:react|:node)?$/": true,
+    //Lint / Typecheck
+    "/^npm run (lint|typecheck)$/": true,
+    // Git : commandes de lecture
+    "/^git status(\\s|$)/": true,
+    "/^git diff(\\s|$)/": true,
+    "/^git log(\\s|$)/": true,
+    "/^git show(\\s|$)/": true,
+    // PowerShell : lecture et diagnostic
+    "Get-Location": true,
+    "Get-ChildItem": true,
+    "Get-Content": true,
+    "Get-Item": true,
+    "Test-Path": true,
+    "Resolve-Path": true,
+    "Select-String": true,
+    "Get-Process": true,
+    "Get-NetTCPConnection": true,
+    "Get-Service": true,
+    "Get-Command": true,
+    "Get-Help": true
   }
 }

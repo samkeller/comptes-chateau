@@ -5,7 +5,7 @@ import { Button } from "primereact/button";
 import KanbanService from "../../../services/kanban/KanbanService";
 import KanbanTask from "../../../interfaces/kanban/KanbanTask";
 import { showGlobalToast } from "../../../services/GlobalToast";
-import { User } from "../../../interfaces/User";
+import { User } from "../../../interfaces/core/User";
 import TailwindTag from "@/components/atoms/TailwindTag";
 import type { CreateKanbanTaskRequest } from "@chocosous/shared";
 import KanbanCommentSection from "./KanbanCommentSection";

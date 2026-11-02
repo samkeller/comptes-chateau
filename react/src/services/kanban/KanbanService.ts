@@ -8,7 +8,7 @@ import type {
 } from "@chocosous/shared";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumn from "@/interfaces/kanban/KanbanColumn";
-import { User } from "@/interfaces/User";
+import { User } from "@/interfaces/core/User";
 
 /** Contenu du tableau kanban une fois les entités API hydratées en modèles frontend. */
 interface KanbanBoardData {
