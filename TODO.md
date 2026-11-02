@@ -17,7 +17,8 @@ Project Description
 - [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
 - [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
 - [ ] [LOW] Repasser les icones liées à un input (utiliser primereact Iconfield>InputIcon en parallèle de l'Input)
- 
+- [ ] [LOW] /shared - simplifier les exports pour permettre de n'importe que le type voulu et non pas tout depuis '@chocosous/shared' (nécessaire ?) 
+
 ### In Progress
 
 - [ ] Gestion d'erreurs centralisés (AppError back -> catchés par Interceptors.ts -> Supprimer tous les catchs() front inutiles - le back envoie les messages d'erreurs)  

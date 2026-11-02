@@ -10,3 +10,6 @@ export type { XpEventType, XpUpdatedEvent, XpRealtimeEvent } from "./XpEvents";
 
 export { ApiErrorSchema } from "./ApiErrorDto";
 export type { ApiErrorBody } from "./ApiErrorDto";
+
+export { USER_XP_ACTIONS, USER_XP_CATEGORIES } from "./UserXpActions";
+export type { UserXpActionsPointsKeys } from "./UserXpActions";
