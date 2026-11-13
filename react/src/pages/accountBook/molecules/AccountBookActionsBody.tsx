@@ -20,7 +20,7 @@ export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: 
     const accountId = useAccountId()
     const navigate = useNavigate()
     const showGlobalToast = useGlobalToast();
-    
+
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const isTransfer = Boolean(data.transferGroupId);
@@ -36,8 +36,14 @@ export default function AccountBookActionsBody({ data, onDelete, onDuplicate }: 
                         ? `Le virement a été dupliqué, y compris l'opération liée sur « ${data.targetAccount?.label} ».`
                         : "L'opération a été dupliquée."
                 });
+                navigate(generatePath(routePaths.account.accountBookDialog, {
+                    accountId: String(accountId),
+                    accountLineId: data.id.toString(),
+                }))
+                // Pas besoin de synchrone pour les effets secondaires
+                // La navigation peut se faire immédiatement après la duplication.
                 onDuplicate?.(data.id);
-            });
+            })
     }
 
     const confirmLineDeletion = () => {
