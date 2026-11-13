@@ -11,8 +11,9 @@
  * - warn : erreurs + warnings
  * - info : erreurs + warnings + infos (défaut)
  * - debug : tout, y compris les détails de debug
+ * Dans le navigateur, où process est absent, le niveau reste "info".
  */
-export const TEST_LOG_LEVEL = process.env.TEST_LOG_LEVEL ?? "info";
+export const TEST_LOG_LEVEL = typeof process === "undefined" ? "info" : process.env.TEST_LOG_LEVEL ?? "info";
 
 /**
  * Logger de test conditionnel basé sur TEST_LOG_LEVEL.
