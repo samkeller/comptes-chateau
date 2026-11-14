@@ -1,4 +1,5 @@
 import type { UserXpActionsPointsKeys } from "./UserXpActions";
+import type { UserDto } from "./";
 
 export interface UserXpActionDto {
     key: UserXpActionsPointsKeys;
@@ -13,4 +14,5 @@ export interface UserXpLogDto {
     actionXp: number;
     multiplicator: number;
     createdAt: string;
+    user: UserDto;
 }

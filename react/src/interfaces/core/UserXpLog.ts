@@ -1,5 +1,6 @@
 import { USER_XP_ACTIONS, UserXpActionsPointsKeys, UserXpLogDto } from "@chocosous/shared";
 import { buildFromCategoryKey, EmptyUserXpCategory, type UserXpCategory } from "./UserXpCategory";
+import { User } from "./User";
 
 export class UserXpLog {
     id: number = 0;
@@ -8,14 +9,18 @@ export class UserXpLog {
     multiplicator: number = 1;
     createdAt: Date = new Date();
     category: UserXpCategory = EmptyUserXpCategory;
+    user: User = new User({});
 
 
-    constructor(user: Partial<UserXpLogDto>) {
-        Object.assign(this, user);
-        if (user?.createdAt) {
-            this.createdAt = new Date(user.createdAt);
+    constructor(userXpLog: Partial<UserXpLogDto>) {
+        Object.assign(this, userXpLog);
+        if (userXpLog?.createdAt) {
+            this.createdAt = new Date(userXpLog.createdAt);
         }
         this.category = buildFromCategoryKey(USER_XP_ACTIONS[this.action].category);
+        if (userXpLog?.user) {
+            this.user = new User(userXpLog.user);
+        }
     }
 
     /**

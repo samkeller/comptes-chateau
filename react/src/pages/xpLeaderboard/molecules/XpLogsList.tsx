@@ -6,6 +6,8 @@ import { Column } from "primereact/column";
 import type { UserXpLog } from "@/interfaces/core/UserXpLog";
 import { formatDistanceToNow } from "@/utils/DatesUtils";
 import FillRemainingHeight from "@/components/layout/FillRemainingHeight";
+import ColorDot from "@/components/atoms/ColorDot";
+import { getNiceColorFromString } from "@/utils/colorUtils";
 
 interface XpLogsListProps {
     logs: UserXpLog[];
@@ -32,6 +34,16 @@ export default function XpLogsList({ logs }: XpLogsListProps) {
                         emptyMessage="Aucun gain d'XP enregistré"
                     >
                         <Column
+                            field="user.username"
+                            header="Utilisateur"
+                            body={(log: UserXpLog) => (
+                                <div className="flex gap-1 items-center text-pretty text-sm">
+                                    <ColorDot color={getNiceColorFromString(log.user.username)} />
+                                    <span>{log.user.username}</span>
+                                </div>
+                            )}
+                        />
+                        <Column
                             field="category"
                             header="Catégorie"
                             body={(log: UserXpLog) => (
@@ -44,6 +56,11 @@ export default function XpLogsList({ logs }: XpLogsListProps) {
                         <Column
                             field="label"
                             header="Action"
+                            body={(log: UserXpLog) => (
+                                <span className="text-pretty text-sm text-500">
+                                    {log.label}
+                                </span>
+                            )}
                         />
                         <Column
                             field="actionXp"
