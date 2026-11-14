@@ -4,10 +4,11 @@ import type { Repository } from "typeorm";
 import { randomUUID } from "crypto";
 import { User } from "../entities/User";
 import { xpEventBus } from "../events/XpEventBus";
-import { USER_XP_ACTIONS, UserXpActionDto, type UserXpActionsPointsKeys, type XpUpdatedEvent } from "@chocosous/shared";
+import { USER_XP_ACTIONS, UserXpActionDto, UserXpLogDto, type UserXpActionsPointsKeys, type XpUpdatedEvent } from "@chocosous/shared";
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 import { UserXpLog } from "../entities/UserXpLog";
 import { runInTransaction } from "../../../utils/transaction";
+import { toUserXpLogDto } from "../mappers/UserXpLogMapper";
 
 type XpEventPublisher = (event: XpUpdatedEvent) => void;
 
@@ -72,8 +73,11 @@ export default class UserXpService {
         return updatedUser;
     }
 
-    getAll(): Promise<UserXpLog[]> {
-        return this.userXpLogRepo.find();
+    async getAll(): Promise<UserXpLogDto[]> {
+        const logs = await this.userXpLogRepo.find({
+            relations: ["user"]
+        });
+        return logs.map(log => toUserXpLogDto(log, log.user));
     }
 
     /**
