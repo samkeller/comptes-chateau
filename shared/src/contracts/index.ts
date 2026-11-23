@@ -18,3 +18,6 @@ export type * from "./externals";
 
 export * from "./notes";
 export type * from "./notes";
+
+export * from "./notifications";
+export type * from "./notifications";

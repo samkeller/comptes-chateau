@@ -6,7 +6,7 @@ import AccountService from "../../services/AccountService";
 import DashboardService from "../../services/DashboardService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { PageTemplate } from "../PageTemplate";
-import HomeGlobalActionsCard from "./components/HomeGlobalActionsCard";
+import HomeNotificationsCard from "./components/HomeNotificationsCard";
 import HomeWelcomeCard from "./components/HomeWelcomeCard";
 import type { DashboardOverview } from "@chocosous/shared";
 import Account from "@/interfaces/Account";
@@ -69,11 +69,6 @@ export default function Index() {
         };
     }, []);
 
-    const assignedKanbanTasksCount = useMemo(
-        () => accountOverviews[0]?.overview.assignedKanbanTasksCount ?? 0,
-        [accountOverviews]
-    );
-
     const totalCurrentBalance = useMemo(
         () => accountOverviews.reduce((acc, item) => acc + item.overview.currentBalance, 0),
         [accountOverviews]
@@ -86,11 +81,6 @@ export default function Index() {
 
     const totalForecastBalanceThreeMonths = useMemo(
         () => accountOverviews.reduce((acc, item) => acc + item.overview.forecastBalanceThreeMonths, 0),
-        [accountOverviews]
-    );
-
-    const totalOperationsToCheck = useMemo(
-        () => accountOverviews.reduce((acc, item) => acc + item.overview.operationsToCheckHorsCompteCount + item.overview.operationsToCheckInAccountCount, 0),
         [accountOverviews]
     );
 
@@ -123,10 +113,7 @@ export default function Index() {
                                 </div>
                             </Card>
 
-                            <HomeGlobalActionsCard
-                                assignedKanbanTasksCount={assignedKanbanTasksCount}
-                                totalOperationsToCheck={totalOperationsToCheck}
-                            />
+                            <HomeNotificationsCard />
                         </div>
                         <Card title="Vue synthetique par compte">
                             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

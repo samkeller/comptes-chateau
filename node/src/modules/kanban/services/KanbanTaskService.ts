@@ -49,12 +49,4 @@ export default class KanbanTaskService {
 
         return rows.map((row) => row.tag);
     }
-
-    async getAssignedTasksCount(userId: number): Promise<number> {
-        return this.taskRepo
-            .createQueryBuilder("task")
-            .innerJoin("task.assignees", "assignee", "assignee.id = :userId", { userId })
-            .where("task.isDone = :isDone", { isDone: false })
-            .getCount();
-    }
 }

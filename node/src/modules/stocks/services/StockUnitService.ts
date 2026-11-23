@@ -6,6 +6,7 @@ import { StockUnit } from "../entities/StockUnit";
 import UserXpService from "../../core/services/UserXpService";
 import StockMovementService from "./StockMovementService";
 import { getExpiryBounds } from "../mappers/StockLotMapper";
+import { formatApiDate } from "../../../utils/DateUtils";
 
 /** Champs modifiables d'un exemplaire. */
 export interface StockUnitFields {
@@ -150,6 +151,31 @@ export default class StockUnitService {
             expiredUnitCount: Number(overview?.expiredUnitCount ?? 0),
             expiringSoonUnitCount: Number(overview?.expiringSoonUnitCount ?? 0),
         };
+    }
+
+    /**
+     * Libellés (triés, sans doublon) des produits ayant au moins un exemplaire périmé,
+     * et de ceux qui périment sous 30 jours (sans exemplaire déjà périmé).
+     */
+    async getExpiringItemLabels(now: Date = new Date()): Promise<{ expiredItemLabels: string[]; expiringSoonItemLabels: string[] }> {
+        const { today, soonLimit } = getExpiryBounds(now);
+        const rows = await this.stockUnitRepo.createQueryBuilder("unit")
+            .innerJoin("unit.item", "item")
+            .select("item.label", "label")
+            .addSelect("MIN(unit.expirationDate)", "earliestExpiration")
+            .where("unit.expirationDate <= :horizon", { horizon: soonLimit })
+            .groupBy("item.id")
+            .addGroupBy("item.label")
+            .orderBy("item.label", "ASC")
+            .getRawMany<{ label: string; earliestExpiration: string | Date }>();
+
+        const expiredItemLabels: string[] = [];
+        const expiringSoonItemLabels: string[] = [];
+        for (const row of rows) {
+            const earliest = row.earliestExpiration instanceof Date ? formatApiDate(row.earliestExpiration) : String(row.earliestExpiration);
+            (earliest < today ? expiredItemLabels : expiringSoonItemLabels).push(row.label);
+        }
+        return { expiredItemLabels, expiringSoonItemLabels };
     }
 
     private async findOneWithRelationsOrThrow(unitId: number): Promise<StockUnit> {

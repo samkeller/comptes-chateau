@@ -9,7 +9,6 @@ export interface DashboardOverview {
     monthlyBudget: number;
     operationsToCheckInAccountCount: number;
     operationsToCheckHorsCompteCount: number;
-    assignedKanbanTasksCount: number;
 }
 
 /** Agrégation mensuelle des opérations par poste. */

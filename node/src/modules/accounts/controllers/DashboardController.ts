@@ -14,7 +14,7 @@ DashboardRoutes.get("/overview", async (req: Request, res: Response) => {
 
     const accountId = getAccountIdFromParams(req.params);
     const dashboardService = new DashboardService();
-    const data = await dashboardService.getOverview(req.session.userId, accountId);
+    const data = await dashboardService.getOverview(accountId);
     res.json(data);
 });
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import DashboardService from "./DashboardService";
-import { testDataSource, TEST_ACCOUNT_ID, TEST_USER_ID } from "../../../tests/testDbSetup";
+import { testDataSource, TEST_ACCOUNT_ID } from "../../../tests/testDbSetup";
 import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import { AccountLinePoste } from "../entities/AccountLinePoste";
@@ -64,7 +64,7 @@ describe("DashboardService.getOverview", () => {
             },
         ]);
 
-        const overview = await service.getOverview(TEST_USER_ID, TEST_ACCOUNT_ID);
+        const overview = await service.getOverview(TEST_ACCOUNT_ID);
 
         expect(overview.currentBalance).toBeCloseTo(1370);
     });
@@ -81,7 +81,7 @@ describe("DashboardService.getOverview", () => {
             natureId: null,
         });
 
-        const overview = await service.getOverview(TEST_USER_ID, TEST_ACCOUNT_ID);
+        const overview = await service.getOverview(TEST_ACCOUNT_ID);
 
         expect(overview.forecastBalanceMonthEnd).toBeLessThan(overview.currentBalance);
     });
@@ -117,7 +117,7 @@ describe("DashboardService.getOverview", () => {
             natureId: null,
         });
 
-        const overview = await service.getOverview(TEST_USER_ID, TEST_ACCOUNT_ID);
+        const overview = await service.getOverview(TEST_ACCOUNT_ID);
 
         expect(overview.monthlyBudget).toBeCloseTo(770);
     });
