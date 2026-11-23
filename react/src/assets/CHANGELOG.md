@@ -121,3 +121,8 @@
 
 ### Changes
 - /automatisations ne contient plus de leaderboard
+
+## [1.2.8 - 23/11/2026]
+
+### Added
+- Ajout d'une description sur les stock items

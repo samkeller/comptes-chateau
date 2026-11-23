@@ -30,6 +30,7 @@ interface StockLotRow {
     key: string;
     itemId: number;
     label: string;
+    description: string | null;
     item: StockItemWithLotsDto;
     lot: StockLotDto | null;
     copies: number | null;
@@ -49,6 +50,7 @@ function toRows(items: StockItemWithLotsDto[]): StockLotRow[] {
                 key: `item-${item.id}`,
                 itemId: item.id,
                 label: item.label,
+                description: item.description,
                 item,
                 lot: null,
                 copies: null,
@@ -62,6 +64,7 @@ function toRows(items: StockItemWithLotsDto[]): StockLotRow[] {
                 key: `lot-${lot.unitIds[0]}`,
                 itemId: item.id,
                 label: item.label,
+                description: item.description,
                 item,
                 lot,
                 copies: lot.unitIds.length,
@@ -214,7 +217,12 @@ export default function StockItemsTable({ locations, overview, filterLocationId,
                     className="h-8 w-8 shrink-0 rounded object-contain" />
             )}
             <div className="min-w-0 flex-1">
-                <h4>{row.label}</h4>
+                <div className="flex items-center gap-2">
+                    <h4>{row.label}</h4>
+                    <span className="text-xs text-gray-500 line-clamp-1">
+                        {row.description}
+                    </span>
+                </div>
                 <span className="text-sm text-gray-500">
                     {row.item.brand && <>{row.item.brand} · </>}
                     {row.item.stockUnitsCount > 0 ? `${row.item.stockUnitsCount} en stock` : "Épuisé"}

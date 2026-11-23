@@ -133,6 +133,17 @@ describe("StockItemService", () => {
                 .toMatchObject({ label: "Pâtes complètes", defaultUnit: "kg", barcode: "12345678", brand: "Panz" });
         });
 
+        it("saves the description on create and update, and clears it with null", async () => {
+            const { item } = await service.save({ label: "Café", defaultUnit: "g", description: "Grains arabica" });
+            expect(item.description).toBe("Grains arabica");
+
+            const updated = await service.save({ id: item.id, label: "Café", defaultUnit: "g", description: "Grains robusta" });
+            expect(updated.item.description).toBe("Grains robusta");
+
+            const cleared = await service.save({ id: item.id, label: "Café", defaultUnit: "g", description: null });
+            expect(cleared.item.description).toBeNull();
+        });
+
         it("throws a typed 404 for an unknown item", async () => {
             await expect(service.save({ id: 999, label: "X", defaultUnit: "g" }))
                 .rejects.toMatchObject({ statusCode: 404, code: "STOCK_ITEM_NOT_FOUND" });

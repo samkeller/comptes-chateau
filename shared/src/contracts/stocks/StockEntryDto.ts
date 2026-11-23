@@ -21,6 +21,7 @@ const HttpUrlSchema = z.string().trim().max(2048).refine((value) => {
 export const StockEntryItemSchema = z.object({
     id: IdSchema.optional(),
     label: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(255).nullable().optional(),
     barcode: z.string().trim()
         .transform((value, ctx) => {
             if (value === "") return null;

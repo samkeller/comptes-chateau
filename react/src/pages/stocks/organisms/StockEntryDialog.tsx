@@ -20,6 +20,7 @@ import {
     applySuggestion, emptyEntryDraft, entryDraftFromItem, newLotDraft,
     switchToExistingItem, toSaveStockEntryDto, type StockEntryDraft, type StockItemDraft, type StockLotDraft,
 } from "../stockEntryDraft";
+import { FloatLabel } from "primereact/floatlabel";
 
 const itemsService = new StockItemsService();
 const entryService = new StockEntryService();
@@ -66,7 +67,7 @@ export default function StockEntryDialog({ itemId, addLot = false, locations, de
         let active = true;
         itemsService.getOne(itemId)
             .then((item) => {
-            if (active) setDraft(entryDraftFromItem(item, addLot ? lastLocationId.current : undefined));
+                if (active) setDraft(entryDraftFromItem(item, addLot ? lastLocationId.current : undefined));
             })
             // Erreur affichée par l'intercepteur : rien à modifier.
             .catch(() => { if (active) onCloseRef.current(); });
@@ -214,57 +215,85 @@ export default function StockEntryDialog({ itemId, addLot = false, locations, de
             ) : (
                 <div className="flex flex-col gap-4 pt-1">
                     <section className="flex flex-col gap-3" aria-label="Produit">
-                        <div className="flex flex-col gap-1">
-                            <label htmlFor="stock-entry-label">Produit<RequiredMark /></label>
-                            {isNewItem ? (
-                                <AutoComplete inputId="stock-entry-label" value={draft.item.label} suggestions={suggestions}
-                                    field="label" delay={250} inputClassName="w-full" className="w-full"
-                                    placeholder="Nom du produit (existant ou nouveau)" disabled={busy} maxLength={255}
-                                    completeMethod={(event) => void searchItems(event.query)}
-                                    itemTemplate={(item: StockItemWithLotsDto) => (
-                                        <span>{item.label}{item.brand ? ` — ${item.brand}` : ""}
-                                            <span className="ml-2 text-sm text-gray-500">({item.stockUnitsCount} en stock)</span>
-                                        </span>
-                                    )}
-                                    onChange={(event) => {
-                                        if (typeof event.value === "string") updateItem({ label: event.value });
-                                    }}
-                                    onSelect={(event) => void selectExistingItem((event.value as StockItemWithLotsDto).id)} />
-                            ) : (
-                                <div className="flex gap-2">
-                                    <InputText
-                                        id="stock-entry-label"
+                        <div className="pt-4">
+                            <FloatLabel>
+                                {isNewItem ? (
+                                    <AutoComplete
+                                        inputId="stock-entry-label"
                                         value={draft.item.label}
+                                        suggestions={suggestions}
+                                        field="label"
+                                        delay={250}
+                                        inputClassName="w-full"
+                                        className="w-full"
+                                        disabled={busy}
                                         maxLength={255}
-                                        className="flex-1 min-w-0"
-                                        onChange={(event) => updateItem({ label: event.target.value })}
+                                        completeMethod={(event) => void searchItems(event.query)}
+                                        itemTemplate={(item: StockItemWithLotsDto) => (
+                                            <span>
+                                                {item.label}{item.brand ? ` — ${item.brand}` : ""}
+                                                <span className="ml-2 text-sm text-gray-500">
+                                                    ({item.stockUnitsCount} en stock)
+                                                </span>
+                                            </span>
+                                        )}
+                                        onChange={(event) => {
+                                            if (typeof event.value === "string") updateItem({ label: event.value });
+                                        }}
+                                        onSelect={(event) => void selectExistingItem((event.value as StockItemWithLotsDto).id)}
                                     />
-                                    {itemId === undefined && (
-                                        <Button
-                                            type="button"
-                                            icon="pi pi-times"
-                                            rounded text
-                                            aria-label="Choisir un autre produit"
-                                            tooltip="Choisir un autre produit"
-                                            tooltipOptions={{ position: 'left' }}
-                                            onClick={chooseAnotherItem}
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <InputText
+                                            id="stock-entry-label"
+                                            value={draft.item.label}
+                                            maxLength={255}
+                                            className="flex-1 min-w-0"
+                                            onChange={(event) => updateItem({ label: event.target.value })}
                                         />
-                                    )}
-                                </div>
-                            )}
+                                        {itemId === undefined && (
+                                            <Button
+                                                type="button"
+                                                icon="pi pi-times"
+                                                rounded
+                                                text
+                                                aria-label="Choisir un autre produit"
+                                                tooltip="Choisir un autre produit"
+                                                tooltipOptions={{ position: "left" }}
+                                                onClick={chooseAnotherItem}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                                <label htmlFor="stock-entry-label">
+                                    Produit <RequiredMark />
+                                </label>
+                            </FloatLabel>
                         </div>
-
-                        <div className="flex flex-col gap-1">
-                            <label htmlFor="stock-entry-barcode">Code-barres <span className="text-gray-500">(facultatif)</span></label>
+                        <div className="pt-4">
                             <div className="flex gap-2">
-                                <InputText id="stock-entry-barcode" inputMode="numeric" autoComplete="off" maxLength={14}
-                                    className="flex-1 min-w-0" value={draft.item.barcode} disabled={busy}
-                                    onChange={(event) => updateItem({ barcode: event.target.value })}
-                                    onKeyDown={(event) => {
-                                        if (event.key !== "Enter" || !isNewItem) return;
-                                        event.preventDefault();
-                                        void lookupBarcode(draft.item.barcode);
-                                    }} />
+                                <div className="flex-1 min-w-0">
+                                    <FloatLabel>
+                                        <InputText
+                                            id="stock-entry-barcode"
+                                            inputMode="numeric"
+                                            autoComplete="off"
+                                            maxLength={14}
+                                            className="w-full"
+                                            value={draft.item.barcode}
+                                            disabled={busy}
+                                            onChange={(event) => updateItem({ barcode: event.target.value })}
+                                            onKeyDown={(event) => {
+                                                if (event.key !== "Enter" || !isNewItem) return;
+                                                event.preventDefault();
+                                                void lookupBarcode(draft.item.barcode);
+                                            }}
+                                        />
+                                        <label htmlFor="stock-entry-barcode">
+                                            Code-barres <span className="text-gray-500">(facultatif)</span>
+                                        </label>
+                                    </FloatLabel>
+                                </div>
                                 {isNewItem && (
                                     <Button
                                         type="button"
@@ -272,7 +301,7 @@ export default function StockEntryDialog({ itemId, addLot = false, locations, de
                                         outlined
                                         aria-label="Rechercher ce code-barres"
                                         tooltip="Rechercher ce code-barres"
-                                        tooltipOptions={{ position: 'left' }}
+                                        tooltipOptions={{ position: "left" }}
                                         loading={lookingUp}
                                         disabled={busy || !draft.item.barcode.trim()}
                                         onClick={() => void lookupBarcode(draft.item.barcode)}
@@ -288,10 +317,12 @@ export default function StockEntryDialog({ itemId, addLot = false, locations, de
                                     onClick={() => setScanning((value) => !value)}
                                 />
                             </div>
-                            <BarcodeScanner active={scanning} onDetected={(code) => void lookupBarcode(code)}
-                                onCancel={() => setScanning(false)} />
+                            <BarcodeScanner
+                                active={scanning}
+                                onDetected={(code) => void lookupBarcode(code)}
+                                onCancel={() => setScanning(false)}
+                            />
                         </div>
-
                         {lookupInfo && (
                             <Message severity={lookupInfo.severity} className="justify-start" text={(
                                 <span>
@@ -300,12 +331,18 @@ export default function StockEntryDialog({ itemId, addLot = false, locations, de
                             )} />
                         )}
 
-                        <div>
-                            <Button type="button" text size="small" className="px-0"
-                                icon={productExpanded ? "pi pi-chevron-up" : "pi pi-chevron-down"}
-                                label="Détails du produit (marque, unité, image)" aria-expanded={productExpanded}
-                                aria-controls="stock-entry-product-details"
-                                onClick={() => setProductExpanded((value) => !value)} />
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <Button
+                                    type="button"
+                                    text size="small"
+                                    className="px-0"
+                                    icon={productExpanded ? "pi pi-chevron-up" : "pi pi-chevron-down"}
+                                    label="Détails du produit (marque, unité, image)"
+                                    aria-expanded={productExpanded}
+                                    aria-controls="stock-entry-product-details"
+                                    onClick={() => setProductExpanded((value) => !value)} />
+                            </div>
                             {productExpanded && (
                                 <div id="stock-entry-product-details" className="pt-2">
                                     <StockProductFields item={draft.item} onChange={updateItem} />

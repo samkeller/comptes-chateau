@@ -9,7 +9,7 @@ import StockUnitsService from "./StockUnitsService";
 vi.mock("axios");
 
 const item: StockItemWithLotsDto = {
-    id: 1, label: "Riz", barcode: null, brand: null, defaultUnit: "g", imageUrl: null,
+    id: 1, label: "Riz", description: null, barcode: null, brand: null, defaultUnit: "g", imageUrl: null,
     stockUnitsCount: 1, nextStockUnitExpiration: null, createdAt: "2026-10-01T00:00:00.000Z",
     lots: [{ locationId: 2, locationLabel: "Cellier", quantity: 500, unit: "g", expirationDate: null, expiryState: "none", unitIds: [9] }],
 };
