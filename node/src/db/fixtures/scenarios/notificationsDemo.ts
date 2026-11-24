@@ -32,7 +32,7 @@ async function seedOverdrawnAccount(fixtures: Fixtures, now: Date): Promise<void
         baseLineEffectiveDate: subMonths(now, 2),
     });
     const poste = await fixtures.postes.create({ accountId: account.id, label: `${DEMO} Courses`, color: "#e11d48" });
-    await fixtures.budgetItems.create({ account: { id: account.id }, poste: { id: poste.id }, label: `${DEMO} Courses`, amount: 200 });
+    await fixtures.budgetItems.create({ accountId: account.id, posteId: poste.id, label: `${DEMO} Courses`, amount: 200 });
 
     // Opérations datées d'aujourd'hui : elles comptent dans le mois courant quel que soit le jour du lancement.
     // Pointée : le solde actuel passe à -250 €.

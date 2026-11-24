@@ -46,8 +46,8 @@ describe("DashboardService.getOverview", () => {
     });
 
     it("aggregates budget items and recurring expenses into the monthly budget", async () => {
-        await fixtures.budgetItems.create({ account: { id: accountId }, poste: { id: poste.id }, label: "Budget loyer", amount: 500, sortOrder: 1 });
-        await fixtures.budgetItems.create({ account: { id: accountId }, poste: { id: poste.id }, label: "Budget alimentation", amount: 150, sortOrder: 2 });
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget loyer", amount: 500, sortOrder: 1 });
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget alimentation", amount: 150, sortOrder: 2 });
         await fixtures.recurringExpenses.create({ accountId, posteId: poste.id, label: "Abonnement", solde: -120, nextOccurrence: new Date() });
 
         const overview = await service.getOverview(accountId);

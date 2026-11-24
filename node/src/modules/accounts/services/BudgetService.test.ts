@@ -8,8 +8,8 @@ describe("BudgetService", () => {
         const accountId = TEST_ACCOUNT_ID;
         const poste = await fixtures.postes.create({ accountId, label: "Logement" });
 
-        await fixtures.budgetItems.create({ account: { id: accountId }, poste: { id: poste.id }, label: "Budget courses", amount: -240, sortOrder: 1 });
-        await fixtures.budgetItems.create({ account: { id: accountId }, poste: { id: poste.id }, label: "Budget prime", amount: 120, sortOrder: 2 });
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget courses", amount: -240, sortOrder: 1 });
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget prime", amount: 120, sortOrder: 2 });
         await fixtures.recurringExpenses.create({
             accountId, posteId: poste.id, label: "Loyer", solde: -900,
             nextOccurrence: new Date("2026-10-01"), frequency: RecurringExpenseFrequency.MONTHLY,

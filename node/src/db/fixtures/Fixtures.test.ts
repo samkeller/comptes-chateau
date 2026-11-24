@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../tests/testDbSetup";
 import { Account } from "../../modules/accounts/entities/Account";
 import { AccountLine } from "../../modules/accounts/entities/AccountLine";
+import { BudgetItem } from "../../modules/accounts/entities/BudgetItem";
 import { KanbanColumn } from "../../modules/kanban/entities/KanbanColumn";
 import { StockItem } from "../../modules/stocks/entities/StockItem";
 import { User } from "../../modules/core/entities/User";
@@ -45,6 +46,19 @@ describe("Fixtures", () => {
         }));
 
         expect(lines.map((line) => line.debit)).toEqual([10, 11, 12]);
+    });
+
+    it("creates budget items from ids, like every other factory", async () => {
+        const poste = await fixtures.postes.create({ accountId: TEST_ACCOUNT_ID });
+
+        const withPoste = await fixtures.budgetItems.create({ accountId: TEST_ACCOUNT_ID, posteId: poste.id, amount: 50 });
+        const withoutPoste = await fixtures.budgetItems.create({ accountId: TEST_ACCOUNT_ID });
+
+        const repo = testDataSource.getRepository(BudgetItem);
+        await expect(repo.findOne({ where: { id: withPoste.id }, relations: { account: true, poste: true } }))
+            .resolves.toMatchObject({ amount: 50, account: { id: TEST_ACCOUNT_ID }, poste: { id: poste.id } });
+        await expect(repo.findOne({ where: { id: withoutPoste.id }, relations: { poste: true } }))
+            .resolves.toMatchObject({ poste: null });
     });
 
     it("creates one entity per given input, in order", async () => {

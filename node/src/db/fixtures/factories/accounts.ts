@@ -64,13 +64,31 @@ export class AccountLineNatureFactory extends EntityFactory<AccountLineNature> {
     }
 }
 
-export class BudgetItemFactory extends EntityFactory<BudgetItem, "account"> {
+export type BudgetItemInput = Omit<DeepPartial<BudgetItem>, "account" | "poste"> & {
+    accountId: number;
+    posteId?: number | null;
+};
+
+/**
+ * `BudgetItem` n'expose que ses relations (pas de colonnes `accountId` / `posteId`, volontairement :
+ * `BudgetService.update` sauvegarde `{ ...existing, poste }`, une colonne en double y réécrirait l'ancien poste).
+ * La factory accepte donc des ids, comme les autres, et les traduit en relations.
+ */
+export class BudgetItemFactory extends EntityFactory<BudgetItem, never, BudgetItemInput> {
     constructor(manager: EntityManager) {
         super(manager, BudgetItem);
     }
 
     protected defaults(sequence: number): DeepPartial<BudgetItem> {
         return { label: `Budget ${sequence}`, amount: 100, isActive: true, sortOrder: 0, poste: null };
+    }
+
+    protected toAttributes({ accountId, posteId, ...attributes }: BudgetItemInput): DeepPartial<BudgetItem> {
+        return {
+            ...attributes,
+            account: { id: accountId },
+            ...(posteId !== undefined && { poste: posteId === null ? null : { id: posteId } }),
+        };
     }
 }
 
