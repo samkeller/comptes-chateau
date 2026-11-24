@@ -1,6 +1,5 @@
-import type { NotificationDto } from "@chocosous/shared";
 import StockUnitService from "../../stocks/services/StockUnitService";
-import { dailyNotification, type NotificationProvider } from "../NotificationProvider";
+import { dailyNotification, type NotificationDraft, type NotificationProvider } from "../NotificationProvider";
 
 export interface StockExpirySituation {
     expiredItemLabels: string[];
@@ -22,8 +21,8 @@ function plural(count: number, singular: string, pluralForm: string): string {
 }
 
 /** Règle pure : une notification pour les produits périmés, une pour ceux qui périment sous 30 jours. */
-export function stockNotifications(situation: StockExpirySituation, now: Date): NotificationDto[] {
-    const notifications: NotificationDto[] = [];
+export function stockNotifications(situation: StockExpirySituation, now: Date): NotificationDraft[] {
+    const notifications: NotificationDraft[] = [];
     const { expiredItemLabels, expiringSoonItemLabels } = situation;
 
     if (expiredItemLabels.length > 0) {

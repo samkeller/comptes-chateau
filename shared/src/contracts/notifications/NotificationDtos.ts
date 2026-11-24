@@ -5,7 +5,7 @@ export type NotificationSeverity = typeof NOTIFICATION_SEVERITIES[number];
 
 /** Écran vers lequel une notification redirige (le front résout la route). */
 export type NotificationTarget =
-    | { kind: "kanban"; taskId: number }
+    | { kind: "kanban"; taskId: number; tab?: "comments" }
     | { kind: "stocks" }
     | { kind: "accountDashboard"; accountId: number }
     | { kind: "accountChecks"; accountId: number }
@@ -25,6 +25,8 @@ export interface NotificationDto {
     /** Date ISO de l'événement (ou du calcul pour une notification d'état). */
     occurredAt: string;
     target: NotificationTarget | null;
+    /** Ignorée par l'utilisateur : toujours renvoyée, pour l'historique. */
+    dismissed: boolean;
 }
 
 export const DismissNotificationSchema = z.object({

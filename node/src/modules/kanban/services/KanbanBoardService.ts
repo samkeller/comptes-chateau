@@ -191,7 +191,7 @@ export default class KanbanBoardService {
             severity: "info",
             title: "Nouveau commentaire",
             message: `${author.username} sur « ${task.title} » : ${truncate(content, COMMENT_EXCERPT_LENGTH)}`,
-            target: { kind: "kanban", taskId: task.id },
+            target: { kind: "kanban", taskId: task.id, tab: "comments" },
             actorUserId: authorId,
         });
         const loaded = await this.commentService.getByIdWithAuthor(saved.id);

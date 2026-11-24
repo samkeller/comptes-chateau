@@ -62,7 +62,7 @@ describe("Kanban notifications", () => {
         expect(await eventsOf(otherUserId)).toEqual([expect.objectContaining({
             type: "KANBAN_TASK_COMMENTED",
             message: expect.stringContaining("Pense au lait"),
-            target: { kind: "kanban", taskId: created.body.id },
+            target: { kind: "kanban", taskId: created.body.id, tab: "comments" },
         })]);
         expect(await eventsOf(TEST_USER_ID)).toEqual([]);
     });

@@ -1,7 +1,7 @@
-import type { DashboardOverview, NotificationDto } from "@chocosous/shared";
+import type { DashboardOverview } from "@chocosous/shared";
 import AccountService from "../../accounts/services/AccountService";
 import DashboardService from "../../accounts/services/DashboardService";
-import { dailyNotification, formatEuros, type NotificationProvider } from "../NotificationProvider";
+import { dailyNotification, formatEuros, type NotificationDraft, type NotificationProvider } from "../NotificationProvider";
 
 /** La notification « opérations à valider » n'apparaît que strictement au-delà de ce nombre. */
 export const OPERATIONS_TO_CHECK_THRESHOLD = 5;
@@ -20,8 +20,8 @@ export interface AccountSituation {
 }
 
 /** Règle pure : solde négatif ou bientôt négatif, budget dépassé, opérations à valider. */
-export function accountNotifications(accounts: AccountSituation[], now: Date): NotificationDto[] {
-    const notifications: NotificationDto[] = [];
+export function accountNotifications(accounts: AccountSituation[], now: Date): NotificationDraft[] {
+    const notifications: NotificationDraft[] = [];
 
     for (const { id, label, overview } of accounts) {
         if (overview.currentBalance < 0) {

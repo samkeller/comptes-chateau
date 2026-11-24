@@ -5,9 +5,9 @@ import { AppDataSource } from "../../../db/dataSource";
 import customLog from "../../../jobs/customLog";
 import { Notification } from "../entities/Notification";
 import { NotificationDismissal } from "../entities/NotificationDismissal";
-import { toNotificationDto } from "../mappers/NotificationMapper";
+import { toNotificationDraft } from "../mappers/NotificationMapper";
 import { notificationProviders } from "../providers";
-import type { NotificationContent, NotificationContext, NotificationProvider } from "../NotificationProvider";
+import type { NotificationContent, NotificationContext, NotificationDraft, NotificationProvider } from "../NotificationProvider";
 
 export interface PublishNotificationInput extends NotificationContent {
     /** Destinataires ; omis = tous les utilisateurs. */
@@ -21,8 +21,11 @@ const EVENT_RETENTION_DAYS = 30;
 
 const SEVERITY_RANK: Record<NotificationSeverity, number> = { high: 0, medium: 1, info: 2 };
 
+/** Actives d'abord, puis par sévérité, puis les plus récentes. */
 function byMostImportant(a: NotificationDto, b: NotificationDto): number {
-    return SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || b.occurredAt.localeCompare(a.occurredAt);
+    return Number(a.dismissed) - Number(b.dismissed)
+        || SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]
+        || b.occurredAt.localeCompare(a.occurredAt);
 }
 
 export default class NotificationService {
@@ -67,12 +70,12 @@ export default class NotificationService {
         ]);
 
         return [...events, ...states]
-            .filter((notification) => !dismissedKeys.has(notification.key))
+            .map((notification) => ({ ...notification, dismissed: dismissedKeys.has(notification.key) }))
             .sort(byMostImportant);
     }
 
     /** Un provider en échec est journalisé puis ignoré : il ne doit pas masquer les autres notifications. */
-    private async collectFromProviders(context: NotificationContext): Promise<NotificationDto[]> {
+    private async collectFromProviders(context: NotificationContext): Promise<NotificationDraft[]> {
         const results = await Promise.allSettled(this.providers.map((provider) => provider.collect(context)));
 
         return results.flatMap((result, index) => {
@@ -88,7 +91,7 @@ export default class NotificationService {
         return new Set(dismissals.map((dismissal) => dismissal.key));
     }
 
-    private async getEvents(userId: number, now: Date): Promise<NotificationDto[]> {
+    private async getEvents(userId: number, now: Date): Promise<NotificationDraft[]> {
         const events = await this.notificationRepo.createQueryBuilder("notification")
             .where("notification.createdAt >= :since", { since: subDays(now, EVENT_RETENTION_DAYS) })
             .andWhere(new Brackets((qb) => qb
@@ -99,6 +102,6 @@ export default class NotificationService {
                 .orWhere("notification.actorUserId <> :userId", { userId })))
             .getMany();
 
-        return events.map(toNotificationDto);
+        return events.map(toNotificationDraft);
     }
 }

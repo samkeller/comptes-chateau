@@ -2,6 +2,9 @@ import type { NotificationDto, NotificationSeverity, NotificationTarget } from "
 import type { EntityManager } from "typeorm";
 import { formatApiDate } from "../../utils/DateUtils";
 
+/** Notification produite par un provider ou un événement, avant prise en compte des notifications ignorées. */
+export type NotificationDraft = Omit<NotificationDto, "dismissed">;
+
 export interface NotificationContext {
     now: Date;
     manager: EntityManager;
@@ -15,7 +18,7 @@ export interface NotificationContext {
  */
 export interface NotificationProvider {
     name: string;
-    collect(context: NotificationContext): Promise<NotificationDto[]>;
+    collect(context: NotificationContext): Promise<NotificationDraft[]>;
 }
 
 export interface NotificationContent {
@@ -32,7 +35,7 @@ export interface NotificationContent {
  *
  * @param scope Distingue plusieurs notifications d'un même type (ex. l'id du compte).
  */
-export function dailyNotification(now: Date, content: NotificationContent, scope?: string | number): NotificationDto {
+export function dailyNotification(now: Date, content: NotificationContent, scope?: string | number): NotificationDraft {
     return {
         ...content,
         key: [content.type, scope, formatApiDate(now)].filter((part) => part !== undefined).join(":"),

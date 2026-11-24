@@ -1,6 +1,8 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { PageTemplate } from "../PageTemplate";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { parseKanbanTaskLink } from "./kanbanTaskLink";
 import KanbanService from "../../services/kanban/KanbanService";
 import KanbanTask from "../../interfaces/kanban/KanbanTask";
 import KanbanColumnDisplay from "./KanbanColumnDisplay";
@@ -47,6 +49,10 @@ export default function KanbanPage() {
 
     const [filters, setFilters] = useState<KanbanFiltersData>({ users: [], tags: [], showDone: false });
 
+    // Lien direct `?taskId=…&tab=…` (ex. depuis une notification) : consommé une seule fois, au premier chargement.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const pendingTaskLink = useRef(parseKanbanTaskLink(searchParams));
+
     function selectTask(task: KanbanTask, initialTab: "task" | "comments" = "task") {
         setSelectedTask(task);
         setSelectedTaskInitialTab(initialTab);
@@ -63,6 +69,14 @@ export default function KanbanPage() {
             setTasks(boardData.tasks);
             setAllTags(tagsData);
             setAllUsers(boardData.users);
+
+            const taskLink = pendingTaskLink.current;
+            pendingTaskLink.current = null;
+            const linkedTask = taskLink && boardData.tasks.find(task => task.id === taskLink.taskId);
+            if (taskLink && linkedTask) {
+                setSelectedTask(linkedTask);
+                setSelectedTaskInitialTab(taskLink.tab);
+            }
         } finally {
             setLoading(false);
         }
@@ -177,6 +191,9 @@ export default function KanbanPage() {
                                             closeDialog={(reloadList) => {
                                                 setSelectedTask(null);
                                                 setSelectedTaskInitialTab("task");
+                                                if (searchParams.has("taskId")) {
+                                                    setSearchParams({}, { replace: true });
+                                                }
                                                 if (reloadList) {
                                                     reloadData();
                                                 }

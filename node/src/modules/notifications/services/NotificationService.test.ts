@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { NotificationDto } from "@chocosous/shared";
 import { User } from "../../core/entities/User";
 import { addDays, subDays } from "date-fns";
 import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
@@ -10,7 +9,7 @@ import { BACKUP_DB_JOB_NAME } from "../../../jobs/backupDb";
 import { StockItem } from "../../stocks/entities/StockItem";
 import { StockLocation } from "../../stocks/entities/StockLocation";
 import { StockUnit } from "../../stocks/entities/StockUnit";
-import type { NotificationProvider } from "../NotificationProvider";
+import type { NotificationDraft, NotificationProvider } from "../NotificationProvider";
 import NotificationService from "./NotificationService";
 
 const NOW = new Date();
@@ -25,7 +24,7 @@ async function createOtherUser(): Promise<number> {
     return user.id;
 }
 
-function staticProvider(notifications: NotificationDto[]): NotificationProvider {
+function staticProvider(notifications: NotificationDraft[]): NotificationProvider {
     return { name: "static", collect: async () => notifications };
 }
 
@@ -75,7 +74,7 @@ describe("NotificationService", () => {
         expect(titles).toEqual(["A", "C", "B", "Nouveau commentaire"]);
     });
 
-    it("hides a dismissed notification for that user only, and tolerates dismissing twice", async () => {
+    it("flags a dismissed notification for that user only, ranked after the active ones, and tolerates dismissing twice", async () => {
         const otherUserId = await createOtherUser();
         const service = new NotificationService(testDataSource.manager, [
             staticProvider([{ key: "STATE:1", type: "STATE", severity: "high", title: "État", message: "", occurredAt: NOW.toISOString(), target: null }]),
@@ -87,8 +86,14 @@ describe("NotificationService", () => {
         await service.dismiss(TEST_USER_ID, "STATE:1");
         await service.dismiss(TEST_USER_ID, "STATE:1");
 
-        expect(await service.getForUser(TEST_USER_ID, NOW)).toEqual([]);
-        expect(await service.getForUser(otherUserId, NOW)).toHaveLength(2);
+        await service.publish({ ...event, title: "Encore active" });
+
+        expect((await service.getForUser(TEST_USER_ID, NOW)).map(({ title, dismissed }) => ({ title, dismissed }))).toEqual([
+            { title: "Encore active", dismissed: false },
+            { title: "État", dismissed: true },
+            { title: "Nouveau commentaire", dismissed: true },
+        ]);
+        expect((await service.getForUser(otherUserId, NOW)).every((notification) => !notification.dismissed)).toBe(true);
     });
 
     it("still returns the other notifications when a provider fails", async () => {

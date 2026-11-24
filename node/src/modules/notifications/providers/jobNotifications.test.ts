@@ -47,22 +47,10 @@ describe("jobNotifications", () => {
         })]);
     });
 
-    it("reports recurring expenses processed overnight, with their labels", () => {
-        const result = jobNotifications([outcome({
-            id: 3,
+    it("stays silent on recurring expenses, even when some were processed (too noisy)", () => {
+        expect(jobNotifications([outcome({
             jobName: RECURRING_EXPENSES_JOB_NAME,
-            details: { processedExpenses: [{ id: 1, label: "Loyer" }, { id: 2, label: "Netflix" }] },
-        })]);
-
-        expect(result).toEqual([expect.objectContaining({
-            key: "RECURRING_EXPENSES_PROCESSED:3",
-            severity: "info",
-            title: "2 dépenses récurrentes traitées",
-            message: "Loyer, Netflix",
-        })]);
-    });
-
-    it("stays silent when the recurring expenses job had nothing to process", () => {
-        expect(jobNotifications([outcome({ jobName: RECURRING_EXPENSES_JOB_NAME, details: { date: RUN_AT } })])).toEqual([]);
+            details: { processedExpenses: [{ id: 1, label: "Loyer" }] },
+        })])).toEqual([]);
     });
 });

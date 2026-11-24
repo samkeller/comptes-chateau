@@ -15,7 +15,6 @@ eact-hooks/set-state-in-effect) dans Sprite.tsx et EditableString.tsx$nl- [ ] Ne
 - [ ] [MEDIUM] Utiliser runInTransaction (node/src/utils/transaction.ts) dans NatureService, PosteService, AccountLineService et BanquePostaleService : ils ouvrent une transaction via this.manager.transaction / AppDataSource.transaction, ce qui produirait un SAVEPOINT non supporté par pg-mem s'ils étaient appelés depuis une transaction existante — effort faible
  
 - [ ] [LOW] Notifications : pousser les nouvelles notifications en temps réel via le flux SSE existant (`/events/stream`) plutôt qu'au chargement de l'accueil
-- [ ] [LOW] Notifications : lien profond vers une tâche kanban (`/kanban?taskId=`) pour ouvrir directement la tâche notifiée
 - [ ] [LOW] Notifications : purger périodiquement `notification` / `notification_dismissal` (> 30 jours) dans le cron nocturne
 - [ ] [LOW] Remplacer les `Record<string, any>` de JobExecutionLogService (erreurs ESLint no-explicit-any)
  

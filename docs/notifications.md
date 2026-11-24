@@ -1,6 +1,5 @@
 # Moteur de notifications
 
-Les notifications remplacent les indicateurs chiffrés de la page d'accueil (`HomeNotificationsCard`).
 Back : `node/src/modules/notifications/`. Contrat : `NotificationDto` dans `@chocosous/shared`.
 
 ## Deux familles
@@ -9,10 +8,6 @@ Back : `node/src/modules/notifications/`. Contrat : `NotificationDto` dans `@cho
 |---|---|---|---|
 | **Événement** | « Une tâche vous a été assignée » | table `notification` (contenu figé) | l'utilisateur l'ignore, ou après 30 jours |
 | **État** | « Le compte X est dans le rouge » | rien : calculée à chaque lecture par un *provider* | la situation est résolue, ou l'utilisateur l'ignore (jusqu'au lendemain) |
-
-Ignorer une notification enregistre sa clé dans `notification_dismissal` (par utilisateur).
-Les clés d'état incluent la date du jour (`ACCOUNT_NEGATIVE:1:2026-11-23`) : si la situation persiste, la notification revient le lendemain.
-Les notifications de job utilisent l'id du log (`JOB_FAILED:42`) : une par exécution.
 
 Destinataires : pas de gestion fine pour l'instant, tout le monde voit tout, sauf les notifications explicitement ciblées (`recipientUserIds`) ; l'auteur d'une action (`actorUserId`) n'en est jamais notifié.
 
@@ -50,7 +45,7 @@ export const xxxNotificationProvider: NotificationProvider = {
 
 Un provider qui échoue est journalisé et ignoré : il ne masque pas les autres notifications.
 
-Nouvel écran cible : ajouter un `kind` à `NotificationTarget` (shared) et sa route dans `toPath` (`HomeNotificationsCard.tsx`).
+Nouvel écran cible : ajouter un `kind` à `NotificationTarget` (shared) et sa route dans `notificationTargetPath.ts` (`components/layout/notifications/`).
 
 ## Notifications existantes
 
@@ -62,5 +57,5 @@ Nouvel écran cible : ajouter un `kind` à `NotificationTarget` (shared) et sa r
 | `ACCOUNT_NEGATIVE` / `ACCOUNT_GOING_NEGATIVE` | high / medium | provider `accounts` (solde pointé < 0 / prévisionnel fin de mois < 0) |
 | `ACCOUNT_BUDGET_EXCEEDED` | medium | provider `accounts` |
 | `OPERATIONS_TO_CHECK` | medium | provider `accounts` (strictement plus de 5 opérations non pointées) |
-| `RECURRING_EXPENSES_PROCESSED` / `BACKUP_SUCCEEDED` | info | provider `jobs` (dernier résultat de chaque job sur 24 h) |
+| `BACKUP_SUCCEEDED` | info | provider `jobs` (dernier résultat de chaque job sur 24 h) |
 | `JOB_FAILED` | high | provider `jobs` ; le cron nocturne journalise aussi son propre échec (`nightly-cron`) |

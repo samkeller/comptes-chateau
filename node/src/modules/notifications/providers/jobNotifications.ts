@@ -1,23 +1,12 @@
-import type { NotificationDto } from "@chocosous/shared";
 import { subHours } from "date-fns";
 import { BACKUP_DB_JOB_NAME } from "../../../jobs/backupDb";
-import { RECURRING_EXPENSES_JOB_NAME } from "../../../jobs/processRecurringExpenses";
 import JobExecutionLogService, { type JobOutcome } from "../../core/services/JobExecutionLogService";
-import type { NotificationContent, NotificationProvider } from "../NotificationProvider";
+import type { NotificationContent, NotificationDraft, NotificationProvider } from "../NotificationProvider";
 
 export type { JobOutcome };
 
 /** Fenêtre d'observation : les jobs tournent chaque nuit. */
 const LOOKBACK_HOURS = 24;
-
-function processedExpenseLabels(details: unknown): string[] {
-    if (typeof details !== "object" || details === null || !("processedExpenses" in details)) return [];
-    const { processedExpenses } = details;
-    if (!Array.isArray(processedExpenses)) return [];
-    return processedExpenses
-        .map((expense: unknown) => (typeof expense === "object" && expense !== null && "label" in expense ? String(expense.label) : null))
-        .filter((label): label is string => label !== null);
-}
 
 /** Succès notable d'un job (les échecs sont regroupés par `failureNotification`). */
 function describeSuccess(outcome: JobOutcome): NotificationContent | null {
@@ -31,18 +20,6 @@ function describeSuccess(outcome: JobOutcome): NotificationContent | null {
         };
     }
 
-    if (outcome.jobName === RECURRING_EXPENSES_JOB_NAME) {
-        const labels = processedExpenseLabels(outcome.details);
-        if (labels.length === 0) return null;
-        return {
-            type: "RECURRING_EXPENSES_PROCESSED",
-            severity: "info",
-            title: labels.length > 1 ? `${labels.length} dépenses récurrentes traitées` : "1 dépense récurrente traitée",
-            message: labels.join(", "),
-            target: null,
-        };
-    }
-
     return null;
 }
 
@@ -50,7 +27,7 @@ function describeSuccess(outcome: JobOutcome): NotificationContent | null {
  * Une seule notification pour tous les échecs (un échec du backup est aussi un échec du cron nocturne).
  * La clé porte les ids des logs : un nouvel échec la fait réapparaître.
  */
-function failureNotification(failures: JobOutcome[]): NotificationDto | null {
+function failureNotification(failures: JobOutcome[]): NotificationDraft | null {
     if (failures.length === 0) return null;
     const sorted = [...failures].sort((a, b) => a.id - b.id);
     const jobNames = sorted.map((failure) => `« ${failure.jobName} »`).join(", ");
@@ -71,7 +48,7 @@ function failureNotification(failures: JobOutcome[]): NotificationDto | null {
  * Règle pure : une notification par succès notable, plus une pour l'ensemble des échecs.
  * La clé porte l'id du log : ignorer une notification ne masque que cette exécution.
  */
-export function jobNotifications(outcomes: JobOutcome[]): NotificationDto[] {
+export function jobNotifications(outcomes: JobOutcome[]): NotificationDraft[] {
     const successes = outcomes.flatMap((outcome) => {
         const content = outcome.status === "success" ? describeSuccess(outcome) : null;
         if (!content) return [];
