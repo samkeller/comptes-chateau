@@ -22,7 +22,8 @@ export default class KanbanController {
     };
 
     saveTask = async (req: Request, res: Response) => {
-        const task = await this.boardService.saveTask(req.body, Number(req.params.id));
+        const connectedUserId = requireUserId(req);
+        const task = await this.boardService.saveTask(req.body, Number(req.params.id), connectedUserId);
         res.status(200).json(task);
     };
 

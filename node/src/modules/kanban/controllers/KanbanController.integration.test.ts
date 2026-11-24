@@ -1,10 +1,9 @@
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
-import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanTask } from "../entities/KanbanTask";
 import { KanbanComment } from "../entities/KanbanComment";
 import { User } from "../../core/entities/User";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 
 describe("KanbanController integration", () => {
@@ -17,29 +16,13 @@ describe("KanbanController integration", () => {
     });
 
     async function createTask(): Promise<void> {
-        const column = await testDataSource.getRepository(KanbanColumn).save({
-            label: "À faire",
-            order: 1,
-        });
-        const task = await testDataSource.getRepository(KanbanTask).save({
-            title: "Courses",
-            description: "Lait",
-            tags: [],
-            priority: "normal",
-            columnId: column.id,
-            column,
-            assignees: [],
-            isDone: false,
-            doneByUserId: null,
-        });
+        const column = await fixtures.kanbanColumns.create({ label: "À faire" });
+        const task = await fixtures.kanbanTasks.create({ columnId: column.id, title: "Courses", description: "Lait" });
         taskId = task.id;
     }
 
     it("creates a task and awards XP within the same operation", async () => {
-        const column = await testDataSource.getRepository(KanbanColumn).save({
-            label: "À faire",
-            order: 1,
-        });
+        const column = await fixtures.kanbanColumns.create({ label: "À faire" });
 
         const response = await request(app)
             .post("/kanban/task")

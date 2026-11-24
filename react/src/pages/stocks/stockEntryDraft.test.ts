@@ -6,7 +6,7 @@ import {
 } from "./stockEntryDraft";
 
 const item: StockItemWithLotsDto = {
-    id: 4, label: "Lait", barcode: "3017620422003", brand: null, defaultUnit: "pièce", imageUrl: null,
+    id: 4, label: "Lait", description: null, barcode: "3017620422003", brand: null, defaultUnit: "pièce", imageUrl: null,
     stockUnitsCount: 3, nextStockUnitExpiration: "2026-10-20", createdAt: "2026-10-01T00:00:00.000Z",
     lots: [
         { locationId: 1, locationLabel: "Cellier", quantity: 1, unit: "L", expirationDate: "2026-10-20", expiryState: "soon", unitIds: [10, 11] },
@@ -23,7 +23,7 @@ describe("stock entry draft", () => {
         draft.lots.push({ ...draft.lots[0], key: "other", copies: 1, expirationDate: null });
 
         expect(toSaveStockEntryDto(draft)).toEqual({
-            item: { label: "Riz", barcode: "012345678905", brand: null, defaultUnit: "pièce", imageUrl: null },
+            item: { label: "Riz", description: null, barcode: "012345678905", brand: null, defaultUnit: "pièce", imageUrl: null },
             lots: [
                 { unitIds: [], copies: 2, locationId: 1, quantity: 500, unit: "g", expirationDate: "2027-01-31" },
                 { unitIds: [], copies: 1, locationId: 1, quantity: 500, unit: "g", expirationDate: null },

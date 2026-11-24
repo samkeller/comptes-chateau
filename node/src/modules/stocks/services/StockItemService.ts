@@ -111,10 +111,11 @@ export default class StockItemService {
     async save(dto: StockEntryItemDto): Promise<{ item: StockItem; created: boolean }> {
         const item = dto.id !== undefined
             ? await this.findByIdOrThrow(dto.id)
-            : this.stockItemRepo.create({ barcode: null, brand: null, imageUrl: null });
+            : this.stockItemRepo.create({ description: null, barcode: null, brand: null, imageUrl: null });
 
         item.label = dto.label;
         item.defaultUnit = dto.defaultUnit;
+        if (dto.description !== undefined) item.description = dto.description || null;
         if (dto.barcode !== undefined) item.barcode = dto.barcode;
         if (dto.brand !== undefined) item.brand = dto.brand || null;
         if (dto.imageUrl !== undefined) item.imageUrl = dto.imageUrl;

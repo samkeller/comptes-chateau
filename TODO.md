@@ -10,10 +10,11 @@ Project Description
 - [ ] Les boutons "Supprimer" "Renommer" etc devraient être factorisés dans composants/atoms pour permettre l'homogénéité graphique dans toute l'appli. Globalement dans 90% des cas on utilise qu'une icone + tooltip en fonction de ou on est dans la page mais parfois il y a le label. On peut faire des atoms "DeleteButton", "EditButton" etc (tout ce qui apparait + de trois fois dans l'application) & permettre de passer des ButtonProps au composants si besoin d'overrides (normalement cela devrait être minimal).  
 - [ ] De plus, on pourrait de cette manière ajouter les actions clavier (touche entrée pour valider, echap pour annuler) de manière uniforme dans toute l'application.  
 - [ ] Ajouter cache frontend (kanban, stocks, accountLines) - données qui changent peu ou batch quotidien. (node-cache obsolète ???)  
+- [ ] Cache des notifications : la cloche (montée dans `PageTemplate`) appelle GET /notifications à chaque changement de page et à chaque ouverture, et chaque appel recalcule `DashboardService.getOverview` pour tous les comptes (+ stocks, jobs). Mettre en cache côté serveur (courte durée) ou sortir la cloche du template de page / ne rafraîchir qu'à l'ouverture du panneau. Peu gênant tant qu'il y a peu d'utilisateurs.  
+- [ ] [LOW] Purger `notification_dismissal` : les notifications d'état ont une nouvelle clé chaque jour, leurs dismissals ne sont jamais supprimés et `getDismissedKeys` les charge tous à chaque appel. Supprimer ceux plus vieux que `EVENT_RETENTION_DAYS` (cron nocturne) ou filtrer sur `createdAt`.  
 - [ ] [MEDIUM] Fixer une fois dans toute l'application la taille des dialogues en fonction de la taille de l'écran.
 - [ ] [MEDIUM] Utiliser `useResponsiveDataTable` dans toutes les datatabes pour le responsive -> Va permettre de supprimer pas mal de code mort
 - [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
-- [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
 - [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
 - [ ] [LOW] Repasser les icones liées à un input (utiliser primereact Iconfield>InputIcon en parallèle de l'Input)
 - [ ] [LOW] /shared - simplifier les exports pour permettre de n'importe que le type voulu et non pas tout depuis '@chocosous/shared' (nécessaire ?) 
@@ -27,6 +28,7 @@ Project Description
 
 ### Done ✓
 
+- [x] [LOW] Fixtures back : factories maison dans `node/src/db/fixtures` (tests + scénarios de dev via `npm run seed`)  
 - [x] Factoriser accountLineNatureDropdown & accountLinePosteDropdown -> Régler les contrats API id vs objet complet -> Repasser tous les dropdowns "nature" (DropdownProps) & "postes" (DropdownProps & accountId)  
 - [x] Auto-backup  
 - [x] Sécuriser ++++ les opérations "miroirs" entre plusieurs comptes. (test unitaires CRUD, impacts modifications, suppression, etc, Ajouter confirm spécifique quand impacts cascade)  

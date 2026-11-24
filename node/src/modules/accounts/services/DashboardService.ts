@@ -1,7 +1,6 @@
 import type { BudgetByPoste, DashboardOverview, MonthlyAggregateByPoste } from "@chocosous/shared";
 import type { EntityManager } from "typeorm";
 import { AppDataSource } from "../../../db/dataSource";
-import KanbanBoardService from "../../kanban/services/KanbanBoardService";
 import AccountLineService from "./AccountLineService";
 import AccountService from "./AccountService";
 import BudgetService from "./BudgetService";
@@ -12,22 +11,20 @@ export default class DashboardService {
     private readonly accountService: AccountService;
     private readonly budgetService: BudgetService;
     private readonly recurringExpenseService: RecurringExpenseService;
-    private readonly kanbanBoardService: KanbanBoardService;
 
     constructor(manager: EntityManager = AppDataSource.manager) {
         this.accountLineService = new AccountLineService(manager);
         this.accountService = new AccountService(manager);
         this.budgetService = new BudgetService(manager);
         this.recurringExpenseService = new RecurringExpenseService(manager);
-        this.kanbanBoardService = new KanbanBoardService(manager);
     }
 
-    async getOverview(userId: number, accountId: number): Promise<DashboardOverview> {
+    /** Situation du compte ; `now` fixe le mois courant et les échéances de prévision (défaut : maintenant). */
+    async getOverview(accountId: number, now: Date = new Date()): Promise<DashboardOverview> {
         const baseline = await this.accountService.getById(accountId);
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
-        const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         // Dernier jour du mois courant
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -40,14 +37,12 @@ export default class DashboardService {
             forecastDeltaThreeMonthsRaw,
             budgetVsActual,
             toCheckCounts,
-            assignedKanbanTasksCount,
         ] = await Promise.all([
             this.accountLineService.getBalanceDeltaSinceDate(true, baseLineDate, undefined, accountId),
             this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, monthEnd, accountId),
             this.accountLineService.getBalanceDeltaSinceDate(false, baseLineDate, threeMonthsEnd, accountId),
             this.getBudgetVsActual(accountId, monthStart.getMonth() + 1, monthStart.getFullYear()),
             this.accountLineService.getOperationsToCheckCounts(accountId),
-            this.kanbanBoardService.getAssignedTasksCount(userId),
         ]);
 
         const [simulateOneMonthForecast, simulateThreeMonthsForecast] = await Promise.all([
@@ -63,7 +58,6 @@ export default class DashboardService {
             monthlyBudget: budgetVsActual.reduce((total, item) => total + item.budgetAmount, 0),
             operationsToCheckInAccountCount: toCheckCounts.inAccount,
             operationsToCheckHorsCompteCount: toCheckCounts.horsCompte,
-            assignedKanbanTasksCount,
         };
     }
 

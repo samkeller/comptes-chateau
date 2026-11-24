@@ -1,47 +1,17 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Account } from "../../accounts/entities/Account";
 import { AccountLineNature } from "../../accounts/entities/AccountLineNature";
 import { User } from "../../core/entities/User";
-import { testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 
 let app: ReturnType<typeof createTestApp>;
-let seededUserId: number;
 let seededNature: AccountLineNature;
 let seededNatureAlt: AccountLineNature;
 
 async function seedBaseData(): Promise<void> {
-    const accountRepo = testDataSource.getRepository(Account);
-    const natureRepo = testDataSource.getRepository(AccountLineNature);
-    const userRepo = testDataSource.getRepository(User);
-
-    await accountRepo.save({
-        id: 1,
-        label: "Compte principal",
-        baseLineAmount: 0,
-        baseLineEffectiveDate: new Date("2026-01-01"),
-    });
-
-    seededNature = await natureRepo.save({
-        label: "Charges",
-        color: "#112233",
-        isHorsCompte: false,
-    });
-
-    seededNatureAlt = await natureRepo.save({
-        label: "Loisirs",
-        color: "#445566",
-        isHorsCompte: false,
-    });
-
-    const seededUser = await userRepo.save({
-        username: "dojo-user",
-        avatar: "001-tiger.png",
-        totalXp: 100,
-        passwordHash: "hash",
-    });
-    seededUserId = seededUser.id;
+    seededNature = await fixtures.natures.create({ label: "Charges", color: "#112233" });
+    seededNatureAlt = await fixtures.natures.create({ label: "Loisirs", color: "#445566" });
 }
 
 describe("AccountLineCategorizationController integration", () => {
@@ -50,7 +20,7 @@ describe("AccountLineCategorizationController integration", () => {
 
         const { default: accountLineCategorizationRoutes } = await import("./AccountLineCategorizationController");
 
-        app = createTestApp("/categorization", accountLineCategorizationRoutes, seededUserId);
+        app = createTestApp("/categorization", accountLineCategorizationRoutes);
     });
 
     it("increments user XP by 10 when a rule is created", async () => {
@@ -70,7 +40,7 @@ describe("AccountLineCategorizationController integration", () => {
             natureId: seededNature.id,
         });
 
-        const updatedUser = await testDataSource.getRepository(User).findOneByOrFail({ id: seededUserId });
+        const updatedUser = await testDataSource.getRepository(User).findOneByOrFail({ id: TEST_USER_ID });
         expect(updatedUser.totalXp).toBe(110);
     });
 

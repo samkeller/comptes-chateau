@@ -1,8 +1,7 @@
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestApp } from "../../../tests/testApp";
-import { testDataSource } from "../../../tests/testDbSetup";
-import { StockItem } from "../entities/StockItem";
+import { testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { OpenFoodFactsApiCall } from "../entities/OpenFoodFactsApiCall";
 import { openFoodFactsThrottle } from "../clients/OpenFoodFactsClient";
 
@@ -36,7 +35,7 @@ describe("StockItemRoutes integration", () => {
     it("looks up existing items (with lots, any barcode form) without contacting OFF", async () => {
         const fetchMock = vi.fn();
         vi.stubGlobal("fetch", fetchMock);
-        const item = await testDataSource.getRepository(StockItem).save({ label: "Riz", defaultUnit: "g", barcode: "012345678905" });
+        const item = await fixtures.stockItems.create({ label: "Riz", defaultUnit: "g", barcode: "012345678905" });
 
         const response = await request(app).get("/stocks/items/lookup/0012345678905");
 
@@ -86,7 +85,7 @@ describe("StockItemRoutes integration", () => {
     });
 
     it("GET /stocks/items/:id returns the item with all its lots, or a typed 404", async () => {
-        const item = await testDataSource.getRepository(StockItem).save({ label: "Riz", defaultUnit: "g" });
+        const item = await fixtures.stockItems.create({ label: "Riz", defaultUnit: "g" });
         const ok = await request(app).get(`/stocks/items/${item.id}`);
         expect(ok.status).toBe(200);
         expect(ok.body).toMatchObject({ id: item.id, label: "Riz", lots: [], stockUnitsCount: 0 });

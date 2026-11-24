@@ -2,8 +2,7 @@ import request from "supertest";
 import { Router } from "express";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createTestApp } from "../../../tests/testApp";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
-import { User } from "../../core/entities/User";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { Note } from "../entities/Note";
 
 describe("NoteController integration", () => {
@@ -39,20 +38,8 @@ describe("NoteController integration", () => {
                 .send({ title: "" });
             expect(invalidResponse.status).toBe(400);
 
-            const note = await testDataSource.getRepository(Note).save({
-                title: "Autre auteur",
-                content: null,
-                isPinned: false,
-                isArchived: false,
-                archivedAt: null,
-                authorId: TEST_USER_ID,
-            });
-            const otherUser = await testDataSource.getRepository(User).save({
-                username: "second-user",
-                avatar: "default-avatar.png",
-                passwordHash: "testpasswordhash",
-                totalXp: 0,
-            });
+            const note = await fixtures.notes.create({ authorId: TEST_USER_ID, title: "Autre auteur" });
+            const otherUser = await fixtures.users.create({ username: "second-user" });
             const { default: noteRoutes } = await import("./NoteController");
             const otherUserRoutes = Router();
             otherUserRoutes.use("/notes", noteRoutes);

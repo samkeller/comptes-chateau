@@ -1,57 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { TEST_ACCOUNT_ID, testDataSource } from "../../../tests/testDbSetup";
-import { AccountLinePoste } from "../entities/AccountLinePoste";
-import { BudgetItem } from "../entities/BudgetItem";
-import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
+import { RecurringExpenseFrequency } from "../entities/RecurringExpense";
 import BudgetService from "./BudgetService";
 
 describe("BudgetService", () => {
     it("returns signed unified budget lines with explicit debit and credit amounts", async () => {
-        const poste = await testDataSource.getRepository(AccountLinePoste).save({
-            label: "Logement",
-            color: "#445566",
-            accountId: TEST_ACCOUNT_ID,
+        const accountId = TEST_ACCOUNT_ID;
+        const poste = await fixtures.postes.create({ accountId, label: "Logement" });
+
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget courses", amount: -240, sortOrder: 1 });
+        await fixtures.budgetItems.create({ accountId, posteId: poste.id, label: "Budget prime", amount: 120, sortOrder: 2 });
+        await fixtures.recurringExpenses.create({
+            accountId, posteId: poste.id, label: "Loyer", solde: -900,
+            nextOccurrence: new Date("2026-10-01"), frequency: RecurringExpenseFrequency.MONTHLY,
         });
-
-        await testDataSource.getRepository(BudgetItem).save([
-            {
-                label: "Budget courses",
-                amount: -240,
-                sortOrder: 1,
-                isActive: true,
-                account: { id: TEST_ACCOUNT_ID },
-                poste,
-            },
-            {
-                label: "Budget prime",
-                amount: 120,
-                sortOrder: 2,
-                isActive: true,
-                account: { id: TEST_ACCOUNT_ID },
-                poste,
-            },
-        ]);
-
-        await testDataSource.getRepository(RecurringExpense).save([
-            {
-                label: "Loyer",
-                solde: -900,
-                isActive: true,
-                nextOccurrence: new Date("2026-10-01"),
-                frequency: RecurringExpenseFrequency.MONTHLY,
-                accountId: TEST_ACCOUNT_ID,
-                poste,
-            },
-            {
-                label: "Prime annuelle",
-                solde: 1200,
-                isActive: true,
-                nextOccurrence: new Date("2026-12-01"),
-                frequency: RecurringExpenseFrequency.YEARLY,
-                accountId: TEST_ACCOUNT_ID,
-                poste,
-            },
-        ]);
+        await fixtures.recurringExpenses.create({
+            accountId, posteId: poste.id, label: "Prime annuelle", solde: 1200,
+            nextOccurrence: new Date("2026-12-01"), frequency: RecurringExpenseFrequency.YEARLY,
+        });
 
         const lines = await new BudgetService(testDataSource.manager).getUnifiedBudgetByPoste(TEST_ACCOUNT_ID);
 

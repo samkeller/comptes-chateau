@@ -15,6 +15,9 @@ export class StockItem {
     @Column({ type: "varchar", length: 255 })
     label: string;
 
+    @Column({ type: "varchar", length: 255, nullable: true })
+    description: string | null;
+
     /** Code-barres normalisé (EAN-13 pour un UPC-A). Non unique. */
     @Column({ type: "varchar", length: 64, nullable: true })
     barcode: string | null;

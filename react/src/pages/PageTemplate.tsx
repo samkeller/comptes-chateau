@@ -14,6 +14,7 @@ import { useConnectedUser } from "../context/ConnectedUserContext";
 import LocalStorageUtils from "../utils/LocalStorageUtils";
 import ChangelogDialog from "@/components/ChangelogDialog";
 import ConnectedUserCard from "@/components/layout/ConnectedUserCard";
+import NotificationBell from "@/components/layout/notifications/NotificationBell";
 import { useScreen } from "@/hooks/useScreen";
 import Sprite from "@/components/atoms/Sprite/Sprite";
 import { routePaths } from "../routes/routePaths";
@@ -128,7 +129,7 @@ export function PageTemplate({ children, pageTitle }: PageTemplateProps) {
         </div>
         <div className="flex items-center gap-2">
           <ConnectedUserCard />
-
+          <NotificationBell buttonClassName="p-1" />
           <Menu
             ref={quickActionsMenuRef}
             popup

@@ -12,6 +12,7 @@ import AccountLineCategorizationRoutes from "./modules/automatisations/controlle
 import EventStreamRoutes from "./modules/core/controllers/EventStreamController";
 import BanquePostaleRoutes from "./modules/externals/controllers/BanquePostaleController";
 import NoteRoutes from "./modules/notes/controllers/NoteController";
+import NotificationRoutes from "./modules/notifications/controllers/NotificationController";
 
 const ApiRouter = Router()
 
@@ -24,6 +25,7 @@ ApiRouter.use('/accounts/:accountId', AccountScopedRoutes)
 ApiRouter.use('/nature', NatureRoutes)
 ApiRouter.use('/kanban', KanbanRoutes)
 ApiRouter.use('/notes', NoteRoutes)
+ApiRouter.use('/notifications', NotificationRoutes)
 ApiRouter.use('/stocks', StockRoutes)
 ApiRouter.use('/users', UserRoutes)
 ApiRouter.use('/users/xp', UserXpRoutes);

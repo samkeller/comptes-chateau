@@ -13,6 +13,7 @@ export interface StockLocationDto {
 export interface StockItemDto {
     id: number;
     label: string;
+    description: string | null;
     barcode: string | null;
     brand: string | null;
     defaultUnit: string;

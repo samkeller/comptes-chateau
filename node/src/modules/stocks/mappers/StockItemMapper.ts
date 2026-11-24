@@ -14,6 +14,7 @@ export function toStockItemDto(item: StockItem, lots: StockLotDto[]): StockItemD
     return {
         id: item.id,
         label: item.label,
+        description: item.description ?? null,
         barcode: item.barcode,
         brand: item.brand ?? null,
         defaultUnit: item.defaultUnit,

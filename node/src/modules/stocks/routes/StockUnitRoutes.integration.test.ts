@@ -1,11 +1,10 @@
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 import { User } from "../../core/entities/User";
 import { USER_XP_ACTIONS } from "@chocosous/shared";
 import { StockItem } from "../entities/StockItem";
-import { StockLocation } from "../entities/StockLocation";
 import { StockMovement } from "../entities/StockMovement";
 import { StockUnit } from "../entities/StockUnit";
 
@@ -18,9 +17,9 @@ describe("StockUnitRoutes integration", () => {
     });
 
     async function seedUnit() {
-        const location = await testDataSource.getRepository(StockLocation).save({ label: "Cuisine" });
-        const item = await testDataSource.getRepository(StockItem).save({ label: "Pâtes", defaultUnit: "g" });
-        const unit = await testDataSource.getRepository(StockUnit).save({
+        const location = await fixtures.stockLocations.create({ label: "Cuisine" });
+        const item = await fixtures.stockItems.create({ label: "Pâtes", defaultUnit: "g" });
+        const unit = await fixtures.stockUnits.create({
             itemId: item.id, locationId: location.id, quantity: 500, unit: "g", expirationDate: "2027-01-01",
         });
         return { item, unit };

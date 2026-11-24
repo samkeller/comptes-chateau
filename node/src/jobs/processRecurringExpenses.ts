@@ -5,11 +5,13 @@ import JobExecutionLogService from "../modules/core/services/JobExecutionLogServ
 import { EntityManager } from "typeorm";
 import { addWeeks, addMonths, addYears } from "date-fns";
 
+export const RECURRING_EXPENSES_JOB_NAME = 'recurring-expenses-monthly';
+
 export async function processRecurringExpenses(
     manager: EntityManager,
     currentDate: Date
 ) {
-    const jobName = 'recurring-expenses-monthly';
+    const jobName = RECURRING_EXPENSES_JOB_NAME;
 
     const recurringExpenseService = new RecurringExpenseService(manager);
     const accountLineService = new AccountLineService(manager);

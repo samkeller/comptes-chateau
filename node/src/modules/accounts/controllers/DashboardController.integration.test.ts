@@ -1,89 +1,25 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { Account } from "../entities/Account";
-import { AccountLine, AccountLineSource } from "../entities/AccountLine";
-import { AccountLinePoste } from "../entities/AccountLinePoste";
-import { testDataSource } from "../../../tests/testDbSetup";
+import { TEST_ACCOUNT_ID, fixtures } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 
 let posteMaisonId: number;
 let posteVoyageId: number;
-const accountId = 1;
+const accountId = TEST_ACCOUNT_ID;
 
 async function seedDashboardLines(): Promise<void> {
-    const accountRepo = testDataSource.getRepository(Account);
-    const posteRepo = testDataSource.getRepository(AccountLinePoste);
-    const lineRepo = testDataSource.getRepository(AccountLine);
-    const account = await accountRepo.save({
-        id: accountId,
-        label: "Compte principal",
-        baseLineAmount: 0,
-        baseLineEffectiveDate: new Date("2026-01-01")
-    });
-
-    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566", account });
-    const posteVoyage = await posteRepo.save({ label: "Voyage", color: "#778899", account });
+    const posteMaison = await fixtures.postes.create({ accountId, label: "Maison", color: "#445566" });
+    const posteVoyage = await fixtures.postes.create({ accountId, label: "Voyage", color: "#778899" });
 
     posteMaisonId = posteMaison.id;
     posteVoyageId = posteVoyage.id;
 
-    await lineRepo.save([
-        {
-            label: "M1",
-            dateOperation: new Date("2026-01-04"),
-            dateValeur: new Date("2026-01-05"),
-            source: AccountLineSource.MANUAL,
-            account,
-            poste: posteMaison,
-            debit: 100,
-            credit: 0,
-            isChecked: true
-        },
-        {
-            label: "M2",
-            dateOperation: new Date("2026-01-10"),
-            dateValeur: null,
-            source: AccountLineSource.MANUAL,
-            account,
-            poste: posteMaison,
-            debit: 0,
-            credit: 40,
-            isChecked: false
-        },
-        {
-            label: "M3",
-            dateOperation: new Date("2026-02-08"),
-            dateValeur: new Date("2026-02-09"),
-            source: AccountLineSource.MANUAL,
-            account,
-            poste: posteMaison,
-            debit: 0,
-            credit: 70,
-            isChecked: true
-        },
-        {
-            label: "V1",
-            dateOperation: new Date("2026-01-07"),
-            dateValeur: new Date("2026-01-08"),
-            source: AccountLineSource.MANUAL,
-            account,
-            poste: posteVoyage,
-            debit: 0,
-            credit: 20,
-            isChecked: true
-        },
-        {
-            label: "V2",
-            dateOperation: new Date("2026-03-01"),
-            dateValeur: new Date("2026-03-02"),
-            source: AccountLineSource.MANUAL,
-            account,
-            poste: posteVoyage,
-            debit: 10,
-            credit: 0,
-            isChecked: true
-        }
-    ]);
+    const checked = (dateValeur: string) => ({ isChecked: true, dateValeur: new Date(dateValeur) });
+    await fixtures.accountLines.create({ accountId, posteId: posteMaison.id, label: "M1", dateOperation: new Date("2026-01-04"), debit: 100, ...checked("2026-01-05") });
+    await fixtures.accountLines.create({ accountId, posteId: posteMaison.id, label: "M2", dateOperation: new Date("2026-01-10"), credit: 40 });
+    await fixtures.accountLines.create({ accountId, posteId: posteMaison.id, label: "M3", dateOperation: new Date("2026-02-08"), credit: 70, ...checked("2026-02-09") });
+    await fixtures.accountLines.create({ accountId, posteId: posteVoyage.id, label: "V1", dateOperation: new Date("2026-01-07"), credit: 20, ...checked("2026-01-08") });
+    await fixtures.accountLines.create({ accountId, posteId: posteVoyage.id, label: "V2", dateOperation: new Date("2026-03-01"), debit: 10, ...checked("2026-03-02") });
 }
 
 describe("DashboardController /monthly-by-poste integration", () => {
@@ -165,55 +101,14 @@ describe("DashboardController monthly-by-poste with incoming transfers", () => {
     });
 
     beforeEach(async () => {
-        const accountRepo = testDataSource.getRepository(Account);
-        const posteRepo = testDataSource.getRepository(AccountLinePoste);
-        const lineRepo = testDataSource.getRepository(AccountLine);
-
-        const sourceAccount = await accountRepo.save({
-            id: sourceAccountId,
-            label: "Source",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01")
-        });
-        const targetAccount = await accountRepo.save({
-            id: targetAccountId,
-            label: "Cible",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01")
-        });
-
-        const posteRevenu = await posteRepo.save({ label: "Revenu", color: "#aabbcc", account: targetAccount });
+        const sourceAccount = await fixtures.accounts.create({ id: sourceAccountId, label: "Source" });
+        const targetAccount = await fixtures.accounts.create({ id: targetAccountId, label: "Cible" });
+        const posteRevenu = await fixtures.postes.create({ accountId: targetAccount.id, label: "Revenu", color: "#aabbcc" });
         posteRevenuId = posteRevenu.id;
 
-        const transferGroupId = "dashboard-transfer-group";
-
-        await lineRepo.save([
-            {
-                label: "Virement sortant",
-                dateOperation: new Date("2026-02-15"),
-                dateValeur: null,
-                source: AccountLineSource.MANUAL,
-                account: sourceAccount,
-                targetAccount: targetAccount,
-                transferGroupId,
-                debit: 300,
-                credit: 0,
-                isChecked: false
-            },
-            {
-                label: "Virement sortant",
-                dateOperation: new Date("2026-02-15"),
-                dateValeur: null,
-                source: AccountLineSource.MANUAL,
-                account: targetAccount,
-                targetAccount: sourceAccount,
-                transferGroupId,
-                poste: posteRevenu,
-                debit: 0,
-                credit: 300,
-                isChecked: false
-            }
-        ]);
+        const transfer = { label: "Virement sortant", dateOperation: new Date("2026-02-15"), transferGroupId: "dashboard-transfer-group" };
+        await fixtures.accountLines.create({ ...transfer, accountId: sourceAccount.id, targetAccount: { id: targetAccount.id }, debit: 300 });
+        await fixtures.accountLines.create({ ...transfer, accountId: targetAccount.id, targetAccount: { id: sourceAccount.id }, posteId: posteRevenu.id, credit: 300 });
     });
 
     it("target account aggregate includes incoming transfer mirror line", async () => {

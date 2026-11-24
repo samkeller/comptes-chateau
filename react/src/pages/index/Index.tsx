@@ -6,7 +6,6 @@ import AccountService from "../../services/AccountService";
 import DashboardService from "../../services/DashboardService";
 import { toMonetaryAmount } from "../../utils/NumberUtils";
 import { PageTemplate } from "../PageTemplate";
-import HomeGlobalActionsCard from "./components/HomeGlobalActionsCard";
 import HomeWelcomeCard from "./components/HomeWelcomeCard";
 import type { DashboardOverview } from "@chocosous/shared";
 import Account from "@/interfaces/Account";
@@ -69,11 +68,6 @@ export default function Index() {
         };
     }, []);
 
-    const assignedKanbanTasksCount = useMemo(
-        () => accountOverviews[0]?.overview.assignedKanbanTasksCount ?? 0,
-        [accountOverviews]
-    );
-
     const totalCurrentBalance = useMemo(
         () => accountOverviews.reduce((acc, item) => acc + item.overview.currentBalance, 0),
         [accountOverviews]
@@ -89,11 +83,6 @@ export default function Index() {
         [accountOverviews]
     );
 
-    const totalOperationsToCheck = useMemo(
-        () => accountOverviews.reduce((acc, item) => acc + item.overview.operationsToCheckHorsCompteCount + item.overview.operationsToCheckInAccountCount, 0),
-        [accountOverviews]
-    );
-
     return (
         <PageTemplate pageTitle="Accueil">
             <div className="flex flex-col gap-6">
@@ -105,29 +94,22 @@ export default function Index() {
                     <>
                         {user && <HomeWelcomeCard user={user} />}
 
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            <Card title="Synthese" className="lg:col-span-2">
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                    <div>
-                                        <div className="text-sm text-surface-500">Solde actuel</div>
-                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalCurrentBalance)}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-surface-500">Solde prévisionnel (fin du mois)</div>
-                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceMonthEnd)}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-surface-500">Solde prévisionnel (trois mois)</div>
-                                        <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceThreeMonths)}</div>
-                                    </div>
+                        <Card title="Synthese">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div>
+                                    <div className="text-sm text-surface-500">Solde actuel</div>
+                                    <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalCurrentBalance)}</div>
                                 </div>
-                            </Card>
-
-                            <HomeGlobalActionsCard
-                                assignedKanbanTasksCount={assignedKanbanTasksCount}
-                                totalOperationsToCheck={totalOperationsToCheck}
-                            />
-                        </div>
+                                <div>
+                                    <div className="text-sm text-surface-500">Solde prévisionnel (fin du mois)</div>
+                                    <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceMonthEnd)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm text-surface-500">Solde prévisionnel (trois mois)</div>
+                                    <div className="text-3xl font-bold text-surface-900">{toMonetaryAmount(totalForecastBalanceThreeMonths)}</div>
+                                </div>
+                            </div>
+                        </Card>
                         <Card title="Vue synthetique par compte">
                             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                                 {accountOverviews.map((model) => (

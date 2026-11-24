@@ -1,105 +1,39 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Account } from "../entities/Account";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
-import { AccountLineNature } from "../entities/AccountLineNature";
-import { AccountLinePoste } from "../entities/AccountLinePoste";
-import { User } from "../../core/entities/User";
-import { testDataSource } from "../../../tests/testDbSetup";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
 
-let seededUserId: number;
 let natureChargesId: number;
-let natureRevenusId: number;
 let posteMaisonId: number;
-let posteLoisirsId: number;
-const accountId = 1;
+const accountId = TEST_ACCOUNT_ID;
 
 async function seedAccountLines(): Promise<void> {
-    const accountRepo = testDataSource.getRepository(Account);
-    const natureRepo = testDataSource.getRepository(AccountLineNature);
-    const posteRepo = testDataSource.getRepository(AccountLinePoste);
-    const lineRepo = testDataSource.getRepository(AccountLine);
-    const userRepo = testDataSource.getRepository(User);
-
-    const seededUser = await userRepo.save({
-        username: "dojo-user",
-        avatar: "001-tiger.png",
-        totalXp: 100,
-        passwordHash: "hash"
-    });
-    seededUserId = seededUser.id;
-
-    const account = await accountRepo.save({
-        id: accountId,
-        label: "Compte principal",
-        baseLineAmount: 0,
-        baseLineEffectiveDate: new Date("2026-01-01")
-    });
-
-    const natureCharges = await natureRepo.save({ label: "Charges", color: "#112233" });
-    const natureRevenus = await natureRepo.save({ label: "Revenus", color: "#334455" });
-    const posteMaison = await posteRepo.save({ label: "Maison", color: "#445566", account });
-    const posteLoisirs = await posteRepo.save({ label: "Loisirs", color: "#778899", account });
+    const natureCharges = await fixtures.natures.create({ label: "Charges", color: "#112233" });
+    const natureRevenus = await fixtures.natures.create({ label: "Revenus", color: "#334455" });
+    const posteMaison = await fixtures.postes.create({ accountId, label: "Maison", color: "#445566" });
+    const posteLoisirs = await fixtures.postes.create({ accountId, label: "Loisirs", color: "#778899" });
 
     natureChargesId = natureCharges.id;
-    natureRevenusId = natureRevenus.id;
     posteMaisonId = posteMaison.id;
-    posteLoisirsId = posteLoisirs.id;
 
-    const baseDateOperation = new Date("2026-03-01");
-
-    await lineRepo.save([
-        {
-            label: "L1",
-            dateOperation: baseDateOperation,
-            dateValeur: null,
-            source: AccountLineSource.MANUAL,
-            account,
-            nature: natureCharges,
-            poste: posteMaison,
-            debit: 100,
-            credit: 0,
-            isChecked: false
-        },
-        {
-            label: "L2",
-            dateOperation: new Date("2026-03-05"),
-            dateValeur: new Date("2026-03-02"),
-            source: AccountLineSource.MANUAL,
-            account,
-            nature: natureCharges,
-            poste: undefined,
-            debit: 20,
-            credit: 0,
-            isChecked: true
-        },
-        {
-            label: "L3",
-            dateOperation: new Date("2026-03-10"),
-            dateValeur: null,
-            source: AccountLineSource.MANUAL,
-            account,
-            nature: natureRevenus,
-            poste: posteMaison,
-            debit: 0,
-            credit: 50,
-            isChecked: false
-        },
-        {
-            label: "L4",
-            dateOperation: new Date("2026-03-15"),
-            dateValeur: new Date("2026-03-01"),
-            source: AccountLineSource.MANUAL,
-            account,
-            nature: undefined,
-            poste: posteLoisirs,
-            debit: 0,
-            credit: 120,
-            isChecked: true
-        }
-    ]);
+    await fixtures.accountLines.create({
+        accountId, label: "L1", dateOperation: new Date("2026-03-01"),
+        natureId: natureCharges.id, posteId: posteMaison.id, debit: 100,
+    });
+    await fixtures.accountLines.create({
+        accountId, label: "L2", dateOperation: new Date("2026-03-05"), dateValeur: new Date("2026-03-02"), isChecked: true,
+        natureId: natureCharges.id, debit: 20,
+    });
+    await fixtures.accountLines.create({
+        accountId, label: "L3", dateOperation: new Date("2026-03-10"),
+        natureId: natureRevenus.id, posteId: posteMaison.id, credit: 50,
+    });
+    await fixtures.accountLines.create({
+        accountId, label: "L4", dateOperation: new Date("2026-03-15"), dateValeur: new Date("2026-03-01"), isChecked: true,
+        posteId: posteLoisirs.id, credit: 120,
+    });
 }
 
 describe("AccountLineController /lazy integration", () => {
@@ -109,7 +43,7 @@ describe("AccountLineController /lazy integration", () => {
         await seedAccountLines();
 
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
-        app = createTestApp("/accounts/:accountId", accountScopedRoutes, seededUserId);
+        app = createTestApp("/accounts/:accountId", accountScopedRoutes);
     });
 
     it("sorts by amount ASC using (credit - debit)", async () => {
@@ -490,19 +424,12 @@ describe("AccountLineController /lazy integration", () => {
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
         const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
 
-        const imported = await importRepo.save({
+        const imported = await fixtures.banquePostaleImports.create({
             accountId,
             compositeExternalId: "1|2026-03-21|L1|-100",
             dateOperation: "2026-03-21",
             label: "L1 importée",
             amount: -100,
-            rowNumber: 1,
-            metadata: {
-                accountNumber: "2245945T038",
-                type: "CCP",
-                exportDate: "2026-03-21",
-                balance: 1000
-            }
         });
 
         const response = await request(app)
@@ -523,19 +450,12 @@ describe("AccountLineController /lazy integration", () => {
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
         const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
 
-        const imported = await importRepo.save({
+        const imported = await fixtures.banquePostaleImports.create({
             accountId,
             compositeExternalId: "1|2026-03-22|L1|-100",
             dateOperation: "2026-03-22",
             label: "L1 importée",
             amount: -100,
-            rowNumber: 1,
-            metadata: {
-                accountNumber: "2245945T038",
-                type: "CCP",
-                exportDate: "2026-03-22",
-                balance: 1000
-            }
         });
 
         const response = await request(app)
@@ -556,33 +476,8 @@ describe("AccountLineController /lazy integration", () => {
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
         const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
 
-        const metadata = {
-            accountNumber: "2245945T038",
-            type: "CCP",
-            exportDate: "2026-03-21",
-            balance: 1000
-        };
-
-        await importRepo.save([
-            {
-                accountId,
-                compositeExternalId: "1|2026-03-21|L1a|-100",
-                dateOperation: "2026-03-21",
-                label: "L1 importée A",
-                amount: -100,
-                rowNumber: 1,
-                metadata
-            },
-            {
-                accountId,
-                compositeExternalId: "1|2026-03-21|L1b|-100",
-                dateOperation: "2026-03-21",
-                label: "L1 importée B",
-                amount: -100,
-                rowNumber: 2,
-                metadata
-            }
-        ]);
+        await fixtures.banquePostaleImports.create({ accountId, compositeExternalId: "1|2026-03-21|L1a|-100", dateOperation: "2026-03-21", label: "L1 importée A", amount: -100 });
+        await fixtures.banquePostaleImports.create({ accountId, compositeExternalId: "1|2026-03-21|L1b|-100", dateOperation: "2026-03-21", label: "L1 importée B", amount: -100 });
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
@@ -602,36 +497,10 @@ describe("AccountLineController /lazy integration", () => {
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
         const lineToCheck = await lineRepo.findOneByOrFail({ label: "L1" });
 
-        const imports = await importRepo.save([
-            {
-                accountId,
-                compositeExternalId: "1|2026-03-21|L1a|-100",
-                dateOperation: "2026-03-21",
-                label: "L1 importée A",
-                amount: -100,
-                rowNumber: 1,
-                metadata: {
-                    accountNumber: "2245945T038",
-                    type: "CCP",
-                    exportDate: "2026-03-21",
-                    balance: 1000
-                }
-            },
-            {
-                accountId,
-                compositeExternalId: "1|2026-03-21|L1b|-100",
-                dateOperation: "2026-03-21",
-                label: "L1 importée B",
-                amount: -100,
-                rowNumber: 2,
-                metadata: {
-                    accountNumber: "2245945T038",
-                    type: "CCP",
-                    exportDate: "2026-03-21",
-                    balance: 1000
-                }
-            }
-        ]);
+        const imports = [
+            await fixtures.banquePostaleImports.create({ accountId, compositeExternalId: "1|2026-03-21|L1a|-100", dateOperation: "2026-03-21", label: "L1 importée A", amount: -100 }),
+            await fixtures.banquePostaleImports.create({ accountId, compositeExternalId: "1|2026-03-21|L1b|-100", dateOperation: "2026-03-21", label: "L1 importée B", amount: -100 }),
+        ];
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations/check-batch`)
@@ -654,19 +523,12 @@ describe("AccountLineController /lazy integration", () => {
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
         const firstLine = await lineRepo.findOneByOrFail({ label: "L1" });
         const secondLine = await lineRepo.findOneByOrFail({ label: "L3" });
-        const imported = await importRepo.save({
+        const imported = await fixtures.banquePostaleImports.create({
             accountId,
             compositeExternalId: "1|2026-03-21|SHARED|-100|1",
             dateOperation: "2026-03-21",
             label: "Import sélectionné deux fois",
             amount: -100,
-            rowNumber: 1,
-            metadata: {
-                accountNumber: "2245945T038",
-                type: "CCP",
-                exportDate: "2026-03-21",
-                balance: 1000
-            }
         });
 
         const response = await request(app)
@@ -708,14 +570,7 @@ describe("AccountLineController /lazy integration", () => {
     it("POST creates a transfer: source gets debit line, target gets mirror credit line, visible via /lazy on both accounts", async () => {
         const targetAccountId = 2;
         const lineRepo = testDataSource.getRepository(AccountLine);
-        const accountRepo = testDataSource.getRepository(Account);
-
-        await accountRepo.save({
-            id: targetAccountId,
-            label: "Epargne",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01")
-        });
+        await fixtures.accounts.create({ id: targetAccountId, label: "Epargne" });
 
         const response = await request(app)
             .post(`/accounts/${accountId}/operations`)

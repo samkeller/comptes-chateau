@@ -10,6 +10,7 @@ import { formatApiDate, parseApiDate } from "@/utils/DatesUtils";
 export interface StockItemDraft {
     id?: number;
     label: string;
+    description?: string;
     barcode: string;
     brand: string;
     defaultUnit: StockUnitUnits;
@@ -91,6 +92,7 @@ export function entryDraftFromItem(item: StockItemWithLotsDto, newLotLocationId?
         item: {
             id: item.id,
             label: item.label,
+            description: item.description ?? "",
             barcode: item.barcode ?? "",
             brand: item.brand ?? "",
             defaultUnit: item.defaultUnit as StockUnitUnits,
@@ -144,6 +146,7 @@ export function toSaveStockEntryDto(draft: StockEntryDraft): SaveStockEntryDto {
         item: {
             ...(draft.item.id !== undefined ? { id: draft.item.id } : {}),
             label: draft.item.label.trim(),
+            description: optional(draft.item.description ?? ""),
             barcode: optional(draft.item.barcode),
             brand: optional(draft.item.brand),
             defaultUnit: draft.item.defaultUnit,

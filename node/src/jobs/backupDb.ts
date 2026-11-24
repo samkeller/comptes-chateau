@@ -7,6 +7,8 @@ import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import JobExecutionLogService from '../modules/core/services/JobExecutionLogService';
 
+export const BACKUP_DB_JOB_NAME = 'backup-db';
+
 /**
  * Creates a PostgreSQL dump (pg_dump) and uploads it to a configured Google Drive folder.
  */
@@ -14,7 +16,7 @@ export async function backupDb(
     currentDate: Date
 
 ) {
-    const jobName = 'backup-db';
+    const jobName = BACKUP_DB_JOB_NAME;
     const logService = new JobExecutionLogService();
 
     await logService.logInfo(jobName, 'Starting backup process');
@@ -152,10 +154,11 @@ export async function backupDb(
                 { date: currentDate }
             );
         } catch (cleanupError) {
-            await logService.logError(
+            // Avertissement seulement : un nettoyage raté ne doit pas faire passer une sauvegarde réussie pour un échec.
+            await logService.logWarning(
                 jobName,
                 `Failed to remove temporary directory: ${tempDir}`,
-                cleanupError
+                { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) }
             );
         }
     }

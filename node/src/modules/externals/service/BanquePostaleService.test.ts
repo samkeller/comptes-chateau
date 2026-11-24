@@ -1,24 +1,19 @@
+import { parseISO } from "date-fns";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Repository } from "typeorm";
-import { Account } from "../../accounts/entities/Account";
 import type { BanquePostaleImportPayload } from "@chocosous/shared";
-import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
 import BanquePostaleService from "./BanquePostaleService";
 import { BanquePostaleOperationImport } from "../entities/BanquePostaleImport";
-import AccountLineService from "../../accounts/services/AccountLineService";
 
 describe("BanquePostaleService.import", () => {
     let banquePostaleService: BanquePostaleService;
-    let accountLineService: AccountLineService;
     let banquePostaleImportRepo: Repository<BanquePostaleOperationImport>;
-    let accountRepo: Repository<Account>;
 
     beforeAll(() => {
         banquePostaleService = new BanquePostaleService(testDataSource.manager);
-        accountLineService = new AccountLineService(testDataSource.manager);
 
         banquePostaleImportRepo = testDataSource.manager.getRepository(BanquePostaleOperationImport);
-        accountRepo = testDataSource.manager.getRepository(Account);
     });
 
     const createPayload = (
@@ -46,16 +41,7 @@ describe("BanquePostaleService.import", () => {
         accountId?: number;
         label?: string;
     } = {}) => {
-        return accountLineService.save({
-            dateOperation: dateOperation,
-            debit,
-            credit,
-            label,
-            isChecked: false,
-        },
-            accountId,
-            TEST_USER_ID
-        );
+        return fixtures.accountLines.create({ accountId, dateOperation: parseISO(dateOperation), debit, credit, label });
     };
 
     it("should create new Banque Postale operations", async () => {
@@ -431,14 +417,7 @@ describe("BanquePostaleService.import", () => {
     });
 
     it("should not match an operation from another account", async () => {
-        const newAccount = accountRepo.create({
-            id: 2,
-            label: "New Account",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: "2026-09-08",
-        });
-
-        await accountRepo.save(newAccount);
+        const newAccount = await fixtures.accounts.create({ label: "New Account" });
 
         const accountLine = await createUncheckedAccountLine({
             accountId: newAccount.id,

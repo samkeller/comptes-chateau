@@ -7,7 +7,8 @@
     "typeorm": "typeorm-ts-node-commonjs -d ./src/db/dataSource.ts",
     "build": "rimraf dist && tsc",
     "start": "node dist/index.js",
-    "tests": "vitest run"
+    "tests": "vitest run",
+    "seed": "ts-node src/db/fixtures/cli.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,7 @@
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
+import { FloatLabel } from "primereact/floatlabel";
 import { STOCK_UNIT_UNITS, type StockUnitUnits } from "@chocosous/shared";
 import type { StockItemDraft } from "../stockEntryDraft";
 
@@ -21,25 +23,69 @@ export default function StockProductFields({ item, onChange }: StockProductField
     const showImage = item.imageUrl.trim() !== "" && isHttpUrl(item.imageUrl);
 
     return (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="flex flex-col gap-1">
-                <label htmlFor="stock-product-brand" className="text-sm">Marque</label>
-                <InputText id="stock-product-brand" value={item.brand} maxLength={255}
-                    onChange={(event) => onChange({ brand: event.target.value })} />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="md:col-span-2 pt-2">
+                <FloatLabel>
+                    <InputTextarea
+                        id="stock-product-description"
+                        rows={3}
+                        value={item.description ?? ""}
+                        maxLength={255}
+                        className="w-full"
+                        onChange={(event) => onChange({ description: event.target.value })}
+                    />
+                    <label htmlFor="stock-product-description">Description</label>
+                </FloatLabel>
             </div>
-            <div className="flex flex-col gap-1">
-                <label htmlFor="stock-product-unit" className="text-sm">Unité par défaut</label>
-                <Dropdown inputId="stock-product-unit" value={item.defaultUnit} options={[...STOCK_UNIT_UNITS]}
-                    onChange={(event) => onChange({ defaultUnit: event.value as StockUnitUnits })} />
+
+            <div className="pt-2">
+                <FloatLabel>
+                    <InputText
+                        id="stock-product-brand"
+                        value={item.brand}
+                        maxLength={255}
+                        className="w-full"
+                        onChange={(event) => onChange({ brand: event.target.value })}
+                    />
+                    <label htmlFor="stock-product-brand">Marque</label>
+                </FloatLabel>
             </div>
-            <div className="flex flex-col gap-1 md:col-span-2">
-                <label htmlFor="stock-product-image" className="text-sm">Image (URL)</label>
+
+            <div className="pt-2">
+                <FloatLabel>
+                    <Dropdown
+                        inputId="stock-product-unit"
+                        value={item.defaultUnit}
+                        options={[...STOCK_UNIT_UNITS]}
+                        className="w-full"
+                        onChange={(event) => onChange({ defaultUnit: event.value as StockUnitUnits })}
+                    />
+                    <label htmlFor="stock-product-unit">Unité par défaut</label>
+                </FloatLabel>
+            </div>
+
+            <div className="md:col-span-2 pt-2">
                 <div className="flex items-center gap-3">
-                    <InputText id="stock-product-image" type="url" value={item.imageUrl} className="flex-1 min-w-0"
-                        onChange={(event) => onChange({ imageUrl: event.target.value })} />
+                    <div className="flex-1 min-w-0">
+                        <FloatLabel>
+                            <InputText
+                                id="stock-product-image"
+                                type="url"
+                                value={item.imageUrl}
+                                className="w-full"
+                                onChange={(event) => onChange({ imageUrl: event.target.value })}
+                            />
+                            <label htmlFor="stock-product-image">Image (URL)</label>
+                        </FloatLabel>
+                    </div>
+
                     {showImage && (
-                        <img src={item.imageUrl.trim()} alt="" referrerPolicy="no-referrer"
-                            className="h-12 w-12 shrink-0 rounded object-contain" />
+                        <img
+                            src={item.imageUrl.trim()}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="h-12 w-12 shrink-0 rounded object-contain"
+                        />
                     )}
                 </div>
             </div>
