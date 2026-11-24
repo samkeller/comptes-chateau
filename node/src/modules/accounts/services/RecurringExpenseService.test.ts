@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RecurringExpenseService from "./RecurringExpenseService";
-import { RecurringExpense, RecurringExpenseFrequency, } from "../entities/RecurringExpense";
-import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource, } from "../../../tests/testDbSetup";
+import { RecurringExpense, RecurringExpenseFrequency } from "../entities/RecurringExpense";
+import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { User } from "../../core/entities/User";
 
 const NOW = new Date("2026-09-11");
@@ -57,16 +57,13 @@ describe("RecurringExpenseService", () => {
     });
 
     it("does not award XP when updating a recurring expense", async () => {
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             id: 1,
             accountId: TEST_ACCOUNT_ID,
             label: "Abonnement salle",
             solde: 31.99,
-            isActive: true,
             nextOccurrence: new Date("2026-10-01"),
             frequency: RecurringExpenseFrequency.MONTHLY,
-            natureId: null,
-            posteId: null,
         });
 
         await service.save(
@@ -94,11 +91,10 @@ describe("RecurringExpenseService", () => {
     it("counts monthly occurrences from the next scheduled date until the forecast horizon", async () => {
         const horizon = new Date("2026-12-31");
 
-        await testDataSource.getRepository(RecurringExpense).save([
+        await fixtures.recurringExpenses.createEach([
             {
                 label: "Loyer",
                 solde: -100,
-                isActive: true,
                 // 15/09, 15/10, 15/11, 15/12
                 nextOccurrence: new Date("2026-09-15"),
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -107,7 +103,6 @@ describe("RecurringExpenseService", () => {
             {
                 label: "Abonnement",
                 solde: -50,
-                isActive: true,
                 // 22/09, 22/10, 22/11, 22/12
                 nextOccurrence: new Date("2026-09-22"),
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -130,11 +125,10 @@ describe("RecurringExpenseService", () => {
         const incomeOccurrence = new Date("2026-09-26");
         const horizon = new Date("2026-10-27");
 
-        await testDataSource.getRepository(RecurringExpense).save([
+        await fixtures.recurringExpenses.createEach([
             {
                 label: "Loyer",
                 solde: -100,
-                isActive: true,
                 // 16/09 puis 16/10
                 nextOccurrence: expenseOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -143,7 +137,6 @@ describe("RecurringExpenseService", () => {
             {
                 label: "Remboursement",
                 solde: 30,
-                isActive: true,
                 // 26/09 puis 26/10
                 nextOccurrence: incomeOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
@@ -165,10 +158,9 @@ describe("RecurringExpenseService", () => {
     it("[simulateFutureRecurrent()] includes the recurring expense occurring on the last day of the current month", async () => {
         const endOfMonth = new Date("2026-09-30");
 
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             label: "Loyer",
             solde: -100,
-            isActive: true,
             nextOccurrence: endOfMonth,
             frequency: RecurringExpenseFrequency.MONTHLY,
             accountId: TEST_ACCOUNT_ID,
@@ -186,10 +178,9 @@ describe("RecurringExpenseService", () => {
         const firstOccurrence = new Date("2026-09-30");
         const horizon = new Date("2026-12-31");
 
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             label: "Loyer",
             solde: -100,
-            isActive: true,
             nextOccurrence: firstOccurrence,
             frequency: RecurringExpenseFrequency.MONTHLY,
             accountId: TEST_ACCOUNT_ID,
@@ -208,10 +199,9 @@ describe("RecurringExpenseService", () => {
         const firstOccurrence = new Date("2026-09-29");
         const horizon = new Date("2027-01-01");
 
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             label: "Loyer",
             solde: -100,
-            isActive: true,
             nextOccurrence: firstOccurrence,
             frequency: RecurringExpenseFrequency.MONTHLY,
             accountId: TEST_ACCOUNT_ID,
@@ -230,10 +220,9 @@ describe("RecurringExpenseService", () => {
         const firstOccurrence = new Date("2026-09-30");
         const horizon = new Date("2026-12-31");
 
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             label: "Loyer",
             solde: -100,
-            isActive: true,
             nextOccurrence: firstOccurrence,
             frequency: RecurringExpenseFrequency.MONTHLY,
             accountId: TEST_ACCOUNT_ID,
@@ -252,11 +241,10 @@ describe("RecurringExpenseService", () => {
         const firstOccurrence = new Date("2026-09-30");
         const horizon = new Date("2026-12-31");
 
-        await testDataSource.getRepository(RecurringExpense).save([
+        await fixtures.recurringExpenses.createEach([
             {
                 label: "Loyer",
                 solde: -100,
-                isActive: true,
                 nextOccurrence: firstOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
                 accountId: TEST_ACCOUNT_ID,
@@ -264,7 +252,6 @@ describe("RecurringExpenseService", () => {
             {
                 label: "Salaire",
                 solde: 2000,
-                isActive: true,
                 nextOccurrence: firstOccurrence,
                 frequency: RecurringExpenseFrequency.MONTHLY,
                 accountId: TEST_ACCOUNT_ID,
@@ -286,10 +273,9 @@ describe("RecurringExpenseService", () => {
         const firstOccurrence = new Date("2026-09-30");
         const horizon = new Date("2027-06-30");
 
-        await testDataSource.getRepository(RecurringExpense).save({
+        await fixtures.recurringExpenses.create({
             label: "Assurance",
             solde: -300,
-            isActive: true,
             nextOccurrence: firstOccurrence,
             frequency: RecurringExpenseFrequency.QUARTERLY,
             accountId: TEST_ACCOUNT_ID,

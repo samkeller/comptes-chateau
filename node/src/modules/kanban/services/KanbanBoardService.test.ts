@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CreateKanbanTaskRequest } from "@chocosous/shared";
 import { AppError } from "../../../utils/AppError";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { User } from "../../core/entities/User";
-import { KanbanColumn } from "../entities/KanbanColumn";
 import { KanbanComment } from "../entities/KanbanComment";
 import { KanbanTask } from "../entities/KanbanTask";
 import KanbanBoardService from "./KanbanBoardService";
@@ -16,22 +15,8 @@ describe("KanbanBoardService", () => {
     });
 
     async function createTask(): Promise<KanbanTask> {
-        const column = await testDataSource.getRepository(KanbanColumn).save({
-            label: "À faire",
-            order: 1,
-        });
-
-        return testDataSource.getRepository(KanbanTask).save({
-            title: "Tâche de test",
-            description: null,
-            tags: [],
-            priority: "normal",
-            columnId: column.id,
-            column,
-            assignees: [],
-            isDone: false,
-            doneByUserId: null,
-        });
+        const column = await fixtures.kanbanColumns.create({ label: "À faire" });
+        return fixtures.kanbanTasks.create({ columnId: column.id, title: "Tâche de test" });
     }
 
     it("does not award completion XP more than once", async () => {
@@ -46,13 +31,8 @@ describe("KanbanBoardService", () => {
 
     it("prevents users from deleting another user's comment", async () => {
         const task = await createTask();
-        const otherUser = await testDataSource.getRepository(User).save({
-            username: "autre-utilisateur",
-            avatar: "default-avatar.png",
-            passwordHash: "testpasswordhash",
-            totalXp: 0,
-        });
-        const comment = await testDataSource.getRepository(KanbanComment).save({
+        const otherUser = await fixtures.users.create({ username: "autre-utilisateur" });
+        const comment = await fixtures.kanbanComments.create({
             content: "Commentaire propriétaire",
             taskId: task.id,
             authorId: TEST_USER_ID,

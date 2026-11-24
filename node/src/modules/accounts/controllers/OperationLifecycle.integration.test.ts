@@ -1,42 +1,15 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Account } from "../entities/Account";
 import { AccountLine } from "../entities/AccountLine";
 import { BanquePostaleOperationImport } from "../../externals/entities/BanquePostaleImport";
-import { User } from "../../core/entities/User";
-import { testDataSource } from "../../../tests/testDbSetup";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 
-const accountId = 1;
+const accountId = TEST_ACCOUNT_ID;
 const targetAccountId = 2;
-let seededUserId: number;
 
 async function seedAccounts(): Promise<void> {
-    const accountRepo = testDataSource.getRepository(Account);
-    const userRepo = testDataSource.getRepository(User);
-
-    const seededUser = await userRepo.save({
-        username: "lifecycle-user",
-        avatar: "001-tiger.png",
-        totalXp: 0,
-        passwordHash: "hash"
-    });
-    seededUserId = seededUser.id;
-
-    await accountRepo.save([
-        {
-            id: accountId,
-            label: "Compte principal",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01")
-        },
-        {
-            id: targetAccountId,
-            label: "Epargne",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01")
-        }
-    ]);
+    await fixtures.accounts.create({ id: targetAccountId, label: "Epargne" });
 }
 
 async function createTransfer(amount: number = 100): Promise<{ id: number; transferGroupId: string }> {
@@ -70,7 +43,7 @@ describe("Operation lifecycle - transfers (integration)", () => {
         await seedAccounts();
 
         const { default: accountScopedRoutes } = await import("./AccountScopedRoutes");
-        app = createTestApp("/accounts/:accountId", accountScopedRoutes, seededUserId);
+        app = createTestApp("/accounts/:accountId", accountScopedRoutes);
     });
 
     it("delete removes both the line and its mirror", async () => {
@@ -86,20 +59,13 @@ describe("Operation lifecycle - transfers (integration)", () => {
     it("delete keeps import row and sets its accountLineId to null", async () => {
         const { id } = await createTransfer();
         const importRepo = testDataSource.getRepository(BanquePostaleOperationImport);
-        const linkedImport = await importRepo.save({
+        const linkedImport = await fixtures.banquePostaleImports.create({
             accountId,
             compositeExternalId: "1|2026-03-15|VIREMENT|-100",
             dateOperation: "2026-03-15",
             label: "Virement import",
             amount: -100,
-            rowNumber: 1,
             accountLineId: id,
-            metadata: {
-                accountNumber: "2245945T038",
-                type: "CCP",
-                exportDate: "2026-03-15",
-                balance: 500
-            }
         });
 
         const deleteResponse = await request(app).delete(`/accounts/${accountId}/operations/${id}`);
@@ -244,37 +210,20 @@ describe("Operation lifecycle - transfers (integration)", () => {
     });
 
     it("the database rejects a line with transferGroupId but no targetAccount (pair consistency)", async () => {
-        const lineRepo = testDataSource.getRepository(AccountLine);
-        const account = await testDataSource.getRepository(Account).findOneByOrFail({ id: accountId });
-
-        await expect(lineRepo.save({
-            label: "Incohérente",
-            dateOperation: new Date("2026-03-10"),
-            dateValeur: null,
+        await expect(fixtures.accountLines.create({
+            accountId,
             debit: 10,
-            credit: 0,
-            isChecked: false,
-            account,
             transferGroupId: "11111111-2222-3333-4444-555555555555",
             targetAccount: null
         })).rejects.toThrow();
     });
 
     it("the database rejects a line with targetAccount but no transferGroupId (pair consistency)", async () => {
-        const lineRepo = testDataSource.getRepository(AccountLine);
-        const account = await testDataSource.getRepository(Account).findOneByOrFail({ id: accountId });
-        const target = await testDataSource.getRepository(Account).findOneByOrFail({ id: targetAccountId });
-
-        await expect(lineRepo.save({
-            label: "Incohérente",
-            dateOperation: new Date("2026-03-10"),
-            dateValeur: null,
+        await expect(fixtures.accountLines.create({
+            accountId,
             debit: 10,
-            credit: 0,
-            isChecked: false,
-            account,
             transferGroupId: null,
-            targetAccount: target
+            targetAccount: { id: targetAccountId }
         })).rejects.toThrow();
     });
 

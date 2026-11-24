@@ -3,7 +3,7 @@ import JobExecutionLogService from "../modules/core/services/JobExecutionLogServ
 import OpenFoodFactsProductService from "../modules/stocks/services/OpenFoodFactsProductService";
 import StockItemService from "../modules/stocks/services/StockItemService";
 
-const JOB_NAME = "open-food-facts-sync";
+export const OPEN_FOOD_FACTS_SYNC_JOB_NAME = "open-food-facts-sync";
 
 export interface SyncOpenFoodFactsOptions {
     /** Appels OFF maximum par exécution (le reste sera traité aux exécutions suivantes). */
@@ -63,10 +63,10 @@ export async function syncOpenFoodFacts(manager: EntityManager, options: SyncOpe
             if (suggestion && await itemService.enrichFromSuggestion(item, suggestion)) result.enrichedItems++;
         }
 
-        await logService.logSuccess(JOB_NAME, "OpenFoodFacts synchronisé", { ...result });
+        await logService.logSuccess(OPEN_FOOD_FACTS_SYNC_JOB_NAME, "OpenFoodFacts synchronisé", { ...result });
         return result;
     } catch (error) {
-        await logService.logError(JOB_NAME, "Échec de la synchronisation OpenFoodFacts", error);
+        await logService.logError(OPEN_FOOD_FACTS_SYNC_JOB_NAME, "Échec de la synchronisation OpenFoodFacts", error);
         throw error;
     }
 }

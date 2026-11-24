@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { TEST_ACCOUNT_ID, testDataSource } from "../../../tests/testDbSetup";
-import { Account } from "../../accounts/entities/Account";
-import { AccountLine, AccountLineSource } from "../../accounts/entities/AccountLine";
+import { TEST_ACCOUNT_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { AccountLinePoste } from "../../accounts/entities/AccountLinePoste";
 import { AccountLineRule } from "../entities/AccountLineRule";
 import AccountLineCategorizationService from "./AccountLineCategorizationService";
@@ -15,25 +13,14 @@ describe("AccountLineCategorizationService", () => {
     });
 
     async function seedPattern(accountId: number, label: string, count: number): Promise<AccountLinePoste> {
-        const poste = await testDataSource.getRepository(AccountLinePoste).save({
+        const poste = await fixtures.postes.create({ accountId, label: `Loisirs ${accountId}` });
+        await fixtures.accountLines.createMany(count, (index) => ({
             accountId,
-            label: `Loisirs ${accountId}`,
-            color: "#123456",
-        });
-
-        await testDataSource.getRepository(AccountLine).save(
-            Array.from({ length: count }, (_, index) => ({
-                accountId,
-                posteId: poste.id,
-                label,
-                debit: 10 + index,
-                credit: 0,
-                isChecked: false,
-                dateValeur: null,
-                dateOperation: new Date(`2026-03-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
-                source: AccountLineSource.MANUAL,
-            }))
-        );
+            posteId: poste.id,
+            label,
+            debit: 10 + index,
+            dateOperation: new Date(`2026-03-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
+        }));
 
         return poste;
     }
@@ -61,13 +48,11 @@ describe("AccountLineCategorizationService", () => {
 
     it("does not return a pattern that already has a rule", async () => {
         await seedPattern(TEST_ACCOUNT_ID, "Café Paris", 3);
-        await testDataSource.getRepository(AccountLineRule).save({
+        await fixtures.rules.create({
             accountId: TEST_ACCOUNT_ID,
             label: "Café paris",
             pattern: "cafe paris",
             occurrencesCount: 3,
-            posteId: null,
-            natureId: null,
         });
 
         await expect(service.getUnmapped()).resolves.toEqual([]);
@@ -75,21 +60,14 @@ describe("AccountLineCategorizationService", () => {
 
     it("keeps patterns isolated by account", async () => {
         const secondAccountId = 2;
-        await testDataSource.getRepository(Account).save({
-            id: secondAccountId,
-            label: "Compte B",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01T00:00:00.000Z"),
-        });
+        await fixtures.accounts.create({ id: secondAccountId, label: "Compte B" });
         await seedPattern(TEST_ACCOUNT_ID, "Café Paris", 1);
         const secondPoste = await seedPattern(secondAccountId, "Cafe Paris", 3);
-        await testDataSource.getRepository(AccountLineRule).save({
+        await fixtures.rules.create({
             accountId: TEST_ACCOUNT_ID,
             label: "Cafe paris",
             pattern: "cafe paris",
             occurrencesCount: 1,
-            posteId: null,
-            natureId: null,
         });
 
         const result = await service.getUnmapped();
@@ -105,13 +83,11 @@ describe("AccountLineCategorizationService", () => {
     });
 
     it("rejects a poste that does not belong to the target account", async () => {
-        const rule = await testDataSource.getRepository(AccountLineRule).save({
+        const rule = await fixtures.rules.create({
             accountId: TEST_ACCOUNT_ID,
             label: "Ancien motif",
             pattern: "ancien motif",
             occurrencesCount: 0,
-            posteId: null,
-            natureId: null,
         });
 
         await expect(service.updateById(rule.id, {

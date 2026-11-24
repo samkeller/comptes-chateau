@@ -1,9 +1,7 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { KanbanColumn } from "../entities/KanbanColumn";
-import { User } from "../../core/entities/User";
 import NotificationService from "../../notifications/services/NotificationService";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 
 /** Notifications de l'utilisateur, sans les providers d'état (comptes, stocks, jobs). */
@@ -22,13 +20,8 @@ describe("Kanban notifications", () => {
     });
 
     beforeEach(async () => {
-        columnId = (await testDataSource.getRepository(KanbanColumn).save({ label: "À faire", order: 1 })).id;
-        otherUserId = (await testDataSource.getRepository(User).save({
-            username: "gaelle",
-            avatar: "default-avatar.png",
-            passwordHash: "hash",
-            totalXp: 0,
-        })).id;
+        columnId = (await fixtures.kanbanColumns.create({ label: "À faire" })).id;
+        otherUserId = (await fixtures.users.create({ username: "gaelle" })).id;
     });
 
     it("notifies a user assigned to a new task, but not the creator assigning themselves", async () => {

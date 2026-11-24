@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { testDataSource } from "../tests/testDbSetup";
+import { testDataSource, fixtures } from "../tests/testDbSetup";
 import type { OpenFoodFactsFetchResult } from "../modules/stocks/clients/OpenFoodFactsClient";
 import { StockItem } from "../modules/stocks/entities/StockItem";
 import { OpenFoodFactsApiCall } from "../modules/stocks/entities/OpenFoodFactsApiCall";
@@ -24,10 +24,10 @@ describe("syncOpenFoodFacts", () => {
 
     it("normalizes barcodes, stores OFF products and enriches existing items without overwriting user data", async () => {
         const repo = testDataSource.getRepository(StockItem);
-        const legacy = await repo.save({ label: "Mon riz", defaultUnit: "g", barcode: "012345678905" });
-        const typed = await repo.save({ label: "Mes pâtes", defaultUnit: "g", barcode: "12345678", brand: "Maison" });
-        const duplicate = await repo.save({ label: "Mes pâtes bis", defaultUnit: "g", barcode: "12345678" });
-        await repo.save({ label: "Sans code", defaultUnit: "g" });
+        const legacy = await fixtures.stockItems.create({ label: "Mon riz", defaultUnit: "g", barcode: "012345678905" });
+        const typed = await fixtures.stockItems.create({ label: "Mes pâtes", defaultUnit: "g", barcode: "12345678", brand: "Maison" });
+        const duplicate = await fixtures.stockItems.create({ label: "Mes pâtes bis", defaultUnit: "g", barcode: "12345678" });
+        await fixtures.stockItems.create({ label: "Sans code", defaultUnit: "g" });
 
         const result = await syncOpenFoodFacts(testDataSource.manager, { now, sleep, productService });
 
@@ -43,8 +43,7 @@ describe("syncOpenFoodFacts", () => {
     });
 
     it("is idempotent and respects the per-run call budget", async () => {
-        const repo = testDataSource.getRepository(StockItem);
-        await repo.save([
+        await fixtures.stockItems.createEach([
             { label: "A", defaultUnit: "g", barcode: "11111111" },
             { label: "B", defaultUnit: "g", barcode: "22222222" },
             { label: "C", defaultUnit: "g", barcode: "33333333" },

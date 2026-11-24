@@ -1,6 +1,6 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { createTestApp } from "../../../tests/testApp";
 import { User } from "../../core/entities/User";
 import { USER_XP_ACTIONS } from "@chocosous/shared";
@@ -20,7 +20,7 @@ describe("StockEntryRoutes integration", () => {
     });
 
     beforeEach(async () => {
-        [kitchen, cellar] = await testDataSource.getRepository(StockLocation).save([{ label: "Cuisine" }, { label: "Cave" }]);
+        [kitchen, cellar] = await fixtures.stockLocations.createEach([{ label: "Cuisine" }, { label: "Cave" }]);
     });
 
     const totalXp = async () => (await testDataSource.getRepository(User).findOneByOrFail({ id: TEST_USER_ID })).totalXp;
@@ -166,8 +166,8 @@ describe("StockEntryRoutes integration", () => {
     });
 
     it.each(["boite", "pack"])("edits a stored product using historical unit %s without changing its quantity", async (unit) => {
-        const item = await testDataSource.getRepository(StockItem).save({ label: "Biscuits", defaultUnit: unit });
-        const storedUnit = await testDataSource.getRepository(StockUnit).save({
+        const item = await fixtures.stockItems.create({ label: "Biscuits", defaultUnit: unit });
+        const storedUnit = await fixtures.stockUnits.create({
             itemId: item.id, locationId: kitchen.id, quantity: 2, unit, expirationDate: null,
         });
 

@@ -2,8 +2,8 @@ import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { BanquePostaleImportPayload } from "@chocosous/shared";
 import { createTestApp } from "../../../tests/testApp";
-import { TEST_ACCOUNT_ID, testDataSource } from "../../../tests/testDbSetup";
-import { AccountLine, AccountLineSource } from "../../accounts/entities/AccountLine";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
+import { AccountLine } from "../../accounts/entities/AccountLine";
 import { BanquePostaleOperationImport } from "../entities/BanquePostaleImport";
 
 describe("BanquePostale Integration Tests", () => {
@@ -16,18 +16,11 @@ describe("BanquePostale Integration Tests", () => {
     });
 
     it("imports operations, reports matching outcomes and stays idempotent", async () => {
-        const accountLineRepository = testDataSource.getRepository(AccountLine);
         const importedOperationRepository = testDataSource.getRepository(BanquePostaleOperationImport);
 
-        const createUncheckedLine = async (line: Partial<AccountLine>) => accountLineRepository.save({
+        const createUncheckedLine = (line: Partial<AccountLine>) => fixtures.accountLines.create({
             accountId: TEST_ACCOUNT_ID,
-            debit: 0,
-            credit: 0,
-            label: "Fixture",
-            isChecked: false,
             dateOperation: new Date("2026-09-08"),
-            dateValeur: null,
-            source: AccountLineSource.MANUAL,
             ...line,
         });
 
@@ -54,15 +47,13 @@ describe("BanquePostale Integration Tests", () => {
         });
         await createUncheckedLine({ debit: 99, label: "Montant différent" });
         await createUncheckedLine({ debit: 88, label: "Date hors fenêtre" });
-        const checkedLine = await accountLineRepository.save({
+        const checkedLine = await fixtures.accountLines.create({
             accountId: TEST_ACCOUNT_ID,
             debit: 77,
-            credit: 0,
             label: "Déjà vérifiée",
             isChecked: true,
             dateOperation: new Date("2026-09-08"),
             dateValeur: new Date("2026-09-08"),
-            source: AccountLineSource.MANUAL,
         });
 
         const payload: BanquePostaleImportPayload = {

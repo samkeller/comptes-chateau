@@ -1,26 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { User } from "../../core/entities/User";
 import { addDays, subDays } from "date-fns";
-import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
+import { TEST_ACCOUNT_ID, TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { formatApiDate } from "../../../utils/DateUtils";
 import AccountLineService from "../../accounts/services/AccountLineService";
 import JobExecutionLogService from "../../core/services/JobExecutionLogService";
 import { BACKUP_DB_JOB_NAME } from "../../../jobs/backupDb";
-import { StockItem } from "../../stocks/entities/StockItem";
-import { StockLocation } from "../../stocks/entities/StockLocation";
-import { StockUnit } from "../../stocks/entities/StockUnit";
 import type { NotificationDraft, NotificationProvider } from "../NotificationProvider";
 import NotificationService from "./NotificationService";
 
 const NOW = new Date();
 
 async function createOtherUser(): Promise<number> {
-    const user = await testDataSource.getRepository(User).save({
-        username: "gaelle",
-        avatar: "default-avatar.png",
-        passwordHash: "hash",
-        totalXp: 0,
-    });
+    const user = await fixtures.users.create({ username: "gaelle" });
     return user.id;
 }
 
@@ -108,14 +99,14 @@ describe("NotificationService", () => {
 
     describe("with the registered providers", () => {
         it("reports expired and soon-to-expire stock, a failed job and an overdrawn account", async () => {
-            const location = await testDataSource.getRepository(StockLocation).save({ label: "Cuisine" });
-            const [milk, butter, rice] = await testDataSource.getRepository(StockItem).save([
+            const location = await fixtures.stockLocations.create({ label: "Cuisine" });
+            const [milk, butter, rice] = await fixtures.stockItems.createEach([
                 { label: "Lait", defaultUnit: "L" },
                 { label: "Beurre", defaultUnit: "g" },
                 { label: "Riz", defaultUnit: "g" },
             ]);
             const unit = { locationId: location.id, quantity: 1, unit: "u" };
-            await testDataSource.getRepository(StockUnit).save([
+            await fixtures.stockUnits.createEach([
                 { ...unit, itemId: milk.id, expirationDate: formatApiDate(subDays(NOW, 1)) },
                 { ...unit, itemId: milk.id, expirationDate: formatApiDate(addDays(NOW, 3)) },
                 { ...unit, itemId: butter.id, expirationDate: formatApiDate(NOW) },

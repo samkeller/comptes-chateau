@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { testDataSource, TEST_ACCOUNT_ID } from "../../../tests/testDbSetup";
+import { testDataSource, TEST_ACCOUNT_ID, fixtures } from "../../../tests/testDbSetup";
 import { AccountLine, AccountLineSource } from "../entities/AccountLine";
 import AccountLineService from "./AccountLineService";
 
@@ -58,15 +58,13 @@ describe("AccountLineService.saveAll", () => {
 
     it("preserves the persisted check state when updating unrelated fields", async () => {
         const accountLineRepo = testDataSource.getRepository(AccountLine);
-        const existingLine = await accountLineRepo.save({
+        const existingLine = await fixtures.accountLines.create({
             accountId: TEST_ACCOUNT_ID,
             label: "Ligne vérifiée",
             dateOperation: new Date("2026-03-01T00:00:00.000Z"),
             isChecked: true,
             dateValeur: new Date("2026-03-02T00:00:00.000Z"),
             debit: 25,
-            credit: 0,
-            source: AccountLineSource.MANUAL,
         });
 
         await service.saveAll([{

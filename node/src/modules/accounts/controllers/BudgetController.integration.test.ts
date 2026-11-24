@@ -1,8 +1,6 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { testDataSource } from "../../../tests/testDbSetup";
-import { Account } from "../entities/Account";
-import { AccountLinePoste } from "../entities/AccountLinePoste";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../../../tests/testDbSetup";
 import { BudgetItem } from "../entities/BudgetItem";
 import { createTestApp } from "../../../tests/testApp";
 
@@ -18,23 +16,8 @@ describe("BudgetController integration", () => {
     });
 
     beforeEach(async () => {
-        const accountRepo = testDataSource.getRepository(Account);
-        const posteRepo = testDataSource.getRepository(AccountLinePoste);
-
-        const account = await accountRepo.save({
-            id: 1,
-            label: "Compte principal",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01"),
-        });
-        accountId = account.id;
-
-        const poste = await posteRepo.save({
-            label: "Logement",
-            color: "#445566",
-            account,
-        });
-        posteId = poste.id;
+        accountId = TEST_ACCOUNT_ID;
+        posteId = (await fixtures.postes.create({ accountId, label: "Logement", color: "#445566" })).id;
     });
 
     it("creates, updates and reads an active budget item", async () => {
@@ -151,21 +134,8 @@ describe("BudgetController integration", () => {
     });
 
     it("returns 400 when poste does not belong to account", async () => {
-        const accountRepo = testDataSource.getRepository(Account);
-        const posteRepo = testDataSource.getRepository(AccountLinePoste);
-
-        const otherAccount = await accountRepo.save({
-            id: 2,
-            label: "Compte secondaire",
-            baseLineAmount: 0,
-            baseLineEffectiveDate: new Date("2026-01-01"),
-        });
-
-        const otherPoste = await posteRepo.save({
-            label: "Autre",
-            color: "#112233",
-            account: otherAccount,
-        });
+        const otherAccount = await fixtures.accounts.create();
+        const otherPoste = await fixtures.postes.create({ accountId: otherAccount.id });
 
         const response = await request(app)
             .post(`/accounts/${accountId}/budget`)

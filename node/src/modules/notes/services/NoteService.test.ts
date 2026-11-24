@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { UpdateNoteRequest } from "@chocosous/shared";
-import { TEST_USER_ID, testDataSource } from "../../../tests/testDbSetup";
-import { User } from "../../core/entities/User";
+import { TEST_USER_ID, testDataSource, fixtures } from "../../../tests/testDbSetup";
 import { Note } from "../entities/Note";
 import NoteService from "./NoteService";
 
@@ -60,12 +59,7 @@ describe("NoteService", () => {
 
         it("allows shared edits but only the author can permanently delete", async () => {
             const note = await service.create({ title: "Partagée" }, TEST_USER_ID);
-            const otherUser = await testDataSource.getRepository(User).save({
-                username: "second-user",
-                avatar: "default-avatar.png",
-                passwordHash: "testpasswordhash",
-                totalXp: 0,
-            });
+            const otherUser = await fixtures.users.create({ username: "second-user" });
 
             await expect(service.update(note.id, { title: "Modifiée" })).resolves.toMatchObject({ title: "Modifiée" });
             await expect(service.delete(note.id, otherUser.id)).rejects.toMatchObject({

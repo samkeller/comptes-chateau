@@ -3,14 +3,18 @@ import "reflect-metadata";
 import { IMemoryDb, newDb } from "pg-mem";
 import { DataSource, getMetadataArgsStorage } from "typeorm";
 import { afterAll, beforeAll, beforeEach, vi } from "vitest";
-import { User } from "../modules/core/entities/User";
-import { Account } from "../modules/accounts/entities/Account";
+import { BASELINE_ACCOUNT_ID, BASELINE_USER_ID, seedBaseline } from "../db/fixtures/baseline";
+import { Fixtures } from "../db/fixtures/Fixtures";
 import { applyVirtualColumnOverrides, registerTestFunctions } from "./testsFunctions";
 import { TestLogger } from "@chocosous/shared";
-import "reflect-metadata";
 
-export const TEST_USER_ID = 1;
-export const TEST_ACCOUNT_ID = 1;
+/**
+ * Setup commun à tous les tests (vitest `setupFiles`) :
+ * une base pg-mem par fichier, remise à zéro avant chaque test puis garnie du socle (`seedBaseline`).
+ * Les données propres à un test se créent avec `fixtures` (cf. `src/db/fixtures`).
+ */
+export const TEST_USER_ID = BASELINE_USER_ID;
+export const TEST_ACCOUNT_ID = BASELINE_ACCOUNT_ID;
 
 /**
  * Découverte automatique de TOUTES les entités du projet.
@@ -41,6 +45,7 @@ function collectEntities(): Function[] {
 //    ait fini d'initialiser testDataSource (ordre garanti par Vitest).
 // -----------------------------------------------------------------------
 let testDataSource: DataSource;
+let fixtures: Fixtures;
 type ColumnMetadataArgs = ReturnType<typeof getMetadataArgsStorage>["columns"][number];
 const originalDateDefaults = new Map<ColumnMetadataArgs, ColumnMetadataArgs["options"]["default"]>();
 let restoreVirtualColumnQueries: () => void;
@@ -61,7 +66,7 @@ vi.mock("../db/dataSource", () => ({
 
 // -----------------------------------------------------------------------
 // 3. Cycle de vie : une DB par fichier de test, restaurée à son état initial
-//    avant chaque test (données et générateurs d'identifiants inclus).
+//    avant chaque test (données et générateurs d'identifiants inclus), puis le socle.
 // -----------------------------------------------------------------------
 let db: IMemoryDb;
 let cleanDatabase: ReturnType<IMemoryDb["backup"]>;
@@ -97,28 +102,9 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     cleanDatabase.restore();
-
-    const seededUser = await testDataSource.getRepository(User).save({
-        username: "testuser",
-        avatar: "default-avatar.png",
-        kanbanAssignedTasks: [],
-        passwordHash: "testpasswordhash",
-        totalXp: 100
-    });
-    if (seededUser.id !== TEST_USER_ID) {
-        throw new Error(`Expected test user id ${TEST_USER_ID}, received ${seededUser.id}`);
-    }
-    TestLogger.info(`[testDbSetup] Test user created with id : ${TEST_USER_ID}`);
-
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    await testDataSource.getRepository(Account).save({
-        id: TEST_ACCOUNT_ID,
-        label: "testaccount0",
-        baseLineAmount: 0,
-        baseLineEffectiveDate: oneYearAgo
-    })
-    TestLogger.info(`[testDbSetup] Test account created with id : ${TEST_ACCOUNT_ID}`);
+    // Nouvelle instance : les compteurs des factories repartent de zéro, chaque test voit les mêmes valeurs par défaut.
+    fixtures = new Fixtures(testDataSource.manager);
+    await seedBaseline(fixtures);
 });
 
 afterAll(async () => {
@@ -133,4 +119,4 @@ afterAll(async () => {
     originalDateDefaults.clear();
 });
 
-export { testDataSource };
+export { fixtures, testDataSource };

@@ -1,24 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { testDataSource } from "../tests/testDbSetup";
+import { describe, it, expect } from "vitest";
+import { TEST_ACCOUNT_ID, fixtures, testDataSource } from "../tests/testDbSetup";
 import { processRecurringExpenses } from "./processRecurringExpenses"
 import { JobExecutionLog } from "../modules/core/entities/JobExecutionLog";
-import { EntityManager } from "typeorm";
 import { RecurringExpense, RecurringExpenseFrequency } from "../modules/accounts/entities/RecurringExpense";
-import { Account } from "../modules/accounts/entities/Account";
 
 
 describe("processRecurringExpenses", () => {
-    let entityManager: EntityManager;
-    let currentDate: Date;
-    let account: Account;
-
-    beforeEach(async () => {
-        entityManager = testDataSource.manager;
-        currentDate = new Date();
-
-        await entityManager.getRepository(Account).findOne({ where: { id: 1 } }).then(acc => account = acc!);
-    });
-
 
     async function getLastLog() {
         const repo = await testDataSource.getRepository(JobExecutionLog)
@@ -50,72 +37,11 @@ describe("processRecurringExpenses", () => {
         const tommorow = new Date();
         tommorow.setDate(tommorow.getDate() + 1);
 
-        const mockedRecurringExpenses: RecurringExpense[] = [
-            {
-                id: 1,
-                label: "Loyer",
-                solde: 850.00,
-                isActive: true,
-                nextOccurrence: yesterday,
-                frequency: RecurringExpenseFrequency.MONTHLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-            {
-                id: 2,
-                label: "Netflix",
-                solde: 17.99,
-                isActive: true,
-                nextOccurrence: new Date(),
-                frequency: RecurringExpenseFrequency.MONTHLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-            {
-                id: 3,
-                label: "Assurance habitation",
-                solde: 240.00,
-                isActive: true,
-                nextOccurrence: tommorow,
-                frequency: RecurringExpenseFrequency.MONTHLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-        ];
-
-
-        const recurringRepo = entityManager.getRepository(RecurringExpense);
-        await recurringRepo.save(mockedRecurringExpenses);
+        await fixtures.recurringExpenses.createEach([
+            { accountId: TEST_ACCOUNT_ID, label: "Loyer", solde: 850.00, nextOccurrence: yesterday },
+            { accountId: TEST_ACCOUNT_ID, label: "Netflix", solde: 17.99, nextOccurrence: new Date() },
+            { accountId: TEST_ACCOUNT_ID, label: "Assurance habitation", solde: 240.00, nextOccurrence: tommorow },
+        ]);
 
         const currentDate = new Date();
         // Act
@@ -152,92 +78,12 @@ describe("processRecurringExpenses", () => {
             new Date(2024, 1, 29),
         ];
 
-        const mockedRecurringExpenses: RecurringExpense[] = [
-            {
-                id: 1,
-                label: "Loyer edgeCase 1",
-                solde: 850.00,
-                isActive: true,
-                nextOccurrence: edgeCasesDates[0],
-                frequency: RecurringExpenseFrequency.MONTHLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-            {
-                id: 2,
-                label: "Netflix edgeCase 2",
-                solde: 17.99,
-                isActive: true,
-                nextOccurrence: edgeCasesDates[1],
-                frequency: RecurringExpenseFrequency.QUARTERLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-            {
-                id: 3,
-                label: "Assurance habitation edgeCase 3",
-                solde: 240.00,
-                isActive: true,
-                nextOccurrence: edgeCasesDates[2],
-                frequency: RecurringExpenseFrequency.MONTHLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-            {
-                id: 4,
-                label: "Assurance voiture edgeCase 4",
-                solde: 9.00,
-                isActive: true,
-                nextOccurrence: edgeCasesDates[3],
-                frequency: RecurringExpenseFrequency.YEARLY,
-
-                natureId: null,
-                nature: undefined,
-
-                posteId: null,
-                poste: undefined,
-
-                accountId: 1,
-                account: {
-                    id: 1,
-                    // ajoute ici les propriétés obligatoires de Account
-                } as Account,
-            },
-        ];
-
-
-        const recurringRepo = entityManager.getRepository(RecurringExpense);
-        await recurringRepo.save(mockedRecurringExpenses);
+        await fixtures.recurringExpenses.createEach([
+            { accountId: TEST_ACCOUNT_ID, label: "Loyer edgeCase 1", solde: 850.00, nextOccurrence: edgeCasesDates[0], frequency: RecurringExpenseFrequency.MONTHLY },
+            { accountId: TEST_ACCOUNT_ID, label: "Netflix edgeCase 2", solde: 17.99, nextOccurrence: edgeCasesDates[1], frequency: RecurringExpenseFrequency.QUARTERLY },
+            { accountId: TEST_ACCOUNT_ID, label: "Assurance habitation edgeCase 3", solde: 240.00, nextOccurrence: edgeCasesDates[2], frequency: RecurringExpenseFrequency.MONTHLY },
+            { accountId: TEST_ACCOUNT_ID, label: "Assurance voiture edgeCase 4", solde: 9.00, nextOccurrence: edgeCasesDates[3], frequency: RecurringExpenseFrequency.YEARLY },
+        ]);
 
         const currentDate = new Date();
         // Act

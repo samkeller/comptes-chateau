@@ -13,7 +13,6 @@ Project Description
 - [ ] [MEDIUM] Fixer une fois dans toute l'application la taille des dialogues en fonction de la taille de l'écran.
 - [ ] [MEDIUM] Utiliser `useResponsiveDataTable` dans toutes les datatabes pour le responsive -> Va permettre de supprimer pas mal de code mort
 - [ ] [LOW] - Corriger BudgetItemTable.tsx pour qu'elle respecte les normes de l'application  
-- [ ] [LOW] Fixtures back (https://github.com/RobinCK/typeorm-fixtures)  
 - [ ] [LOW] Ajout Ctrl+Click sur liens pour qu'ils s'ouvrent dans un nouvel onglet (recherche react router)
 - [ ] [LOW] Repasser les icones liées à un input (utiliser primereact Iconfield>InputIcon en parallèle de l'Input)
 - [ ] [LOW] /shared - simplifier les exports pour permettre de n'importe que le type voulu et non pas tout depuis '@chocosous/shared' (nécessaire ?) 
@@ -27,6 +26,7 @@ Project Description
 
 ### Done ✓
 
+- [x] [LOW] Fixtures back : factories maison dans `node/src/db/fixtures` (tests + scénarios de dev via `npm run seed`)  
 - [x] Factoriser accountLineNatureDropdown & accountLinePosteDropdown -> Régler les contrats API id vs objet complet -> Repasser tous les dropdowns "nature" (DropdownProps) & "postes" (DropdownProps & accountId)  
 - [x] Auto-backup  
 - [x] Sécuriser ++++ les opérations "miroirs" entre plusieurs comptes. (test unitaires CRUD, impacts modifications, suppression, etc, Ajouter confirm spécifique quand impacts cascade)  
