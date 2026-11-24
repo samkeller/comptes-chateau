@@ -130,9 +130,12 @@ export default class KanbanBoardService {
             existingTask.assignees = await this.resolveAssignees(body.assigneeIds);
         }
 
-        const savedTask = await this.taskService.save(existingTask);
         const newAssigneeIds = existingTask.assignees.map((user) => user.id).filter((userId) => !previousAssigneeIds.has(userId));
-        await this.notifyAssigned(savedTask, newAssigneeIds, connectedUserId);
+        const savedTask = await this.manager.transaction(async (manager) => {
+            const savedTask = await new KanbanTaskService(manager).save(existingTask);
+            await this.notifyAssigned(savedTask, newAssigneeIds, connectedUserId, manager);
+            return savedTask;
+        });
         return toKanbanTaskDto(await this.loadTaskOrThrow(savedTask.id));
     }
 
@@ -174,8 +177,12 @@ export default class KanbanBoardService {
         return comments.map((comment) => this.toCommentDto(comment));
     }
 
+    /**
+     * Ajoute un commentaire et notifie les personnes concernées par la tâche :
+     * ses assignés et les auteurs des commentaires précédents (jamais l'auteur lui-même).
+     */
     async createComment(dto: CreateKanbanCommentInput, authorId: number): Promise<KanbanCommentResponse> {
-        const task = await this.taskService.getById(dto.taskId);
+        const task = await this.taskService.getByIdWithAssignees(dto.taskId);
         if (!task) {
             throw notFound("KANBAN_TASK_NOT_FOUND", "Tâche kanban introuvable");
         }
@@ -185,14 +192,22 @@ export default class KanbanBoardService {
         }
 
         const content = dto.content.trim();
-        const saved = await this.commentService.create(content, dto.taskId, authorId);
-        await new NotificationService(this.manager).publish({
-            type: "KANBAN_TASK_COMMENTED",
-            severity: "info",
-            title: "Nouveau commentaire",
-            message: `${author.username} sur « ${task.title} » : ${truncate(content, COMMENT_EXCERPT_LENGTH)}`,
-            target: { kind: "kanban", taskId: task.id, tab: "comments" },
-            actorUserId: authorId,
+        const saved = await this.manager.transaction(async (manager) => {
+            const commentService = new KanbanCommentService(manager);
+            const previousCommenterIds = await commentService.getAuthorIdsByTaskId(task.id);
+            const saved = await commentService.create(content, task.id, authorId);
+            const recipientUserIds = [...new Set([...task.assignees.map((user) => user.id), ...previousCommenterIds])]
+                .filter((userId) => userId !== authorId);
+            await new NotificationService(manager).publish({
+                type: "KANBAN_TASK_COMMENTED",
+                severity: "info",
+                title: "Nouveau commentaire",
+                message: `${author.username} sur « ${task.title} » : ${truncate(content, COMMENT_EXCERPT_LENGTH)}`,
+                target: { kind: "kanban", taskId: task.id, tab: "comments" },
+                recipientUserIds,
+                actorUserId: authorId,
+            });
+            return saved;
         });
         const loaded = await this.commentService.getByIdWithAuthor(saved.id);
         if (!loaded) throw notFound("KANBAN_COMMENT_NOT_FOUND", "Commentaire introuvable");

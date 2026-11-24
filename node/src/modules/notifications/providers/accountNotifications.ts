@@ -75,7 +75,7 @@ export const accountNotificationProvider: NotificationProvider = {
         const situations = await Promise.all(accounts.map(async (account) => ({
             id: account.id,
             label: account.label,
-            overview: await dashboardService.getOverview(account.id),
+            overview: await dashboardService.getOverview(account.id, now),
         })));
         return accountNotifications(situations, now);
     },

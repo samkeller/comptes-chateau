@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useNavigate } from "react-router-dom";
-import type { NotificationDto, NotificationSeverity, NotificationTarget } from "@chocosous/shared";
+import type { NotificationDto, NotificationTarget } from "@chocosous/shared";
 import NotificationService from "@/services/NotificationService";
 import LocalStorageUtils from "@/utils/LocalStorageUtils";
 import NotificationItem from "./NotificationItem";
@@ -14,18 +14,6 @@ import { ScrollPanel } from "primereact/scrollpanel";
 
 /** Durée de l'animation de sortie d'une notification ignorée (cf. `duration-300` de NotificationItem). */
 const DISMISS_ANIMATION_MS = 300;
-
-const badgeColorBySeverity: Record<NotificationSeverity, string> = {
-    high: "bg-red-500",
-    medium: "bg-orange-400",
-    info: "bg-primary-500",
-};
-
-function highestSeverity(notifications: NotificationDto[]): NotificationSeverity {
-    if (notifications.some((notification) => notification.severity === "high")) return "high";
-    if (notifications.some((notification) => notification.severity === "medium")) return "medium";
-    return "info";
-}
 
 function wait(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -53,8 +41,9 @@ export default function NotificationBell({ buttonClassName }: NotificationBellPr
     const active = notifications.filter((notification) => !notification.dismissed);
     const dismissed = notifications.filter((notification) => notification.dismissed);
 
-    const dismiss = (key: string) => {
-        Promise.all([new NotificationService().dismiss(key), wait(DISMISS_ANIMATION_MS)])
+    /** Rejette si l'appel échoue : la notification reste alors active. */
+    const dismiss = (key: string): Promise<void> => {
+        return Promise.all([new NotificationService().dismiss(key), wait(DISMISS_ANIMATION_MS)])
             .then(() => setNotifications((current) => current.map((notification) => (
                 notification.key === key ? { ...notification, dismissed: true } : notification
             ))))

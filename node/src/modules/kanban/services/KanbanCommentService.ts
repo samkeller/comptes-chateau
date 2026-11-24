@@ -30,6 +30,16 @@ export default class KanbanCommentService {
         return new Map(rows.map((row) => [Number(row.taskId), Number(row.commentCount)]));
     }
 
+    /** Auteurs distincts des commentaires d'une tâche. */
+    async getAuthorIdsByTaskId(taskId: number): Promise<number[]> {
+        const rows = await this.commentRepo.createQueryBuilder("comment")
+            .select("DISTINCT comment.authorId", "authorId")
+            .where("comment.taskId = :taskId", { taskId })
+            .getRawMany<{ authorId: number }>();
+
+        return rows.map((row) => Number(row.authorId));
+    }
+
     async getById(id: number): Promise<KanbanComment | null> {
         return this.commentRepo.findOneBy({ id });
     }

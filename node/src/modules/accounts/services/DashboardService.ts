@@ -19,12 +19,12 @@ export default class DashboardService {
         this.recurringExpenseService = new RecurringExpenseService(manager);
     }
 
-    async getOverview(accountId: number): Promise<DashboardOverview> {
+    /** Situation du compte ; `now` fixe le mois courant et les échéances de prévision (défaut : maintenant). */
+    async getOverview(accountId: number, now: Date = new Date()): Promise<DashboardOverview> {
         const baseline = await this.accountService.getById(accountId);
         const baselineAmount = baseline ? Number(baseline.baseLineAmount) : 0;
         const baseLineDate = baseline ? baseline.baseLineEffectiveDate : new Date(1960, 0, 1);
 
-        const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         // Dernier jour du mois courant
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);

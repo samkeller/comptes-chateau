@@ -11,9 +11,9 @@ const severityStyles: Record<NotificationSeverity, { icon: string; accent: strin
 
 interface NotificationItemProps {
     notification: NotificationDto;
-    /** Animation de sortie en cours (après « Ignorer »). */
     onOpen?: () => void;
-    onDismiss?: () => void;
+    /** Ignore la notification ; une promesse rejetée annule l'animation de sortie. */
+    onDismiss?: () => Promise<void>;
 }
 
 /**
@@ -28,8 +28,13 @@ export default function NotificationItem({ notification, onOpen, onDismiss }: No
     const handleDismiss = async () => {
         if (!onDismiss || isDismissing) return;
 
-        await onDismiss();
+        // Animation de sortie lancée tout de suite, annulée si l'appel échoue (l'intercepteur affiche l'erreur).
         setIsDismissing(true);
+        try {
+            await onDismiss();
+        } catch {
+            setIsDismissing(false);
+        }
     };
 
     return (
