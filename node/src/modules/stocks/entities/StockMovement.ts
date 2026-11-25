@@ -5,9 +5,6 @@ import {
     PrimaryGeneratedColumn,
 } from "typeorm";
 import { STOCK_MOVEMENT_TYPES, type StockMovementType } from "@chocosous/shared";
-import type { StockItem } from "./StockItem";
-import type { StockLocation } from "./StockLocation";
-import type { StockUnit } from "./StockUnit";
 
 @Entity("stock_movement")
 export class StockMovement {

@@ -6,7 +6,7 @@ export class TruncateAccountLineRules1786869263708 implements MigrationInterface
         await queryRunner.clearTable("account_line_rule");
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // TRUNCATE ne peut pas être annulé.
     }
 

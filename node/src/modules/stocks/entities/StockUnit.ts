@@ -1,13 +1,10 @@
 import {
     Column,
     CreateDateColumn,
-    DeleteDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
-    OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn,
 } from "typeorm";
 import type { StockItem } from "./StockItem";
 import { StockLocation } from "./StockLocation";

@@ -3,7 +3,7 @@ import { ObjectLiteral, SelectQueryBuilder } from "typeorm";
 import TableQueryMapper, { TableFilterHandler, TableSortHandler } from "./TableQueryMapper";
 import type { TableQueryFilter, TableQuerySort } from "@chocosous/shared";
 
-class MockQueryBuilder<TEntity extends ObjectLiteral> {
+class MockQueryBuilder {
     public orderByCalls: Array<{ field: string; direction: "ASC" | "DESC" }> = [];
 
     orderBy(field: string, direction: "ASC" | "DESC"): this {
@@ -19,12 +19,12 @@ class MockQueryBuilder<TEntity extends ObjectLiteral> {
 
 describe("TableQueryMapper", () => {
     it("applies requested sort handler", () => {
-        const qb = new MockQueryBuilder<ObjectLiteral>();
+        const qb = new MockQueryBuilder();
         const defaultSort = { field: "dateOperation", direction: "DESC" as const };
 
         const amountHandler: TableSortHandler<ObjectLiteral> = {
             apply: vi.fn((builder, direction) => {
-                (builder as unknown as MockQueryBuilder<ObjectLiteral>).orderBy("amountSql", direction);
+                (builder as unknown as MockQueryBuilder).orderBy("amountSql", direction);
             })
         };
 
@@ -49,10 +49,10 @@ describe("TableQueryMapper", () => {
     });
 
     it("applies default sort when sort is null", () => {
-        const qb = new MockQueryBuilder<ObjectLiteral>();
+        const qb = new MockQueryBuilder();
         const defaultHandler: TableSortHandler<ObjectLiteral> = {
             apply: vi.fn((builder, direction) => {
-                (builder as unknown as MockQueryBuilder<ObjectLiteral>).orderBy("al.dateOperation", direction);
+                (builder as unknown as MockQueryBuilder).orderBy("al.dateOperation", direction);
             })
         };
 

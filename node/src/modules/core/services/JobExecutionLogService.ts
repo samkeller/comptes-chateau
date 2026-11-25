@@ -31,7 +31,7 @@ export default class JobExecutionLogService {
 
     }
 
-    async logSuccess(jobName: string, message: string, details?: Record<string, any>) {
+    async logSuccess(jobName: string, message: string, details?: Record<string, unknown>) {
         customLog("SUCCESS", `Job "${jobName}" succeeded: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,
@@ -41,7 +41,7 @@ export default class JobExecutionLogService {
         });
     }
 
-    async logInfo(jobName: string, message: string, details?: Record<string, any>) {
+    async logInfo(jobName: string, message: string, details?: Record<string, unknown>) {
         customLog("INFO", `Job "${jobName}" info: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,
@@ -54,7 +54,7 @@ export default class JobExecutionLogService {
     async logError(
         jobName: string,
         message: string,
-        details?: Error | unknown | Record<string, any>
+        details?: unknown
     ) {
         customLog("ERROR", `Job "${jobName}" failed: ${message}`);
 
@@ -99,7 +99,7 @@ export default class JobExecutionLogService {
         }));
     }
 
-    async logWarning(jobName: string, message: string, details?: Record<string, any>) {
+    async logWarning(jobName: string, message: string, details?: Record<string, unknown>) {
         customLog("WARN", `Job "${jobName}" warning: ${message}`);
         return this.jobExecutionLogRepo.save({
             jobName,

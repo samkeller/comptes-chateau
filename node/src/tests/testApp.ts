@@ -4,6 +4,9 @@ import { TEST_USER_ID } from "./testDbSetup";
 
 /**
  * Crée une application Express pour les tests avec un chemin de montage, des routes et un ID utilisateur optionnel.
+ *
+ * `express-session` n'est pas installé dans l'app de test : on le remplace par un middleware
+ * minimal qui pose `req.session` (même contrat que le vrai middleware, sans store ni cookie).
  * @param mountPath 
  * @param routes 
  * @param userId 
@@ -13,7 +16,7 @@ export function createTestApp(mountPath: string, routes: Router, userId: number 
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
-        (req as any).session = { userId };
+        Object.assign(req, { session: { userId } });
         next();
     });
     app.use(mountPath, routes);

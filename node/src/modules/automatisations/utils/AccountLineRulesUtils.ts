@@ -5,7 +5,7 @@ import { capitalizeFirstLetter } from "../../../utils/StringUtils";
  * @param label 
  * @returns 
  */
-export function normalizeAccountLineRuleLabel(label: string): string {
+export function normalizeAccountLineRuleLabel(label: string | null | undefined): string {
   if (!label) throw new Error("Le libellé ne peut pas être vide.");
 
   let normalized = label

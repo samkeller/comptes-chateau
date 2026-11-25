@@ -23,15 +23,20 @@ const entityModules = import.meta.glob("../modules/**/entities/*.ts", {
     eager: true
 }) as Record<string, Record<string, unknown>>;
 
-function collectEntities(): Function[] {
+// TypeORM type lui-même `entities` en `MixedList<Function | string | EntitySchema>`
+// (cf. BaseDataSourceOptions) : `Function` est donc le type attendu ici, pas un raccourci.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+type EntityClass = Function;
+
+function collectEntities(): EntityClass[] {
     TestLogger.info("[testDbSetup] Collecting entities...");
-    const entities: Function[] = [];
+    const entities: EntityClass[] = [];
     for (const mod of Object.values(entityModules)) {
         for (const exported of Object.values(mod)) {
             // Ne garde que les classes (les enums exportés dans le même fichier
             // — ex: AccountLineSource — ne sont pas des "function" côté JS compilé).
             if (typeof exported === "function" && exported.prototype) {
-                entities.push(exported as Function);
+                entities.push(exported);
             }
         }
     }
@@ -59,7 +64,9 @@ vi.mock("../db/dataSource", () => ({
                 );
             }
             const value = (testDataSource as unknown as Record<string | symbol, unknown>)[prop];
-            return typeof value === "function" ? (value as Function).bind(testDataSource) : value;
+            return typeof value === "function"
+                ? value.bind(testDataSource)
+                : value;
         }
     })
 }));

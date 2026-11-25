@@ -36,8 +36,8 @@ describe("AccountLineCategorizationService.getUnmapped", () => {
     it("returns null for empty or whitespace-only strings", () => {
         expect(() => normalizeAccountLineRuleLabel("   ")).toThrow("Le libellé normalisé ne peut pas être vide.");
         expect(() => normalizeAccountLineRuleLabel("")).toThrow("Le libellé ne peut pas être vide.");
-        expect(() => normalizeAccountLineRuleLabel(null as any)).toThrow("Le libellé ne peut pas être vide.");
-        expect(() => normalizeAccountLineRuleLabel(undefined as any)).toThrow("Le libellé ne peut pas être vide.");
+        expect(() => normalizeAccountLineRuleLabel(null)).toThrow("Le libellé ne peut pas être vide.");
+        expect(() => normalizeAccountLineRuleLabel(undefined)).toThrow("Le libellé ne peut pas être vide.");
     })
 
     /**
