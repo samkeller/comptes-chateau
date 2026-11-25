@@ -16,14 +16,18 @@
     "build": "rimraf dist && tsc",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
-    "watch": "tsc --watch --preserveWatchOutput"
+    "watch": "tsc --watch --preserveWatchOutput",
+    "lint": "eslint ."
   },
   "dependencies": {
     "zod": "^4.5.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.5",
+    "globals": "^17.14.0",
     "rimraf": "^6.0.1",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.74.0"
   }
 }

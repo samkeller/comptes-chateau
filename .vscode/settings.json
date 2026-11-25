@@ -1,23 +1,21 @@
 {
-  "eslint.run": "onSave",
+  "eslint.run": "onType",
   "editor.codeActionsOnSave": {
     "source.fixAll.ts": "always",
     "source.fixAll.eslint": "always"
   },
   "eslint.workingDirectories": [
-    {
-      "directory": "react",
-      "changeProcessCWD": true
-    },
-    {
-      "directory": "node",
-      "changeProcessCWD": true
-    }
+    "react",
+    "node",
+    "shared"
   ],
   "eslint.validate": [
     "javascript",
-    "typescript"
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
   ],
+  "eslint.format.enable": true,
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/dist/**": true,
@@ -27,6 +25,7 @@
     "**/node_modules": true,
     "**/dist": true
   },
+  // Terminal auto-approval for chat tools.
   "chat.tools.terminal.autoApprove": {
     // Tests
     "/^npm run tests(:front|:back)?$/": true,

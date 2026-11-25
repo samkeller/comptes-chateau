@@ -32,6 +32,7 @@
   "description": "",
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "eslint": "^10.15.0",
     "wait-on": "^9.1.0"
   }
 }

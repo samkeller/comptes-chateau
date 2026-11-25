@@ -21,10 +21,10 @@ export default function AuthPage() {
 
     const { isDesktop } = useScreen()
     const [authService] = useState(new AuthService());
-    let navigate = useNavigate();
+    const navigate = useNavigate();
     const showGlobalToast = useGlobalToast();
     const { refreshUser } = useConnectedUser();
-
+    
     useEffect(() => { setError(null) }, [password])
 
     const submit = async () => {
